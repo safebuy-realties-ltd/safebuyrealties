@@ -46,6 +46,10 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-primary-soft: var(--primary-soft);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -142,6 +146,12 @@
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+
+  html {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   body {
