@@ -1,23 +1,41 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShoppingBag, Home, Briefcase } from "lucide-react";
+import { useAuth, dashboardPathForRole, type Role } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
 
 const roles = [
-  { id: "buyer", label: "Buyer", desc: "Browse and purchase verified properties", icon: ShoppingBag },
-  { id: "seller", label: "Seller", desc: "List and sell with verification", icon: Home },
-  { id: "professional", label: "Professional", desc: "Surveyor, lawyer, or inspector", icon: Briefcase },
-] as const;
+  { id: "buyer" as Role, label: "Buyer", desc: "Browse and purchase verified properties", icon: ShoppingBag },
+  { id: "seller" as Role, label: "Seller", desc: "List and sell with verification", icon: Home },
+  { id: "professional" as Role, label: "Professional", desc: "Surveyor, lawyer, or inspector", icon: Briefcase },
+];
 
 function RegisterPage() {
-  const [role, setRole] = useState<typeof roles[number]["id"]>("buyer");
+  const { register } = useAuth();
+  const navigate = useNavigate();
+  const [role, setRole] = useState<Role>("buyer");
+  const [firstName, setFirst] = useState("");
+  const [lastName, setLast] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!firstName || !email || !password) {
+      setError("Fill in your name, email, and password.");
+      return;
+    }
+    const user = register({ firstName, lastName, email, role });
+    navigate({ to: dashboardPathForRole(user.role) });
+  };
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -56,30 +74,27 @@ function RegisterPage() {
             ))}
           </div>
 
-          <form className="mt-6 space-y-4">
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="first">First name</Label>
-                <Input id="first" placeholder="Jane" />
+                <Input id="first" placeholder="Jane" value={firstName} onChange={(e) => setFirst(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last">Last name</Label>
-                <Input id="last" placeholder="Doe" />
+                <Input id="last" placeholder="Doe" value={lastName} onChange={(e) => setLast(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" />
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" />
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button asChild className="w-full" size="lg">
-              <Link to={role === "seller" ? "/dashboard/seller" : role === "professional" ? "/dashboard/professional" : "/dashboard/buyer"}>
-                Create account
-              </Link>
-            </Button>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" size="lg">Create account</Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
