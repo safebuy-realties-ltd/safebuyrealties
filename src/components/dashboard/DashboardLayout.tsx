@@ -116,7 +116,7 @@ export function DashboardLayout({ role, children }: { role: keyof typeof navByRo
           </div>
         </header>
         <main className="flex-1 p-6 md:p-8">
-          <Outlet />
+          {children ?? <Outlet />}
         </main>
       </div>
     </div>
