@@ -1,4 +1,5 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -8,15 +9,17 @@ import {
   Settings,
   Bell,
   Search,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth, dashboardPathForRole, type Role } from "@/lib/auth";
 
 export type NavItem = { label: string; to: string; icon: LucideIcon };
 
-export const navByRole: Record<string, NavItem[]> = {
+export const navByRole: Record<Role, NavItem[]> = {
   buyer: [
     { label: "Overview", to: "/dashboard/buyer", icon: LayoutDashboard },
     { label: "Browse Listings", to: "/dashboard/buyer/listings", icon: Building2 },
@@ -45,7 +48,7 @@ export const navByRole: Record<string, NavItem[]> = {
   ],
 };
 
-const roleLabels: Record<string, string> = {
+const roleLabels: Record<Role, string> = {
   buyer: "Buyer",
   seller: "Seller",
   professional: "Professional",
@@ -53,9 +56,43 @@ const roleLabels: Record<string, string> = {
   admin: "Administrator",
 };
 
-export function DashboardLayout({ role, children }: { role: keyof typeof navByRole; children?: React.ReactNode }) {
+function initialsOf(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("") || "U";
+}
+
+export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
   const items = navByRole[role];
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate({ to: "/login" });
+      return;
+    }
+    if (user && user.role !== role) {
+      navigate({ to: dashboardPathForRole(user.role) });
+    }
+  }, [isAuthenticated, user, role, navigate]);
+
+  if (!isAuthenticated || !user || user.role !== role) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/30">
+        <div className="text-sm text-muted-foreground">Loading workspace…</div>
+      </div>
+    );
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/" });
+  };
 
   return (
     <div className="flex min-h-screen bg-secondary/30">
@@ -90,12 +127,22 @@ export function DashboardLayout({ role, children }: { role: keyof typeof navByRo
         <div className="border-t border-border/60 p-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">SB</AvatarFallback>
+              <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
+                {initialsOf(user.name)}
+              </AvatarFallback>
             </Avatar>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">Sam Brooks</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
               <p className="truncate text-xs text-muted-foreground">{roleLabels[role]}</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+              title="Log out"
+              aria-label="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </aside>
@@ -108,10 +155,16 @@ export function DashboardLayout({ role, children }: { role: keyof typeof navByRo
               <Input placeholder="Search listings, tasks, documents…" className="h-9 pl-9 bg-secondary/50 border-transparent" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
               <Bell className="h-4 w-4" />
               <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
+            >
+              <LogOut className="h-4 w-4" /> Log out
             </button>
           </div>
         </header>
