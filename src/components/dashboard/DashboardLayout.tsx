@@ -53,7 +53,7 @@ const roleLabels: Record<string, string> = {
   admin: "Administrator",
 };
 
-export function DashboardLayout({ role }: { role: keyof typeof navByRole }) {
+export function DashboardLayout({ role, children }: { role: keyof typeof navByRole; children?: React.ReactNode }) {
   const items = navByRole[role];
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
