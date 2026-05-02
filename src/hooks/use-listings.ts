@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export type ListingDto = {
   id: string;
@@ -17,9 +18,11 @@ export type ListingDto = {
 };
 
 export function useListingsQuery() {
+  const { user, isReady } = useAuth();
   return useQuery({
-    queryKey: ["listings"],
+    queryKey: ["listings", user?.id ?? "anon"],
     queryFn: () => apiRequest<ListingDto[]>("/listings"),
+    enabled: isReady && !!user,
     select: (envelope) => ({
       listings: envelope.data,
       meta: envelope.meta as { page: number; pageSize: number; total: number } | undefined,

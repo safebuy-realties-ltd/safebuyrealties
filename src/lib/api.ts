@@ -28,6 +28,32 @@ export class ApiError extends Error {
 
 export type ApiEnvelope<T> = { data: T; meta?: Record<string, unknown> };
 
+export type DocumentDto = {
+  id: string;
+  listingId: string;
+  category: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  createdAt: string;
+};
+
+export async function uploadDocument(params: {
+  listingId: string;
+  category: string;
+  file: File;
+}): Promise<ApiEnvelope<DocumentDto>> {
+  const form = new FormData();
+  form.append("listingId", params.listingId);
+  form.append("category", params.category);
+  form.append("file", params.file);
+  return apiRequest<DocumentDto>("/documents/upload", {
+    method: "POST",
+    body: form,
+  });
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit & { token?: string | null } = {},

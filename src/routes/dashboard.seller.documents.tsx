@@ -1,10 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, CheckCircle2, X, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
+import { useListingsQuery } from "@/hooks/use-listings";
+import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use-documents";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
   component: () => (
@@ -15,15 +24,6 @@ export const Route = createFileRoute("/dashboard/seller/documents")({
 });
 
 type DocType = "title_deed" | "survey_plan" | "building_approval" | "tax_receipt" | "other";
-
-type DocFile = {
-  id: string;
-  name: string;
-  size: number;
-  type: DocType;
-  progress: number; // 0..100
-  status: "uploading" | "complete" | "error";
-};
 
 const docTypes: { id: DocType; label: string; desc: string; icon: typeof Scale; required: boolean }[] = [
   { id: "title_deed", label: "Title Deed", desc: "Certificate of Occupancy or equivalent", icon: Scale, required: true },
@@ -38,46 +38,68 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function categoryLabel(category: string) {
+  const d = docTypes.find((t) => t.id === category);
+  return d?.label ?? category.replace(/_/g, " ");
+}
+
 function SellerDocuments() {
+  const { data: listingsData, isLoading: listingsLoading, isError: listingsIsError, error: listingsErr } =
+    useListingsQuery();
+  const listings = listingsData?.listings ?? [];
+
+  const [listingId, setListingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<DocType>("title_deed");
   const [dragOver, setDragOver] = useState(false);
-  const [files, setFiles] = useState<DocFile[]>([
-    { id: "f1", name: "Title-Deed-2024.pdf", size: 1.4 * 1024 * 1024, type: "title_deed", progress: 100, status: "complete" },
-    { id: "f2", name: "Survey-Plan-LG.pdf", size: 820 * 1024, type: "survey_plan", progress: 100, status: "complete" },
-  ]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const simulateUpload = useCallback((file: File, type: DocType) => {
-    const id = `f_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const next: DocFile = { id, name: file.name, size: file.size, type, progress: 0, status: "uploading" };
-    setFiles((prev) => [next, ...prev]);
+  useEffect(() => {
+    if (listings.length === 0) {
+      setListingId(null);
+      return;
+    }
+    if (!listingId || !listings.some((l) => l.id === listingId)) {
+      setListingId(listings[0].id);
+    }
+  }, [listings, listingId]);
 
-    const tick = () => {
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.id !== id) return f;
-          const inc = Math.max(8, Math.round(Math.random() * 22));
-          const p = Math.min(100, f.progress + inc);
-          return { ...f, progress: p, status: p >= 100 ? "complete" : "uploading" };
-        }),
-      );
-    };
+  const {
+    data: documents,
+    isLoading: docsLoading,
+    isError: docsError,
+    error: docsErr,
+    refetch: refetchDocs,
+  } = useListingDocumentsQuery(listingId);
 
-    const interval = window.setInterval(() => {
-      tick();
-      setFiles((prev) => {
-        const target = prev.find((f) => f.id === id);
-        if (target && target.progress >= 100) {
-          window.clearInterval(interval);
+  const uploadMutation = useUploadDocumentMutation();
+
+  const countByType = (t: DocType) => (documents ?? []).filter((d) => d.category === t).length;
+
+  const processFiles = useCallback(
+    async (list: FileList | null) => {
+      if (!list?.length || !listingId) return;
+      setUploadError(null);
+      const files = Array.from(list);
+      for (const file of files) {
+        try {
+          await uploadMutation.mutateAsync({
+            listingId,
+            category: activeType,
+            file,
+          });
+        } catch (e) {
+          const msg = e instanceof ApiError ? e.message : e instanceof Error ? e.message : "Upload failed";
+          setUploadError(msg);
+          break;
         }
-        return prev;
-      });
-    }, 350);
-  }, []);
+      }
+    },
+    [listingId, activeType, uploadMutation.mutateAsync],
+  );
 
   const handleFiles = (list: FileList | null) => {
-    if (!list) return;
-    Array.from(list).forEach((f) => simulateUpload(f, activeType));
+    void processFiles(list);
   };
 
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -91,17 +113,40 @@ function SellerDocuments() {
     e.target.value = "";
   };
 
-  const removeFile = (id: string) => setFiles((prev) => prev.filter((f) => f.id !== id));
-
-  const countByType = (t: DocType) =>
-    files.filter((f) => f.type === t && f.status === "complete").length;
-
   return (
     <>
       <PageHeader
         title="Documents"
         description="Upload and manage verification documents for your listings."
       />
+
+      {listingsIsError && (
+        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {listingsErr instanceof Error ? listingsErr.message : "Could not load listings."}
+        </div>
+      )}
+
+      <div className="mb-6">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Listing</p>
+        {listingsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading listings…</p>
+        ) : listings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Create a listing before uploading documents.</p>
+        ) : (
+          <Select value={listingId ?? undefined} onValueChange={(v) => setListingId(v)}>
+            <SelectTrigger className="max-w-md">
+              <SelectValue placeholder="Select listing" />
+            </SelectTrigger>
+            <SelectContent>
+              {listings.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.title} ({l.status.replace(/_/g, " ")})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-2">
@@ -114,6 +159,7 @@ function SellerDocuments() {
             return (
               <button
                 key={d.id}
+                type="button"
                 onClick={() => setActiveType(d.id)}
                 className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${
                   active
@@ -121,14 +167,23 @@ function SellerDocuments() {
                     : "border-border bg-card hover:border-primary/40"
                 }`}
               >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                  }`}
+                >
                   <d.icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">{d.label}</span>
                     {d.required && (
-                      <Badge variant="outline" className="border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)] text-[10px]">Required</Badge>
+                      <Badge
+                        variant="outline"
+                        className="border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)] text-[10px]"
+                      >
+                        Required
+                      </Badge>
                     )}
                   </span>
                   <span className="block text-xs text-muted-foreground">{d.desc}</span>
@@ -144,13 +199,30 @@ function SellerDocuments() {
         </aside>
 
         <section>
+          {docsError && listingId && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {docsErr instanceof Error ? docsErr.message : "Could not load documents."}{" "}
+              <button type="button" className="ml-2 underline" onClick={() => void refetchDocs()}>
+                Retry
+              </button>
+            </div>
+          )}
+          {uploadError && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {uploadError}
+            </div>
+          )}
+
           <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
             className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
               dragOver ? "border-primary bg-primary-soft" : "border-border bg-secondary/40"
-            }`}
+            } ${!listingId || uploadMutation.isPending ? "pointer-events-none opacity-60" : ""}`}
           >
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
               <Upload className="h-5 w-5 text-primary" />
@@ -158,9 +230,13 @@ function SellerDocuments() {
             <p className="mt-4 text-sm font-medium text-foreground">
               Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files here
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 25MB each</p>
-            <Button className="mt-5" onClick={() => inputRef.current?.click()}>
-              Browse files
+            <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 15MB each (API limit)</p>
+            <Button
+              className="mt-5"
+              disabled={!listingId || uploadMutation.isPending}
+              onClick={() => inputRef.current?.click()}
+            >
+              {uploadMutation.isPending ? "Uploading…" : "Browse files"}
             </Button>
             <input
               ref={inputRef}
@@ -168,6 +244,7 @@ function SellerDocuments() {
               multiple
               accept=".pdf,.jpg,.jpeg,.png"
               className="hidden"
+              disabled={!listingId || uploadMutation.isPending}
               onChange={onPick}
             />
           </div>
@@ -175,59 +252,50 @@ function SellerDocuments() {
           <div className="mt-6 rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between border-b border-border/60 p-5">
               <h2 className="text-base font-semibold">Uploaded files</h2>
-              <p className="text-xs text-muted-foreground">{files.length} total</p>
+              <p className="text-xs text-muted-foreground">{documents?.length ?? 0} total</p>
             </div>
             <ul className="divide-y divide-border/60">
-              {files.length === 0 && (
-                <li className="px-5 py-8 text-center text-sm text-muted-foreground">
-                  No files uploaded yet.
-                </li>
+              {!listingId && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Select a listing first.</li>
               )}
-              {files.map((f) => (
-                <li key={f.id} className="flex items-center gap-4 px-5 py-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-sm font-medium text-foreground">{f.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatSize(f.size)}</p>
+              {listingId && docsLoading && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Loading documents…</li>
+              )}
+              {listingId && !docsLoading && (documents ?? []).length === 0 && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">No files uploaded yet.</li>
+              )}
+              {listingId &&
+                !docsLoading &&
+                (documents ?? []).map((f) => (
+                  <li key={f.id} className="flex items-center gap-4 px-5 py-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <FileText className="h-5 w-5" />
                     </div>
-                    <div className="mt-1 flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {docTypes.find((d) => d.id === f.type)?.label ?? "Other"}
-                      </span>
-                      {f.status === "uploading" && (
-                        <div className="flex flex-1 items-center gap-2">
-                          <Progress value={f.progress} className="h-1.5 flex-1" />
-                          <span className="text-xs tabular-nums text-muted-foreground">{f.progress}%</span>
-                        </div>
-                      )}
-                      {f.status === "complete" && (
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">{f.fileName}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(f.sizeBytes)}</p>
+                      </div>
+                      <div className="mt-1 flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">{categoryLabel(f.category)}</span>
                         <span className="flex items-center gap-1 text-xs font-medium text-[oklch(0.4_0.12_155)]">
                           <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
                         </span>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => removeFile(f.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    aria-label="Remove file"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
+                  </li>
+                ))}
             </ul>
           </div>
 
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)]">
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <FileCheck2 className="h-4 w-4 text-primary" />
+              <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
               Submit documents for verification once all required types are uploaded.
             </div>
-            <Button>Submit for verification</Button>
+            <Button type="button" disabled>
+              Submit for verification
+            </Button>
           </div>
         </section>
       </div>
