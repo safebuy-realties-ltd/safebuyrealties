@@ -18,6 +18,7 @@ import { Route as DashboardSellerRouteImport } from './routes/dashboard.seller'
 import { Route as DashboardProfessionalRouteImport } from './routes/dashboard.professional'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard.buyer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardStaffWorkflowRouteImport } from './routes/dashboard.staff.workflow'
 import { Route as DashboardStaffSubmissionsRouteImport } from './routes/dashboard.staff.submissions'
 import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard.seller.documents'
 import { Route as DashboardProfessionalTasksRouteImport } from './routes/dashboard.professional.tasks'
@@ -70,6 +71,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/dashboard/admin',
   path: '/dashboard/admin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardStaffWorkflowRoute = DashboardStaffWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => DashboardStaffRoute,
 } as any)
 const DashboardStaffSubmissionsRoute =
   DashboardStaffSubmissionsRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRoute
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
+  '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRoute
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
+  '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRoute
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
+  '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/staff/submissions'
+    | '/dashboard/staff/workflow'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/staff/submissions'
+    | '/dashboard/staff/workflow'
   id:
     | '__root__'
     | '/'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/staff/submissions'
+    | '/dashboard/staff/workflow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -299,6 +311,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/staff/workflow': {
+      id: '/dashboard/staff/workflow'
+      path: '/workflow'
+      fullPath: '/dashboard/staff/workflow'
+      preLoaderRoute: typeof DashboardStaffWorkflowRouteImport
+      parentRoute: typeof DashboardStaffRoute
     }
     '/dashboard/staff/submissions': {
       id: '/dashboard/staff/submissions'
@@ -407,10 +426,12 @@ const DashboardSellerRouteWithChildren = DashboardSellerRoute._addFileChildren(
 
 interface DashboardStaffRouteChildren {
   DashboardStaffSubmissionsRoute: typeof DashboardStaffSubmissionsRoute
+  DashboardStaffWorkflowRoute: typeof DashboardStaffWorkflowRoute
 }
 
 const DashboardStaffRouteChildren: DashboardStaffRouteChildren = {
   DashboardStaffSubmissionsRoute: DashboardStaffSubmissionsRoute,
+  DashboardStaffWorkflowRoute: DashboardStaffWorkflowRoute,
 }
 
 const DashboardStaffRouteWithChildren = DashboardStaffRoute._addFileChildren(
