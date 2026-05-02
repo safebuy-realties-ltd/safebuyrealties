@@ -1,7 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useAdminUsersQuery } from "@/hooks/use-admin-users";
+import { useListingsQuery } from "@/hooks/use-listings";
 
 export const Route = createFileRoute("/dashboard/admin")({
   component: () => (
@@ -11,58 +15,94 @@ export const Route = createFileRoute("/dashboard/admin")({
   ),
 });
 
+function initialsOf(n: string) {
+  return n
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0])
+    .join("")
+    .toUpperCase();
+}
+
 function AdminOverview() {
+  const { data: usersData, isLoading: loadUsers, isError: usersErr } = useAdminUsersQuery({ page: 1, pageSize: 8 });
+  const { data: listingsData, isLoading: loadListings, isError: listingsErr } = useListingsQuery({ pageSize: 200 });
+  const users = usersData?.users ?? [];
+  const totalUsers = usersData?.meta?.total ?? 0;
+  const listings = listingsData?.listings ?? [];
+
+  const pendingReviews = useMemo(
+    () => listings.filter((l) => l.status === "PENDING_REVIEW").length,
+    [listings],
+  );
+
   return (
     <>
       <PageHeader
         title="Platform overview"
-        description="System health, users and listings at a glance."
+        description="Counts from the database. Open Users or Listings for full views."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard/admin/users">Users</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link to="/dashboard/admin/listings">Listings</Link>
+            </Button>
+          </div>
+        }
       />
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Total users" value="12,480" hint="+312 this month" />
-        <StatCard label="Active listings" value="3,217" />
-        <StatCard label="Pending reviews" value="42" />
-        <StatCard label="Revenue (MTD)" value="$184k" hint="+8.2%" />
+        <StatCard label="Users (total)" value={loadUsers ? "…" : String(totalUsers)} hint="Registered" />
+        <StatCard label="Listings loaded" value={loadListings ? "…" : String(listings.length)} hint="This page batch" />
+        <StatCard label="Pending review" value={loadListings ? "…" : String(pendingReviews)} />
+        <StatCard label="API" value={usersErr || listingsErr ? "Error" : "OK"} hint="Latest fetch" />
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-          <h2 className="text-lg font-semibold">Recent users</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent users</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/dashboard/admin/users">Manage</Link>
+            </Button>
+          </div>
+          {loadUsers && <p className="mt-4 text-sm text-muted-foreground">Loading…</p>}
+          {!loadUsers && users.length === 0 && (
+            <p className="mt-4 text-sm text-muted-foreground">No users returned.</p>
+          )}
           <div className="mt-4 space-y-3">
-            {[
-              { name: "Adaeze Okeke", role: "Buyer", initials: "AO" },
-              { name: "Tunde Kalu", role: "Seller", initials: "TK" },
-              { name: "Maya Idris", role: "Professional", initials: "MI" },
-              { name: "Olu Adebayo", role: "Buyer", initials: "OA" },
-            ].map((u) => (
-              <div key={u.name} className="flex items-center gap-3">
-                <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary-soft text-primary text-xs">{u.initials}</AvatarFallback></Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{u.name}</p>
-                  <p className="text-xs text-muted-foreground">{u.role}</p>
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center gap-3">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-primary-soft text-xs text-primary">
+                    {initialsOf(u.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{u.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                 </div>
-                <Badge variant="outline" className="border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]">Active</Badge>
+                <Badge variant="outline">{u.role}</Badge>
               </div>
             ))}
           </div>
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-          <h2 className="text-lg font-semibold">System status</h2>
-          <div className="mt-4 space-y-3">
-            {[
-              { name: "Verification engine", up: true },
-              { name: "Payment & escrow", up: true },
-              { name: "Document storage", up: true },
-              { name: "Notification service", up: true },
-            ].map((s) => (
-              <div key={s.name} className="flex items-center justify-between rounded-lg border border-border/60 bg-background px-4 py-3">
-                <span className="text-sm font-medium">{s.name}</span>
-                <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="h-2 w-2 rounded-full bg-success" /> Operational
-                </span>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-lg font-semibold">Quick links</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Payments and revenue rollups are not aggregated in this MVP; use buyer transactions and seeded payments in
+            the database for demos.
+          </p>
+          <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-muted-foreground">
+            <li>
+              <Link className="text-primary underline" to="/dashboard/admin/listings">
+                Moderate listing statuses
+              </Link>
+            </li>
+            <li>Staff verification: log in as staff@safebuyrealties.test to use the workflow screens.</li>
+          </ul>
         </div>
       </div>
     </>

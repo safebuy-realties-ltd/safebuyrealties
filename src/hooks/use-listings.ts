@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 export type ListingDto = {
   id: string;
   sellerId: string;
+  sellerName?: string;
   title: string;
   description: string;
   location: string;

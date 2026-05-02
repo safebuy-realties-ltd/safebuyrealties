@@ -1,6 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
+import { Button } from "@/components/ui/button";
+import { useMyTasksQuery } from "@/hooks/use-tasks";
+import { useListingsQuery } from "@/hooks/use-listings";
+import type { TaskDto } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/professional")({
   component: () => (
@@ -10,26 +15,77 @@ export const Route = createFileRoute("/dashboard/professional")({
   ),
 });
 
+function apiStatusToCard(status: string): "pending" | "in_progress" | "completed" {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "in_progress";
+    case "COMPLETED":
+      return "completed";
+    default:
+      return "pending";
+  }
+}
+
+function formatDue(iso: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
 function ProOverview() {
+  const { data: tasksData, isLoading } = useMyTasksQuery({ pageSize: 20 });
+  const tasks = tasksData?.tasks ?? [];
+  const { data: listingsData } = useListingsQuery();
+  const titleById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
+    return m;
+  }, [listingsData?.listings]);
+
+  const counts = useMemo(() => {
+    const pending = tasks.filter((t: TaskDto) => t.status === "PENDING").length;
+    const ip = tasks.filter((t: TaskDto) => t.status === "IN_PROGRESS").length;
+    const done = tasks.filter((t: TaskDto) => t.status === "COMPLETED").length;
+    return { pending, ip, done };
+  }, [tasks]);
+
+  const preview = tasks.slice(0, 6);
+
   return (
     <>
       <PageHeader
-        title="Assigned tasks"
-        description="Verifications and reports awaiting your action."
+        title="Overview"
+        description="Snapshot of your assigned tasks from the API."
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/dashboard/professional/tasks">All tasks</Link>
+          </Button>
+        }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pending" value="5" />
-        <StatCard label="In progress" value="3" />
-        <StatCard label="Completed (30d)" value="22" />
+        <StatCard label="Pending" value={isLoading ? "…" : String(counts.pending)} />
+        <StatCard label="In progress" value={isLoading ? "…" : String(counts.ip)} />
+        <StatCard label="Completed (loaded)" value={isLoading ? "…" : String(counts.done)} />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <TaskCard title="Title verification" property="Garden Court Residence" due="May 5" status="in_progress" type="Legal" />
-        <TaskCard title="Survey inspection" property="Acacia Hills Estate" due="May 7" status="pending" type="Survey" />
-        <TaskCard title="Property valuation" property="Maple Heights Apartment" due="May 3" status="pending" type="Valuation" />
-        <TaskCard title="Structural report" property="Cedar Park Villa" due="Apr 28" status="completed" type="Inspection" />
-        <TaskCard title="Encumbrance check" property="Riverside Townhouse" due="May 10" status="in_progress" type="Legal" />
-        <TaskCard title="Boundary verification" property="Sunset Bay Condo" due="May 12" status="pending" type="Survey" />
+        {isLoading && <p className="col-span-full text-sm text-muted-foreground">Loading tasks…</p>}
+        {!isLoading && preview.length === 0 && (
+          <p className="col-span-full text-sm text-muted-foreground">No tasks assigned yet.</p>
+        )}
+        {preview.map((t) => (
+          <TaskCard
+            key={t.id}
+            title={t.title}
+            property={titleById.get(t.listingId) ?? t.listingId}
+            due={formatDue(t.dueAt)}
+            status={apiStatusToCard(t.status)}
+            type={t.type}
+          />
+        ))}
       </div>
     </>
   );

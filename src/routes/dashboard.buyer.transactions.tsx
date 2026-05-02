@@ -1,12 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, ArrowRight } from "lucide-react";
 import { useMyTransactionsQuery, type TransactionDto } from "@/hooks/use-transactions";
-import { useMemo } from "react";
+import { useInitiatePaymentMutation } from "@/hooks/use-payments";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/buyer/transactions")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    mock: search.mock === "1" || search.mock === true,
+  }),
   component: () => (
     <DashboardLayout role="buyer">
       <Transactions />
@@ -62,8 +69,23 @@ function timelineForStatus(status: string) {
   ];
 }
 
+function depositAmountForListing(priceStr: string) {
+  const n = Number(priceStr);
+  if (!Number.isFinite(n) || n <= 0) return 500_000;
+  return Math.min(Math.max(Math.round(n * 0.02), 5_000), 2_000_000);
+}
+
 function Transactions() {
+  const { mock } = Route.useSearch();
+  const qc = useQueryClient();
   const { data: items, isLoading, isError, error, refetch } = useMyTransactionsQuery();
+
+  useEffect(() => {
+    if (mock) {
+      void qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.message("Refreshing transactions after payment…");
+    }
+  }, [mock, qc]);
 
   const stats = useMemo(() => {
     const list = items ?? [];
@@ -76,7 +98,7 @@ function Transactions() {
     <>
       <PageHeader
         title="Transactions"
-        description="Track purchases you have started on live listings."
+        description="Track purchases you have started on live listings. Complete payment to finish."
       />
 
       {isError && (
@@ -119,6 +141,34 @@ function Transactions() {
 function TransactionCard({ tx }: { tx: TransactionDto }) {
   const steps = timelineForStatus(tx.status);
   const amount = formatMoney(tx.listing.price, tx.listing.currency);
+  const payMutation = useInitiatePaymentMutation();
+  const deposit = depositAmountForListing(tx.listing.price);
+  const canPay = tx.status !== "COMPLETED";
+
+  const pay = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const callbackUrl = `${origin}/dashboard/buyer/transactions?mock=1`;
+    payMutation.mutate(
+      {
+        amount: deposit,
+        currency: tx.listing.currency || "NGN",
+        transactionId: tx.id,
+        callbackUrl,
+      },
+      {
+        onSuccess: (res) => {
+          if (res.authorizationUrl.includes("mock=1")) {
+            toast.success("Payment completed (demo / no Paystack key). Transaction updated.");
+            return;
+          }
+          window.location.href = res.authorizationUrl;
+        },
+        onError: (e) => {
+          toast.error(e instanceof ApiError ? e.message : "Payment could not start.");
+        },
+      },
+    );
+  };
 
   return (
     <article className="rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
@@ -134,6 +184,11 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
           <Badge variant="outline" className={`gap-1 ${statusBadgeClass(tx.status)}`}>
             {statusLabel(tx.status)}
           </Badge>
+          {canPay && (
+            <Button size="sm" onClick={() => pay()} disabled={payMutation.isPending}>
+              {payMutation.isPending ? "Processing…" : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
+            </Button>
+          )}
           <Button variant="outline" size="sm" asChild>
             <Link to="/listings/$listingId" params={{ listingId: tx.listing.id }}>
               View listing

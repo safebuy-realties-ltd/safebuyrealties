@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useListingsQuery } from "@/hooks/use-listings";
 
 export const Route = createFileRoute("/dashboard/staff")({
   component: () => (
@@ -11,48 +13,78 @@ export const Route = createFileRoute("/dashboard/staff")({
   ),
 });
 
+const PIPELINE = ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION"] as const;
+
 function StaffOverview() {
+  const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 200 });
+  const listings = data?.listings ?? [];
+
+  const stats = useMemo(() => {
+    const pipeline = listings.filter((l) => PIPELINE.includes(l.status as (typeof PIPELINE)[number]));
+    const assigned = listings.filter((l) => l.status === "ASSIGNED").length;
+    const inVer = listings.filter((l) => l.status === "IN_VERIFICATION").length;
+    const pending = listings.filter((l) => l.status === "PENDING_REVIEW").length;
+    return { pipeline: pipeline.length, pending, assigned, inVer, live: listings.filter((l) => l.status === "LIVE").length };
+  }, [listings]);
+
+  const recent = useMemo(
+    () =>
+      [...listings]
+        .filter((l) => PIPELINE.includes(l.status as (typeof PIPELINE)[number]))
+        .slice(0, 12),
+    [listings],
+  );
+
   return (
     <>
       <PageHeader
         title="Operations workspace"
-        description="Review submissions, assign professionals, manage workflow."
+        description="Listings in review and verification. Open Workflow to assign professionals to steps."
       />
+      {isError && (
+        <p className="mb-4 text-sm text-destructive">
+          {error instanceof Error ? error.message : "Could not load listings."}{" "}
+          <button type="button" className="underline" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="New submissions" value="8" />
-        <StatCard label="Awaiting assignment" value="5" />
-        <StatCard label="Active verifications" value="14" />
-        <StatCard label="Closed this week" value="11" />
+        <StatCard label="In pipeline" value={isLoading ? "…" : String(stats.pipeline)} hint="Review + verify" />
+        <StatCard label="Pending review" value={isLoading ? "…" : String(stats.pending)} />
+        <StatCard label="In verification" value={isLoading ? "…" : String(stats.inVer)} />
+        <StatCard label="Live" value={isLoading ? "…" : String(stats.live)} hint="Published" />
       </div>
 
       <div className="mt-10 rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-between border-b border-border/60 p-5">
-          <h2 className="text-lg font-semibold">Recent submissions</h2>
-          <Button variant="outline" size="sm">Export</Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 p-5">
+          <h2 className="text-lg font-semibold">Listings in review / verification</h2>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/dashboard/staff/workflow">Open workflow</Link>
+          </Button>
         </div>
         <div className="divide-y divide-border/60">
-          {[
-            { listing: "Acacia Hills Estate", seller: "Olu A.", type: "Survey", status: "pending" },
-            { listing: "Riverside Townhouse", seller: "Maya I.", type: "Legal", status: "in_progress" },
-            { listing: "Garden Court Residence", seller: "Tunde K.", type: "Valuation", status: "in_progress" },
-            { listing: "Maple Heights", seller: "Adaeze O.", type: "Inspection", status: "completed" },
-          ].map((s, i) => (
-            <div key={i} className="grid grid-cols-12 items-center gap-4 px-5 py-4 text-sm">
-              <div className="col-span-4 font-medium text-foreground">{s.listing}</div>
-              <div className="col-span-3 text-muted-foreground">{s.seller}</div>
-              <div className="col-span-2 text-muted-foreground">{s.type}</div>
-              <div className="col-span-2">
-                <Badge variant="outline" className={
-                  s.status === "completed" ? "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]" :
-                  s.status === "in_progress" ? "border-primary/20 bg-primary-soft text-primary" :
-                  "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]"
-                }>{s.status === "in_progress" ? "In progress" : s.status === "completed" ? "Done" : "Pending"}</Badge>
+          {isLoading && <p className="p-6 text-sm text-muted-foreground">Loading…</p>}
+          {!isLoading && recent.length === 0 && (
+            <p className="p-6 text-sm text-muted-foreground">No listings in this pipeline right now.</p>
+          )}
+          {!isLoading &&
+            recent.map((l) => (
+              <div key={l.id} className="grid grid-cols-12 items-center gap-4 px-5 py-4 text-sm">
+                <div className="col-span-4 font-medium text-foreground">{l.title}</div>
+                <div className="col-span-3 text-muted-foreground">{l.sellerName ?? l.sellerId.slice(0, 8)}</div>
+                <div className="col-span-3">
+                  <Badge variant="outline">{l.status.replace(/_/g, " ")}</Badge>
+                </div>
+                <div className="col-span-2 text-right">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/dashboard/staff/workflow" search={{ listing: l.id }}>
+                      Assign
+                    </Link>
+                  </Button>
+                </div>
               </div>
-              <div className="col-span-1 text-right">
-                <Button variant="ghost" size="sm">Assign</Button>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </>

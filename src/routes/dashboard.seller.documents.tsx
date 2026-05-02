@@ -11,8 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
+import { toast } from "sonner";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use-documents";
+import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
@@ -73,8 +75,25 @@ function SellerDocuments() {
   } = useListingDocumentsQuery(listingId);
 
   const uploadMutation = useUploadDocumentMutation();
+  const updateListing = useUpdateListingMutation();
 
   const countByType = (t: DocType) => (documents ?? []).filter((d) => d.category === t).length;
+  const canSubmitForReview =
+    !!listingId &&
+    countByType("title_deed") > 0 &&
+    countByType("survey_plan") > 0 &&
+    listings.find((l) => l.id === listingId)?.status === "DRAFT";
+
+  const submitForReview = () => {
+    if (!listingId) return;
+    updateListing.mutate(
+      { id: listingId, body: { status: "PENDING_REVIEW" } },
+      {
+        onSuccess: () => toast.success("Submitted for review. Verification steps will be created."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not submit."),
+      },
+    );
+  };
 
   const processFiles = useCallback(
     async (list: FileList | null) => {
@@ -293,8 +312,12 @@ function SellerDocuments() {
               <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
               Submit documents for verification once all required types are uploaded.
             </div>
-            <Button type="button" disabled>
-              Submit for verification
+            <Button
+              type="button"
+              disabled={!canSubmitForReview || updateListing.isPending}
+              onClick={() => submitForReview()}
+            >
+              {updateListing.isPending ? "Submitting…" : "Submit for verification"}
             </Button>
           </div>
         </section>

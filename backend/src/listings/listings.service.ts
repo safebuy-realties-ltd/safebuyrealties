@@ -32,23 +32,30 @@ const VERIFICATION_TEMPLATE: { type: VerificationStepType; order: number }[] = [
 export class ListingsService {
   constructor(private prisma: PrismaService) {}
 
-  private serializeListing(l: {
-    id: string;
-    sellerId: string;
-    title: string;
-    description: string;
-    location: string;
-    price: Prisma.Decimal;
-    currency: string;
-    status: ListingStatus;
-    verifiedAt: Date | null;
-    rejectionReason: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
+  private serializeListing(
+    l: {
+      id: string;
+      sellerId: string;
+      title: string;
+      description: string;
+      location: string;
+      price: Prisma.Decimal;
+      currency: string;
+      status: ListingStatus;
+      verifiedAt: Date | null;
+      rejectionReason: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    seller?: { firstName: string; lastName: string } | null,
+  ) {
+    const sellerName = seller
+      ? `${seller.firstName} ${seller.lastName}`.trim() || undefined
+      : undefined;
     return {
       id: l.id,
       sellerId: l.sellerId,
+      sellerName,
       title: l.title,
       description: l.description,
       location: l.location,
@@ -103,7 +110,11 @@ export class ListingsService {
     if (status === ListingStatus.PENDING_REVIEW) {
       await this.ensureVerificationSteps(listing.id);
     }
-    return this.serializeListing(listing);
+    const withSeller = await this.prisma.listing.findUniqueOrThrow({
+      where: { id: listing.id },
+      include: { seller: { select: { firstName: true, lastName: true } } },
+    });
+    return this.serializeListing(withSeller, withSeller.seller);
   }
 
   async findAll(query: ListListingsQueryDto, actor: JwtPayload | null) {
@@ -141,19 +152,23 @@ export class ListingsService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { updatedAt: "desc" },
+        include: { seller: { select: { firstName: true, lastName: true } } },
       }),
     ]);
     return {
-      data: rows.map((l) => this.serializeListing(l)),
+      data: rows.map((l) => this.serializeListing(l, l.seller)),
       meta: { page, pageSize, total },
     };
   }
 
   async findOne(id: string, actor: JwtPayload | null) {
-    const listing = await this.prisma.listing.findUnique({ where: { id } });
+    const listing = await this.prisma.listing.findUnique({
+      where: { id },
+      include: { seller: { select: { firstName: true, lastName: true } } },
+    });
     if (!listing) throw new NotFoundException("Listing not found");
     if (!(await this.canAccessListing(listing, actor))) throw new ForbiddenException();
-    return this.serializeListing(listing);
+    return this.serializeListing(listing, listing.seller);
   }
 
   async update(id: string, dto: UpdateListingDto, actor: JwtPayload) {
@@ -188,7 +203,11 @@ export class ListingsService {
       await this.ensureVerificationSteps(id);
     }
 
-    return this.serializeListing(updated);
+    const out = await this.prisma.listing.findUniqueOrThrow({
+      where: { id },
+      include: { seller: { select: { firstName: true, lastName: true } } },
+    });
+    return this.serializeListing(out, out.seller);
   }
 
   async remove(id: string, actor: JwtPayload) {
@@ -200,8 +219,9 @@ export class ListingsService {
     const updated = await this.prisma.listing.update({
       where: { id },
       data: { status: ListingStatus.ARCHIVED },
+      include: { seller: { select: { firstName: true, lastName: true } } },
     });
-    return this.serializeListing(updated);
+    return this.serializeListing(updated, updated.seller);
   }
 
   private async canAccessListing(

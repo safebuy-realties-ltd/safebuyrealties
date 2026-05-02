@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    listing: typeof search.listing === "string" ? search.listing : undefined,
+  }),
   component: () => (
     <DashboardLayout role="staff">
       <StaffWorkflow />
@@ -27,6 +30,7 @@ export const Route = createFileRoute("/dashboard/staff/workflow")({
 });
 
 function StaffWorkflow() {
+  const { listing: listingFromSearch } = Route.useSearch();
   const { data: listingsData, isLoading: listingsLoading, isError: listingsError, error: listingsErr } =
     useListingsQuery({ pageSize: 100 });
   const listings = listingsData?.listings ?? [];
@@ -37,6 +41,13 @@ function StaffWorkflow() {
   const [q, setQ] = useState("");
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!listingFromSearch) return;
+    if (listings.some((l) => l.id === listingFromSearch)) {
+      setSelectedListingId(listingFromSearch);
+    }
+  }, [listingFromSearch, listings]);
+
   const filteredListings = useMemo(() => {
     if (!q.trim()) return listings;
     const n = q.toLowerCase();
@@ -45,7 +56,8 @@ function StaffWorkflow() {
         l.title.toLowerCase().includes(n) ||
         l.location.toLowerCase().includes(n) ||
         l.id.toLowerCase().includes(n) ||
-        l.status.toLowerCase().includes(n),
+        l.status.toLowerCase().includes(n) ||
+        (l.sellerName ?? "").toLowerCase().includes(n),
     );
   }, [listings, q]);
 

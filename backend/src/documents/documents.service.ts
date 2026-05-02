@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import { UserRole } from "@prisma/client";
+import { UserRole, ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import * as fs from "fs";
@@ -24,6 +24,7 @@ export class DocumentsService {
     const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
     if (!listing) throw new NotFoundException("Listing not found");
     if (listing.sellerId === actor.sub || this.isStaff(actor.role)) return listing;
+    if (actor.role === UserRole.BUYER && listing.status === ListingStatus.LIVE) return listing;
     if (actor.role === UserRole.PROFESSIONAL) {
       const [v, t] = await Promise.all([
         this.prisma.verificationStep.count({

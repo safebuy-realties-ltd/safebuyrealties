@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,25 +11,19 @@ import {
   Maximize,
   FileText,
   CheckCircle2,
-  Download,
   PlayCircle,
 } from "lucide-react";
-import { VerificationTracker, defaultVerificationSteps } from "@/components/VerificationTracker";
+import { VerificationTracker, type VerificationStep } from "@/components/VerificationTracker";
 import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
 import { useCreateTransactionMutation } from "@/hooks/use-transactions";
 import { ApiError } from "@/lib/api";
+import { useListingDocumentsQuery } from "@/hooks/use-documents";
+import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 
 const PLACEHOLDER_IMG =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
-
-const documents = [
-  { name: "Title deed", size: "1.2 MB", verified: true },
-  { name: "Survey plan", size: "880 KB", verified: true },
-  { name: "Structural report", size: "2.1 MB", verified: true },
-  { name: "Tax clearance", size: "640 KB", verified: false },
-];
 
 export const Route = createFileRoute("/listings/$listingId")({
   component: ListingDetail,
@@ -49,16 +43,62 @@ function formatMoney(amount: string, currency: string) {
   }
 }
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] {
+  const sorted = [...steps].sort((a, b) => a.order - b.order);
+  const firstIncomplete = sorted.findIndex((s) => s.status !== "COMPLETED");
+  return sorted.map((s, i) => {
+    if (s.status === "COMPLETED") {
+      return {
+        label: s.label,
+        status: "completed" as const,
+        timestamp: s.completedAt ? new Date(s.completedAt).toLocaleString() : "Completed",
+      };
+    }
+    if (i === firstIncomplete) {
+      return {
+        label: s.label,
+        status: "current" as const,
+        timestamp:
+          s.status === "IN_PROGRESS"
+            ? "In progress"
+            : s.status === "BLOCKED"
+              ? "Blocked"
+              : "Pending",
+      };
+    }
+    return { label: s.label, status: "pending" as const };
+  });
+}
+
 function ListingDetail() {
   const { listingId } = Route.useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
   const createTransaction = useCreateTransactionMutation();
   const [verificationStarted, setVerificationStarted] = useState(false);
 
+  const canFetchExtras = isReady && isAuthenticated && !!listingId;
+  const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(canFetchExtras ? listingId : null);
+  const {
+    data: verSteps,
+    isLoading: verLoading,
+    isError: verError,
+  } = useVerificationListingQuery(listingId, canFetchExtras);
+
   const isBuyer = isAuthenticated && user?.role === "buyer";
   const canStartTransaction = isBuyer && listing?.status === "LIVE";
+
+  const trackerSteps = useMemo((): VerificationStep[] | null => {
+    if (!verSteps?.length) return null;
+    return mapVerificationSteps(verSteps);
+  }, [verSteps]);
 
   const startVerification = () => {
     setVerificationStarted(true);
@@ -146,6 +186,9 @@ function ListingDetail() {
                   {listing.location}
                 </p>
                 <h1 className="mt-1 text-3xl font-semibold tracking-tight">{listing.title}</h1>
+                {listing.sellerName && (
+                  <p className="mt-1 text-sm text-muted-foreground">Listed by {listing.sellerName}</p>
+                )}
               </div>
               {verified && (
                 <Badge className="gap-1 border-primary/20 bg-primary-soft text-primary">
@@ -175,13 +218,26 @@ function ListingDetail() {
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Documents</h2>
                 <span className="text-xs text-muted-foreground">
-                  {documents.filter((d) => d.verified).length} of {documents.length} verified
+                  {!isAuthenticated
+                    ? "Sign in to view uploaded documents."
+                    : docsLoading
+                      ? "Loading…"
+                      : `${documents?.length ?? 0} on file`}
                 </span>
               </div>
+              {!isAuthenticated && (
+                <p className="mt-3 text-sm text-muted-foreground">Log in as a buyer or seller to see document uploads.</p>
+              )}
+              {isAuthenticated && docsLoading && (
+                <p className="mt-3 text-sm text-muted-foreground">Loading documents…</p>
+              )}
+              {isAuthenticated && !docsLoading && (documents ?? []).length === 0 && (
+                <p className="mt-3 text-sm text-muted-foreground">No documents uploaded for this listing yet.</p>
+              )}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {documents.map((d) => (
+                {(documents ?? []).map((d) => (
                   <div
-                    key={d.name}
+                    key={d.id}
                     className="flex min-w-0 items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-3">
@@ -189,18 +245,13 @@ function ListingDetail() {
                         <FileText className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{d.name}</p>
+                        <p className="truncate text-sm font-medium">{d.fileName}</p>
                         <p className="text-xs text-muted-foreground">
-                          PDF · {d.size} · {d.verified ? "Verified" : "Pending"}
+                          {d.mimeType} · {formatSize(d.sizeBytes)} · {d.category.replace(/_/g, " ")}
                         </p>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {d.verified && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Download ${d.name}`}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   </div>
                 ))}
               </div>
@@ -249,9 +300,21 @@ function ListingDetail() {
 
             <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-semibold">Verification milestones</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Live status with timestamps for every step.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Progress from the verification API.</p>
               <div className="mt-5">
-                <VerificationTracker steps={defaultVerificationSteps} />
+                {!isAuthenticated && (
+                  <p className="text-sm text-muted-foreground">Sign in to see verification steps for this listing.</p>
+                )}
+                {isAuthenticated && verLoading && <p className="text-sm text-muted-foreground">Loading steps…</p>}
+                {isAuthenticated && verError && (
+                  <p className="text-sm text-muted-foreground">Verification details are not available for your role.</p>
+                )}
+                {isAuthenticated && !verLoading && !verError && trackerSteps && trackerSteps.length > 0 && (
+                  <VerificationTracker steps={trackerSteps} />
+                )}
+                {isAuthenticated && !verLoading && !verError && (!trackerSteps || trackerSteps.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No verification steps yet (listing not in review).</p>
+                )}
               </div>
             </div>
           </aside>
