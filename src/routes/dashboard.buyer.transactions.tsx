@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/buyer/transactions")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    mock: search.mock === "1" || search.mock === true,
+  validateSearch: (search: Record<string, unknown>): { mock?: boolean } => ({
+    mock: search.mock === "1" || search.mock === true ? true : undefined,
   }),
   component: () => (
     <DashboardLayout role="buyer">
