@@ -19,7 +19,7 @@ import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
     listing: typeof search.listing === "string" ? search.listing : undefined,
   }),
   component: () => (
