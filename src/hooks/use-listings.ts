@@ -17,11 +17,29 @@ export type ListingDto = {
   updatedAt: string;
 };
 
-export function useListingsQuery() {
+export type ListingsQueryOptions = {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+function listingsQueryString(options?: ListingsQueryOptions) {
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 20;
+  const qs = new URLSearchParams();
+  qs.set("page", String(page));
+  qs.set("pageSize", String(pageSize));
+  if (options?.status) qs.set("status", options.status);
+  const s = qs.toString();
+  return s ? `?${s}` : "";
+}
+
+export function useListingsQuery(options?: ListingsQueryOptions) {
   const { user, isReady } = useAuth();
+  const q = listingsQueryString(options);
   return useQuery({
-    queryKey: ["listings", user?.id ?? "anon"],
-    queryFn: () => apiRequest<ListingDto[]>("/listings"),
+    queryKey: ["listings", user?.id ?? "anon", options?.status ?? null, options?.page ?? 1, options?.pageSize ?? 20],
+    queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
     enabled: isReady && !!user,
     select: (envelope) => ({
       listings: envelope.data,

@@ -5,6 +5,10 @@ import { TaskCard, type TaskStatus } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
+import { useMyTasksQuery, usePatchTaskMutation, type TaskDto } from "@/hooks/use-tasks";
+import { useListingsQuery } from "@/hooks/use-listings";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/professional/tasks")({
   component: () => (
@@ -14,24 +18,6 @@ export const Route = createFileRoute("/dashboard/professional/tasks")({
   ),
 });
 
-type Task = {
-  id: string;
-  title: string;
-  property: string;
-  due: string;
-  status: TaskStatus;
-  type: string;
-};
-
-const seed: Task[] = [
-  { id: "t1", title: "Title verification", property: "Garden Court Residence", due: "May 5", status: "in_progress", type: "Legal" },
-  { id: "t2", title: "Survey inspection", property: "Acacia Hills Estate", due: "May 7", status: "pending", type: "Survey" },
-  { id: "t3", title: "Property valuation", property: "Maple Heights Apartment", due: "May 3", status: "pending", type: "Valuation" },
-  { id: "t4", title: "Structural report", property: "Cedar Park Villa", due: "Apr 28", status: "completed", type: "Inspection" },
-  { id: "t5", title: "Encumbrance check", property: "Riverside Townhouse", due: "May 10", status: "in_progress", type: "Legal" },
-  { id: "t6", title: "Boundary verification", property: "Sunset Bay Condo", due: "May 12", status: "pending", type: "Survey" },
-];
-
 const filters: { id: TaskStatus | "all"; label: string }[] = [
   { id: "all", label: "All" },
   { id: "pending", label: "Pending" },
@@ -39,45 +25,99 @@ const filters: { id: TaskStatus | "all"; label: string }[] = [
   { id: "completed", label: "Completed" },
 ];
 
+function apiStatusToCard(status: string): TaskStatus {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "in_progress";
+    case "COMPLETED":
+      return "completed";
+    case "PENDING":
+    default:
+      return "pending";
+  }
+}
+
+function formatDue(iso: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
 function ProTasks() {
-  const [tasks, setTasks] = useState<Task[]>(seed);
   const [filter, setFilter] = useState<TaskStatus | "all">("all");
   const [q, setQ] = useState("");
 
-  const visible = useMemo(
-    () =>
-      tasks.filter((t) => {
-        if (filter !== "all" && t.status !== filter) return false;
-        if (q && !`${t.title} ${t.property} ${t.type}`.toLowerCase().includes(q.toLowerCase())) return false;
-        return true;
-      }),
-    [tasks, filter, q],
-  );
+  const { data, isLoading, isError, error, refetch } = useMyTasksQuery({ pageSize: 100 });
+  const tasks = data?.tasks ?? [];
+
+  const { data: listingsData } = useListingsQuery();
+  const listingTitleById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
+    return m;
+  }, [listingsData?.listings]);
+
+  const visible = useMemo(() => {
+    let rows = tasks;
+    if (filter !== "all") {
+      const want =
+        filter === "pending" ? "PENDING" : filter === "in_progress" ? "IN_PROGRESS" : "COMPLETED";
+      rows = rows.filter((t) => t.status === want);
+    }
+    if (!q.trim()) return rows;
+    const n = q.toLowerCase();
+    return rows.filter(
+      (t: TaskDto) =>
+        t.title.toLowerCase().includes(n) ||
+        t.type.toLowerCase().includes(n) ||
+        (listingTitleById.get(t.listingId) ?? "").toLowerCase().includes(n),
+    );
+  }, [tasks, filter, q, listingTitleById]);
 
   const counts = {
     all: tasks.length,
-    pending: tasks.filter((t) => t.status === "pending").length,
-    in_progress: tasks.filter((t) => t.status === "in_progress").length,
-    completed: tasks.filter((t) => t.status === "completed").length,
+    pending: tasks.filter((t) => t.status === "PENDING").length,
+    in_progress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
+    completed: tasks.filter((t) => t.status === "COMPLETED").length,
   };
 
-  const advance = (id: string) =>
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t;
-        const next: TaskStatus = t.status === "pending" ? "in_progress" : t.status === "in_progress" ? "completed" : "completed";
-        return { ...t, status: next };
-      }),
+  const patchMutation = usePatchTaskMutation();
+
+  const advance = (t: TaskDto) => {
+    const next =
+      t.status === "PENDING" ? "IN_PROGRESS" : t.status === "IN_PROGRESS" ? "COMPLETED" : null;
+    if (!next) return;
+    patchMutation.mutate(
+      { id: t.id, body: { status: next } },
+      {
+        onSuccess: () => toast.success("Task updated."),
+        onError: (e) => {
+          toast.error(e instanceof ApiError ? e.message : "Update failed.");
+        },
+      },
     );
+  };
 
   return (
     <>
       <PageHeader
         title="Assigned tasks"
-        description="Verifications and reports awaiting your action."
+        description="Tasks created by staff. Update status as you work."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {isError && (
+        <p className="text-sm text-destructive">
+          {error instanceof Error ? error.message : "Could not load tasks."}{" "}
+          <Button variant="outline" size="sm" className="ml-2 h-7" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        </p>
+      )}
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Pending" value={String(counts.pending)} />
         <StatCard label="In progress" value={String(counts.in_progress)} />
         <StatCard label="Completed" value={String(counts.completed)} />
@@ -91,13 +131,18 @@ function ProTasks() {
             return (
               <button
                 key={f.id}
+                type="button"
                 onClick={() => setFilter(f.id)}
                 className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
                   active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f.label}
-                <span className={`rounded-full px-1.5 text-[10px] font-semibold ${active ? "bg-primary-foreground/20" : "bg-secondary"}`}>
+                <span
+                  className={`rounded-full px-1.5 text-[10px] font-semibold ${
+                    active ? "bg-primary-foreground/20" : "bg-secondary"
+                  }`}
+                >
                   {c}
                 </span>
               </button>
@@ -111,17 +156,32 @@ function ProTasks() {
       </div>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.length === 0 && (
+        {isLoading && (
+          <div className="col-span-full text-sm text-muted-foreground">Loading tasks…</div>
+        )}
+        {!isLoading && visible.length === 0 && (
           <div className="col-span-full rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
             No tasks match your filters.
           </div>
         )}
         {visible.map((t) => (
           <div key={t.id} className="space-y-3">
-            <TaskCard title={t.title} property={t.property} due={t.due} status={t.status} type={t.type} />
-            {t.status !== "completed" && (
-              <Button variant="outline" size="sm" className="w-full" onClick={() => advance(t.id)}>
-                {t.status === "pending" ? "Start task" : "Mark complete"}
+            <TaskCard
+              title={t.title}
+              property={listingTitleById.get(t.listingId) ?? t.listingId}
+              due={formatDue(t.dueAt)}
+              status={apiStatusToCard(t.status)}
+              type={t.type}
+            />
+            {t.status !== "COMPLETED" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={patchMutation.isPending}
+                onClick={() => advance(t)}
+              >
+                {t.status === "PENDING" ? "Start task" : "Mark complete"}
               </Button>
             )}
           </div>
