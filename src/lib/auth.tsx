@@ -75,8 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function hydrate() {
       const token = readToken();
       if (!token) {
-        setUser(readUserCache());
-        setIsReady(true);
+        persistUser(null);
+        if (!cancelled) {
+          setUser(null);
+          setIsReady(true);
+        }
         return;
       }
       try {
