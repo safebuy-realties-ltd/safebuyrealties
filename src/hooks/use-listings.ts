@@ -29,3 +29,12 @@ export function useListingsQuery() {
     }),
   });
 }
+
+export function useListingQuery(listingId: string) {
+  return useQuery({
+    queryKey: ["listing", listingId],
+    queryFn: () => apiRequest<ListingDto>(`/listings/${listingId}`),
+    select: (envelope) => envelope.data,
+    enabled: !!listingId,
+  });
+}

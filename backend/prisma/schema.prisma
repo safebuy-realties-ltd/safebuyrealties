@@ -70,10 +70,8 @@ enum PaymentStatus {
 
 enum TransactionStatus {
   INITIATED
-  DUE_DILIGENCE
-  PAYMENT
-  CLOSED
-  CANCELLED
+  IN_PROGRESS
+  COMPLETED
 }
 
 model User {

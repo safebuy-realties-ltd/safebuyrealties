@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { UserRole, PaymentStatus, ListingStatus, Prisma } from "@prisma/client";
+import { UserRole, PaymentStatus, ListingStatus, TransactionStatus, Prisma } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -72,6 +72,9 @@ export class PaymentsService {
       if (tx.buyerId !== actor.sub && !this.isStaff(actor.role)) {
         throw new ForbiddenException();
       }
+      if (tx.status === TransactionStatus.COMPLETED) {
+        throw new BadRequestException("This transaction is already completed");
+      }
     }
 
     const currency = dto.currency ?? "NGN";
@@ -87,6 +90,17 @@ export class PaymentsService {
         metadata: { callbackUrl: dto.callbackUrl } as object,
       },
     });
+
+    if (dto.transactionId) {
+      await this.prisma.transaction.updateMany({
+        where: {
+          id: dto.transactionId,
+          status: TransactionStatus.INITIATED,
+          ...(this.isStaff(actor.role) ? {} : { buyerId: actor.sub }),
+        },
+        data: { status: TransactionStatus.IN_PROGRESS },
+      });
+    }
 
     const payer = await this.prisma.user.findUniqueOrThrow({ where: { id: actor.sub } });
     const secret = this.config.get<string>("PAYSTACK_SECRET_KEY");
@@ -189,9 +203,20 @@ export class PaymentsService {
     const failed = payload.event === "charge.failed" || payload.data?.status === "failed";
 
     if (success) {
-      await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { status: PaymentStatus.SUCCEEDED },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: { status: PaymentStatus.SUCCEEDED },
+        });
+        if (payment.transactionId) {
+          await tx.transaction.updateMany({
+            where: {
+              id: payment.transactionId,
+              status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
+            },
+            data: { status: TransactionStatus.COMPLETED },
+          });
+        }
       });
     } else if (failed) {
       await this.prisma.payment.update({

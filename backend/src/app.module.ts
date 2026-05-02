@@ -8,6 +8,7 @@ import { DocumentsModule } from "./documents/documents.module";
 import { VerificationModule } from "./verification/verification.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { TransactionsModule } from "./transactions/transactions.module";
 import { HealthModule } from "./health/health.module";
 
 @Module({
@@ -21,6 +22,7 @@ import { HealthModule } from "./health/health.module";
     VerificationModule,
     TasksModule,
     PaymentsModule,
+    TransactionsModule,
     HealthModule,
   ],
 })

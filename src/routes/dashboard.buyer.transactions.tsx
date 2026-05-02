@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Clock, CreditCard, ShieldCheck, FileSignature } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, Circle, Clock, ArrowRight } from "lucide-react";
+import { useMyTransactionsQuery, type TransactionDto } from "@/hooks/use-transactions";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/dashboard/buyer/transactions")({
   component: () => (
@@ -12,143 +14,164 @@ export const Route = createFileRoute("/dashboard/buyer/transactions")({
   ),
 });
 
-type EscrowStatus = "awaiting_funds" | "funded" | "in_review" | "released" | "completed";
+function formatMoney(amount: string, currency: string) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return `${currency} ${amount}`;
+  try {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: currency || "NGN",
+      maximumFractionDigits: 0,
+    }).format(n);
+  } catch {
+    return `${currency} ${amount}`;
+  }
+}
 
-type Tx = {
-  id: string;
-  property: string;
-  amount: string;
-  escrow: EscrowStatus;
-  reference: string;
-  timeline: { label: string; date: string; done: boolean; current?: boolean }[];
-  nextAction?: { label: string; kind: "primary" | "outline" };
-};
+function statusBadgeClass(status: string) {
+  switch (status) {
+    case "COMPLETED":
+      return "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]";
+    case "IN_PROGRESS":
+      return "border-primary/20 bg-primary-soft text-primary";
+    case "INITIATED":
+    default:
+      return "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]";
+  }
+}
 
-const escrowMeta: Record<EscrowStatus, { label: string; className: string }> = {
-  awaiting_funds: { label: "Awaiting funds", className: "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]" },
-  funded: { label: "Escrow funded", className: "border-primary/20 bg-primary-soft text-primary" },
-  in_review: { label: "Under verification", className: "border-primary/20 bg-primary-soft text-primary" },
-  released: { label: "Funds released", className: "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]" },
-  completed: { label: "Completed", className: "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]" },
-};
+function statusLabel(status: string) {
+  const m: Record<string, string> = {
+    INITIATED: "Initiated",
+    IN_PROGRESS: "In progress",
+    COMPLETED: "Completed",
+  };
+  return m[status] ?? status;
+}
 
-const transactions: Tx[] = [
-  {
-    id: "tx_001",
-    property: "Maple Heights Apartment",
-    amount: "$185,000",
-    escrow: "in_review",
-    reference: "SBR-2026-0418",
-    nextAction: { label: "Sign final agreement", kind: "primary" },
-    timeline: [
-      { label: "Offer accepted", date: "Apr 12, 2026", done: true },
-      { label: "Escrow funded", date: "Apr 15, 2026", done: true },
-      { label: "Verification in progress", date: "Apr 22, 2026", done: true, current: true },
-      { label: "Final signing", date: "Pending", done: false },
-      { label: "Funds released", date: "Pending", done: false },
-    ],
-  },
-  {
-    id: "tx_002",
-    property: "Garden Court Residence",
-    amount: "$420,000",
-    escrow: "awaiting_funds",
-    reference: "SBR-2026-0429",
-    nextAction: { label: "Fund escrow", kind: "primary" },
-    timeline: [
-      { label: "Offer submitted", date: "Apr 26, 2026", done: true },
-      { label: "Offer accepted", date: "Apr 28, 2026", done: true, current: true },
-      { label: "Awaiting escrow funding", date: "Pending", done: false },
-      { label: "Verification", date: "Pending", done: false },
-      { label: "Closing", date: "Pending", done: false },
-    ],
-  },
-  {
-    id: "tx_003",
-    property: "Sunset Bay Condo",
-    amount: "$510,000",
-    escrow: "completed",
-    reference: "SBR-2026-0301",
-    timeline: [
-      { label: "Offer accepted", date: "Mar 1, 2026", done: true },
-      { label: "Escrow funded", date: "Mar 4, 2026", done: true },
-      { label: "Verification complete", date: "Mar 19, 2026", done: true },
-      { label: "Final signing", date: "Mar 24, 2026", done: true },
-      { label: "Funds released", date: "Mar 26, 2026", done: true, current: true },
-    ],
-  },
-];
+function timelineForStatus(status: string) {
+  return [
+    { key: "init", label: "Initiated", done: true, current: status === "INITIATED" },
+    {
+      key: "prog",
+      label: "In progress",
+      done: status === "IN_PROGRESS" || status === "COMPLETED",
+      current: status === "IN_PROGRESS",
+    },
+    { key: "done", label: "Completed", done: status === "COMPLETED", current: false },
+  ];
+}
 
 function Transactions() {
+  const { data: items, isLoading, isError, error, refetch } = useMyTransactionsQuery();
+
+  const stats = useMemo(() => {
+    const list = items ?? [];
+    const active = list.filter((t) => t.status !== "COMPLETED").length;
+    const completed = list.filter((t) => t.status === "COMPLETED").length;
+    return { total: list.length, active, completed };
+  }, [items]);
+
   return (
     <>
       <PageHeader
         title="Transactions"
-        description="Escrow status, payment actions and verification timeline."
+        description="Track purchases you have started on live listings."
       />
 
+      {isError && (
+        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error instanceof Error ? error.message : "Could not load transactions."}{" "}
+          <button type="button" className="ml-2 underline" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Active" value="2" hint="1 awaiting your action" />
-        <StatCard label="In escrow" value="$605,000" hint="Across 2 properties" />
-        <StatCard label="Completed (YTD)" value="3" />
+        <StatCard label="Total" value={String(stats.total)} hint="All time" />
+        <StatCard label="Active" value={String(stats.active)} hint="Not completed" />
+        <StatCard label="Completed" value={String(stats.completed)} />
       </div>
 
       <div className="mt-8 space-y-6">
-        {transactions.map((tx) => (
-          <article
-            key={tx.id}
-            className="rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]"
-          >
-            <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 p-5">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {tx.reference}
-                </p>
-                <h3 className="mt-1 text-base font-semibold text-foreground">{tx.property}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{tx.amount}</span></p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className={`gap-1 ${escrowMeta[tx.escrow].className}`}>
-                  <ShieldCheck className="h-3 w-3" /> {escrowMeta[tx.escrow].label}
-                </Badge>
-                {tx.nextAction && (
-                  <Button size="sm" variant={tx.nextAction.kind === "primary" ? "default" : "outline"}>
-                    {tx.nextAction.label === "Fund escrow" ? <CreditCard className="mr-1 h-4 w-4" /> : <FileSignature className="mr-1 h-4 w-4" />}
-                    {tx.nextAction.label}
-                  </Button>
-                )}
-              </div>
-            </header>
-
-            <div className="p-5">
-              <ol className="relative space-y-5 pl-6">
-                <span className="absolute left-[9px] top-2 bottom-2 w-px bg-border" aria-hidden />
-                {tx.timeline.map((step, i) => {
-                  const Icon = step.done ? CheckCircle2 : step.current ? Clock : Circle;
-                  const color = step.done
-                    ? "text-success"
-                    : step.current
-                    ? "text-primary"
-                    : "text-muted-foreground";
-                  return (
-                    <li key={i} className="relative">
-                      <span className={`absolute -left-6 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-card ${color}`}>
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className={`text-sm ${step.done || step.current ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                          {step.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{step.date}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          </article>
+        {isLoading && (
+          <p className="text-center text-sm text-muted-foreground">Loading transactions…</p>
+        )}
+        {!isLoading && (items ?? []).length === 0 && (
+          <div className="rounded-xl border border-border/60 bg-card p-10 text-center shadow-[var(--shadow-card)]">
+            <p className="text-sm text-muted-foreground">You have not started any transactions yet.</p>
+            <Button className="mt-4" asChild>
+              <Link to="/dashboard/buyer/listings">
+                Browse listings <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        )}
+        {(items ?? []).map((tx) => (
+          <TransactionCard key={tx.id} tx={tx} />
         ))}
       </div>
     </>
+  );
+}
+
+function TransactionCard({ tx }: { tx: TransactionDto }) {
+  const steps = timelineForStatus(tx.status);
+  const amount = formatMoney(tx.listing.price, tx.listing.currency);
+
+  return (
+    <article className="rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 p-5">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Transaction</p>
+          <h3 className="mt-1 text-base font-semibold text-foreground">{tx.listing.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {tx.listing.location} · <span className="font-semibold text-foreground">{amount}</span>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className={`gap-1 ${statusBadgeClass(tx.status)}`}>
+            {statusLabel(tx.status)}
+          </Badge>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/listings/$listingId" params={{ listingId: tx.listing.id }}>
+              View listing
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      <div className="p-5">
+        <ol className="relative space-y-5 pl-6">
+          <span className="absolute bottom-2 left-[9px] top-2 w-px bg-border" aria-hidden />
+          {steps.map((step) => {
+            const Icon = step.done ? CheckCircle2 : step.current ? Clock : Circle;
+            const color = step.done ? "text-success" : step.current ? "text-primary" : "text-muted-foreground";
+            return (
+              <li key={step.key} className="relative">
+                <span
+                  className={`absolute -left-6 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-card ${color}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p
+                    className={`text-sm ${
+                      step.done || step.current ? "font-medium text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.label}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Started {new Date(tx.createdAt).toLocaleString()} · Updated {new Date(tx.updatedAt).toLocaleString()}
+        </p>
+      </div>
+    </article>
   );
 }
