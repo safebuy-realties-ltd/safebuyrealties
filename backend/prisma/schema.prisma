@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  PROFESSIONAL
+  STAFF
+  ADMIN
+}
+
+enum ProfessionalType {
+  LAWYER
+  SURVEYOR
+  VALUER
+  ARCHITECT
+  ENGINEER
+  BUILDER
+  QUANTITY_SURVEYOR
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ASSIGNED
+  IN_VERIFICATION
+  VERIFIED
+  LIVE
+  REJECTED
+  ARCHIVED
+}
+
+enum VerificationStepType {
+  SUBMISSION
+  DOCUMENT_REVIEW
+  FIELD_VERIFICATION
+  LEGAL
+  SURVEY
+  VALUATION
+  RISK_REVIEW
+  FINAL_APPROVAL
+}
+
+enum VerificationStepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionStatus {
+  INITIATED
+  DUE_DILIGENCE
+  PAYMENT
+  CLOSED
+  CANCELLED
+}
+
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  role               UserRole
+  professionalType   ProfessionalType?
+  phone              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  listings           Listing[]           @relation("SellerListings")
+  documentsUploaded Document[]         @relation("DocumentUploader")
+  verificationAssigned VerificationStep[] @relation("StepAssignee")
+  tasksAssigned      Task[]              @relation("TaskAssignee")
+  tasksCreated       Task[]              @relation("TaskCreator")
+  payments           Payment[]           @relation("PayerPayments")
+  transactions       Transaction[]       @relation("BuyerTransactions")
+}
+
+model Listing {
+  id               String             @id @default(uuid())
+  sellerId         String
+  seller           User               @relation("SellerListings", fields: [sellerId], references: [id])
+  title            String
+  description      String
+  location         String
+  price            Decimal            @db.Decimal(18, 2)
+  currency         String             @default("NGN")
+  status           ListingStatus      @default(DRAFT)
+  verifiedAt       DateTime?
+  rejectionReason  String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  documents        Document[]
+  verificationSteps VerificationStep[]
+  tasks            Task[]
+  payments         Payment[]
+  transactions     Transaction[]
+
+  @@index([sellerId, status])
+}
+
+model Document {
+  id           String   @id @default(uuid())
+  listingId    String
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  category     String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String
+  createdAt    DateTime @default(now())
+
+  @@index([listingId])
+}
+
+model VerificationStep {
+  id                     String                   @id @default(uuid())
+  listingId              String
+  listing                Listing                  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  type                   VerificationStepType
+  status                 VerificationStepStatus   @default(PENDING)
+  assignedProfessionalId String?
+  assignedProfessional   User?                    @relation("StepAssignee", fields: [assignedProfessionalId], references: [id])
+  notes                  String?
+  completedAt            DateTime?
+  order                  Int
+  riskFlags              Json                     @default("[]")
+
+  @@index([listingId])
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  listingId   String
+  listing     Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  assigneeId  String
+  assignee    User       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById String
+  createdBy   User       @relation("TaskCreator", fields: [createdById], references: [id])
+  title       String
+  description String?
+  type        String
+  status      TaskStatus @default(PENDING)
+  dueAt       DateTime?
+  documentId  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([assigneeId, status])
+}
+
+model Transaction {
+  id        String              @id @default(uuid())
+  listingId String
+  listing   Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User                @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  status    TransactionStatus   @default(INITIATED)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  payments  Payment[]
+}
+
+model Payment {
+  id                 String        @id @default(uuid())
+  listingId          String?
+  listing            Listing?      @relation(fields: [listingId], references: [id])
+  transactionId      String?
+  transaction        Transaction?  @relation(fields: [transactionId], references: [id])
+  payerId            String
+  payer              User          @relation("PayerPayments", fields: [payerId], references: [id])
+  amount             Decimal       @db.Decimal(18, 2)
+  currency           String        @default("NGN")
+  provider           String        @default("paystack")
+  providerReference  String?       @unique
+  status             PaymentStatus @default(PENDING)
+  metadata           Json          @default("{}")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+}

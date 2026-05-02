@@ -33,7 +33,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   professional: [
     { label: "Overview", to: "/dashboard/professional", icon: LayoutDashboard },
     { label: "Assigned Tasks", to: "/dashboard/professional/tasks", icon: ClipboardList },
-    { label: "Reports", to: "/dashboard/professional/reports", icon: FileText },
+    { label: "Reports", to: "/dashboard/professional", icon: FileText },
   ],
   staff: [
     { label: "Overview", to: "/dashboard/staff", icon: LayoutDashboard },
@@ -68,10 +68,11 @@ function initialsOf(name: string) {
 export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
   const items = navByRole[role];
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isReady, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!isReady) return;
     if (!isAuthenticated) {
       navigate({ to: "/login" });
       return;
@@ -79,9 +80,9 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
     if (user && user.role !== role) {
       navigate({ to: dashboardPathForRole(user.role) });
     }
-  }, [isAuthenticated, user, role, navigate]);
+  }, [isReady, isAuthenticated, user, role, navigate]);
 
-  if (!isAuthenticated || !user || user.role !== role) {
+  if (!isReady || !isAuthenticated || !user || user.role !== role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <div className="text-sm text-muted-foreground">Loading workspace…</div>

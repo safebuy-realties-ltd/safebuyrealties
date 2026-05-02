@@ -4,36 +4,43 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, dashboardPathForRole, type Role } from "@/lib/auth";
+import { useAuth, dashboardPathForRole } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const roleOptions: { value: Role; label: string }[] = [
-  { value: "buyer", label: "Buyer" },
-  { value: "seller", label: "Seller" },
-  { value: "professional", label: "Professional" },
-  { value: "staff", label: "Staff" },
-  { value: "admin", label: "Administrator" },
-];
-
 function LoginPage() {
-  const { login } = useAuth();
+  const { login, isReady } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("buyer");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Enter your email and password.");
       return;
     }
-    const user = login(email, role);
-    navigate({ to: dashboardPathForRole(user.role) });
+    setLoading(true);
+    setError("");
+    try {
+      const user = await login(email, password);
+      navigate({ to: dashboardPathForRole(user.role) });
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Could not sign in.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +66,9 @@ function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a className="text-xs text-primary hover:underline" href="#">Forgot?</a>
+                <a className="text-xs text-primary hover:underline" href="#">
+                  Forgot?
+                </a>
               </div>
               <Input
                 id="password"
@@ -70,36 +79,27 @@ function LoginPage() {
                 autoComplete="current-password"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Sign in as</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
-              >
-                {roleOptions.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">Demo: choose a role to preview that workspace.</p>
-            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" size="lg">Log in</Button>
+            <Button type="submit" className="w-full" size="lg" disabled={loading || !isReady}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account? <Link to="/register" className="font-medium text-primary hover:underline">Create one</Link>
+            New here?{" "}
+            <Link to="/register" className="font-medium text-primary hover:underline">
+              Create an account
+            </Link>
           </p>
         </div>
         <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} SafeBuyRealties</p>
       </div>
       <div className="relative hidden bg-[var(--gradient-hero)] lg:block">
         <div className="absolute inset-0 flex flex-col justify-end p-12 text-primary-foreground">
-          <blockquote className="max-w-md text-2xl font-medium leading-snug">
-            "SafeBuyRealties made buying my first home effortless and trustworthy."
-          </blockquote>
-          <p className="mt-4 text-sm text-primary-foreground/80">— Adaeze O., verified buyer</p>
+          <h2 className="max-w-md text-3xl font-semibold leading-tight">Verified listings. Safer transactions.</h2>
+          <p className="mt-4 max-w-md text-primary-foreground/80">
+            Sign in to continue due diligence, manage listings, and collaborate with professionals.
+          </p>
         </div>
       </div>
     </div>

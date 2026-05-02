@@ -1,12 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
-import { sampleListings } from "@/components/ListingCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useListingsQuery } from "@/hooks/use-listings";
 
 export const Route = createFileRoute("/dashboard/buyer/listings")({
   component: () => (
@@ -48,30 +47,50 @@ const verifIcons: Record<Verification, typeof ShieldCheck> = {
   unverified: ShieldAlert,
 };
 
-const data: Row[] = sampleListings.map((l, i) => ({
-  id: l.id,
-  title: l.title,
-  location: l.location,
-  price: l.price,
-  priceValue: Number(l.price.replace(/[^0-9]/g, "")) || 0,
-  beds: l.beds,
-  baths: l.baths,
-  area: l.area,
-  verification: l.verified ? "verified" : i % 2 === 0 ? "in_review" : "unverified",
-}));
+function formatNgn(amount: string) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return amount;
+  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
+}
+
+function listingToRow(l: {
+  id: string;
+  title: string;
+  location: string;
+  price: string;
+  status: string;
+}): Row {
+  const priceValue = Number(l.price) || 0;
+  const verification: Verification =
+    l.status === "LIVE" ? "verified" : l.status === "VERIFIED" ? "in_review" : "unverified";
+  return {
+    id: l.id,
+    title: l.title,
+    location: l.location,
+    price: formatNgn(l.price),
+    priceValue,
+    beds: 0,
+    baths: 0,
+    area: "—",
+    verification,
+  };
+}
 
 type SortKey = "title" | "location" | "priceValue" | "beds" | "verification";
 type SortDir = "asc" | "desc";
 
 function BrowseListings() {
+  const { data, isLoading, isError, error, refetch } = useListingsQuery();
   const [q, setQ] = useState("");
   const [verif, setVerif] = useState<Verification | "all">("all");
   const [beds, setBeds] = useState<string>("any");
   const [sortKey, setSortKey] = useState<SortKey>("priceValue");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
+  const baseRows = useMemo(() => (data?.listings ?? []).map(listingToRow), [data?.listings]);
+
   const rows = useMemo(() => {
-    const filtered = data.filter((r) => {
+    const filtered = baseRows.filter((r) => {
       if (verif !== "all" && r.verification !== verif) return false;
       if (beds !== "any" && r.beds < Number(beds)) return false;
       if (q && !(`${r.title} ${r.location}`.toLowerCase().includes(q.toLowerCase()))) return false;
@@ -86,7 +105,7 @@ function BrowseListings() {
         : String(bv).localeCompare(String(av));
     });
     return sorted;
-  }, [q, verif, beds, sortKey, sortDir]);
+  }, [baseRows, q, verif, beds, sortKey, sortDir]);
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -96,10 +115,19 @@ function BrowseListings() {
     }
   };
 
-  const SortHeader = ({ k, children, className = "" }: { k: SortKey; children: React.ReactNode; className?: string }) => {
+  const SortHeader = ({
+    k,
+    children,
+    className = "",
+  }: {
+    k: SortKey;
+    children: React.ReactNode;
+    className?: string;
+  }) => {
     const Icon = sortKey !== k ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
     return (
       <button
+        type="button"
         onClick={() => toggleSort(k)}
         className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground ${className}`}
       >
@@ -115,6 +143,15 @@ function BrowseListings() {
         title="Browse listings"
         description="Search verified properties and review verification status."
       />
+
+      {isError && (
+        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error instanceof Error ? error.message : "Could not load listings."}{" "}
+          <button type="button" className="ml-2 underline" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap items-center gap-3">
@@ -149,7 +186,11 @@ function BrowseListings() {
           </select>
           <Button
             variant="outline"
-            onClick={() => { setQ(""); setVerif("all"); setBeds("any"); }}
+            onClick={() => {
+              setQ("");
+              setVerif("all");
+              setBeds("any");
+            }}
           >
             Reset
           </Button>
@@ -158,45 +199,64 @@ function BrowseListings() {
 
       <div className="mt-6 overflow-hidden rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
         <div className="hidden grid-cols-12 gap-4 border-b border-border/60 bg-secondary/40 px-5 py-3 md:grid">
-          <div className="col-span-4"><SortHeader k="title">Property</SortHeader></div>
-          <div className="col-span-3"><SortHeader k="location">Location</SortHeader></div>
-          <div className="col-span-2 text-right"><SortHeader k="priceValue" className="ml-auto">Price</SortHeader></div>
-          <div className="col-span-1 text-right"><SortHeader k="beds" className="ml-auto">Beds</SortHeader></div>
-          <div className="col-span-2"><SortHeader k="verification">Verification</SortHeader></div>
+          <div className="col-span-4">
+            <SortHeader k="title">Property</SortHeader>
+          </div>
+          <div className="col-span-3">
+            <SortHeader k="location">Location</SortHeader>
+          </div>
+          <div className="col-span-2 text-right">
+            <SortHeader k="priceValue" className="ml-auto">
+              Price
+            </SortHeader>
+          </div>
+          <div className="col-span-1 text-right">
+            <SortHeader k="beds" className="ml-auto">
+              Beds
+            </SortHeader>
+          </div>
+          <div className="col-span-2">
+            <SortHeader k="verification">Verification</SortHeader>
+          </div>
         </div>
         <div className="divide-y divide-border/60">
-          {rows.length === 0 && (
+          {isLoading && (
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">Loading listings…</div>
+          )}
+          {!isLoading && rows.length === 0 && (
             <div className="px-5 py-10 text-center text-sm text-muted-foreground">No listings match your filters.</div>
           )}
-          {rows.map((r) => {
-            const Icon = verifIcons[r.verification];
-            return (
-              <Link
-                key={r.id}
-                to="/listings/$listingId"
-                params={{ listingId: r.id }}
-                className="grid grid-cols-1 gap-2 px-5 py-4 text-sm transition-colors hover:bg-secondary/40 md:grid-cols-12 md:items-center md:gap-4"
-              >
-                <div className="col-span-4">
-                  <p className="font-medium text-foreground">{r.title}</p>
-                  <p className="text-xs text-muted-foreground md:hidden">{r.location}</p>
-                </div>
-                <div className="col-span-3 hidden text-muted-foreground md:block">{r.location}</div>
-                <div className="col-span-2 font-semibold text-primary md:text-right">{r.price}</div>
-                <div className="col-span-1 text-muted-foreground md:text-right">{r.beds}</div>
-                <div className="col-span-2">
-                  <Badge variant="outline" className={`gap-1 ${verifStyles[r.verification]}`}>
-                    <Icon className="h-3 w-3" /> {verifLabels[r.verification]}
-                  </Badge>
-                </div>
-              </Link>
-            );
-          })}
+          {!isLoading &&
+            rows.map((r) => {
+              const Icon = verifIcons[r.verification];
+              return (
+                <Link
+                  key={r.id}
+                  to="/listings/$listingId"
+                  params={{ listingId: r.id }}
+                  className="grid grid-cols-1 gap-2 px-5 py-4 text-sm transition-colors hover:bg-secondary/40 md:grid-cols-12 md:items-center md:gap-4"
+                >
+                  <div className="col-span-4">
+                    <p className="font-medium text-foreground">{r.title}</p>
+                    <p className="text-xs text-muted-foreground md:hidden">{r.location}</p>
+                  </div>
+                  <div className="col-span-3 hidden text-muted-foreground md:block">{r.location}</div>
+                  <div className="col-span-2 font-semibold text-primary md:text-right">{r.price}</div>
+                  <div className="col-span-1 text-muted-foreground md:text-right">{r.beds || "—"}</div>
+                  <div className="col-span-2">
+                    <Badge variant="outline" className={`gap-1 ${verifStyles[r.verification]}`}>
+                      <Icon className="h-3 w-3" /> {verifLabels[r.verification]}
+                    </Badge>
+                  </div>
+                </Link>
+              );
+            })}
         </div>
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Showing {rows.length} of {data.length} listings
+        Showing {rows.length} of {baseRows.length} listings
+        {data?.meta?.total != null ? ` (${data.meta.total} on server)` : null}
       </p>
     </>
   );

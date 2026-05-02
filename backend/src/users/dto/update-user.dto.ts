@@ -1,0 +1,27 @@
+import { IsEnum, IsOptional, IsString, MinLength } from "class-validator";
+import { UserRole, ProfessionalType } from "@prisma/client";
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  /** Staff/admin only */
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
+
+  @IsOptional()
+  @IsEnum(ProfessionalType)
+  professionalType?: ProfessionalType | null;
+}
