@@ -222,8 +222,9 @@ function StaffWorkflow() {
                   </div>
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Select onValueChange={(who) => setConfirm({ kind: "assign", id: s.id, who })}>
-                      <SelectTrigger className="h-8 w-[160px]">
-                        <SelectValue placeholder={<span className="flex items-center gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Assign</span>} />
+                      <SelectTrigger className="h-8 w-[150px]">
+                        <UserPlus className="mr-1 h-3.5 w-3.5" />
+                        <SelectValue placeholder="Assign" />
                       </SelectTrigger>
                       <SelectContent>
                         {professionals.map((p) => (
