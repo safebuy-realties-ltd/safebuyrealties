@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
-import { apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -449,17 +448,6 @@ function SellerDocuments() {
           </div>
         </section>
       </div>
-      {upload.isError && <p className="text-sm text-destructive">{upload.error instanceof Error ? upload.error.message : "Upload failed"}</p>}
-      <Button onClick={()=>submit.mutate()} disabled={!listingId || submit.isPending}>Submit for verification</Button>
-      {submit.isError && <p className="text-sm text-destructive">{submit.error instanceof Error ? submit.error.message : "Submit failed"}</p>}
-    </div>
-    <div className="mt-6 rounded-xl border bg-card p-4">
-      <h3 className="font-semibold">Documents</h3>
-      <ul className="mt-3 space-y-2 text-sm">{(docsQuery.data ?? []).map((d)=><li key={d.id}>{d.fileName} · {d.category}</li>)}</ul>
-    </div>
-    <div className="mt-6 rounded-xl border bg-card p-4">
-      <h3 className="font-semibold">Verification status</h3>
-      <ul className="mt-3 space-y-2 text-sm">{(stepQuery.data ?? []).map((s)=><li key={s.id}>{s.type}: {s.status}</li>)}</ul>
-    </div>
-  </DashboardLayout>
+    </>
+  );
 }
