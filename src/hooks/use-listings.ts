@@ -82,3 +82,23 @@ export function useCreateListingMutation() {
     },
   });
 }
+
+export function useCreateListingMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      title: string;
+      description: string;
+      location: string;
+      price: number;
+      currency?: string;
+    }) =>
+      apiRequest<ListingDto>("/listings", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}

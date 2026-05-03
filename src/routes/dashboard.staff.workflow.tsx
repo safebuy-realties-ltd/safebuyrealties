@@ -227,7 +227,7 @@ function StaffWorkflow() {
                     <Button
                       size="sm"
                       className="h-9"
-                      disabled={assignMutation.isPending || prosLoading}
+                      disabled={assignMutation.isPending || createTaskMutation.isPending || prosLoading}
                       onClick={() => assignStep(s.type)}
                     >
                       Assign
