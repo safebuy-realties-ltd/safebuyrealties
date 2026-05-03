@@ -90,8 +90,8 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
     );
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate({ to: "/" });
   };
 
