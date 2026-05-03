@@ -51,7 +51,32 @@ export class VerificationService {
   }
 
   async assign(dto: AssignVerificationDto, actor: JwtPayload) {
+    const listing = await this.prisma.listing.findUnique({ where: { id: dto.listingId } });
+    if (!listing) throw new NotFoundException("Listing not found");
+
+    // Seller submission path: mark the SUBMISSION step in-progress.
+    if (actor.role === UserRole.SELLER) {
+      if (listing.sellerId !== actor.sub) throw new ForbiddenException();
+      const step = await this.prisma.verificationStep.findFirst({
+        where: { listingId: dto.listingId, type: VerificationStepType.SUBMISSION },
+      });
+      if (!step) throw new NotFoundException("Submission step not found for this listing");
+      const updated = await this.prisma.verificationStep.update({
+        where: { id: step.id },
+        data: {
+          status:
+            step.status === VerificationStepStatus.PENDING
+              ? VerificationStepStatus.IN_PROGRESS
+              : step.status,
+        },
+      });
+      return this.serializeStep(updated);
+    }
+
     if (!this.isStaff(actor.role)) throw new ForbiddenException();
+    if (!dto.professionalId) throw new BadRequestException("professionalId is required");
+    if (!dto.stepType) throw new BadRequestException("stepType is required");
+
     const pro = await this.prisma.user.findUnique({ where: { id: dto.professionalId } });
     if (!pro || pro.role !== UserRole.PROFESSIONAL) {
       throw new BadRequestException("professionalId must be a professional user");
