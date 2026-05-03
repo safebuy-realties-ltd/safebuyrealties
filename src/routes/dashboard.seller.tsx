@@ -86,32 +86,21 @@ function SellerOverview() {
 
   const createListing = useCreateListingMutation();
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [price, setPrice] = useState("");
-  const [description, setDescription] = useState("");
 
   const createDraft = () => {
     const clean = title.trim();
     if (!clean) return;
-    const amount = Number(price);
-    if (!location.trim() || !description.trim() || !Number.isFinite(amount) || amount < 0) {
-      toast.error("Enter title, location, description and a valid price.");
-      return;
-    }
     createListing.mutate(
       {
         title: clean,
-        description: description.trim(),
-        location: location.trim(),
-        price: amount,
+        description: `${clean} description`,
+        location: "Lagos",
+        price: 0,
         currency: "NGN",
       },
       {
         onSuccess: () => {
           setTitle("");
-          setLocation("");
-          setPrice("");
-          setDescription("");
           toast.success("Draft listing created.");
         },
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not create listing."),
@@ -126,8 +115,8 @@ function SellerOverview() {
         description="Create listings, manage documents and track verification."
         actions={
           <Button type="button" asChild>
-            <Link to="/dashboard/seller/documents">
-              <Plus className="mr-1 h-4 w-4" /> Documents
+            <Link to="/dashboard/seller/listings">
+              <Plus className="mr-1 h-4 w-4" /> New listing
             </Link>
           </Button>
         }
@@ -144,12 +133,9 @@ function SellerOverview() {
 
       <div className="mb-6 rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="text-sm font-medium">Create listing draft</p>
-        <div className="mt-2 grid gap-2 md:grid-cols-2">
+        <div className="mt-2 flex gap-2">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Listing title" />
-          <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" />
-          <Input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (NGN)" type="number" min="0" />
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" />
-          <Button type="button" onClick={createDraft} disabled={createListing.isPending || !title.trim()} className="md:col-span-2">
+          <Button type="button" onClick={createDraft} disabled={createListing.isPending || !title.trim()}>
             {createListing.isPending ? "Creating…" : "Create draft"}
           </Button>
         </div>
@@ -166,7 +152,7 @@ function SellerOverview() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Your listings</h2>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard/seller/documents">Manage documents</Link>
+              <Link to="/dashboard/seller/listings">Manage listings</Link>
             </Button>
           </div>
           <div className="mt-4 divide-y divide-border/60">
