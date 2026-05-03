@@ -14,7 +14,8 @@ import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileChe
 import { toast } from "sonner";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use-documents";
-import { useUpdateListingMutation } from "@/hooks/use-update-listing";
+import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
@@ -75,25 +76,57 @@ function SellerDocuments() {
   } = useListingDocumentsQuery(listingId);
 
   const uploadMutation = useUploadDocumentMutation();
-  const updateListing = useUpdateListingMutation();
+  const assignVerification = useAssignVerificationMutation();
+  const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
+  const professionals = prosData?.users ?? [];
+  const [selectedStepType, setSelectedStepType] = useState<string>("DOCUMENT_REVIEW");
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    data: verificationSteps,
+    isLoading: verificationLoading,
+    isError: verificationError,
+    error: verificationErr,
+    refetch: refetchVerification,
+  } = useVerificationListingQuery(listingId ?? "", !!listingId);
 
   const countByType = (t: DocType) => (documents ?? []).filter((d) => d.category === t).length;
+  const missingRequiredDocs = docTypes
+    .filter((d) => d.required)
+    .filter((d) => countByType(d.id) === 0)
+    .map((d) => d.label);
+
   const canSubmitForReview =
     !!listingId &&
-    countByType("title_deed") > 0 &&
-    countByType("survey_plan") > 0 &&
-    listings.find((l) => l.id === listingId)?.status === "DRAFT";
+    missingRequiredDocs.length === 0 &&
+    !!selectedProfessionalId;
 
   const submitForReview = () => {
     if (!listingId) return;
-    updateListing.mutate(
-      { id: listingId, body: { status: "PENDING_REVIEW" } },
+    setSubmitError(null);
+    assignVerification.mutate(
+      { listingId, professionalId: selectedProfessionalId, stepType: selectedStepType },
       {
-        onSuccess: () => toast.success("Submitted for review. Verification steps will be created."),
-        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not submit."),
+        onSuccess: async () => {
+          toast.success("Assignment submitted.");
+          await refetchVerification();
+        },
+        onError: (e) => {
+          const msg = e instanceof ApiError ? e.message : "Could not submit.";
+          setSubmitError(msg);
+          toast.error(msg);
+        },
       },
     );
   };
+
+  useEffect(() => {
+    if (!verificationSteps || verificationSteps.length === 0) return;
+    if (!verificationSteps.some((s) => s.type === selectedStepType)) {
+      setSelectedStepType(verificationSteps[0].type);
+    }
+  }, [verificationSteps, selectedStepType]);
 
   const processFiles = useCallback(
     async (list: FileList | null) => {
@@ -308,17 +341,90 @@ function SellerDocuments() {
           </div>
 
           <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
-              Submit documents for verification once all required types are uploaded.
+            <div className="w-full space-y-3">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
+                Submit documents for verification once all required types are uploaded.
+              </div>
+              {missingRequiredDocs.length > 0 && (
+                <p className="text-xs text-destructive">Missing required categories: {missingRequiredDocs.join(", ")}</p>
+              )}
+              {submitError && <p className="text-xs text-destructive">{submitError}</p>}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">Verification step</p>
+                  <Select value={selectedStepType} onValueChange={setSelectedStepType}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select step" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(verificationSteps ?? []).map((s) => (
+                        <SelectItem key={s.id} value={s.type}>
+                          {s.label} ({s.status})
+                        </SelectItem>
+                      ))}
+                      {(verificationSteps ?? []).length === 0 && (
+                        <SelectItem value="DOCUMENT_REVIEW">Document Review</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">Professional</p>
+                  <Select value={selectedProfessionalId} onValueChange={setSelectedProfessionalId}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={prosLoading ? "Loading…" : "Select professional"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {professionals.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  disabled={!canSubmitForReview || assignVerification.isPending}
+                  onClick={() => submitForReview()}
+                >
+                  {assignVerification.isPending ? "Submitting…" : "Submit assignment"}
+                </Button>
+              </div>
             </div>
-            <Button
-              type="button"
-              disabled={!canSubmitForReview || updateListing.isPending}
-              onClick={() => submitForReview()}
-            >
-              {updateListing.isPending ? "Submitting…" : "Submit for verification"}
-            </Button>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Verification status</h3>
+              {verificationError && (
+                <button className="text-xs underline" type="button" onClick={() => void refetchVerification()}>
+                  Retry
+                </button>
+              )}
+            </div>
+            {verificationLoading && <p className="mt-2 text-muted-foreground">Loading verification details…</p>}
+            {verificationError && (
+              <p className="mt-2 text-destructive">
+                {verificationErr instanceof Error ? verificationErr.message : "Failed to fetch verification details."}
+              </p>
+            )}
+            {!verificationLoading && !verificationError && (verificationSteps ?? []).length === 0 && (
+              <p className="mt-2 text-muted-foreground">No verification steps yet for this listing.</p>
+            )}
+            {(verificationSteps ?? []).length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {verificationSteps?.map((s) => (
+                  <li key={s.id} className="flex items-center justify-between rounded border border-border/60 px-3 py-2">
+                    <span>{s.label}</span>
+                    <span className="text-xs text-muted-foreground">{s.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
       </div>
