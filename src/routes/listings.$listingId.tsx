@@ -18,10 +18,9 @@ import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
 import { useCreateTransactionMutation } from "@/hooks/use-transactions";
-import { ApiError } from "@/lib/api";
+import { ApiError, apiRequest } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
-import { apiRequest } from "@/lib/api";
 import type { ListingDto } from "@/hooks/use-listings";
 
 const PLACEHOLDER_IMG =
@@ -87,7 +86,7 @@ function ListingDetail() {
   const loaderListing = Route.useLoaderData();
   const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
-  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
+  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId, loaderListing);
   const createTransaction = useCreateTransactionMutation();
   const [verificationStarted, setVerificationStarted] = useState(false);
 
