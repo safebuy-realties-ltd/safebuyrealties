@@ -53,12 +53,13 @@ export function useListingsQuery(options?: ListingsQueryOptions) {
   });
 }
 
-export function useListingQuery(listingId: string) {
+export function useListingQuery(listingId: string, initialData?: ListingDto) {
   return useQuery({
     queryKey: ["listing", listingId],
     queryFn: () => apiRequest<ListingDto>(`/listings/${listingId}`),
     select: (envelope) => envelope.data,
     enabled: !!listingId,
+    initialData,
   });
 }
 

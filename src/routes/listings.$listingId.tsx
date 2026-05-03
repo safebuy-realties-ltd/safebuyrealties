@@ -18,14 +18,19 @@ import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
 import { useCreateTransactionMutation } from "@/hooks/use-transactions";
-import { ApiError } from "@/lib/api";
+import { ApiError, apiRequest } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
+import type { ListingDto } from "@/hooks/use-listings";
 
 const PLACEHOLDER_IMG =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
 export const Route = createFileRoute("/listings/$listingId")({
+  loader: async ({ params }) => {
+    const listing = await apiRequest<ListingDto>(`/listings/${params.listingId}`);
+    return listing.data;
+  },
   component: ListingDetail,
 });
 
@@ -78,9 +83,10 @@ function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] 
 
 function ListingDetail() {
   const { listingId } = Route.useParams();
+  const loaderListing = Route.useLoaderData();
   const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
-  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
+  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId, loaderListing);
   const createTransaction = useCreateTransactionMutation();
   const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
 
@@ -93,7 +99,8 @@ function ListingDetail() {
   } = useVerificationListingQuery(listingId, canFetchExtras);
 
   const isBuyer = isAuthenticated && user?.role === "buyer";
-  const canStartTransaction = isBuyer && listing?.status === "LIVE";
+  const resolvedListing = listing ?? loaderListing;
+  const canStartTransaction = isBuyer && resolvedListing?.status === "LIVE";
 
   const trackerSteps = useMemo((): VerificationStep[] | null => {
     if (!verSteps?.length) return null;
@@ -108,9 +115,9 @@ function ListingDetail() {
   };
 
   const startTransaction = async () => {
-    if (!listing) return;
+    if (!resolvedListing) return;
     try {
-      await createTransaction.mutateAsync(listing.id);
+      await createTransaction.mutateAsync(resolvedListing.id);
       toast.success("Transaction started", {
         description: "Continue from your buyer dashboard to complete payment when ready.",
       });
@@ -179,19 +186,19 @@ function ListingDetail() {
     );
   }
 
-  if (!listing) {
+  if (!resolvedListing) {
     return null;
   }
 
-  const priceLabel = formatMoney(listing.price, listing.currency);
-  const verified = listing.status === "LIVE";
+  const priceLabel = formatMoney(resolvedListing.price, resolvedListing.currency);
+  const verified = resolvedListing.status === "LIVE";
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
-          <img src={PLACEHOLDER_IMG} alt={listing.title} className="aspect-[21/9] w-full object-cover" />
+          <img src={PLACEHOLDER_IMG} alt={resolvedListing.title} className="aspect-[21/9] w-full object-cover" />
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
@@ -200,11 +207,11 @@ function ListingDetail() {
               <div>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5" />
-                  {listing.location}
+                  {resolvedListing.location}
                 </p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight">{listing.title}</h1>
-                {listing.sellerName && (
-                  <p className="mt-1 text-sm text-muted-foreground">Listed by {listing.sellerName}</p>
+                <h1 className="mt-1 text-3xl font-semibold tracking-tight">{resolvedListing.title}</h1>
+                {resolvedListing.sellerName && (
+                  <p className="mt-1 text-sm text-muted-foreground">Listed by {resolvedListing.sellerName}</p>
                 )}
               </div>
               {verified && (
@@ -228,7 +235,7 @@ function ListingDetail() {
 
             <section className="mt-8">
               <h2 className="text-lg font-semibold">About this property</h2>
-              <p className="mt-3 leading-relaxed text-muted-foreground">{listing.description}</p>
+              <p className="mt-3 leading-relaxed text-muted-foreground">{resolvedListing.description}</p>
             </section>
 
             <section className="mt-10">
