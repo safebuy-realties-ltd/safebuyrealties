@@ -4,6 +4,10 @@ import { useAuth } from "@/lib/auth";
 
 export type TaskDto = {
   id: string;
+  reviewFeedback?: string[] | string | null;
+  revisionStatus?: string | null;
+  requiresDocumentEvidence?: boolean;
+  completionNotes?: string | null;
   listingId: string;
   assigneeId: string;
   createdById: string;
@@ -46,7 +50,7 @@ export function useMyTasksQuery(opts?: { status?: string; page?: number; pageSiz
 export function usePatchTaskMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; body: { status?: string } }) =>
+    mutationFn: (args: { id: string; body: { status?: string; completionNotes?: string; checklist?: unknown; report?: unknown } }) =>
       apiRequest<TaskDto>(`/tasks/${args.id}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
@@ -58,23 +62,13 @@ export function usePatchTaskMutation() {
   });
 }
 
-export function useCreateTaskMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: {
-      listingId: string;
-      assigneeId: string;
-      title: string;
-      description?: string;
-      type: string;
-      dueAt?: string;
-    }) =>
-      apiRequest<TaskDto>("/tasks", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["tasks"] });
-    },
+
+export function useMyTaskByIdQuery(taskId: string | null) {
+  const { user, isReady } = useAuth();
+  const isProfessional = user?.role === "professional";
+  return useQuery({
+    queryKey: ["tasks", "me", "detail", taskId],
+    queryFn: () => apiRequest<TaskDto>(`/tasks/me/${taskId}`),
+    enabled: isReady && isProfessional && !!taskId,
   });
 }

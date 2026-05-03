@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
+import { useCreateListingMutation, useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 
 export const Route = createFileRoute("/dashboard/seller")({
@@ -81,6 +84,30 @@ function SellerOverview() {
 
   const recentListings = useMemo(() => [...listings].slice(0, 8), [listings]);
 
+  const createListing = useCreateListingMutation();
+  const [title, setTitle] = useState("");
+
+  const createDraft = () => {
+    const clean = title.trim();
+    if (!clean) return;
+    createListing.mutate(
+      {
+        title: clean,
+        description: `${clean} description`,
+        location: "Lagos",
+        price: 0,
+        currency: "NGN",
+      },
+      {
+        onSuccess: () => {
+          setTitle("");
+          toast.success("Draft listing created.");
+        },
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not create listing."),
+      },
+    );
+  };
+
   return (
     <>
       <PageHeader
@@ -88,8 +115,8 @@ function SellerOverview() {
         description="Create listings, manage documents and track verification."
         actions={
           <Button type="button" asChild>
-            <Link to="/dashboard/seller/documents">
-              <Plus className="mr-1 h-4 w-4" /> Documents
+            <Link to="/dashboard/seller/listings">
+              <Plus className="mr-1 h-4 w-4" /> New listing
             </Link>
           </Button>
         }
@@ -104,6 +131,16 @@ function SellerOverview() {
         </div>
       )}
 
+      <div className="mb-6 rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
+        <p className="text-sm font-medium">Create listing draft</p>
+        <div className="mt-2 flex gap-2">
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Listing title" />
+          <Button type="button" onClick={createDraft} disabled={createListing.isPending || !title.trim()}>
+            {createListing.isPending ? "Creating…" : "Create draft"}
+          </Button>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Your listings" value={String(stats.total)} hint={`${stats.live} live`} />
         <StatCard label="In verification" value={String(stats.inVerification)} hint="Pipeline stages" />
@@ -115,7 +152,7 @@ function SellerOverview() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Your listings</h2>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard/seller/documents">Manage documents</Link>
+              <Link to="/dashboard/seller/listings">Manage listings</Link>
             </Button>
           </div>
           <div className="mt-4 divide-y divide-border/60">

@@ -3,9 +3,8 @@ import { useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
-import { useMyTasksQuery } from "@/hooks/use-tasks";
+import { useMyTasksQuery, useTaskKpiCounts } from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
-import type { TaskDto } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/professional")({
   component: () => (
@@ -38,19 +37,13 @@ function formatDue(iso: string | null) {
 function ProOverview() {
   const { data: tasksData, isLoading } = useMyTasksQuery({ pageSize: 20 });
   const tasks = tasksData?.tasks ?? [];
+  const kpis = useTaskKpiCounts();
   const { data: listingsData } = useListingsQuery();
   const titleById = useMemo(() => {
     const m = new Map<string, string>();
     for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
     return m;
   }, [listingsData?.listings]);
-
-  const counts = useMemo(() => {
-    const pending = tasks.filter((t: TaskDto) => t.status === "PENDING").length;
-    const ip = tasks.filter((t: TaskDto) => t.status === "IN_PROGRESS").length;
-    const done = tasks.filter((t: TaskDto) => t.status === "COMPLETED").length;
-    return { pending, ip, done };
-  }, [tasks]);
 
   const preview = tasks.slice(0, 6);
 
@@ -66,9 +59,9 @@ function ProOverview() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pending" value={isLoading ? "…" : String(counts.pending)} />
-        <StatCard label="In progress" value={isLoading ? "…" : String(counts.ip)} />
-        <StatCard label="Completed (loaded)" value={isLoading ? "…" : String(counts.done)} />
+        <StatCard label="Pending" value={kpis.isLoading ? "…" : String(kpis.pending)} />
+        <StatCard label="In progress" value={kpis.isLoading ? "…" : String(kpis.inProgress)} />
+        <StatCard label="Completed" value={kpis.isLoading ? "…" : String(kpis.completed)} />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
