@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/select";
 import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use-documents";
-import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
-import { useProfessionalsQuery } from "@/hooks/use-users";
+import { useVerificationListingQuery } from "@/hooks/use-verification";
+import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
@@ -58,6 +59,7 @@ function userVisibleApiError(error: unknown, fallback: string) {
 }
 
 function SellerDocuments() {
+  const qc = useQueryClient();
   const { data: listingsData, isLoading: listingsLoading, isError: listingsIsError, error: listingsErr } =
     useListingsQuery();
   const listings = listingsData?.listings ?? [];
@@ -67,6 +69,8 @@ function SellerDocuments() {
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedListing = listings.find((l) => l.id === (listingId ?? "")) ?? null;
 
   useEffect(() => {
     if (listings.length === 0) {
@@ -91,11 +95,7 @@ function SellerDocuments() {
   }, [listingId, refetchDocs]);
 
   const uploadMutation = useUploadDocumentMutation();
-  const assignVerification = useAssignVerificationMutation();
-  const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
-  const professionals = prosData?.users ?? [];
-  const [selectedStepType, setSelectedStepType] = useState<string>("DOCUMENT_REVIEW");
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
+  const updateListing = useUpdateListingMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -115,16 +115,18 @@ function SellerDocuments() {
   const canSubmitForReview =
     !!listingId &&
     missingRequiredDocs.length === 0 &&
-    !!selectedProfessionalId;
+    !!selectedListing &&
+    (selectedListing.status === "DRAFT" || selectedListing.status === "REJECTED");
 
   const submitForReview = () => {
-    if (!listingId) return;
+    if (!listingId || !canSubmitForReview) return;
     setSubmitError(null);
-    assignVerification.mutate(
-      { listingId, professionalId: selectedProfessionalId, stepType: selectedStepType },
+    updateListing.mutate(
+      { id: listingId, body: { status: "PENDING_REVIEW" } },
       {
         onSuccess: async () => {
-          toast.success("Assignment submitted.");
+          toast.success("Submitted for review. Our team will verify your documents.");
+          void qc.invalidateQueries({ queryKey: ["verification", "listing", listingId] });
           await refetchVerification();
         },
         onError: (e) => {
@@ -135,13 +137,6 @@ function SellerDocuments() {
       },
     );
   };
-
-  useEffect(() => {
-    if (!verificationSteps || verificationSteps.length === 0) return;
-    if (!verificationSteps.some((s) => s.type === selectedStepType)) {
-      setSelectedStepType(verificationSteps[0].type);
-    }
-  }, [verificationSteps, selectedStepType]);
 
   const processFiles = useCallback(
     async (list: FileList | null) => {
@@ -348,10 +343,7 @@ function SellerDocuments() {
                       <div className="mt-1 flex items-center gap-3">
                         <span className="text-xs text-muted-foreground">{categoryLabel(f.category)}</span>
                         <span className="flex items-center gap-1 text-xs font-medium text-[oklch(0.4_0.12_155)]">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> {("status" in f && typeof (f as { status?: string }).status === "string"
-                          ? (f as { status: string }).status
-                          : "uploaded")
-                          .replace(/_/g, " ")}
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
                         </span>
                       </div>
                     </div>
@@ -364,54 +356,29 @@ function SellerDocuments() {
             <div className="w-full space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
-                Submit documents for verification once all required types are uploaded.
+                When required documents are uploaded, submit this listing for staff review. Staff assign professionals
+                from their workflow.
               </div>
+              {selectedListing && selectedListing.status !== "DRAFT" && selectedListing.status !== "REJECTED" && (
+                <p className="text-xs text-muted-foreground">
+                  This listing is{" "}
+                  <span className="font-medium text-foreground">
+                    {selectedListing.status.replace(/_/g, " ")}
+                  </span>
+                  . Submission for review is only available from Draft or Rejected.
+                </p>
+              )}
               {missingRequiredDocs.length > 0 && (
                 <p className="text-xs text-destructive">Missing required categories: {missingRequiredDocs.join(", ")}</p>
               )}
               {submitError && <p className="text-xs text-destructive">{submitError}</p>}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="mb-1 text-xs text-muted-foreground">Verification step</p>
-                  <Select value={selectedStepType} onValueChange={setSelectedStepType}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Select step" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(verificationSteps ?? []).map((s) => (
-                        <SelectItem key={s.id} value={s.type}>
-                          {s.label} ({s.status})
-                        </SelectItem>
-                      ))}
-                      {(verificationSteps ?? []).length === 0 && (
-                        <SelectItem value="DOCUMENT_REVIEW">Document Review</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-muted-foreground">Professional</p>
-                  <Select value={selectedProfessionalId} onValueChange={setSelectedProfessionalId}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder={prosLoading ? "Loading…" : "Select professional"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {professionals.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} ({p.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
               <div className="flex justify-end">
                 <Button
                   type="button"
-                  disabled={!canSubmitForReview || assignVerification.isPending}
+                  disabled={!canSubmitForReview || updateListing.isPending}
                   onClick={() => submitForReview()}
                 >
-                  {assignVerification.isPending ? "Submitting…" : "Submit assignment"}
+                  {updateListing.isPending ? "Submitting…" : "Submit for verification"}
                 </Button>
               </div>
             </div>
