@@ -57,3 +57,16 @@ export function usePatchTaskMutation() {
     },
   });
 }
+
+export function useTaskKpiCounts() {
+  const pending = useMyTasksQuery({ status: "PENDING", page: 1, pageSize: 1 });
+  const inProgress = useMyTasksQuery({ status: "IN_PROGRESS", page: 1, pageSize: 1 });
+  const completed = useMyTasksQuery({ status: "COMPLETED", page: 1, pageSize: 1 });
+
+  return {
+    pending: pending.data?.meta?.total ?? 0,
+    inProgress: inProgress.data?.meta?.total ?? 0,
+    completed: completed.data?.meta?.total ?? 0,
+    isLoading: pending.isLoading || inProgress.isLoading || completed.isLoading,
+  };
+}
