@@ -1,11 +1,21 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe, RequestMethod } from "@nestjs/common";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  app.use(cookieParser());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // API only; CSP enforced at the frontend
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    }),
+  );
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
