@@ -24,6 +24,7 @@ export type DocumentDto = {
   sizeBytes: number;
   storageKey: string;
   createdAt: string;
+  status?: string;
 };
 
 export async function uploadDocument(params: {

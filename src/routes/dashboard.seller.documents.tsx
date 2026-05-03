@@ -45,6 +45,17 @@ function categoryLabel(category: string) {
   return d?.label ?? category.replace(/_/g, " ");
 }
 
+function userVisibleApiError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    if (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN" || error.code === "HTTP_401") {
+      return "Your session has expired or you do not have access. Please sign in again.";
+    }
+    return error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
 function SellerDocuments() {
   const { data: listingsData, isLoading: listingsLoading, isError: listingsIsError, error: listingsErr } =
     useListingsQuery();
@@ -73,6 +84,10 @@ function SellerDocuments() {
     error: docsErr,
     refetch: refetchDocs,
   } = useListingDocumentsQuery(listingId);
+
+  useEffect(() => {
+    if (listingId) void refetchDocs();
+  }, [listingId, refetchDocs]);
 
   const uploadMutation = useUploadDocumentMutation();
   const updateListing = useUpdateListingMutation();
@@ -108,13 +123,15 @@ function SellerDocuments() {
             file,
           });
         } catch (e) {
-          const msg = e instanceof ApiError ? e.message : e instanceof Error ? e.message : "Upload failed";
+          const msg = userVisibleApiError(e, "Upload failed");
           setUploadError(msg);
           break;
         }
       }
+
+      void refetchDocs();
     },
-    [listingId, activeType, uploadMutation.mutateAsync],
+    [listingId, activeType, refetchDocs, uploadMutation],
   );
 
   const handleFiles = (list: FileList | null) => {
@@ -141,7 +158,7 @@ function SellerDocuments() {
 
       {listingsIsError && (
         <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {listingsErr instanceof Error ? listingsErr.message : "Could not load listings."}
+          {userVisibleApiError(listingsErr, "Could not load listings.")}
         </div>
       )}
 
@@ -220,7 +237,7 @@ function SellerDocuments() {
         <section>
           {docsError && listingId && (
             <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {docsErr instanceof Error ? docsErr.message : "Could not load documents."}{" "}
+              {userVisibleApiError(docsErr, "Could not load documents.")}{" "}
               <button type="button" className="ml-2 underline" onClick={() => void refetchDocs()}>
                 Retry
               </button>
@@ -298,7 +315,10 @@ function SellerDocuments() {
                       <div className="mt-1 flex items-center gap-3">
                         <span className="text-xs text-muted-foreground">{categoryLabel(f.category)}</span>
                         <span className="flex items-center gap-1 text-xs font-medium text-[oklch(0.4_0.12_155)]">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
+                          <CheckCircle2 className="h-3.5 w-3.5" /> {("status" in f && typeof (f as { status?: string }).status === "string"
+                          ? (f as { status: string }).status
+                          : "uploaded")
+                          .replace(/_/g, " ")}
                         </span>
                       </div>
                     </div>
