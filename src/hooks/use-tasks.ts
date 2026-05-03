@@ -4,6 +4,10 @@ import { useAuth } from "@/lib/auth";
 
 export type TaskDto = {
   id: string;
+  reviewFeedback?: string[] | string | null;
+  revisionStatus?: string | null;
+  requiresDocumentEvidence?: boolean;
+  completionNotes?: string | null;
   listingId: string;
   assigneeId: string;
   createdById: string;
@@ -46,7 +50,7 @@ export function useMyTasksQuery(opts?: { status?: string; page?: number; pageSiz
 export function usePatchTaskMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; body: { status?: string } }) =>
+    mutationFn: (args: { id: string; body: { status?: string; completionNotes?: string; checklist?: unknown; report?: unknown } }) =>
       apiRequest<TaskDto>(`/tasks/${args.id}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
@@ -55,5 +59,16 @@ export function usePatchTaskMutation() {
       void qc.invalidateQueries({ queryKey: ["tasks", "me"] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
     },
+  });
+}
+
+
+export function useMyTaskByIdQuery(taskId: string | null) {
+  const { user, isReady } = useAuth();
+  const isProfessional = user?.role === "professional";
+  return useQuery({
+    queryKey: ["tasks", "me", "detail", taskId],
+    queryFn: () => apiRequest<TaskDto>(`/tasks/me/${taskId}`),
+    enabled: isReady && isProfessional && !!taskId,
   });
 }
