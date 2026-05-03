@@ -1,19 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -21,10 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, UserPlus, CheckCircle2, XCircle, History } from "lucide-react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
+import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
+import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import { useProfessionalsQuery } from "@/hooks/use-users";
+import { ApiError } from "@/lib/api";
+import { useCreateTaskMutation } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
+  validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
+    listing: typeof search.listing === "string" ? search.listing : undefined,
+  }),
   component: () => (
     <DashboardLayout role="staff">
       <StaffWorkflow />
@@ -32,255 +30,269 @@ export const Route = createFileRoute("/dashboard/staff/workflow")({
   ),
 });
 
-type Status = "pending" | "in_progress" | "completed" | "rejected";
-
-type Submission = {
-  id: string;
-  listing: string;
-  seller: string;
-  type: string;
-  status: Status;
-  assignee: string | null;
-  submitted: string;
-};
-
-type AuditEntry = {
-  id: string;
-  ts: string;
-  actor: string;
-  action: string;
-  target: string;
-};
-
-const professionals = ["Maya Idris", "Femi Bello", "Chika Eze", "Tobi Lawal"];
-
-const seed: Submission[] = [
-  { id: "s1", listing: "Acacia Hills Estate", seller: "Olu A.", type: "Survey", status: "pending", assignee: null, submitted: "Apr 28" },
-  { id: "s2", listing: "Riverside Townhouse", seller: "Maya I.", type: "Legal", status: "in_progress", assignee: "Maya Idris", submitted: "Apr 24" },
-  { id: "s3", listing: "Garden Court Residence", seller: "Tunde K.", type: "Valuation", status: "in_progress", assignee: "Femi Bello", submitted: "Apr 22" },
-  { id: "s4", listing: "Maple Heights", seller: "Adaeze O.", type: "Inspection", status: "completed", assignee: "Chika Eze", submitted: "Apr 18" },
-  { id: "s5", listing: "Cedar Park Villa", seller: "Ifeanyi U.", type: "Legal", status: "pending", assignee: null, submitted: "Apr 27" },
-];
-
-const statusMeta: Record<Status, { label: string; className: string }> = {
-  pending: { label: "Pending", className: "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]" },
-  in_progress: { label: "In progress", className: "border-primary/20 bg-primary-soft text-primary" },
-  completed: { label: "Completed", className: "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]" },
-  rejected: { label: "Rejected", className: "border-destructive/30 bg-destructive/10 text-destructive" },
-};
-
-const filters: { id: Status | "all"; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "pending", label: "Pending" },
-  { id: "in_progress", label: "In progress" },
-  { id: "completed", label: "Completed" },
-  { id: "rejected", label: "Rejected" },
-];
-
-function nowStamp() {
-  return new Date().toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
 function StaffWorkflow() {
-  const [items, setItems] = useState<Submission[]>(seed);
-  const [filter, setFilter] = useState<Status | "all">("all");
+  const { listing: listingFromSearch } = Route.useSearch();
+  const [filter, setFilter] = useState<"all" | StaffQueueFilter>("all");
+  const { data: queueData, isLoading: listingsLoading, isError: listingsError, error: listingsErr } = useStaffQueueQuery(filter);
+  const cards = queueData?.cards ?? [];
+
+  const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
+  const professionals = prosData?.users ?? [];
+
   const [q, setQ] = useState("");
-  const [audit, setAudit] = useState<AuditEntry[]>([
-    { id: "a0", ts: "Apr 28 · 10:14", actor: "System", action: "Received submission", target: "Acacia Hills Estate" },
-    { id: "a1", ts: "Apr 24 · 09:02", actor: "Chika Eze", action: "Assigned Maya Idris", target: "Riverside Townhouse" },
-  ]);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
-  const [confirm, setConfirm] = useState<
-    | { kind: "assign"; id: string; who: string }
-    | { kind: "approve"; id: string }
-    | { kind: "reject"; id: string }
-    | null
-  >(null);
+  useEffect(() => {
+    if (!listingFromSearch) return;
+    if (cards.some((l) => l.listingId === listingFromSearch)) {
+      setSelectedListingId(listingFromSearch);
+    }
+  }, [listingFromSearch, cards]);
 
-  const visible = useMemo(
-    () =>
-      items.filter((s) => {
-        if (filter !== "all" && s.status !== filter) return false;
-        if (q && !`${s.listing} ${s.seller} ${s.type}`.toLowerCase().includes(q.toLowerCase())) return false;
-        return true;
-      }),
-    [items, filter, q],
+  const filteredListings = useMemo(() => {
+    if (!q.trim()) return cards;
+    const n = q.toLowerCase();
+    return cards.filter(
+      (l) =>
+        l.title.toLowerCase().includes(n) ||
+        l.subtitle.toLowerCase().includes(n) ||
+        l.listingId.toLowerCase().includes(n) ||
+        l.backendStatus.toLowerCase().includes(n),
+    );
+  }, [cards, q]);
+
+  const selectedListing = cards.find((l) => l.listingId === selectedListingId) ?? null;
+
+  const {
+    data: steps,
+    isLoading: stepsLoading,
+    isError: stepsError,
+    error: stepsErr,
+    refetch: refetchSteps,
+  } = useVerificationListingQuery(selectedListingId ?? "", !!selectedListingId);
+
+  const assignMutation = useAssignVerificationMutation();
+  const createTaskMutation = useCreateTaskMutation();
+  const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
+  const {
+    data: activity = [],
+    isLoading: activityLoading,
+    isError: activityError,
+  } = useVerificationActivityQuery(selectedListingId ?? "", !!selectedListingId);
+
+  const inWorkflow = useMemo(
+    () => cards.filter((l) => l.queueStatus === "in_progress").length,
+    [cards],
   );
 
-  const counts = {
-    all: items.length,
-    pending: items.filter((s) => s.status === "pending").length,
-    in_progress: items.filter((s) => s.status === "in_progress").length,
-    completed: items.filter((s) => s.status === "completed").length,
-    rejected: items.filter((s) => s.status === "rejected").length,
-  };
-
-  const log = (entry: Omit<AuditEntry, "id" | "ts">) =>
-    setAudit((prev) => [{ id: crypto.randomUUID(), ts: nowStamp(), ...entry }, ...prev].slice(0, 50));
-
-  const performConfirm = () => {
-    if (!confirm) return;
-    const sub = items.find((s) => s.id === confirm.id);
-    if (!sub) return;
-
-    if (confirm.kind === "assign") {
-      setItems((prev) =>
-        prev.map((s) =>
-          s.id === confirm.id
-            ? { ...s, assignee: confirm.who, status: s.status === "pending" ? "in_progress" : s.status }
-            : s,
-        ),
-      );
-      log({ actor: "You", action: `Assigned ${confirm.who}`, target: sub.listing });
-      toast.success(`Assigned ${confirm.who}`);
-    } else if (confirm.kind === "approve") {
-      setItems((prev) => prev.map((s) => (s.id === confirm.id ? { ...s, status: "completed" } : s)));
-      log({ actor: "You", action: "Approved submission", target: sub.listing });
-      toast.success("Submission approved");
-    } else if (confirm.kind === "reject") {
-      setItems((prev) => prev.map((s) => (s.id === confirm.id ? { ...s, status: "rejected" } : s)));
-      log({ actor: "You", action: "Rejected submission", target: sub.listing });
-      toast.success("Submission rejected");
+  const assignStep = (stepType: string) => {
+    if (!selectedListingId) return;
+    const professionalId = professionalByStep[stepType];
+    if (!professionalId) {
+      toast.error("Choose a professional first.");
+      return;
     }
-    setConfirm(null);
+    assignMutation.mutate(
+      { listingId: selectedListingId, professionalId, stepType },
+      {
+        onSuccess: async () => {
+          try {
+            await createTaskMutation.mutateAsync({
+              listingId: selectedListingId,
+              assigneeId: professionalId,
+              title: `${stepType.replace(/_/g, " ")} verification`,
+              type: stepType,
+              description: `Complete ${stepType.replace(/_/g, " ")} for listing verification.`,
+            });
+            toast.success("Verification step assigned and task synced.");
+          } catch (e) {
+            toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task sync failed.");
+          }
+        },
+        onError: (e) => {
+          const msg = e instanceof ApiError ? e.message : "Assignment failed.";
+          toast.error(msg);
+        },
+      },
+    );
   };
 
-  const confirmCopy = (() => {
-    if (!confirm) return { title: "", desc: "", action: "Confirm" };
-    const sub = items.find((s) => s.id === confirm.id);
-    const t = sub?.listing ?? "this submission";
-    if (confirm.kind === "assign") return { title: `Assign ${confirm.who}?`, desc: `${confirm.who} will be notified and the submission for ${t} moves to In progress.`, action: "Assign" };
-    if (confirm.kind === "approve") return { title: "Approve submission?", desc: `Approving ${t} marks the verification as completed.`, action: "Approve" };
-    return { title: "Reject submission?", desc: `Rejecting ${t} will notify the seller and close the workflow.`, action: "Reject" };
-  })();
+  const transitionStep = (stepId: string, status: "COMPLETED" | "REJECTED") => {
+    if (!selectedListingId) return;
+    patchStepMutation.mutate(
+      { stepId, listingId: selectedListingId, body: { status } },
+      {
+        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
+      },
+    );
+  };
 
   return (
     <>
       <PageHeader
         title="Workflow"
-        description="Review submissions, assign professionals, and keep an auditable trail."
+        description="Pick a listing, load verification steps, and assign each step to a professional."
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Pending" value={String(counts.pending)} />
-        <StatCard label="In progress" value={String(counts.in_progress)} />
-        <StatCard label="Completed" value={String(counts.completed)} />
-        <StatCard label="Rejected" value={String(counts.rejected)} />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Listings loaded" value={String(cards.length)} />
+        <StatCard label="In review / verification" value={String(inWorkflow)} />
+        <StatCard label="Professionals" value={String(professionals.length)} />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex flex-wrap rounded-lg border border-border/60 bg-card p-1 shadow-sm">
-              {filters.map((f) => {
-                const active = filter === f.id;
-                const c = f.id === "all" ? counts.all : counts[f.id];
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setFilter(f.id)}
-                    className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                      active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {f.label}
-                    <span className={`rounded-full px-1.5 text-[10px] font-semibold ${active ? "bg-primary-foreground/20" : "bg-secondary"}`}>{c}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="relative ml-auto min-w-[200px] flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="h-10 pl-9" />
-            </div>
-          </div>
+      {listingsError && (
+        <p className="mt-4 text-sm text-destructive">
+          {listingsErr instanceof Error ? listingsErr.message : "Could not load listings."}
+        </p>
+      )}
 
-          <div className="mt-5 space-y-3">
-            {visible.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border/60 bg-card p-10 text-center text-sm text-muted-foreground">
-                No submissions match your filters.
-              </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">Listings</h2>
+          <div className="relative mt-2">
+            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Filter by title, location, status…"
+              className="h-9 pl-8"
+            />
+          </div>
+          <div className="mt-3 max-h-[420px] space-y-1 overflow-y-auto text-sm">
+            {listingsLoading && <p className="text-muted-foreground">Loading…</p>}
+            {!listingsLoading && filteredListings.length === 0 && (
+              <p className="text-muted-foreground">No listings match.</p>
             )}
-            {visible.map((s) => (
-              <div key={s.id} className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{s.listing}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {s.type} · Seller {s.seller} · Submitted {s.submitted}
+            {["all", "pending", "in_progress", "completed", "rejected"].map((f) => (
+              <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f as "all" | StaffQueueFilter)}>{f.replace("_", " ")}</Button>
+            ))}
+            {filteredListings.map((l) => (
+              <button
+                key={l.listingId}
+                type="button"
+                onClick={() => setSelectedListingId(l.listingId)}
+                className={`flex w-full flex-col rounded border px-2 py-2 text-left ${
+                  selectedListingId === l.listingId ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50"
+                }`}
+              >
+                <span className="font-medium">{l.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {l.backendStatus} · {l.subtitle}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">Verification steps</h2>
+          {!selectedListingId && (
+            <p className="mt-3 text-sm text-muted-foreground">Select a listing to load its verification pipeline.</p>
+          )}
+          {selectedListing && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {selectedListing.title} — steps are created when a listing enters review (e.g. PENDING_REVIEW).
+            </p>
+          )}
+          {selectedListingId && stepsError && (
+            <div className="mt-3 text-sm text-destructive">
+              {stepsErr instanceof ApiError ? stepsErr.message : "Failed to load steps."}
+              <Button variant="outline" size="sm" className="ml-2 h-7" onClick={() => void refetchSteps()}>
+                Retry
+              </Button>
+            </div>
+          )}
+          {selectedListingId && stepsLoading && <p className="mt-3 text-sm text-muted-foreground">Loading steps…</p>}
+          {selectedListingId && !stepsLoading && !stepsError && steps && steps.length === 0 && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No verification steps for this listing yet. Move the listing to PENDING_REVIEW to generate steps.
+            </p>
+          )}
+          {steps && steps.length > 0 && (
+            <ul className="mt-3 space-y-3">
+              {steps.map((s) => (
+                <li key={s.id} className="rounded border border-border/80 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{s.label}</span>
+                    <Badge variant="outline">{s.status}</Badge>
+                    {s.assignedProfessionalId && (
+                      <span className="text-xs text-muted-foreground">Assigned pro id: {s.assignedProfessionalId}</span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
+                    <div className="min-w-[200px] flex-1">
+                      <p className="mb-1 text-xs text-muted-foreground">Assign professional</p>
+                      <Select
+                        disabled={prosLoading || professionals.length === 0}
+                        value={professionalByStep[s.type] ?? ""}
+                        onValueChange={(v) => setProfessionalByStep((prev) => ({ ...prev, [s.type]: v }))}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder={prosLoading ? "Loading…" : "Select"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {professionals.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name} ({p.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="h-9"
+                      disabled={assignMutation.isPending || createTaskMutation.isPending || prosLoading}
+                      onClick={() => assignStep(s.type)}
+                    >
+                      Assign
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "COMPLETED")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "REJECTED")}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold">Activity log</h3>
+            {activityLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
+            {activityError && <p className="mt-2 text-sm text-destructive">Could not load activity.</p>}
+            {!activityLoading && !activityError && activity.length === 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">No workflow activity yet.</p>
+            )}
+            {!activityLoading && !activityError && activity.length > 0 && (
+              <ul className="mt-2 space-y-2 text-sm">
+                {activity.map((entry) => (
+                  <li key={entry.id} className="rounded border border-border/70 p-2">
+                    <p className="font-medium">{entry.action.replace(/_/g, " ")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(entry.createdAt).toLocaleString()} · {entry.actorId ?? "system"}
                     </p>
-                  </div>
-                  <Badge variant="outline" className={statusMeta[s.status].className}>
-                    {statusMeta[s.status].label}
-                  </Badge>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/60 pt-4">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    Assignee:
-                    <span className="font-medium text-foreground">{s.assignee ?? "Unassigned"}</span>
-                  </div>
-                  <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <Select onValueChange={(who) => setConfirm({ kind: "assign", id: s.id, who })}>
-                      <SelectTrigger className="h-8 w-[150px]">
-                        <UserPlus className="mr-1 h-3.5 w-3.5" />
-                        <SelectValue placeholder="Assign" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {professionals.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {s.status !== "completed" && (
-                      <Button size="sm" variant="outline" onClick={() => setConfirm({ kind: "approve", id: s.id })}>
-                        <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Approve
-                      </Button>
-                    )}
-                    {s.status !== "rejected" && (
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirm({ kind: "reject", id: s.id })}>
-                        <XCircle className="mr-1 h-3.5 w-3.5" /> Reject
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        </div>
-
-        <aside className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold">Activity log</h3>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">Audit trail of recent workflow actions.</p>
-          <ol className="mt-4 space-y-4">
-            {audit.map((a) => (
-              <li key={a.id} className="relative pl-5">
-                <span className="absolute left-0 top-1.5 h-2 w-2 rounded-full bg-primary" />
-                <p className="text-sm text-foreground">
-                  <span className="font-medium">{a.actor}</span> {a.action}
-                </p>
-                <p className="text-xs text-muted-foreground">{a.target} · {a.ts}</p>
-              </li>
-            ))}
-          </ol>
-        </aside>
+        </section>
       </div>
-
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmCopy.title}</AlertDialogTitle>
-            <AlertDialogDescription>{confirmCopy.desc}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={performConfirm}>{confirmCopy.action}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

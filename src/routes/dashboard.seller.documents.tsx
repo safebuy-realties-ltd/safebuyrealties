@@ -1,40 +1,453 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
 import { apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
+import { toast } from "sonner";
+import { useListingsQuery } from "@/hooks/use-listings";
+import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use-documents";
+import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import { useProfessionalsQuery } from "@/hooks/use-users";
+import { ApiError } from "@/lib/api";
 
-export const Route = createFileRoute("/dashboard/seller/documents")({ component: SellerDocuments });
+export const Route = createFileRoute("/dashboard/seller/documents")({
+  component: () => (
+    <DashboardLayout role="seller">
+      <SellerDocuments />
+    </DashboardLayout>
+  ),
+});
 
-type Listing = { id:string; title:string };
-type Doc = { id:string; fileName:string; category:string; sizeBytes:number; createdAt:string };
+type DocType = "title_deed" | "survey_plan" | "building_approval" | "tax_receipt" | "other";
 
-type Step = { id:string; type:string; status:string; assignedProfessionalId:string | null };
+const docTypes: { id: DocType; label: string; desc: string; icon: typeof Scale; required: boolean }[] = [
+  { id: "title_deed", label: "Title Deed", desc: "Certificate of Occupancy or equivalent", icon: Scale, required: true },
+  { id: "survey_plan", label: "Survey Plan", desc: "Registered surveyor's plan", icon: Map, required: true },
+  { id: "building_approval", label: "Building Approval", desc: "Government building permit", icon: Building2, required: false },
+  { id: "tax_receipt", label: "Tax Receipts", desc: "Recent property tax payments", icon: Receipt, required: false },
+];
 
-function SellerDocuments(){
-  const qc = useQueryClient();
-  const [listingId, setListingId] = useState("");
-  const [category, setCategory] = useState("title_deed");
-  const [file, setFile] = useState<File | null>(null);
-  const { data: listings=[] } = useQuery({ queryKey:["seller-listings"], queryFn: async()=> (await apiRequest<Listing[]>("/listings")).data });
-  const docsQuery = useQuery({ queryKey:["listing-docs", listingId], enabled: !!listingId, queryFn: async()=> (await apiRequest<Doc[]>(`/documents/listing/${listingId}`)).data });
-  const stepQuery = useQuery({ queryKey:["listing-steps", listingId], enabled: !!listingId, queryFn: async()=> (await apiRequest<Step[]>(`/verification/listing/${listingId}`)).data });
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-  const upload = useMutation({ mutationFn: async()=>{ if(!file || !listingId) return; const fd = new FormData(); fd.append("listingId", listingId); fd.append("category", category); fd.append("file", file); return apiRequest("/documents/upload", {method:"POST", body:fd}); }, onSuccess: async()=>{ setFile(null); await qc.invalidateQueries({queryKey:["listing-docs", listingId]}); } });
-  const submit = useMutation({ mutationFn: async()=> apiRequest("/verification/assign", {method:"POST", body: JSON.stringify({ listingId, stepType:"SUBMISSION" })}) , onSuccess: async()=> qc.invalidateQueries({queryKey:["listing-steps", listingId]})});
+function categoryLabel(category: string) {
+  const d = docTypes.find((t) => t.id === category);
+  return d?.label ?? category.replace(/_/g, " ");
+}
 
-  return <DashboardLayout role="seller"><PageHeader title="Documents" description="Upload listing documents and submit for verification." />
-    <div className="rounded-xl border bg-card p-4 space-y-3">
-      <select className="h-10 rounded border px-2" value={listingId} onChange={(e)=>setListingId(e.target.value)}>
-        <option value="">Select listing</option>
-        {listings.map((l)=><option key={l.id} value={l.id}>{l.title}</option>)}
-      </select>
-      {listingId && <Link className="text-sm underline" to="/listings/$listingId" params={{listingId}}>Open listing detail</Link>}
-      <div className="flex gap-2 items-center">
-        <input value={category} onChange={(e)=>setCategory(e.target.value)} className="h-10 rounded border px-2" placeholder="category" />
-        <input type="file" onChange={(e)=>setFile(e.target.files?.[0] ?? null)} />
-        <Button onClick={()=>upload.mutate()} disabled={!file || !listingId || upload.isPending}>Upload</Button>
+function userVisibleApiError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    if (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN" || error.code === "HTTP_401") {
+      return "Your session has expired or you do not have access. Please sign in again.";
+    }
+    return error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
+function SellerDocuments() {
+  const { data: listingsData, isLoading: listingsLoading, isError: listingsIsError, error: listingsErr } =
+    useListingsQuery();
+  const listings = listingsData?.listings ?? [];
+
+  const [listingId, setListingId] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<DocType>("title_deed");
+  const [dragOver, setDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (listings.length === 0) {
+      setListingId(null);
+      return;
+    }
+    if (!listingId || !listings.some((l) => l.id === listingId)) {
+      setListingId(listings[0].id);
+    }
+  }, [listings, listingId]);
+
+  const {
+    data: documents,
+    isLoading: docsLoading,
+    isError: docsError,
+    error: docsErr,
+    refetch: refetchDocs,
+  } = useListingDocumentsQuery(listingId);
+
+  useEffect(() => {
+    if (listingId) void refetchDocs();
+  }, [listingId, refetchDocs]);
+
+  const uploadMutation = useUploadDocumentMutation();
+  const assignVerification = useAssignVerificationMutation();
+  const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
+  const professionals = prosData?.users ?? [];
+  const [selectedStepType, setSelectedStepType] = useState<string>("DOCUMENT_REVIEW");
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    data: verificationSteps,
+    isLoading: verificationLoading,
+    isError: verificationError,
+    error: verificationErr,
+    refetch: refetchVerification,
+  } = useVerificationListingQuery(listingId ?? "", !!listingId);
+
+  const countByType = (t: DocType) => (documents ?? []).filter((d) => d.category === t).length;
+  const missingRequiredDocs = docTypes
+    .filter((d) => d.required)
+    .filter((d) => countByType(d.id) === 0)
+    .map((d) => d.label);
+
+  const canSubmitForReview =
+    !!listingId &&
+    missingRequiredDocs.length === 0 &&
+    !!selectedProfessionalId;
+
+  const submitForReview = () => {
+    if (!listingId) return;
+    setSubmitError(null);
+    assignVerification.mutate(
+      { listingId, professionalId: selectedProfessionalId, stepType: selectedStepType },
+      {
+        onSuccess: async () => {
+          toast.success("Assignment submitted.");
+          await refetchVerification();
+        },
+        onError: (e) => {
+          const msg = e instanceof ApiError ? e.message : "Could not submit.";
+          setSubmitError(msg);
+          toast.error(msg);
+        },
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (!verificationSteps || verificationSteps.length === 0) return;
+    if (!verificationSteps.some((s) => s.type === selectedStepType)) {
+      setSelectedStepType(verificationSteps[0].type);
+    }
+  }, [verificationSteps, selectedStepType]);
+
+  const processFiles = useCallback(
+    async (list: FileList | null) => {
+      if (!list?.length || !listingId) return;
+      setUploadError(null);
+      const files = Array.from(list);
+      for (const file of files) {
+        try {
+          await uploadMutation.mutateAsync({
+            listingId,
+            category: activeType,
+            file,
+          });
+        } catch (e) {
+          const msg = userVisibleApiError(e, "Upload failed");
+          setUploadError(msg);
+          break;
+        }
+      }
+
+      void refetchDocs();
+    },
+    [listingId, activeType, refetchDocs, uploadMutation],
+  );
+
+  const handleFiles = (list: FileList | null) => {
+    void processFiles(list);
+  };
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  return (
+    <>
+      <PageHeader
+        title="Documents"
+        description="Upload and manage verification documents for your listings."
+      />
+
+      {listingsIsError && (
+        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {userVisibleApiError(listingsErr, "Could not load listings.")}
+        </div>
+      )}
+
+      <div className="mb-6">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Listing</p>
+        {listingsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading listings…</p>
+        ) : listings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Create a listing before uploading documents.</p>
+        ) : (
+          <Select value={listingId ?? undefined} onValueChange={(v) => setListingId(v)}>
+            <SelectTrigger className="max-w-md">
+              <SelectValue placeholder="Select listing" />
+            </SelectTrigger>
+            <SelectContent>
+              {listings.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.title} ({l.status.replace(/_/g, " ")})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="space-y-2">
+          <p className="px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Document type
+          </p>
+          {docTypes.map((d) => {
+            const active = activeType === d.id;
+            const count = countByType(d.id);
+            return (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setActiveType(d.id)}
+                className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                  active
+                    ? "border-primary bg-primary-soft"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  <d.icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">{d.label}</span>
+                    {d.required && (
+                      <Badge
+                        variant="outline"
+                        className="border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)] text-[10px]"
+                      >
+                        Required
+                      </Badge>
+                    )}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{d.desc}</span>
+                </span>
+                {count > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-success/15 px-1.5 text-[10px] font-semibold text-[oklch(0.4_0.12_155)]">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </aside>
+
+        <section>
+          {docsError && listingId && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {userVisibleApiError(docsErr, "Could not load documents.")}{" "}
+              <button type="button" className="ml-2 underline" onClick={() => void refetchDocs()}>
+                Retry
+              </button>
+            </div>
+          )}
+          {uploadError && (
+            <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {uploadError}
+            </div>
+          )}
+
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+              dragOver ? "border-primary bg-primary-soft" : "border-border bg-secondary/40"
+            } ${!listingId || uploadMutation.isPending ? "pointer-events-none opacity-60" : ""}`}
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
+              <Upload className="h-5 w-5 text-primary" />
+            </div>
+            <p className="mt-4 text-sm font-medium text-foreground">
+              Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files here
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 15MB each (API limit)</p>
+            <Button
+              className="mt-5"
+              disabled={!listingId || uploadMutation.isPending}
+              onClick={() => inputRef.current?.click()}
+            >
+              {uploadMutation.isPending ? "Uploading…" : "Browse files"}
+            </Button>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="hidden"
+              disabled={!listingId || uploadMutation.isPending}
+              onChange={onPick}
+            />
+          </div>
+
+          <div className="mt-6 rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between border-b border-border/60 p-5">
+              <h2 className="text-base font-semibold">Uploaded files</h2>
+              <p className="text-xs text-muted-foreground">{documents?.length ?? 0} total</p>
+            </div>
+            <ul className="divide-y divide-border/60">
+              {!listingId && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Select a listing first.</li>
+              )}
+              {listingId && docsLoading && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Loading documents…</li>
+              )}
+              {listingId && !docsLoading && (documents ?? []).length === 0 && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">No files uploaded yet.</li>
+              )}
+              {listingId &&
+                !docsLoading &&
+                (documents ?? []).map((f) => (
+                  <li key={f.id} className="flex items-center gap-4 px-5 py-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">{f.fileName}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(f.sizeBytes)}</p>
+                      </div>
+                      <div className="mt-1 flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">{categoryLabel(f.category)}</span>
+                        <span className="flex items-center gap-1 text-xs font-medium text-[oklch(0.4_0.12_155)]">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> {("status" in f && typeof (f as { status?: string }).status === "string"
+                          ? (f as { status: string }).status
+                          : "uploaded")
+                          .replace(/_/g, " ")}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
+            <div className="w-full space-y-3">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
+                Submit documents for verification once all required types are uploaded.
+              </div>
+              {missingRequiredDocs.length > 0 && (
+                <p className="text-xs text-destructive">Missing required categories: {missingRequiredDocs.join(", ")}</p>
+              )}
+              {submitError && <p className="text-xs text-destructive">{submitError}</p>}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">Verification step</p>
+                  <Select value={selectedStepType} onValueChange={setSelectedStepType}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select step" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(verificationSteps ?? []).map((s) => (
+                        <SelectItem key={s.id} value={s.type}>
+                          {s.label} ({s.status})
+                        </SelectItem>
+                      ))}
+                      {(verificationSteps ?? []).length === 0 && (
+                        <SelectItem value="DOCUMENT_REVIEW">Document Review</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">Professional</p>
+                  <Select value={selectedProfessionalId} onValueChange={setSelectedProfessionalId}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={prosLoading ? "Loading…" : "Select professional"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {professionals.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  disabled={!canSubmitForReview || assignVerification.isPending}
+                  onClick={() => submitForReview()}
+                >
+                  {assignVerification.isPending ? "Submitting…" : "Submit assignment"}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border/60 bg-card p-4 text-sm shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Verification status</h3>
+              {verificationError && (
+                <button className="text-xs underline" type="button" onClick={() => void refetchVerification()}>
+                  Retry
+                </button>
+              )}
+            </div>
+            {verificationLoading && <p className="mt-2 text-muted-foreground">Loading verification details…</p>}
+            {verificationError && (
+              <p className="mt-2 text-destructive">
+                {verificationErr instanceof Error ? verificationErr.message : "Failed to fetch verification details."}
+              </p>
+            )}
+            {!verificationLoading && !verificationError && (verificationSteps ?? []).length === 0 && (
+              <p className="mt-2 text-muted-foreground">No verification steps yet for this listing.</p>
+            )}
+            {(verificationSteps ?? []).length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {verificationSteps?.map((s) => (
+                  <li key={s.id} className="flex items-center justify-between rounded border border-border/60 px-3 py-2">
+                    <span>{s.label}</span>
+                    <span className="text-xs text-muted-foreground">{s.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       </div>
       {upload.isError && <p className="text-sm text-destructive">{upload.error instanceof Error ? upload.error.message : "Upload failed"}</p>}
       <Button onClick={()=>submit.mutate()} disabled={!listingId || submit.isPending}>Submit for verification</Button>

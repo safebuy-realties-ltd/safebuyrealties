@@ -1,8 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
-import { ListingCard, sampleListings } from "@/components/ListingCard";
+import { ListingCard, type Listing } from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth";
+import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
+import { useMyTransactionsQuery } from "@/hooks/use-transactions";
+
+const PLACEHOLDER_IMG =
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
 
 export const Route = createFileRoute("/dashboard/buyer")({
   component: () => (
@@ -12,48 +19,114 @@ export const Route = createFileRoute("/dashboard/buyer")({
   ),
 });
 
+function formatMoney(amount: string, currency: string) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return `${currency} ${amount}`;
+  try {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: currency || "NGN",
+      maximumFractionDigits: 0,
+    }).format(n);
+  } catch {
+    return `${currency} ${amount}`;
+  }
+}
+
+function toListingCard(l: ListingDto): Listing {
+  return {
+    id: l.id,
+    title: l.title,
+    location: l.location,
+    price: formatMoney(l.price, l.currency),
+    beds: 0,
+    baths: 0,
+    area: "—",
+    verified: l.status === "LIVE",
+    image: PLACEHOLDER_IMG,
+  };
+}
+
+function txBadgeClass(status: string) {
+  if (status === "COMPLETED") return "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]";
+  if (status === "IN_PROGRESS") return "border-primary/20 bg-primary-soft text-primary";
+  return "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]";
+}
+
 function BuyerOverview() {
+  const { user } = useAuth();
+  const { data: listingsData, isLoading: loadListings } = useListingsQuery();
+  const listings = listingsData?.listings ?? [];
+  const { data: txs, isLoading: loadTxs } = useMyTransactionsQuery();
+
+  const previewListings = useMemo(() => listings.slice(0, 6).map(toListingCard), [listings]);
+  const previewTxs = useMemo(() => (txs ?? []).slice(0, 5), [txs]);
+
+  const stats = useMemo(() => {
+    const t = txs ?? [];
+    return {
+      listings: listings.length,
+      activeTx: t.filter((x) => x.status !== "COMPLETED").length,
+      doneTx: t.filter((x) => x.status === "COMPLETED").length,
+    };
+  }, [listings.length, txs]);
+
   return (
     <>
       <PageHeader
-        title="Welcome back, Sam"
-        description="Discover verified properties and track your transactions."
-        actions={<Button>Browse listings</Button>}
+        title={user?.name ? `Welcome back, ${user.name.split(" ")[0]}` : "Buyer dashboard"}
+        description="Browse live listings and track your transactions."
+        actions={
+          <Button asChild>
+            <Link to="/dashboard/buyer/listings">Browse listings</Link>
+          </Button>
+        }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Saved listings" value="12" hint="3 added this week" />
-        <StatCard label="Active offers" value="2" hint="1 awaiting response" />
-        <StatCard label="In escrow" value="$185,000" hint="Maple Heights Apartment" />
+        <StatCard label="Live listings" value={loadListings ? "…" : String(stats.listings)} hint="Browse" />
+        <StatCard label="Active transactions" value={loadTxs ? "…" : String(stats.activeTx)} />
+        <StatCard label="Completed" value={loadTxs ? "…" : String(stats.doneTx)} />
       </div>
 
       <div className="mt-10">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold tracking-tight">Verified for you</h2>
-          <Button variant="ghost" size="sm">View all</Button>
+          <h2 className="text-lg font-semibold tracking-tight">Live listings</h2>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard/buyer/listings">View all</Link>
+          </Button>
         </div>
+        {loadListings && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {!loadListings && previewListings.length === 0 && (
+          <p className="text-sm text-muted-foreground">No listings available.</p>
+        )}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {sampleListings.slice(0, 3).map((l) => <ListingCard key={l.id} listing={l} />)}
+          {previewListings.map((l) => (
+            <ListingCard key={l.id} listing={l} />
+          ))}
         </div>
       </div>
 
       <div className="mt-10 rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-        <h2 className="text-lg font-semibold">Transaction status</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent transactions</h2>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/dashboard/buyer/transactions">Open</Link>
+          </Button>
+        </div>
+        {loadTxs && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {!loadTxs && previewTxs.length === 0 && (
+          <p className="text-sm text-muted-foreground">No transactions yet. Start one from a listing.</p>
+        )}
         <div className="mt-4 divide-y divide-border/60">
-          {[
-            { name: "Maple Heights Apartment", stage: "Escrow funded", status: "in_progress" },
-            { name: "Garden Court Residence", stage: "Offer submitted", status: "pending" },
-            { name: "Sunset Bay Condo", stage: "Documents verified", status: "completed" },
-          ].map((t, i) => (
-            <div key={i} className="flex items-center justify-between py-3">
+          {previewTxs.map((t) => (
+            <div key={t.id} className="flex items-center justify-between py-3">
               <div>
-                <p className="font-medium text-foreground">{t.name}</p>
-                <p className="text-sm text-muted-foreground">{t.stage}</p>
+                <p className="font-medium text-foreground">{t.listing.title}</p>
+                <p className="text-sm text-muted-foreground">{t.listing.location}</p>
               </div>
-              <Badge variant="outline" className={
-                t.status === "completed" ? "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]" :
-                t.status === "in_progress" ? "border-primary/20 bg-primary-soft text-primary" :
-                "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]"
-              }>{t.status === "in_progress" ? "In progress" : t.status === "completed" ? "Completed" : "Pending"}</Badge>
+              <Badge variant="outline" className={txBadgeClass(t.status)}>
+                {t.status.replace(/_/g, " ")}
+              </Badge>
             </div>
           ))}
         </div>

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { UserRole, PaymentStatus, ListingStatus, Prisma } from "@prisma/client";
+import { UserRole, PaymentStatus, ListingStatus, TransactionStatus, Prisma } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -72,6 +72,9 @@ export class PaymentsService {
       if (tx.buyerId !== actor.sub && !this.isStaff(actor.role)) {
         throw new ForbiddenException();
       }
+      if (tx.status === TransactionStatus.COMPLETED) {
+        throw new BadRequestException("This transaction is already completed");
+      }
     }
 
     const currency = dto.currency ?? "NGN";
@@ -88,6 +91,17 @@ export class PaymentsService {
       },
     });
 
+    if (dto.transactionId) {
+      await this.prisma.transaction.updateMany({
+        where: {
+          id: dto.transactionId,
+          status: TransactionStatus.INITIATED,
+          ...(this.isStaff(actor.role) ? {} : { buyerId: actor.sub }),
+        },
+        data: { status: TransactionStatus.IN_PROGRESS },
+      });
+    }
+
     const payer = await this.prisma.user.findUniqueOrThrow({ where: { id: actor.sub } });
     const secret = this.config.get<string>("PAYSTACK_SECRET_KEY");
     const amountMinor = Math.round(Number(dto.amount) * 100);
@@ -98,9 +112,10 @@ export class PaymentsService {
         where: { id: payment.id },
         data: { providerReference: mockRef, status: PaymentStatus.PROCESSING },
       });
+      await this.applyPaymentChargeSuccess(payment.id);
       return {
         paymentId: payment.id,
-        authorizationUrl: `${dto.callbackUrl}?mock=1&ref=${mockRef}`,
+        authorizationUrl: `${dto.callbackUrl}?mock=1&ref=${mockRef}&paymentId=${payment.id}`,
         reference: mockRef,
         accessCode: null as string | null,
       };
@@ -153,6 +168,27 @@ export class PaymentsService {
     };
   }
 
+  /** Marks payment succeeded and completes linked transaction (same as Paystack charge.success). */
+  private async applyPaymentChargeSuccess(paymentId: string) {
+    const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!p) return;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: p.id },
+        data: { status: PaymentStatus.SUCCEEDED },
+      });
+      if (p.transactionId) {
+        await tx.transaction.updateMany({
+          where: {
+            id: p.transactionId,
+            status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
+          },
+          data: { status: TransactionStatus.COMPLETED },
+        });
+      }
+    });
+  }
+
   async findOne(id: string, actor: JwtPayload) {
     const p = await this.prisma.payment.findUnique({ where: { id } });
     if (!p) throw new NotFoundException("Payment not found");
@@ -189,10 +225,7 @@ export class PaymentsService {
     const failed = payload.event === "charge.failed" || payload.data?.status === "failed";
 
     if (success) {
-      await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { status: PaymentStatus.SUCCEEDED },
-      });
+      await this.applyPaymentChargeSuccess(payment.id);
     } else if (failed) {
       await this.prisma.payment.update({
         where: { id: payment.id },

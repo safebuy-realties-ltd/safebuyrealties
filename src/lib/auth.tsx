@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { apiRequest, readToken, writeToken } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 
 export type Role = "buyer" | "seller" | "professional" | "staff" | "admin";
 
@@ -20,24 +20,6 @@ type ApiUser = {
   role: string;
   professionalType?: string | null;
 };
-
-const USER_KEY = "sbr.auth.user";
-
-function readUserCache(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistUser(user: AuthUser | null) {
-  if (typeof window === "undefined") return;
-  if (!user) localStorage.removeItem(USER_KEY);
-  else localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
 
 function mapApiUser(u: ApiUser): AuthUser {
   return {
@@ -61,37 +43,39 @@ type AuthState = {
     password: string;
     role: SelfRegisterRole;
   }) => Promise<AuthUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
 
+/**
+ * SECURITY: We never trust any client-side cache (localStorage / sessionStorage)
+ * for the authenticated user or role. The only source of truth is the server's
+ * /auth/me endpoint, which validates the HttpOnly session cookie. Any cached
+ * user state is held in React memory only and reset on every mount.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    async function hydrate() {
-      const token = readToken();
-      if (!token) {
-        setUser(readUserCache());
-        setIsReady(true);
-        return;
-      }
+
+    // Defensive: scrub any stale auth artifacts a previous build may have written.
+    if (typeof window !== "undefined") {
       try {
-        const envelope = await apiRequest<ApiUser>("/auth/me", {
-          method: "GET",
-          token,
-        });
-        const next = mapApiUser(envelope.data);
-        if (!cancelled) {
-          setUser(next);
-          persistUser(next);
-        }
+        localStorage.removeItem("sbr.auth.user");
+        localStorage.removeItem("sbr.auth.token");
       } catch {
-        writeToken(null);
-        persistUser(null);
+        /* ignore */
+      }
+    }
+
+    async function hydrate() {
+      try {
+        const envelope = await apiRequest<ApiUser>("/auth/me", { method: "GET" });
+        if (!cancelled) setUser(mapApiUser(envelope.data));
+      } catch {
         if (!cancelled) setUser(null);
       } finally {
         if (!cancelled) setIsReady(true);
@@ -104,16 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const envelope = await apiRequest<{ accessToken: string; user: ApiUser }>("/auth/login", {
+    const envelope = await apiRequest<{ user: ApiUser }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
-      token: null,
     });
-    const { accessToken, user: u } = envelope.data;
-    writeToken(accessToken);
-    const next = mapApiUser(u);
+    const next = mapApiUser(envelope.data.user);
     setUser(next);
-    persistUser(next);
     return next;
   }, []);
 
@@ -125,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password: string;
       role: SelfRegisterRole;
     }) => {
-      const envelope = await apiRequest<{ accessToken: string; user: ApiUser }>("/auth/register", {
+      const envelope = await apiRequest<{ user: ApiUser }>("/auth/register", {
         method: "POST",
         body: JSON.stringify({
           email: data.email,
@@ -134,21 +114,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           lastName: data.lastName,
           role: data.role.toUpperCase(),
         }),
-        token: null,
       });
-      const { accessToken, user: u } = envelope.data;
-      writeToken(accessToken);
-      const next = mapApiUser(u);
+      const next = mapApiUser(envelope.data.user);
       setUser(next);
-      persistUser(next);
       return next;
     },
     [],
   );
 
-  const logout = useCallback(() => {
-    writeToken(null);
-    persistUser(null);
+  const logout = useCallback(async () => {
+    try {
+      await apiRequest("/auth/logout", { method: "POST" });
+    } catch {
+      /* still clear local state */
+    }
     setUser(null);
   }, []);
 
@@ -176,9 +155,4 @@ export function useAuth() {
 
 export function dashboardPathForRole(role: Role): string {
   return `/dashboard/${role}`;
-}
-
-/** SSR-safe synchronous check used by route guards. */
-export function getStoredUser(): AuthUser | null {
-  return readUserCache();
 }
