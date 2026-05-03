@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -59,5 +59,25 @@ export function useListingQuery(listingId: string) {
     queryFn: () => apiRequest<ListingDto>(`/listings/${listingId}`),
     select: (envelope) => envelope.data,
     enabled: !!listingId,
+  });
+}
+
+export function useCreateListingMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      title: string;
+      description: string;
+      location: string;
+      price: number;
+      currency?: string;
+    }) =>
+      apiRequest<ListingDto>("/listings", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
   });
 }

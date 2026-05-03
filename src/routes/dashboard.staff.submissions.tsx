@@ -20,6 +20,7 @@ function StaffSubmissions() {
   const { data, isLoading, isError, error, refetch } = useStaffQueueQuery(filter);
   const rows = data?.tableRows ?? [];
   const [q, setQ] = useState("");
+  const updateListing = useUpdateListingMutation();
 
   const visible = useMemo(() => {
     if (!q.trim()) return rows;
@@ -88,12 +89,17 @@ function StaffSubmissions() {
                 <div className="col-span-2">
                   <Badge variant="outline">{l.backendStatus.replace(/_/g, " ")}</Badge>
                 </div>
-                <div className="col-span-3 flex justify-end">
+                <div className="col-span-3 flex justify-end gap-2">
                   <Button size="sm" variant="outline" asChild>
                     <Link to="/dashboard/staff/workflow" search={{ listing: l.id }}>
                       Assign in workflow
                     </Link>
                   </Button>
+                  {(["ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(l.status)) && (
+                    <Button size="sm" disabled={updateListing.isPending} onClick={() => approve(l.id, l.status)}>
+                      {l.status === "VERIFIED" ? "Publish live" : "Approve"}
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}
