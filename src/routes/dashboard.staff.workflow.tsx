@@ -14,9 +14,15 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useListingsQuery } from "@/hooks/use-listings";
-import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import {
+  useAssignVerificationMutation,
+  usePatchVerificationStepMutation,
+  useVerificationActivityQuery,
+  useVerificationListingQuery,
+} from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
+import { useCreateTaskMutation } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
   validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
@@ -72,7 +78,14 @@ function StaffWorkflow() {
   } = useVerificationListingQuery(selectedListingId ?? "", !!selectedListingId);
 
   const assignMutation = useAssignVerificationMutation();
+  const patchStepMutation = usePatchVerificationStepMutation();
+  const createTaskMutation = useCreateTaskMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
+  const {
+    data: activity = [],
+    isLoading: activityLoading,
+    isError: activityError,
+  } = useVerificationActivityQuery(selectedListingId ?? "", !!selectedListingId);
 
   const inWorkflow = useMemo(
     () => listings.filter((l) => ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION"].includes(l.status)).length,
@@ -89,11 +102,34 @@ function StaffWorkflow() {
     assignMutation.mutate(
       { listingId: selectedListingId, professionalId, stepType },
       {
-        onSuccess: () => toast.success("Verification step assigned."),
+        onSuccess: async () => {
+          const selectedPro = professionals.find((p) => p.id === professionalId);
+          if (selectedPro) {
+            await createTaskMutation.mutateAsync({
+              listingId: selectedListingId,
+              assigneeId: professionalId,
+              title: `${stepType.replace(/_/g, " ")} verification`,
+              description: `Complete ${stepType.replace(/_/g, " ").toLowerCase()} checks for listing ${selectedListingId}.`,
+              type: stepType,
+            });
+          }
+          toast.success("Verification step assigned.");
+        },
         onError: (e) => {
           const msg = e instanceof ApiError ? e.message : "Assignment failed.";
           toast.error(msg);
         },
+      },
+    );
+  };
+
+  const transitionStep = (stepId: string, status: "COMPLETED" | "REJECTED") => {
+    if (!selectedListingId) return;
+    patchStepMutation.mutate(
+      { stepId, listingId: selectedListingId, body: { status } },
+      {
+        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
       },
     );
   };
@@ -215,11 +251,49 @@ function StaffWorkflow() {
                     >
                       Assign
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "COMPLETED")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "REJECTED")}
+                    >
+                      Reject
+                    </Button>
                   </div>
                 </li>
               ))}
             </ul>
           )}
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold">Activity log</h3>
+            {activityLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
+            {activityError && <p className="mt-2 text-sm text-destructive">Could not load activity.</p>}
+            {!activityLoading && !activityError && activity.length === 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">No workflow activity yet.</p>
+            )}
+            {!activityLoading && !activityError && activity.length > 0 && (
+              <ul className="mt-2 space-y-2 text-sm">
+                {activity.map((entry) => (
+                  <li key={entry.id} className="rounded border border-border/70 p-2">
+                    <p className="font-medium">{entry.action.replace(/_/g, " ")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(entry.createdAt).toLocaleString()} · {entry.actorId ?? "system"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       </div>
     </>
