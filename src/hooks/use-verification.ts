@@ -14,6 +14,16 @@ export type VerificationStepDto = {
   riskFlags: string[];
 };
 
+export type VerificationActivityDto = {
+  id: string;
+  listingId: string;
+  stepId: string | null;
+  action: string;
+  actorId: string | null;
+  meta: Record<string, unknown> | null;
+  createdAt: string;
+};
+
 export function useVerificationListingQuery(listingId: string, enabled = true) {
   return useQuery({
     queryKey: ["verification", "listing", listingId],
@@ -56,5 +66,16 @@ export function usePatchVerificationStepMutation() {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
     },
+  });
+}
+
+export function useVerificationActivityQuery(listingId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["verification", "activity", listingId],
+    queryFn: async () => {
+      const env = await apiRequest<VerificationActivityDto[]>(`/verification/listing/${listingId}/activity`);
+      return env.data;
+    },
+    enabled: enabled && !!listingId,
   });
 }

@@ -13,12 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useListingsQuery } from "@/hooks/use-listings";
-import {
-  useAssignVerificationMutation,
-  usePatchVerificationStepMutation,
-  useVerificationListingQuery,
-} from "@/hooks/use-verification";
+import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
+import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 import { useCreateTaskMutation } from "@/hooks/use-tasks";
@@ -36,9 +32,9 @@ export const Route = createFileRoute("/dashboard/staff/workflow")({
 
 function StaffWorkflow() {
   const { listing: listingFromSearch } = Route.useSearch();
-  const { data: listingsData, isLoading: listingsLoading, isError: listingsError, error: listingsErr } =
-    useListingsQuery({ pageSize: 100 });
-  const listings = listingsData?.listings ?? [];
+  const [filter, setFilter] = useState<"all" | StaffQueueFilter>("all");
+  const { data: queueData, isLoading: listingsLoading, isError: listingsError, error: listingsErr } = useStaffQueueQuery(filter);
+  const cards = queueData?.cards ?? [];
 
   const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
   const professionals = prosData?.users ?? [];
@@ -48,25 +44,24 @@ function StaffWorkflow() {
 
   useEffect(() => {
     if (!listingFromSearch) return;
-    if (listings.some((l) => l.id === listingFromSearch)) {
+    if (cards.some((l) => l.listingId === listingFromSearch)) {
       setSelectedListingId(listingFromSearch);
     }
-  }, [listingFromSearch, listings]);
+  }, [listingFromSearch, cards]);
 
   const filteredListings = useMemo(() => {
-    if (!q.trim()) return listings;
+    if (!q.trim()) return cards;
     const n = q.toLowerCase();
-    return listings.filter(
+    return cards.filter(
       (l) =>
         l.title.toLowerCase().includes(n) ||
-        l.location.toLowerCase().includes(n) ||
-        l.id.toLowerCase().includes(n) ||
-        l.status.toLowerCase().includes(n) ||
-        (l.sellerName ?? "").toLowerCase().includes(n),
+        l.subtitle.toLowerCase().includes(n) ||
+        l.listingId.toLowerCase().includes(n) ||
+        l.backendStatus.toLowerCase().includes(n),
     );
-  }, [listings, q]);
+  }, [cards, q]);
 
-  const selectedListing = listings.find((l) => l.id === selectedListingId) ?? null;
+  const selectedListing = cards.find((l) => l.listingId === selectedListingId) ?? null;
 
   const {
     data: steps,
@@ -77,12 +72,17 @@ function StaffWorkflow() {
   } = useVerificationListingQuery(selectedListingId ?? "", !!selectedListingId);
 
   const assignMutation = useAssignVerificationMutation();
-  const patchStepMutation = usePatchVerificationStepMutation();
   const createTaskMutation = useCreateTaskMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
+  const {
+    data: activity = [],
+    isLoading: activityLoading,
+    isError: activityError,
+  } = useVerificationActivityQuery(selectedListingId ?? "", !!selectedListingId);
+
   const inWorkflow = useMemo(
-    () => listings.filter((l) => ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION"].includes(l.status)).length,
-    [listings],
+    () => cards.filter((l) => l.queueStatus === "in_progress").length,
+    [cards],
   );
 
   const assignStep = (stepType: string) => {
@@ -96,21 +96,18 @@ function StaffWorkflow() {
       { listingId: selectedListingId, professionalId, stepType },
       {
         onSuccess: async () => {
-          const selectedPro = professionals.find((p) => p.id === professionalId);
-          if (selectedPro) {
-            try {
-              await createTaskMutation.mutateAsync({
-                listingId: selectedListingId,
-                assigneeId: professionalId,
-                title: `${stepType.replace(/_/g, " ")} verification`,
-                description: `Complete ${stepType.replace(/_/g, " ").toLowerCase()} checks for listing ${selectedListingId}.`,
-                type: stepType,
-              });
-            } catch (e) {
-              toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task creation failed.");
-            }
+          try {
+            await createTaskMutation.mutateAsync({
+              listingId: selectedListingId,
+              assigneeId: professionalId,
+              title: `${stepType.replace(/_/g, " ")} verification`,
+              type: stepType,
+              description: `Complete ${stepType.replace(/_/g, " ")} for listing verification.`,
+            });
+            toast.success("Verification step assigned and task synced.");
+          } catch (e) {
+            toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task sync failed.");
           }
-          toast.success("Verification step assigned.");
         },
         onError: (e) => {
           const msg = e instanceof ApiError ? e.message : "Assignment failed.";
@@ -120,51 +117,16 @@ function StaffWorkflow() {
     );
   };
 
-  const transitionStep = (stepId: string, status: "COMPLETED" | "BLOCKED") => {
+  const transitionStep = (stepId: string, status: "COMPLETED" | "REJECTED") => {
     if (!selectedListingId) return;
     patchStepMutation.mutate(
       { stepId, listingId: selectedListingId, body: { status } },
       {
-        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step sent back."),
+        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
       },
     );
   };
-
-  const activity = useMemo(() => {
-    if (!steps?.length) return [];
-    return steps
-      .flatMap((step) => {
-        const events: { id: string; label: string; when: string | null }[] = [];
-        if (step.assignedProfessionalId) {
-          events.push({
-            id: `${step.id}-assigned`,
-            label: `${step.label} assigned to professional ${step.assignedProfessionalId}`,
-            when: null,
-          });
-        }
-        if (step.status === "COMPLETED") {
-          events.push({
-            id: `${step.id}-completed`,
-            label: `${step.label} approved`,
-            when: step.completedAt,
-          });
-        }
-        if (step.status === "BLOCKED") {
-          events.push({
-            id: `${step.id}-blocked`,
-            label: `${step.label} rejected / blocked`,
-            when: null,
-          });
-        }
-        return events;
-      })
-      .sort((a, b) => {
-        const aTime = a.when ? Date.parse(a.when) : 0;
-        const bTime = b.when ? Date.parse(b.when) : 0;
-        return bTime - aTime;
-      });
-  }, [steps]);
 
   return (
     <>
@@ -174,7 +136,7 @@ function StaffWorkflow() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Listings loaded" value={String(listings.length)} />
+        <StatCard label="Listings loaded" value={String(cards.length)} />
         <StatCard label="In review / verification" value={String(inWorkflow)} />
         <StatCard label="Professionals" value={String(professionals.length)} />
       </div>
@@ -202,18 +164,21 @@ function StaffWorkflow() {
             {!listingsLoading && filteredListings.length === 0 && (
               <p className="text-muted-foreground">No listings match.</p>
             )}
+            {["all", "pending", "in_progress", "completed", "rejected"].map((f) => (
+              <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f as "all" | StaffQueueFilter)}>{f.replace("_", " ")}</Button>
+            ))}
             {filteredListings.map((l) => (
               <button
-                key={l.id}
+                key={l.listingId}
                 type="button"
-                onClick={() => setSelectedListingId(l.id)}
+                onClick={() => setSelectedListingId(l.listingId)}
                 className={`flex w-full flex-col rounded border px-2 py-2 text-left ${
-                  selectedListingId === l.id ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50"
+                  selectedListingId === l.listingId ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50"
                 }`}
               >
                 <span className="font-medium">{l.title}</span>
                 <span className="text-xs text-muted-foreground">
-                  {l.status} · {l.location}
+                  {l.backendStatus} · {l.subtitle}
                 </span>
               </button>
             ))}
@@ -278,7 +243,7 @@ function StaffWorkflow() {
                     <Button
                       size="sm"
                       className="h-9"
-                      disabled={assignMutation.isPending || prosLoading}
+                      disabled={assignMutation.isPending || createTaskMutation.isPending || prosLoading}
                       onClick={() => assignStep(s.type)}
                     >
                       Assign
@@ -297,7 +262,7 @@ function StaffWorkflow() {
                       variant="destructive"
                       className="h-9"
                       disabled={patchStepMutation.isPending}
-                      onClick={() => transitionStep(s.id, "BLOCKED")}
+                      onClick={() => transitionStep(s.id, "REJECTED")}
                     >
                       Reject
                     </Button>
@@ -308,17 +273,18 @@ function StaffWorkflow() {
           )}
           <div className="mt-5 border-t border-border/60 pt-4">
             <h3 className="text-sm font-semibold">Activity log</h3>
-            {stepsLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
-            {!stepsLoading && activity.length === 0 && (
+            {activityLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
+            {activityError && <p className="mt-2 text-sm text-destructive">Could not load activity.</p>}
+            {!activityLoading && !activityError && activity.length === 0 && (
               <p className="mt-2 text-sm text-muted-foreground">No workflow activity yet.</p>
             )}
-            {!stepsLoading && activity.length > 0 && (
+            {!activityLoading && !activityError && activity.length > 0 && (
               <ul className="mt-2 space-y-2 text-sm">
                 {activity.map((entry) => (
                   <li key={entry.id} className="rounded border border-border/70 p-2">
-                    <p className="font-medium">{entry.label}</p>
+                    <p className="font-medium">{entry.action.replace(/_/g, " ")}</p>
                     <p className="text-xs text-muted-foreground">
-                      {entry.when ? new Date(entry.when).toLocaleString() : "Awaiting completion timestamp"}
+                      {new Date(entry.createdAt).toLocaleString()} · {entry.actorId ?? "system"}
                     </p>
                   </li>
                 ))}
