@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, ArrowRight } from "lucide-react";
 import { useMyTransactionsQuery, type TransactionDto } from "@/hooks/use-transactions";
-import { useInitiatePaymentMutation } from "@/hooks/use-payments";
+import { useInitiatePaymentMutation, usePaymentQuery, type PaymentDto } from "@/hooks/use-payments";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
@@ -67,6 +67,37 @@ function timelineForStatus(status: string) {
     },
     { key: "done", label: "Completed", done: status === "COMPLETED", current: false },
   ];
+}
+
+function timelineForPaymentStatus(status: PaymentDto["status"]) {
+  if (status === "FAILED") {
+    return [
+      { key: "init", label: "Escrow initiated", done: true, current: false },
+      { key: "failed", label: "Payment failed", done: false, current: true },
+      { key: "done", label: "Escrow funded", done: false, current: false },
+    ];
+  }
+  return [
+    { key: "init", label: "Escrow initiated", done: true, current: status === "PENDING" },
+    {
+      key: "prog",
+      label: "Payment processing",
+      done: status === "PROCESSING" || status === "SUCCEEDED",
+      current: status === "PROCESSING",
+    },
+    { key: "done", label: "Escrow funded", done: status === "SUCCEEDED", current: false },
+  ];
+}
+
+function getStoredPayment(txId: string): { paymentId?: string; reference?: string } | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(`tx-payment:${txId}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as { paymentId?: string; reference?: string };
+  } catch {
+    return null;
+  }
 }
 
 function depositAmountForListing(priceStr: string) {
@@ -139,7 +170,10 @@ function Transactions() {
 }
 
 function TransactionCard({ tx }: { tx: TransactionDto }) {
-  const steps = timelineForStatus(tx.status);
+  const storedPayment = getStoredPayment(tx.id);
+  const paymentId = storedPayment?.paymentId ?? null;
+  const { data: payment } = usePaymentQuery(paymentId);
+  const steps = payment ? timelineForPaymentStatus(payment.status) : timelineForStatus(tx.status);
   const amount = formatMoney(tx.listing.price, tx.listing.currency);
   const payMutation = useInitiatePaymentMutation();
   const deposit = depositAmountForListing(tx.listing.price);
@@ -157,6 +191,12 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
       },
       {
         onSuccess: (res) => {
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem(
+              `tx-payment:${tx.id}`,
+              JSON.stringify({ paymentId: res.paymentId, reference: res.reference }),
+            );
+          }
           if (res.authorizationUrl.includes("mock=1")) {
             toast.success("Payment completed (demo / no Paystack key). Transaction updated.");
             return;
@@ -226,6 +266,11 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
         <p className="mt-4 text-xs text-muted-foreground">
           Started {new Date(tx.createdAt).toLocaleString()} · Updated {new Date(tx.updatedAt).toLocaleString()}
         </p>
+        {storedPayment?.reference && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Payment reference: <span className="font-mono">{storedPayment.reference}</span>
+          </p>
+        )}
       </div>
     </article>
   );
