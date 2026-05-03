@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useMyTasksQuery, usePatchTaskMutation, type TaskDto } from "@/hooks/use-tasks";
+import { useMyTasksQuery, usePatchTaskMutation, useTaskKpiCounts, type TaskDto } from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { ApiError } from "@/lib/api";
 
@@ -52,6 +52,7 @@ function ProTasks() {
 
   const { data, isLoading, isError, error, refetch } = useMyTasksQuery({ pageSize: 100 });
   const tasks = data?.tasks ?? [];
+  const kpis = useTaskKpiCounts();
 
   const { data: listingsData } = useListingsQuery();
   const listingTitleById = useMemo(() => {
@@ -78,10 +79,10 @@ function ProTasks() {
   }, [tasks, filter, q, listingTitleById]);
 
   const counts = {
-    all: tasks.length,
-    pending: tasks.filter((t) => t.status === "PENDING").length,
-    in_progress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
-    completed: tasks.filter((t) => t.status === "COMPLETED").length,
+    all: kpis.pending + kpis.inProgress + kpis.completed,
+    pending: kpis.pending,
+    in_progress: kpis.inProgress,
+    completed: kpis.completed,
   };
 
   const patchMutation = usePatchTaskMutation();
@@ -93,7 +94,10 @@ function ProTasks() {
     patchMutation.mutate(
       { id: t.id, body: { status: next } },
       {
-        onSuccess: () => toast.success("Task updated."),
+        onSuccess: () => {
+          toast.success("Task updated.");
+          void refetch();
+        },
         onError: (e) => {
           toast.error(e instanceof ApiError ? e.message : "Update failed.");
         },
@@ -118,9 +122,9 @@ function ProTasks() {
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pending" value={String(counts.pending)} />
-        <StatCard label="In progress" value={String(counts.in_progress)} />
-        <StatCard label="Completed" value={String(counts.completed)} />
+        <StatCard label="Pending" value={kpis.isLoading ? "…" : String(counts.pending)} />
+        <StatCard label="In progress" value={kpis.isLoading ? "…" : String(counts.in_progress)} />
+        <StatCard label="Completed" value={kpis.isLoading ? "…" : String(counts.completed)} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
