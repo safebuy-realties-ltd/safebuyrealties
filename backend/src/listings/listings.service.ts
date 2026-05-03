@@ -129,6 +129,7 @@ export class ListingsService {
       if (query.status) where.status = query.status;
     } else if (this.isStaff(actor.role)) {
       if (query.status) where.status = query.status;
+      if (query.sellerId) where.sellerId = query.sellerId;
     } else if (actor.role === UserRole.PROFESSIONAL) {
       where.AND = [
         {

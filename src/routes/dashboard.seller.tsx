@@ -115,8 +115,8 @@ function SellerOverview() {
         description="Create listings, manage documents and track verification."
         actions={
           <Button type="button" asChild>
-            <Link to="/dashboard/seller/documents">
-              <Plus className="mr-1 h-4 w-4" /> Documents
+            <Link to="/dashboard/seller/listings">
+              <Plus className="mr-1 h-4 w-4" /> New listing
             </Link>
           </Button>
         }
@@ -152,7 +152,7 @@ function SellerOverview() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Your listings</h2>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard/seller/documents">Manage documents</Link>
+              <Link to="/dashboard/seller/listings">Manage listings</Link>
             </Button>
           </div>
           <div className="mt-4 divide-y divide-border/60">

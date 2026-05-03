@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard, type TaskStatus } from "@/components/TaskCard";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useMyTasksQuery, usePatchTaskMutation, type TaskDto } from "@/hooks/use-tasks";
+import { useMyTasksQuery, usePatchTaskMutation, useTaskKpiCounts, type TaskDto } from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { ApiError } from "@/lib/api";
 
@@ -52,6 +52,7 @@ function ProTasks() {
 
   const { data, isLoading, isError, error, refetch } = useMyTasksQuery({ pageSize: 100 });
   const tasks = data?.tasks ?? [];
+  const kpis = useTaskKpiCounts();
 
   const { data: listingsData } = useListingsQuery();
   const listingTitleById = useMemo(() => {
@@ -79,9 +80,9 @@ function ProTasks() {
 
   const counts = {
     all: tasks.length,
-    pending: tasks.filter((t) => t.status === "PENDING").length,
-    in_progress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
-    completed: tasks.filter((t) => t.status === "COMPLETED").length,
+    pending: kpis.pending,
+    in_progress: kpis.inProgress,
+    completed: kpis.completed,
   };
 
   const patchMutation = usePatchTaskMutation();
@@ -93,7 +94,10 @@ function ProTasks() {
     patchMutation.mutate(
       { id: t.id, body: { status: next } },
       {
-        onSuccess: () => toast.success("Task updated."),
+        onSuccess: () => {
+          toast.success("Task updated.");
+          void refetch();
+        },
         onError: (e) => {
           toast.error(e instanceof ApiError ? e.message : "Update failed.");
         },
@@ -118,9 +122,9 @@ function ProTasks() {
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pending" value={String(counts.pending)} />
-        <StatCard label="In progress" value={String(counts.in_progress)} />
-        <StatCard label="Completed" value={String(counts.completed)} />
+        <StatCard label="Pending" value={kpis.isLoading ? "…" : String(counts.pending)} />
+        <StatCard label="In progress" value={kpis.isLoading ? "…" : String(counts.in_progress)} />
+        <StatCard label="Completed" value={kpis.isLoading ? "…" : String(counts.completed)} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -166,6 +170,7 @@ function ProTasks() {
         )}
         {visible.map((t) => (
           <div key={t.id} className="space-y-3">
+            <Link to="/dashboard/professional/tasks/$taskId" params={{ taskId: t.id }} className="block">
             <TaskCard
               title={t.title}
               property={listingTitleById.get(t.listingId) ?? t.listingId}
@@ -173,6 +178,7 @@ function ProTasks() {
               status={apiStatusToCard(t.status)}
               type={t.type}
             />
+            </Link>
             {t.status !== "COMPLETED" && (
               <Button
                 variant="outline"
