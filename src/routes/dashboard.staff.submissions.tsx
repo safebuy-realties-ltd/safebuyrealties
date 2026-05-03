@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { useListingsQuery } from "@/hooks/use-listings";
+import { useUpdateListingMutation } from "@/hooks/use-update-listing";
+import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/staff/submissions")({
   component: () => (
@@ -21,6 +24,7 @@ function StaffSubmissions() {
   const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 200 });
   const listings = data?.listings ?? [];
   const [q, setQ] = useState("");
+  const updateListing = useUpdateListingMutation();
 
   const pipeline = useMemo(
     () => listings.filter((l) => PIPELINE.includes(l.status as (typeof PIPELINE)[number])),
@@ -38,6 +42,19 @@ function StaffSubmissions() {
         l.status.toLowerCase().includes(n),
     );
   }, [pipeline, q]);
+
+
+  const approve = (id: string, status: string) => {
+    const next = status === "IN_VERIFICATION" || status === "ASSIGNED" ? "VERIFIED" : status === "VERIFIED" ? "LIVE" : null;
+    if (!next) return;
+    updateListing.mutate(
+      { id, body: { status: next } },
+      {
+        onSuccess: () => toast.success(`Listing moved to ${next.replace(/_/g, " ")}.`),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Approval failed."),
+      },
+    );
+  };
 
   const counts = {
     all: pipeline.length,
@@ -98,12 +115,17 @@ function StaffSubmissions() {
                 <div className="col-span-2">
                   <Badge variant="outline">{l.status.replace(/_/g, " ")}</Badge>
                 </div>
-                <div className="col-span-3 flex justify-end">
+                <div className="col-span-3 flex justify-end gap-2">
                   <Button size="sm" variant="outline" asChild>
                     <Link to="/dashboard/staff/workflow" search={{ listing: l.id }}>
                       Assign in workflow
                     </Link>
                   </Button>
+                  {(["ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(l.status)) && (
+                    <Button size="sm" disabled={updateListing.isPending} onClick={() => approve(l.id, l.status)}>
+                      {l.status === "VERIFIED" ? "Publish live" : "Approve"}
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}

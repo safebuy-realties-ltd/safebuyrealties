@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
+import { useCreateListingMutation, useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 
 export const Route = createFileRoute("/dashboard/seller")({
@@ -81,6 +84,41 @@ function SellerOverview() {
 
   const recentListings = useMemo(() => [...listings].slice(0, 8), [listings]);
 
+  const createListing = useCreateListingMutation();
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+
+  const createDraft = () => {
+    const clean = title.trim();
+    if (!clean) return;
+    const amount = Number(price);
+    if (!location.trim() || !description.trim() || !Number.isFinite(amount) || amount < 0) {
+      toast.error("Enter title, location, description and a valid price.");
+      return;
+    }
+    createListing.mutate(
+      {
+        title: clean,
+        description: description.trim(),
+        location: location.trim(),
+        price: amount,
+        currency: "NGN",
+      },
+      {
+        onSuccess: () => {
+          setTitle("");
+          setLocation("");
+          setPrice("");
+          setDescription("");
+          toast.success("Draft listing created.");
+        },
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not create listing."),
+      },
+    );
+  };
+
   return (
     <>
       <PageHeader
@@ -103,6 +141,19 @@ function SellerOverview() {
           </button>
         </div>
       )}
+
+      <div className="mb-6 rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
+        <p className="text-sm font-medium">Create listing draft</p>
+        <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Listing title" />
+          <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" />
+          <Input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (NGN)" type="number" min="0" />
+          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" />
+          <Button type="button" onClick={createDraft} disabled={createListing.isPending || !title.trim()} className="md:col-span-2">
+            {createListing.isPending ? "Creating…" : "Create draft"}
+          </Button>
+        </div>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Your listings" value={String(stats.total)} hint={`${stats.live} live`} />
