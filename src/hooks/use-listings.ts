@@ -20,6 +20,8 @@ export type ListingDto = {
 
 export type ListingsQueryOptions = {
   status?: string;
+  sellerId?: string;
+  ownedOnly?: boolean;
   page?: number;
   pageSize?: number;
 };
@@ -31,15 +33,17 @@ function listingsQueryString(options?: ListingsQueryOptions) {
   qs.set("page", String(page));
   qs.set("pageSize", String(pageSize));
   if (options?.status) qs.set("status", options.status);
+  if (options?.sellerId) qs.set("sellerId", options.sellerId);
   const s = qs.toString();
   return s ? `?${s}` : "";
 }
 
 export function useListingsQuery(options?: ListingsQueryOptions) {
   const { user, isReady } = useAuth();
-  const q = listingsQueryString(options);
+  const sellerId = options?.ownedOnly ? user?.id : options?.sellerId;
+  const q = listingsQueryString({ ...options, sellerId });
   return useQuery({
-    queryKey: ["listings", user?.id ?? "anon", options?.status ?? null, options?.page ?? 1, options?.pageSize ?? 20],
+    queryKey: ["listings", user?.id ?? "anon", options?.status ?? null, sellerId ?? null, options?.page ?? 1, options?.pageSize ?? 20],
     queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
     enabled: isReady && !!user,
     select: (envelope) => ({
