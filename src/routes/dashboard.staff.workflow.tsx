@@ -14,9 +14,14 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useListingsQuery } from "@/hooks/use-listings";
-import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import {
+  useAssignVerificationMutation,
+  usePatchVerificationStepMutation,
+  useVerificationListingQuery,
+} from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
+import { useCreateTaskMutation } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
   validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
@@ -72,8 +77,9 @@ function StaffWorkflow() {
   } = useVerificationListingQuery(selectedListingId ?? "", !!selectedListingId);
 
   const assignMutation = useAssignVerificationMutation();
+  const patchStepMutation = usePatchVerificationStepMutation();
+  const createTaskMutation = useCreateTaskMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
-
   const inWorkflow = useMemo(
     () => listings.filter((l) => ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION"].includes(l.status)).length,
     [listings],
@@ -89,7 +95,23 @@ function StaffWorkflow() {
     assignMutation.mutate(
       { listingId: selectedListingId, professionalId, stepType },
       {
-        onSuccess: () => toast.success("Verification step assigned."),
+        onSuccess: async () => {
+          const selectedPro = professionals.find((p) => p.id === professionalId);
+          if (selectedPro) {
+            try {
+              await createTaskMutation.mutateAsync({
+                listingId: selectedListingId,
+                assigneeId: professionalId,
+                title: `${stepType.replace(/_/g, " ")} verification`,
+                description: `Complete ${stepType.replace(/_/g, " ").toLowerCase()} checks for listing ${selectedListingId}.`,
+                type: stepType,
+              });
+            } catch (e) {
+              toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task creation failed.");
+            }
+          }
+          toast.success("Verification step assigned.");
+        },
         onError: (e) => {
           const msg = e instanceof ApiError ? e.message : "Assignment failed.";
           toast.error(msg);
@@ -97,6 +119,52 @@ function StaffWorkflow() {
       },
     );
   };
+
+  const transitionStep = (stepId: string, status: "COMPLETED" | "BLOCKED") => {
+    if (!selectedListingId) return;
+    patchStepMutation.mutate(
+      { stepId, listingId: selectedListingId, body: { status } },
+      {
+        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step sent back."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
+      },
+    );
+  };
+
+  const activity = useMemo(() => {
+    if (!steps?.length) return [];
+    return steps
+      .flatMap((step) => {
+        const events: { id: string; label: string; when: string | null }[] = [];
+        if (step.assignedProfessionalId) {
+          events.push({
+            id: `${step.id}-assigned`,
+            label: `${step.label} assigned to professional ${step.assignedProfessionalId}`,
+            when: null,
+          });
+        }
+        if (step.status === "COMPLETED") {
+          events.push({
+            id: `${step.id}-completed`,
+            label: `${step.label} approved`,
+            when: step.completedAt,
+          });
+        }
+        if (step.status === "BLOCKED") {
+          events.push({
+            id: `${step.id}-blocked`,
+            label: `${step.label} rejected / blocked`,
+            when: null,
+          });
+        }
+        return events;
+      })
+      .sort((a, b) => {
+        const aTime = a.when ? Date.parse(a.when) : 0;
+        const bTime = b.when ? Date.parse(b.when) : 0;
+        return bTime - aTime;
+      });
+  }, [steps]);
 
   return (
     <>
@@ -215,11 +283,48 @@ function StaffWorkflow() {
                     >
                       Assign
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "COMPLETED")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-9"
+                      disabled={patchStepMutation.isPending}
+                      onClick={() => transitionStep(s.id, "BLOCKED")}
+                    >
+                      Reject
+                    </Button>
                   </div>
                 </li>
               ))}
             </ul>
           )}
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <h3 className="text-sm font-semibold">Activity log</h3>
+            {stepsLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
+            {!stepsLoading && activity.length === 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">No workflow activity yet.</p>
+            )}
+            {!stepsLoading && activity.length > 0 && (
+              <ul className="mt-2 space-y-2 text-sm">
+                {activity.map((entry) => (
+                  <li key={entry.id} className="rounded border border-border/70 p-2">
+                    <p className="font-medium">{entry.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.when ? new Date(entry.when).toLocaleString() : "Awaiting completion timestamp"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       </div>
     </>

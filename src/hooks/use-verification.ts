@@ -39,3 +39,22 @@ export function useAssignVerificationMutation() {
     },
   });
 }
+
+export function usePatchVerificationStepMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      stepId: string;
+      listingId: string;
+      body: { status?: string; notes?: string; riskFlags?: string[] };
+    }) =>
+      apiRequest<VerificationStepDto>(`/verification/steps/${args.stepId}`, {
+        method: "PATCH",
+        body: JSON.stringify(args.body),
+      }),
+    onSuccess: (_env, vars) => {
+      void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}
