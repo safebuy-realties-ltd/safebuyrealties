@@ -36,7 +36,7 @@ function StaffSubmissions() {
     <>
       <PageHeader
         title="Submissions"
-        description="Listings moving through verification. Assign professionals in Workflow."
+        description="Listings moving through verification with live backend status updates."
       />
 
       {isError && (
