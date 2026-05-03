@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, Max, Min } from "class-validator";
+import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { ListingStatus } from "@prisma/client";
 
@@ -19,4 +19,10 @@ export class ListListingsQueryDto {
   @IsOptional()
   @IsEnum(ListingStatus)
   status?: ListingStatus;
+
+  @IsOptional()
+  @IsUUID()
+  sellerId?: string;
 }
+
+

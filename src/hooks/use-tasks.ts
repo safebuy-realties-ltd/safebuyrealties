@@ -4,6 +4,10 @@ import { useAuth } from "@/lib/auth";
 
 export type TaskDto = {
   id: string;
+  reviewFeedback?: string[] | string | null;
+  revisionStatus?: string | null;
+  requiresDocumentEvidence?: boolean;
+  completionNotes?: string | null;
   listingId: string;
   assigneeId: string;
   createdById: string;
@@ -46,7 +50,7 @@ export function useMyTasksQuery(opts?: { status?: string; page?: number; pageSiz
 export function usePatchTaskMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; body: { status?: string } }) =>
+    mutationFn: (args: { id: string; body: { status?: string; completionNotes?: string; checklist?: unknown; report?: unknown } }) =>
       apiRequest<TaskDto>(`/tasks/${args.id}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
@@ -58,15 +62,13 @@ export function usePatchTaskMutation() {
   });
 }
 
-export function useTaskKpiCounts() {
-  const pending = useMyTasksQuery({ status: "PENDING", page: 1, pageSize: 1 });
-  const inProgress = useMyTasksQuery({ status: "IN_PROGRESS", page: 1, pageSize: 1 });
-  const completed = useMyTasksQuery({ status: "COMPLETED", page: 1, pageSize: 1 });
 
-  return {
-    pending: pending.data?.meta?.total ?? 0,
-    inProgress: inProgress.data?.meta?.total ?? 0,
-    completed: completed.data?.meta?.total ?? 0,
-    isLoading: pending.isLoading || inProgress.isLoading || completed.isLoading,
-  };
+export function useMyTaskByIdQuery(taskId: string | null) {
+  const { user, isReady } = useAuth();
+  const isProfessional = user?.role === "professional";
+  return useQuery({
+    queryKey: ["tasks", "me", "detail", taskId],
+    queryFn: () => apiRequest<TaskDto>(`/tasks/me/${taskId}`),
+    enabled: isReady && isProfessional && !!taskId,
+  });
 }

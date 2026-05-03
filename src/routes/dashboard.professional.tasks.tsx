@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard, type TaskStatus } from "@/components/TaskCard";
@@ -170,6 +170,7 @@ function ProTasks() {
         )}
         {visible.map((t) => (
           <div key={t.id} className="space-y-3">
+            <Link to="/dashboard/professional/tasks/$taskId" params={{ taskId: t.id }} className="block">
             <TaskCard
               title={t.title}
               property={listingTitleById.get(t.listingId) ?? t.listingId}
@@ -177,6 +178,7 @@ function ProTasks() {
               status={apiStatusToCard(t.status)}
               type={t.type}
             />
+            </Link>
             {t.status !== "COMPLETED" && (
               <Button
                 variant="outline"
