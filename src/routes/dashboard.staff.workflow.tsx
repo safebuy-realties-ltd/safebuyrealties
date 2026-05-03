@@ -17,6 +17,7 @@ import { useListingsQuery } from "@/hooks/use-listings";
 import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
+import { useCreateTaskMutation } from "@/hooks/use-tasks";
 
 export const Route = createFileRoute("/dashboard/staff/workflow")({
   validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
@@ -72,6 +73,7 @@ function StaffWorkflow() {
   } = useVerificationListingQuery(selectedListingId ?? "", !!selectedListingId);
 
   const assignMutation = useAssignVerificationMutation();
+  const createTaskMutation = useCreateTaskMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
 
   const inWorkflow = useMemo(
@@ -89,7 +91,20 @@ function StaffWorkflow() {
     assignMutation.mutate(
       { listingId: selectedListingId, professionalId, stepType },
       {
-        onSuccess: () => toast.success("Verification step assigned."),
+        onSuccess: async () => {
+          try {
+            await createTaskMutation.mutateAsync({
+              listingId: selectedListingId,
+              assigneeId: professionalId,
+              title: `${stepType.replace(/_/g, " ")} verification`,
+              type: stepType,
+              description: `Complete ${stepType.replace(/_/g, " ")} for listing verification.`,
+            });
+            toast.success("Verification step assigned and task synced.");
+          } catch (e) {
+            toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task sync failed.");
+          }
+        },
         onError: (e) => {
           const msg = e instanceof ApiError ? e.message : "Assignment failed.";
           toast.error(msg);

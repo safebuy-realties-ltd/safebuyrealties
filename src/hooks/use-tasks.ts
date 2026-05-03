@@ -57,3 +57,24 @@ export function usePatchTaskMutation() {
     },
   });
 }
+
+export function useCreateTaskMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      listingId: string;
+      assigneeId: string;
+      title: string;
+      type: string;
+      description?: string;
+      dueAt?: string;
+    }) =>
+      apiRequest<TaskDto>("/tasks", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tasks", "me"] });
+    },
+  });
+}
