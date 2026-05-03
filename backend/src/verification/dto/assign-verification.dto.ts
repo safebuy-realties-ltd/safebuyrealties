@@ -1,4 +1,4 @@
-import { IsEnum, IsString, MinLength } from "class-validator";
+import { IsEnum, IsOptional, IsString, MinLength } from "class-validator";
 import { VerificationStepType } from "@prisma/client";
 
 export class AssignVerificationDto {
@@ -6,10 +6,12 @@ export class AssignVerificationDto {
   @MinLength(1)
   listingId!: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  professionalId!: string;
+  professionalId?: string;
 
+  @IsOptional()
   @IsEnum(VerificationStepType)
-  stepType!: VerificationStepType;
+  stepType?: VerificationStepType;
 }
