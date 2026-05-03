@@ -88,7 +88,7 @@ function ListingDetail() {
   const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId, loaderListing);
   const createTransaction = useCreateTransactionMutation();
-  const [verificationStarted, setVerificationStarted] = useState(false);
+  const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
 
   const canFetchExtras = isReady && isAuthenticated && !!listingId;
   const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(canFetchExtras ? listingId : null);
@@ -107,10 +107,10 @@ function ListingDetail() {
     return mapVerificationSteps(verSteps);
   }, [verSteps]);
 
-  const startVerification = () => {
-    setVerificationStarted(true);
-    toast.success("Verification request submitted", {
-      description: "Our team will reach out within 24 hours to begin the process.",
+  const openVerificationStatus = () => {
+    setIsRoutingToVerification(true);
+    void navigate({ to: "/dashboard/buyer/listings" }).finally(() => {
+      setIsRoutingToVerification(false);
     });
   };
 
@@ -124,6 +124,23 @@ function ListingDetail() {
       navigate({ to: "/dashboard/buyer/transactions" });
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Could not start transaction");
+    }
+  };
+
+  const handleMakeOffer = async () => {
+    if (!isAuthenticated) {
+      void navigate({ to: "/login" });
+      return;
+    }
+    if (!isBuyer || !listing || listing.status !== "LIVE") {
+      toast.error("Only buyers can make offers on live listings.");
+      return;
+    }
+    try {
+      await createTransaction.mutateAsync(listing.id);
+      navigate({ to: "/dashboard/buyer/transactions" });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Could not create offer.");
     }
   };
 
@@ -283,18 +300,20 @@ function ListingDetail() {
                 <Button
                   className="mt-5 w-full"
                   size="lg"
-                  onClick={startVerification}
-                  disabled={verificationStarted || (isBuyer && resolvedListing.status !== "LIVE")}
+                  onClick={openVerificationStatus}
+                  disabled={isRoutingToVerification}
                 >
                   <PlayCircle className="mr-2 h-4 w-4" />
-                  {verificationStarted
-                    ? "Verification requested"
-                    : isBuyer
-                      ? "Listing not available for purchase"
-                      : "Start verification"}
+                  {isRoutingToVerification ? "Opening verification…" : "View verification status"}
                 </Button>
               )}
-              <Button variant="outline" className="mt-2 w-full" type="button" disabled>
+              <Button
+                variant="outline"
+                className="mt-2 w-full"
+                type="button"
+                onClick={() => void handleMakeOffer()}
+                disabled={createTransaction.isPending || !isBuyer || listing.status !== "LIVE"}
+              >
                 Make an offer
               </Button>
               <Button variant="ghost" className="mt-1 w-full" type="button" disabled>

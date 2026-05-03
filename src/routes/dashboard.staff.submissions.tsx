@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
-import { useListingsQuery } from "@/hooks/use-listings";
+import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
 
 export const Route = createFileRoute("/dashboard/staff/submissions")({
   component: () => (
@@ -15,36 +15,22 @@ export const Route = createFileRoute("/dashboard/staff/submissions")({
   ),
 });
 
-const PIPELINE = ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED"] as const;
-
 function StaffSubmissions() {
-  const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 200 });
-  const listings = data?.listings ?? [];
+  const [filter, setFilter] = useState<"all" | StaffQueueFilter>("all");
+  const { data, isLoading, isError, error, refetch } = useStaffQueueQuery(filter);
+  const rows = data?.tableRows ?? [];
   const [q, setQ] = useState("");
-
-  const pipeline = useMemo(
-    () => listings.filter((l) => PIPELINE.includes(l.status as (typeof PIPELINE)[number])),
-    [listings],
-  );
+  const updateListing = useUpdateListingMutation();
 
   const visible = useMemo(() => {
-    if (!q.trim()) return pipeline;
+    if (!q.trim()) return rows;
     const n = q.toLowerCase();
-    return pipeline.filter(
-      (l) =>
-        l.title.toLowerCase().includes(n) ||
-        l.location.toLowerCase().includes(n) ||
-        (l.sellerName ?? "").toLowerCase().includes(n) ||
-        l.status.toLowerCase().includes(n),
+    return rows.filter(
+      (l) => l.title.toLowerCase().includes(n) || l.location.toLowerCase().includes(n) || l.seller.toLowerCase().includes(n) || l.backendStatus.toLowerCase().includes(n),
     );
-  }, [pipeline, q]);
+  }, [rows, q]);
 
-  const counts = {
-    all: pipeline.length,
-    pending: pipeline.filter((l) => l.status === "PENDING_REVIEW").length,
-    in_progress: pipeline.filter((l) => l.status === "ASSIGNED" || l.status === "IN_VERIFICATION").length,
-    completed: pipeline.filter((l) => l.status === "VERIFIED").length,
-  };
+  const counts = data?.counts ?? { pending: 0, in_progress: 0, completed: 0, rejected: 0 };
 
   return (
     <>
@@ -63,13 +49,18 @@ function StaffSubmissions() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="All" value={isLoading ? "…" : String(counts.all)} />
-        <StatCard label="Pending review" value={isLoading ? "…" : String(counts.pending)} />
-        <StatCard label="Verifying" value={isLoading ? "…" : String(counts.in_progress)} />
-        <StatCard label="Verified" value={isLoading ? "…" : String(counts.completed)} />
+        <StatCard label="All" value={isLoading ? "…" : String(counts.pending + counts.in_progress + counts.completed + counts.rejected)} />
+        <StatCard label="Pending" value={isLoading ? "…" : String(counts.pending)} />
+        <StatCard label="In progress" value={isLoading ? "…" : String(counts.in_progress)} />
+        <StatCard label="Completed" value={isLoading ? "…" : String(counts.completed)} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
+        {["all", "pending", "in_progress", "completed", "rejected"].map((f) => (
+          <Button key={f} variant={filter === f ? "default" : "outline"} size="sm" onClick={() => setFilter(f as "all" | StaffQueueFilter)}>
+            {f.replace("_", " ")}
+          </Button>
+        ))}
         <div className="relative ml-auto min-w-[220px] flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="h-10 pl-9" />
@@ -94,16 +85,21 @@ function StaffSubmissions() {
             visible.map((l) => (
               <li key={l.id} className="grid grid-cols-1 gap-2 px-5 py-4 text-sm md:grid-cols-12 md:items-center md:gap-4">
                 <div className="col-span-4 font-medium text-foreground">{l.title}</div>
-                <div className="col-span-3 text-muted-foreground">{l.sellerName ?? l.sellerId}</div>
+                <div className="col-span-3 text-muted-foreground">{l.seller}</div>
                 <div className="col-span-2">
-                  <Badge variant="outline">{l.status.replace(/_/g, " ")}</Badge>
+                  <Badge variant="outline">{l.backendStatus.replace(/_/g, " ")}</Badge>
                 </div>
-                <div className="col-span-3 flex justify-end">
+                <div className="col-span-3 flex justify-end gap-2">
                   <Button size="sm" variant="outline" asChild>
                     <Link to="/dashboard/staff/workflow" search={{ listing: l.id }}>
                       Assign in workflow
                     </Link>
                   </Button>
+                  {(["ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(l.status)) && (
+                    <Button size="sm" disabled={updateListing.isPending} onClick={() => approve(l.id, l.status)}>
+                      {l.status === "VERIFIED" ? "Publish live" : "Approve"}
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}
