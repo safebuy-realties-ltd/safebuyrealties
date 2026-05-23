@@ -195,7 +195,7 @@ stateDiagram-v2
 Actors: Seller/Agent, Staff. 1) Seller/Agent creates DRAFT (title, location, price, type, specs,
 media, ownership docs). 2) Uploads **required documents** (C of O / title deed, survey plan; plus
 optional Deed of Assignment, Governor's Consent, tax receipt). 3) Submits → PENDING_REVIEW
-(visible-but-clearly-unverified per client rule, or hidden — see open decision OD-2). 4) Staff
+(**hidden from buyers until VERIFIED** — Resolved Decision RD-2). 4) Staff
 triage → assign verification steps → IN_VERIFICATION. 5) On approval → VERIFIED (published). 6)
 NEEDS_MORE_INFO loops back to seller. **Buyers cannot pay on anything not VERIFIED.**
 
@@ -289,11 +289,14 @@ stateDiagram-v2
   REFUNDED --> [*]
 ```
 
-> **Open decision OD-1 (escrow mechanism).** True fund-holding can be implemented as (a) an
-> **in-platform escrow ledger** atop Paystack/Flutterwave settlement, or (b) integration with a
-> **licensed third-party/CBN-regulated escrow provider**. (b) carries lower legal/regulatory risk
-> (the legal-comments doc flags CBN/AML and escrow safeguards) but added cost/complexity. The
-> Master PRD defines escrow behavior; the mechanism choice is a Phase 5 / commercial decision.
+> **Resolved Decision RD-1 (escrow mechanism).** Escrow is an **in-platform escrow ledger**:
+> SafeBuyRealties maintains the logical held-balance and the release/refund logic, while money
+> moves through **a single integrated payment gateway — Paystack OR Flutterwave** (one of the
+> two) used for **both collection and disbursement** (the gateway's transfer/payout API funds
+> seller payouts, agent commission, and buyer refunds). No third-party/regulated escrow provider
+> is used. Implication: the platform must hold funds in a controlled settlement account, reconcile
+> gateway settlement against the ledger, and apply release conditions before initiating payout —
+> and must be mindful of CBN/AML expectations flagged in the legal-comments doc.
 
 ### 4.6 Document integrity workflow
 
@@ -517,13 +520,14 @@ erDiagram
 | C11 | Inspection scheduling | **Defined** (§6, §4.8) | Explicit in requirements + demo |
 | C12 | Listing media vs documents | **Separate ListingMedia entity** (§7) | Demo expects hero/gallery; legal docs are distinct |
 
-**Open decisions for Goodness (no resolution forced here):**
-- **OD-1 — Escrow mechanism:** in-platform ledger vs licensed third-party provider (regulatory
-  weight; Phase 5 / commercial).
-- **OD-2 — Unverified listing visibility:** requirements doc says "visible but clearly marked
-  unverified"; alternative is hide-until-verified. Trust vs inventory-density trade-off.
-- **OD-3 — KYC depth/provider:** identity verification is implied (NDPR/AML) but no provider
-  named; choose manual vs integrated (e.g., NIN/BVN) KYC.
+**Resolved decisions (confirmed by Goodness, 2026-05-23):**
+- **RD-1 — Escrow mechanism:** **in-platform escrow ledger**; collection **and** disbursement via
+  **one integrated gateway (Paystack or Flutterwave)** using its transfer/payout API. No
+  third-party escrow provider. (See §4.5.)
+- **RD-2 — Unverified listing visibility:** **hide-until-verified** — listings are invisible to
+  buyers/public until they reach VERIFIED. (See §4.2, §10.2.)
+- **RD-3 — KYC / identity verification:** **manual** identity verification by internal staff (no
+  automated NIN/BVN provider in the north-star); KYC records reviewed in the staff/admin queue.
 
 ---
 
@@ -606,9 +610,9 @@ operations, all cross-cutting features, a conceptual data model, NFRs (security/
 performance/accessibility), conflict resolutions (C1–C12), and acceptance criteria — without yet
 constraining to current scope.
 
-**Three open decisions (OD-1 escrow mechanism, OD-2 unverified-listing visibility, OD-3 KYC
-depth)** are surfaced for Goodness; they do not block the audit but should be settled before
-build-scoping in Phase 5.
+The three previously open decisions are now **resolved** (RD-1 in-platform escrow ledger via a
+single Paystack/Flutterwave integration; RD-2 hide-until-verified; RD-3 manual KYC) and folded
+into the relevant sections.
 
 **Next (Phase 3, on approval):** `03_CURRENT_STATE_AUDIT.md` — an honest, detailed status of the
 active codebase against this PRD (implemented / partial / broken / mock / missing), per frontend
