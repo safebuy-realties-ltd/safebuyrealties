@@ -106,7 +106,15 @@ async function main() {
     const { res, json } = await req("/transactions/me?page=1&pageSize=10");
     const rows = json?.data ?? [];
     record("buyer.transactions", res.ok ? "pass" : "fail", `${rows.length} transaction(s)`);
-    globalThis._txnId = rows[0]?.id;
+    const tx = rows[0];
+    globalThis._txnId = tx?.id;
+    globalThis._txnListingPrice = tx?.listing?.price;
+  }
+
+  function depositAmount(priceStr) {
+    const n = Number(priceStr);
+    if (!Number.isFinite(n) || n <= 0) return 500_000;
+    return Math.min(Math.max(Math.round(n * 0.02), 5_000), 2_000_000);
   }
 
   // Buyer: create transaction on LIVE listing (if any)
@@ -129,16 +137,24 @@ async function main() {
     record("buyer.startTransaction", "partial", "no LIVE listing to test");
   }
 
-  // Buyer: payment initiate (mock)
+  // Buyer: payment initiate (Paystack test or mock when no secret)
   if (globalThis._txnId) {
+    const amount = depositAmount(globalThis._txnListingPrice);
+    const callbackUrl = `${base.replace(/\/api\/v\d+$/, "")}/dashboard/buyer/transactions?mock=1`;
     const { res, json } = await req("/payments/initiate", {
       method: "POST",
-      body: JSON.stringify({ transactionId: globalThis._txnId }),
+      body: JSON.stringify({
+        transactionId: globalThis._txnId,
+        amount,
+        currency: "NGN",
+        callbackUrl,
+      }),
     });
+    const ref = json?.data?.reference ?? json?.data?.authorizationUrl;
     record(
       "buyer.paymentInitiate",
       res.ok ? "pass" : "partial",
-      res.ok ? json?.data?.reference ?? "ok" : `HTTP ${res.status} ${JSON.stringify(json?.message ?? json)}`,
+      res.ok ? String(ref ?? "ok") : `HTTP ${res.status}`,
     );
   } else {
     record("buyer.paymentInitiate", "partial", "no transaction id");
@@ -174,17 +190,24 @@ async function main() {
       ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(l.status),
     );
     record("staff.listings", res.ok ? "pass" : "fail", `${pending.length} in workflow statuses`);
-    globalThis._staffListingId = pending[0]?.id ?? rows[0]?.id;
+    globalThis._staffListingId = pending[0]?.id;
+    globalThis._staffHasPipeline = pending.length > 0;
   }
 
-  // Staff: verification steps
-  if (globalThis._staffListingId) {
-    const { res, json } = await req(`/verification/listings/${globalThis._staffListingId}`);
+  // Staff: verification steps (only when a pipeline listing exists)
+  if (globalThis._staffHasPipeline && globalThis._staffListingId) {
+    const { res, json } = await req(`/verification/listing/${globalThis._staffListingId}`);
     const steps = json?.data ?? [];
     record(
       "staff.verificationSteps",
-      res.ok ? "pass" : "fail",
+      res.ok && steps.length > 0 ? "pass" : "fail",
       `${steps.length} step(s)`,
+    );
+  } else {
+    record(
+      "staff.verificationSteps",
+      "partial",
+      "no pipeline listings yet (redeploy API or wait for ensure-pipeline script)",
     );
   }
 
@@ -229,7 +252,7 @@ async function main() {
       password: PASSWORD,
       firstName: "Val",
       lastName: "Idate",
-      role: "buyer",
+      role: "BUYER",
     }),
   });
   record(
