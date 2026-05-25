@@ -10,7 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, FileText, CheckCircle2, Scale, Map, Building2, Receipt, FileCheck2 } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  CheckCircle2,
+  Scale,
+  Map,
+  Building2,
+  Receipt,
+  FileCheck2,
+  ImageIcon,
+  Images,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useListingsQuery } from "@/hooks/use-listings";
@@ -27,19 +38,44 @@ export const Route = createFileRoute("/dashboard/seller/documents")({
   ),
 });
 
-type DocType = "title_deed" | "survey_plan" | "building_approval" | "tax_receipt" | "other";
+type DocType =
+  | "title_deed"
+  | "survey_plan"
+  | "building_approval"
+  | "tax_receipt"
+  | "listing_hero"
+  | "listing_gallery"
+  | "other";
 
 const docTypes: { id: DocType; label: string; desc: string; icon: typeof Scale; required: boolean }[] = [
   { id: "title_deed", label: "Title Deed", desc: "Certificate of Occupancy or equivalent", icon: Scale, required: true },
   { id: "survey_plan", label: "Survey Plan", desc: "Registered surveyor's plan", icon: Map, required: true },
   { id: "building_approval", label: "Building Approval", desc: "Government building permit", icon: Building2, required: false },
   { id: "tax_receipt", label: "Tax Receipts", desc: "Recent property tax payments", icon: Receipt, required: false },
+  { id: "listing_hero", label: "Hero Image", desc: "Main property photo", icon: ImageIcon, required: false },
+  {
+    id: "listing_gallery",
+    label: "Gallery Photos",
+    desc: "Additional property photos (max 8)",
+    icon: Images,
+    required: false,
+  },
 ];
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isListingImageCategory(category: DocType): boolean {
+  return category === "listing_hero" || category === "listing_gallery";
+}
+
+function isImageUpload(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
 }
 
 function categoryLabel(category: string) {
@@ -143,6 +179,20 @@ function SellerDocuments() {
       if (!list?.length || !listingId) return;
       setUploadError(null);
       const files = Array.from(list);
+      if (isListingImageCategory(activeType)) {
+        const nonImages = files.filter((f) => !isImageUpload(f));
+        if (nonImages.length > 0) {
+          setUploadError("Hero and gallery uploads must be images (JPG, PNG, or WebP).");
+          return;
+        }
+      }
+      if (activeType === "listing_gallery") {
+        const existing = (documents ?? []).filter((d) => d.category === "listing_gallery").length;
+        if (existing + files.length > 8) {
+          setUploadError("Gallery supports at most 8 photos.");
+          return;
+        }
+      }
       for (const file of files) {
         try {
           await uploadMutation.mutateAsync({
@@ -159,7 +209,7 @@ function SellerDocuments() {
 
       void refetchDocs();
     },
-    [listingId, activeType, refetchDocs, uploadMutation],
+    [listingId, activeType, documents, refetchDocs, uploadMutation],
   );
 
   const handleFiles = (list: FileList | null) => {
@@ -294,7 +344,11 @@ function SellerDocuments() {
             <p className="mt-4 text-sm font-medium text-foreground">
               Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files here
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 15MB each (API limit)</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isListingImageCategory(activeType)
+                ? "JPG, PNG, or WebP up to 15MB each (API limit)"
+                : "PDF, JPG, PNG up to 15MB each (API limit)"}
+            </p>
             <Button
               className="mt-5"
               disabled={!listingId || uploadMutation.isPending}
@@ -306,7 +360,11 @@ function SellerDocuments() {
               ref={inputRef}
               type="file"
               multiple
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept={
+                isListingImageCategory(activeType)
+                  ? "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  : ".pdf,.jpg,.jpeg,.png"
+              }
               className="hidden"
               disabled={!listingId || uploadMutation.isPending}
               onChange={onPick}

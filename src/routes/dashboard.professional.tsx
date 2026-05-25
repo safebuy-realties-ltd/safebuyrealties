@@ -59,9 +59,15 @@ function ProOverview() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pending" value={kpis.isLoading ? "…" : String(kpis.pending)} />
-        <StatCard label="In progress" value={kpis.isLoading ? "…" : String(kpis.inProgress)} />
-        <StatCard label="Completed" value={kpis.isLoading ? "…" : String(kpis.completed)} />
+        <StatCard label="Pending" value={kpis.isLoading ? "…" : String(kpis.data?.pending ?? 0)} />
+        <StatCard
+          label="In progress"
+          value={kpis.isLoading ? "…" : String(kpis.data?.inProgress ?? 0)}
+        />
+        <StatCard
+          label="Completed"
+          value={kpis.isLoading ? "…" : String(kpis.data?.completed ?? 0)}
+        />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
+import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
 import { useCreateListingMutation, useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 
@@ -30,41 +31,6 @@ function formatMoney(amount: string, currency: string) {
   } catch {
     return `${currency} ${amount}`;
   }
-}
-
-function listingStatusStyle(status: string) {
-  switch (status) {
-    case "LIVE":
-      return "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]";
-    case "VERIFIED":
-      return "border-primary/20 bg-primary-soft text-primary";
-    case "IN_VERIFICATION":
-    case "ASSIGNED":
-      return "border-primary/20 bg-primary-soft text-primary";
-    case "PENDING_REVIEW":
-      return "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]";
-    case "REJECTED":
-      return "border-destructive/30 bg-destructive/10 text-destructive";
-    case "ARCHIVED":
-      return "border-border text-muted-foreground";
-    case "DRAFT":
-    default:
-      return "border-border text-muted-foreground";
-  }
-}
-
-function listingStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    DRAFT: "Draft",
-    PENDING_REVIEW: "Pending review",
-    ASSIGNED: "Assigned",
-    IN_VERIFICATION: "Verifying",
-    VERIFIED: "Verified",
-    LIVE: "Live",
-    REJECTED: "Rejected",
-    ARCHIVED: "Archived",
-  };
-  return labels[status] ?? status.replace(/_/g, " ");
 }
 
 function SellerOverview() {
@@ -209,8 +175,8 @@ function ListingRow({ listing }: { listing: ListingDto }) {
           {formatMoney(listing.price, listing.currency)} · {listing.location}
         </p>
       </div>
-      <Badge variant="outline" className={listingStatusStyle(listing.status)}>
-        {listingStatusLabel(listing.status)}
+      <Badge variant="outline" className={statusBadgeClass(listing.status)}>
+        {statusLabel(listing.status)}
       </Badge>
     </div>
   );

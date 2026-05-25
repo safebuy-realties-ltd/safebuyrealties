@@ -18,6 +18,7 @@ export type StaffTableRowViewModel = {
   seller: string;
   location: string;
   backendStatus: string;
+  status: string;
   queueStatus: StaffQueueFilter;
 };
 
@@ -53,12 +54,16 @@ export function useStaffQueueQuery(filter: StaffQueueFilter | "all" = "all") {
       const listings = listingsEnv.data;
 
       const pipelineListings = listings.filter((l) =>
-        ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED", "REJECTED", "LIVE"].includes(l.status),
+        ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED", "REJECTED", "LIVE"].includes(
+          l.status,
+        ),
       );
 
       const withSteps: StaffQueueItem[] = await Promise.all(
         pipelineListings.map(async (listing) => {
-          const stepsEnv = await apiRequest<VerificationStepDto[]>(`/verification/listing/${listing.id}`);
+          const stepsEnv = await apiRequest<VerificationStepDto[]>(
+            `/verification/listing/${listing.id}`,
+          );
           return { listing, steps: stepsEnv.data };
         }),
       );
@@ -69,10 +74,16 @@ export function useStaffQueueQuery(filter: StaffQueueFilter | "all" = "all") {
           acc[key] += 1;
           return acc;
         },
-        { pending: 0, in_progress: 0, completed: 0, rejected: 0 } as Record<StaffQueueFilter, number>,
+        { pending: 0, in_progress: 0, completed: 0, rejected: 0 } as Record<
+          StaffQueueFilter,
+          number
+        >,
       );
 
-      const filtered = filter === "all" ? withSteps : withSteps.filter((i) => normalizeQueueStatus(i.listing, i.steps) === filter);
+      const filtered =
+        filter === "all"
+          ? withSteps
+          : withSteps.filter((i) => normalizeQueueStatus(i.listing, i.steps) === filter);
 
       const tableRows: StaffTableRowViewModel[] = filtered.map((item) => ({
         id: item.listing.id,
@@ -81,6 +92,7 @@ export function useStaffQueueQuery(filter: StaffQueueFilter | "all" = "all") {
         seller: item.listing.sellerName ?? item.listing.sellerId,
         location: item.listing.location,
         backendStatus: item.listing.status,
+        status: item.listing.status,
         queueStatus: normalizeQueueStatus(item.listing, item.steps),
       }));
 
