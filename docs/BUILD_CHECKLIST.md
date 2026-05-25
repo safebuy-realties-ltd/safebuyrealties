@@ -9,6 +9,8 @@ This is the single source of truth for development progress.
 
 Any AI tool working on this project reads this file first, finds the first `[ ]` or `[~]`, and continues from there. See `AGENT_PROMPT.md` for the full working protocol.
 
+**Validation (Vercel-first, no Docker):** Use `docs/VERCEL_VALIDATION.md`. Replace checklist `localhost:3001` curl examples with `https://safebuyrealties-app.vercel.app/api/v1` (or the current preview URL). Browser checks run on the deployed app after push.
+
 ---
 
 ## Last Session Notes
@@ -20,7 +22,7 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 - **Completed:** Step 1 — all five items validated and marked done
 - **Changes:** Fixed `useTaskKpiCounts` to query `PENDING` / `IN_PROGRESS` / `COMPLETED` (was lowercase, KPIs always zero)
 - **Gate A:** `npx tsc --noEmit` (root + backend) — pass. Hooks/workflow/submissions/CI already present in repo; code review confirms wiring.
-- **Gate A (browser):** Not run here — backend/DB not up in this environment (no Docker). Re-run locally: `backend/docker compose up -d`, `npm run start:dev` in backend, `npm run dev` in root; login `lawyer@safebuyrealties.test` / `staff@safebuyrealties.test` / `password123`; hit the four routes below.
+- **Gate A (browser):** Not run in that session. Re-run on Vercel: https://safebuyrealties-app.vercel.app — login `lawyer@safebuyrealties.test` / `staff@safebuyrealties.test` / `password123`; see `docs/VERCEL_VALIDATION.md` and `docs/demo-script-checklist.md`.
 - **Next:** Step 2 — **Prisma schema — listing spec and media fields** (first unchecked item)
 - **Blockers:** None
 

@@ -25,19 +25,22 @@ Every item must be validated before being marked done. Do not skip validation to
 
 **For every backend change:**
 - Run `cd backend && npx tsc --noEmit` — must produce zero errors
-- Test each new endpoint with a curl command. Document the curl command and its response in a comment at the top of the relevant service file or in the checklist
-- If a new Prisma model was added: run `cd backend && npx prisma migrate dev --name <feature-name>` and confirm it succeeds
+- Test each new endpoint with curl against **deployed** API (see `docs/VERCEL_VALIDATION.md`). Default base: `https://safebuyrealties-app.vercel.app/api/v1` or preview URL from the latest Vercel deploy. Document the curl command and response in the checklist or service file.
+- If a new Prisma model was added: add a migration (`npx prisma migrate dev --name <feature> --create-only` in `backend/`, or migrate via `vercel env pull` + remote DB). Migrations apply on **Vercel backend deploy** (`migrate deploy` in `vercel-build`). Confirm success in the deployment build log — Docker is not required.
 
 **For every frontend change:**
 - Run `npx tsc --noEmit` from the repo root — must produce zero errors
-- If a new route was added: verify the page loads without a crash by checking the browser console for errors (or ask the user to confirm)
-- If an existing broken page was fixed: confirm the specific crash is gone
+- If a new route was added: verify on **Vercel preview or production** (`https://safebuyrealties-app.vercel.app` or branch preview) — no console errors on load
+- If an existing broken page was fixed: confirm on the deployed app (browser MCP or manual)
 
 **For a complete feature (backend + frontend):**
-- Both type checks pass
-- Start both servers (`npm run dev` in root, `npm run start:dev` in backend)
-- Walk through the feature step by step as a user would — log in as the right role, navigate to the screen, perform the action, confirm the result appears correctly
-- Describe exactly what you verified and what you saw
+- Both type checks pass (Gate A)
+- Push branch; wait for Vercel preview deploy(s) for frontend and backend if either changed (Gate C)
+- Run `node scripts/vercel-api-smoke.mjs` with `SBR_API_BASE` set to the preview API if needed
+- Walk through the feature on the **deployed** app — log in as the right role (seed users in `VERCEL_VALIDATION.md`), perform the action, confirm the result
+- Describe exactly what you verified, which URL, and what you saw
+
+**Local `npm run dev` / Docker are optional**, not the default validation path. See `docs/VERCEL_VALIDATION.md`.
 
 **If validation fails:**
 - Fix the issue before moving on
@@ -84,10 +87,12 @@ Do not re-implement work already present; validate first, then mark `[x]`.
 
 ## Milestone validation (not every item)
 
-- **Gate A (every item):** `tsc` FE + BE; curl for new APIs; browser check for routes
+- **Gate A (every item):** `tsc` FE + BE; optional `node scripts/vercel-api-smoke.mjs` after deploy
 - **Gate B (every push):** GitHub Actions CI
-- **Gate C (end of Steps 2, 5, 7, 10):** staging deploy + `docs/demo-script-checklist.md`
-- **Gate D (all `[x]`):** full buyer / seller / staff / pro journeys
+- **Gate C (end of Steps 2, 5, 7, 10):** Vercel preview/production + `docs/demo-script-checklist.md` + `docs/VERCEL_VALIDATION.md`
+- **Gate D (all `[x]`):** full buyer / seller / staff / pro journeys on production URLs
+
+**Validation reference:** `docs/VERCEL_VALIDATION.md` (URLs, migrations without Docker, curl, seed logins).
 
 ## Parallel sessions
 

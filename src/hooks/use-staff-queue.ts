@@ -50,7 +50,7 @@ export function useStaffQueueQuery(filter: StaffQueueFilter | "all" = "all") {
     queryKey: ["staff", "queue", user?.id ?? "anon"],
     enabled: isReady && !!user,
     queryFn: async () => {
-      const listingsEnv = await apiRequest<ListingDto[]>("/listings?page=1&pageSize=200");
+      const listingsEnv = await apiRequest<ListingDto[]>("/listings?page=1&pageSize=100");
       const listings = listingsEnv.data;
 
       const pipelineListings = listings.filter((l) =>

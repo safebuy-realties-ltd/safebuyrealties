@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "validate:tsc": "npx tsc --noEmit && cd backend && npx tsc --noEmit",
+    "smoke:api": "node scripts/vercel-api-smoke.mjs"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

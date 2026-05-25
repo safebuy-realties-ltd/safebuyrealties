@@ -1,6 +1,14 @@
 # Demo Script Checklist
 
-Validated walkthrough URLs:
+**Base URL (production):** https://safebuyrealties-app.vercel.app  
+**API (direct):** https://safebuyrealties.vercel.app/api/v1  
+**Preview:** use the frontend preview URL from the Vercel dashboard for your branch.
+
+**Logins (seed):** `password123` — `staff@`, `seller@`, `buyer@`, `lawyer@` `@safebuyrealties.test`
+
+See `docs/VERCEL_VALIDATION.md` for curl smoke and migration workflow without Docker.
+
+Validated walkthrough paths (append to base URL):
 
 ## Seller
 

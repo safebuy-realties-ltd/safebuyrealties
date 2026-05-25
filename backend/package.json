@@ -12,6 +12,7 @@
     "start:prod": "node dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:create": "prisma migrate dev --create-only",
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed"
   },

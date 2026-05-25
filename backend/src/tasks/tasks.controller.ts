@@ -27,6 +27,11 @@ export class TasksController {
     return this.tasks.listMine(query, user);
   }
 
+  @Get("me/:id")
+  getMineById(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.tasks.getMineById(id, user);
+  }
+
   @Patch(":id")
   patch(@Param("id") id: string, @Body() dto: PatchTaskDto, @CurrentUser() user: JwtPayload) {
     return this.tasks.patch(id, dto, user);

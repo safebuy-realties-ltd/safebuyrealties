@@ -94,6 +94,17 @@ export class TasksService {
     };
   }
 
+  async getMineById(taskId: string, actor: JwtPayload) {
+    if (actor.role !== UserRole.PROFESSIONAL) {
+      throw new ForbiddenException("Only professionals have assigned tasks");
+    }
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, assigneeId: actor.sub },
+    });
+    if (!task) throw new NotFoundException("Task not found");
+    return this.serializeTask(task);
+  }
+
   async patch(id: string, dto: PatchTaskDto, actor: JwtPayload) {
     const task = await this.prisma.task.findUnique({ where: { id } });
     if (!task) throw new NotFoundException("Task not found");
