@@ -6,6 +6,47 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 
+function parseConfiguredOrigins(): string[] {
+  return (
+    process.env.FRONTEND_URL?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) ?? []
+  );
+}
+
+function isAllowedCorsOrigin(origin: string, configuredOrigins: string[], isProd: boolean): boolean {
+  if (configuredOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (!isProd) {
+    try {
+      const { hostname } = new URL(origin);
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    const { protocol, hostname } = new URL(origin);
+    // Production + preview deploys on Vercel for this project
+    if (
+      protocol === "https:" &&
+      hostname.endsWith(".vercel.app") &&
+      hostname.includes("safebuyrealties")
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.use(cookieParser());
@@ -27,33 +68,14 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
   const isProd = process.env.NODE_ENV === "production";
-  const configuredOrigins =
-    process.env.FRONTEND_URL?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? [];
+  const configuredOrigins = parseConfiguredOrigins();
   app.enableCors({
     origin: (reqOrigin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
       if (!reqOrigin) {
         cb(null, true);
         return;
       }
-      if (configuredOrigins.includes(reqOrigin)) {
-        cb(null, true);
-        return;
-      }
-      if (!isProd) {
-        try {
-          const { hostname } = new URL(reqOrigin);
-          if (hostname === "localhost" || hostname === "127.0.0.1") {
-            cb(null, true);
-            return;
-          }
-        } catch {
-          cb(null, false);
-          return;
-        }
-      }
-      cb(null, false);
+      cb(null, isAllowedCorsOrigin(reqOrigin, configuredOrigins, isProd));
     },
     credentials: true,
   });
