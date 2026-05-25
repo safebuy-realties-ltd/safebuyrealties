@@ -98,7 +98,9 @@ async function main() {
       res.ok ? (list.length ? "pass" : "partial") : "fail",
       `${list.length} total, ${live.length} LIVE`,
     );
-    globalThis._liveListingId = live[0]?.id ?? list[0]?.id;
+    const liveListing = live[0] ?? list[0];
+    globalThis._liveListingId = liveListing?.id;
+    globalThis._liveListingPrice = liveListing?.price;
   }
 
   // Buyer: transactions
@@ -131,7 +133,11 @@ async function main() {
         res.ok ? "pass" : "partial",
         res.ok ? `id=${json?.data?.id}` : `HTTP ${res.status}`,
       );
-      if (res.ok) globalThis._txnId = json?.data?.id;
+      if (res.ok) {
+        globalThis._txnId = json?.data?.id;
+        globalThis._txnListingPrice =
+          json?.data?.listing?.price ?? globalThis._liveListingPrice ?? globalThis._txnListingPrice;
+      }
     }
   } else {
     record("buyer.startTransaction", "partial", "no LIVE listing to test");
