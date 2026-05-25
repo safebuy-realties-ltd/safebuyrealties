@@ -21,12 +21,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-25
 - **Tool:** Cursor (Composer)
-- **Completed:** Step 2 item 1 — PR [#25](https://github.com/ifejesu/safebuyrealties/pull/25) merged (`777d17f`)
-- **Gate A:** `npm test` (backend Jest), `npm run validate:tsc` — pass on PR
-- **Gate B:** `CI (required)` green on PR and main post-merge (run `26404991901`)
-- **Gate C (deploy):** Backend production deploy `dpl_5MCjDEtMJThyHSHQ4nEpTeeHYRuq` — `[vercel-migrate]` → `prisma migrate deploy`, 3 migrations, **no pending**; health `https://safebuyrealties.vercel.app/api/v1/health` OK
-- **Next:** Step 2 item 2 — Object storage service (`feat/step2-storage` or similar)
-- **Blockers:** Enable branch protection on `main` per `docs/BRANCH_PROTECTION.md` if not done yet
+- **In progress:** Step 2 item 2 — Object storage service (`feat/step2-object-storage`)
+- **Done this session:** `StorageService` (local + S3), documents upload wired; Jest tests (storage + documents)
+- **Gate A:** `npm test` (9), `npm run validate:tsc` — pass locally
+- **Next:** PR → preview — seller document upload on Vercel (local driver uses `STORAGE_LOCAL_PATH` / ephemeral FS on serverless; note for validation)
+- **Blockers:** None
 
 ---
 
@@ -69,14 +68,12 @@ These four issues cause dashboard screens to crash on load. Fix them before anyt
 
 These are building blocks that other features depend on. Build them in order.
 
-- [x] **Prisma schema — listing spec and media fields**
-  - Add to `Listing` model: `beds Int?`, `baths Int?`, `landAreaSqm Decimal? @db.Decimal(10,2)`, `buildType String?`
-  - Add new model `ListingMedia`: `ListingMediaType` enum (`HERO`, `GALLERY`); API returns `hero` / `gallery`; `sortOrder` + `createdAt` + `id` ordering
-  - Migration: `20260525143000_listing_spec_and_media` (merged PR #25)
-  - Tests: `backend/src/listings/listings.service.spec.ts` (Jest)
-  - Validation: Vercel production build `dpl_5MCjDEtMJThyHSHQ4nEpTeeHYRuq` — `[vercel-migrate]` no pending migrations; `npx tsc` + `npm test` in CI
+- [x] **Prisma schema — listing spec and media fields** (PR #25)
+  - `Listing` spec fields + `ListingMedia` / `ListingMediaType`; migration `20260525143000_listing_spec_and_media`
+  - Tests: `backend/src/listings/listings.service.spec.ts`
+  - Validated: production deploy migrate OK (`dpl_5MCjDEtMJThyHSHQ4nEpTeeHYRuq`)
 
-- [ ] **Object storage service**
+- [~] **Object storage service**
   - Create `backend/src/storage/storage.service.ts` and `backend/src/storage/storage.module.ts`
   - The service reads `STORAGE_DRIVER` env var (`local` or `s3`). Default to `local` for dev.
   - Local driver: reads/writes files to `STORAGE_LOCAL_PATH` (default `./uploads`). `getSignedUrl()` returns `/uploads/{key}`

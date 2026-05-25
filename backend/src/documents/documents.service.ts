@@ -6,15 +6,18 @@ import {
 } from "@nestjs/common";
 import { UserRole, ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { StorageService } from "../storage/storage.service";
 import { JwtPayload } from "../auth/jwt.strategy";
-import * as fs from "fs";
 import * as path from "path";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
 @Injectable()
 export class DocumentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storage: StorageService,
+  ) {}
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
@@ -42,17 +45,17 @@ export class DocumentsService {
     category: string,
     file: Express.Multer.File,
     actor: JwtPayload,
-    uploadDir: string,
   ) {
     await this.getListingOrThrow(listingId, actor);
     if (!file?.size) throw new BadRequestException("File is required");
     if (file.size > MAX_BYTES) throw new ForbiddenException("File too large (max 15MB)");
 
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = path.join("listings", listingId, `${Date.now()}_${safeName}`);
-    const abs = path.join(uploadDir, storageKey);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, file.buffer);
+    const storageKey = await this.storage.upload(
+      file.buffer,
+      path.join("listings", listingId, `${Date.now()}_${safeName}`),
+      file.mimetype,
+    );
 
     const doc = await this.prisma.document.create({
       data: {
