@@ -6,6 +6,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "build": "nest build",
+    "vercel-build": "prisma generate && nest build && node scripts/vercel-migrate.mjs",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",

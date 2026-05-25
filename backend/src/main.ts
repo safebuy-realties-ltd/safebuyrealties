@@ -1,5 +1,5 @@
 import { NestFactory } from "@nestjs/core";
-import { ValidationPipe, RequestMethod } from "@nestjs/common";
+import { ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
@@ -33,9 +33,7 @@ async function bootstrap() {
     allowedHeaders: "*",
     exposedHeaders: "*",
   });
-  app.setGlobalPrefix("api/v1", {
-    exclude: [{ path: "health", method: RequestMethod.GET }],
-  });
+  app.setGlobalPrefix("api/v1");
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
 }
