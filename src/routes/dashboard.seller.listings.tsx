@@ -5,6 +5,7 @@ import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLay
 import { useAuth } from "@/lib/auth";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { apiRequest } from "@/lib/api";
+import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,10 @@ type CreateListingInput = {
   location: string;
   price: number;
   currency: string;
+  beds?: number;
+  baths?: number;
+  landAreaSqm?: number;
+  buildType?: string;
 };
 
 function SellerListingsPage() {
@@ -74,7 +79,9 @@ function SellerListingsPage() {
                 <p className="font-medium">{listing.title}</p>
                 <p className="text-sm text-muted-foreground">{listing.location}</p>
               </div>
-              <Badge variant="outline">{listing.status}</Badge>
+              <Badge variant="outline" className={statusBadgeClass(listing.status)}>
+                {statusLabel(listing.status)}
+              </Badge>
             </div>
           ))}
         </div>
@@ -98,6 +105,10 @@ function CreateListingForm({
     location: "",
     price: "",
     currency: "NGN",
+    beds: "",
+    baths: "",
+    landAreaSqm: "",
+    buildType: "",
   });
 
   return (
@@ -105,13 +116,21 @@ function CreateListingForm({
       className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]"
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({
+        const payload: CreateListingInput = {
           title: form.title.trim(),
           description: form.description.trim(),
           location: form.location.trim(),
           price: Number(form.price),
           currency: form.currency.trim() || "NGN",
-        });
+        };
+        const beds = Number(form.beds);
+        if (form.beds.trim() && Number.isFinite(beds)) payload.beds = beds;
+        const baths = Number(form.baths);
+        if (form.baths.trim() && Number.isFinite(baths)) payload.baths = baths;
+        const landAreaSqm = Number(form.landAreaSqm);
+        if (form.landAreaSqm.trim() && Number.isFinite(landAreaSqm)) payload.landAreaSqm = landAreaSqm;
+        if (form.buildType.trim()) payload.buildType = form.buildType.trim();
+        onSubmit(payload);
       }}
     >
       <h2 className="text-lg font-semibold">Create listing</h2>
@@ -140,6 +159,32 @@ function CreateListingForm({
           placeholder="Currency (e.g. NGN)"
           value={form.currency}
           onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+        />
+        <Input
+          type="number"
+          min="0"
+          placeholder="Beds (optional)"
+          value={form.beds}
+          onChange={(e) => setForm((p) => ({ ...p, beds: e.target.value }))}
+        />
+        <Input
+          type="number"
+          min="0"
+          placeholder="Baths (optional)"
+          value={form.baths}
+          onChange={(e) => setForm((p) => ({ ...p, baths: e.target.value }))}
+        />
+        <Input
+          type="number"
+          min="0"
+          placeholder="Land area m² (optional)"
+          value={form.landAreaSqm}
+          onChange={(e) => setForm((p) => ({ ...p, landAreaSqm: e.target.value }))}
+        />
+        <Input
+          placeholder="Build type (e.g. Detached)"
+          value={form.buildType}
+          onChange={(e) => setForm((p) => ({ ...p, buildType: e.target.value }))}
         />
       </div>
       <Textarea

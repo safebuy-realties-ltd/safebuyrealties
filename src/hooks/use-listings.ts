@@ -16,6 +16,10 @@ export type ListingDto = {
   rejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
+  beds?: number | null;
+  baths?: number | null;
+  landAreaSqm?: number | null;
+  buildType?: string | null;
 };
 
 export type ListingsQueryOptions = {

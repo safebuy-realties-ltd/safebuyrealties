@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
+import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
 
 export const Route = createFileRoute("/dashboard/admin/listings")({
   component: () => (
@@ -109,7 +110,7 @@ function AdminListings() {
               onClick={() => setStatusFilter(s)}
               className={`rounded-md px-2 py-1.5 text-xs ${statusFilter === s ? "bg-primary text-primary-foreground" : ""}`}
             >
-              {s} ({counts[s] ?? 0})
+              {statusLabel(s)} ({counts[s] ?? 0})
             </button>
           ))}
         </div>
@@ -143,7 +144,9 @@ function AdminListings() {
                 <div className="col-span-2 text-muted-foreground">{l.location}</div>
                 <div className="col-span-2 text-foreground">{formatMoney(l.price, l.currency)}</div>
                 <div className="col-span-1">
-                  <Badge variant="outline">{l.status}</Badge>
+                  <Badge variant="outline" className={statusBadgeClass(l.status)}>
+                    {statusLabel(l.status)}
+                  </Badge>
                 </div>
                 <div className="col-span-2 flex flex-wrap justify-end gap-1">
                   <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => setStatus(l, "PENDING_REVIEW")}>
