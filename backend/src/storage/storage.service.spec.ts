@@ -68,6 +68,30 @@ describe("StorageService (local driver)", () => {
 });
 
 describe("StorageService (s3 driver)", () => {
+  it("uses /tmp on Vercel when no local path is configured", async () => {
+    const prev = process.env.VERCEL;
+    process.env.VERCEL = "1";
+    try {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          StorageService,
+          {
+            provide: ConfigService,
+            useValue: { get: () => undefined },
+          },
+        ],
+      }).compile();
+      const service = module.get(StorageService);
+      await service.upload(Buffer.from("v"), "vercel-check.txt", "text/plain");
+      const abs = path.join("/tmp", "safebuyrealties-uploads", "vercel-check.txt");
+      expect(fs.existsSync(abs)).toBe(true);
+      await service.delete("vercel-check.txt");
+    } finally {
+      if (prev === undefined) delete process.env.VERCEL;
+      else process.env.VERCEL = prev;
+    }
+  });
+
   it("throws when required S3 env vars are missing", async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [

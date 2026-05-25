@@ -12,6 +12,23 @@ import * as path from "path";
 
 type StorageDriver = "local" | "s3";
 
+function resolveLocalRoot(config: ConfigService): string {
+  const configured =
+    config.get<string>("STORAGE_LOCAL_PATH")?.trim() ||
+    config.get<string>("UPLOAD_DIR")?.trim();
+  if (configured) {
+    // Relative UPLOAD_DIR (e.g. ./uploads) is not writable on Vercel serverless
+    if (process.env.VERCEL && !path.isAbsolute(configured)) {
+      return path.join("/tmp", "safebuyrealties-uploads");
+    }
+    return path.resolve(configured);
+  }
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "safebuyrealties-uploads");
+  }
+  return path.resolve("./uploads");
+}
+
 @Injectable()
 export class StorageService {
   private readonly driver: StorageDriver;
@@ -25,11 +42,7 @@ export class StorageService {
       throw new BadRequestException(`Unsupported STORAGE_DRIVER: ${raw}`);
     }
     this.driver = raw;
-    this.localRoot = path.resolve(
-      this.config.get<string>("STORAGE_LOCAL_PATH") ??
-        this.config.get<string>("UPLOAD_DIR") ??
-        "./uploads",
-    );
+    this.localRoot = resolveLocalRoot(this.config);
   }
 
   async upload(buffer: Buffer, key: string, mimeType: string): Promise<string> {
