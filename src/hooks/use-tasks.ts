@@ -82,7 +82,7 @@ export function useTaskKpiCounts() {
   return useQuery({
     queryKey: ["tasks", "me", "counts"],
     queryFn: async () => {
-      const statuses = ["pending", "in_progress", "completed"];
+      const statuses = ["PENDING", "IN_PROGRESS", "COMPLETED"] as const;
       const counts = { pending: 0, inProgress: 0, completed: 0 };
 
       for (const status of statuses) {
@@ -94,9 +94,9 @@ export function useTaskKpiCounts() {
           const result = await apiRequest<TaskDto[]>(`/tasks/me${q}`);
           const meta = result.meta as TasksMeMeta | undefined;
 
-          if (status === "pending") counts.pending += result.data.length;
-          else if (status === "in_progress") counts.inProgress += result.data.length;
-          else if (status === "completed") counts.completed += result.data.length;
+          if (status === "PENDING") counts.pending += result.data.length;
+          else if (status === "IN_PROGRESS") counts.inProgress += result.data.length;
+          else counts.completed += result.data.length;
 
           hasMore = !!(meta && meta.page * meta.pageSize < meta.total);
           page++;
