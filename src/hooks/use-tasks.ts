@@ -72,3 +72,30 @@ export function useMyTaskByIdQuery(taskId: string | null) {
     enabled: isReady && isProfessional && !!taskId,
   });
 }
+
+export function useTaskKpiCounts() {
+  const { data, isLoading } = useMyTasksQuery({ pageSize: 100 });
+  const tasks = data?.tasks ?? [];
+
+  return {
+    pending: tasks.filter((t) => t.status === "PENDING").length,
+    inProgress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
+    completed: tasks.filter((t) => t.status === "COMPLETED").length,
+    isLoading,
+  };
+}
+
+export function useCreateTaskMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { listingId: string; assigneeId: string; title: string; type: string; description: string }) =>
+      apiRequest<TaskDto>("/tasks", {
+        method: "POST",
+        body: JSON.stringify(args),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tasks", "me"] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}

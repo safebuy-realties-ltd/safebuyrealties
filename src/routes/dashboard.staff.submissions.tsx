@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
+import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 
 export const Route = createFileRoute("/dashboard/staff/submissions")({
   component: () => (
@@ -21,6 +23,25 @@ function StaffSubmissions() {
   const rows = data?.tableRows ?? [];
   const [q, setQ] = useState("");
   const updateListing = useUpdateListingMutation();
+
+  const approve = (id: string, currentStatus: string) => {
+    const nextStatus =
+      currentStatus === "VERIFIED"
+        ? "LIVE"
+        : currentStatus === "IN_VERIFICATION"
+          ? "VERIFIED"
+          : currentStatus === "ASSIGNED"
+            ? "IN_VERIFICATION"
+            : null;
+    if (!nextStatus) return;
+    updateListing.mutate(
+      { id, body: { status: nextStatus } },
+      {
+        onSuccess: () => toast.success("Listing status updated."),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed."),
+      },
+    );
+  };
 
   const visible = useMemo(() => {
     if (!q.trim()) return rows;

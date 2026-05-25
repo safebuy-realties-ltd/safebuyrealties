@@ -14,7 +14,7 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
-import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import { useAssignVerificationMutation, usePatchVerificationStepMutation, useVerificationListingQuery } from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 import { useCreateTaskMutation } from "@/hooks/use-tasks";
@@ -73,6 +73,7 @@ function StaffWorkflow() {
 
   const assignMutation = useAssignVerificationMutation();
   const createTaskMutation = useCreateTaskMutation();
+  const patchStepMutation = usePatchVerificationStepMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
   const {
     data: activity = [],
