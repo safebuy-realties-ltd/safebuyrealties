@@ -122,8 +122,7 @@ export class VerificationService {
   async patchStep(stepId: string, dto: PatchVerificationStepDto, actor: JwtPayload) {
     const step = await this.prisma.verificationStep.findUnique({ where: { id: stepId } });
     if (!step) throw new NotFoundException("Step not found");
-    const allowed =
-      this.isStaff(actor.role) || step.assignedProfessionalId === actor.sub;
+    const allowed = this.isStaff(actor.role) || step.assignedProfessionalId === actor.sub;
     if (!allowed) throw new ForbiddenException();
     const data: {
       status?: VerificationStepStatus;

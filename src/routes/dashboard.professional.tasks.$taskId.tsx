@@ -103,7 +103,10 @@ function TaskDetailPage() {
     <>
       <PageHeader title={task.title} description={`Task ID: ${task.id}`} />
       <div className="mb-4">
-        <Link to="/dashboard/professional/tasks" className="text-sm text-primary underline-offset-4 hover:underline">
+        <Link
+          to="/dashboard/professional/tasks"
+          className="text-sm text-primary underline-offset-4 hover:underline"
+        >
           Back to task list
         </Link>
       </div>
@@ -114,11 +117,21 @@ function TaskDetailPage() {
             <CardTitle>Task metadata</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><strong>Status:</strong> {task.status}</p>
-            <p><strong>Type:</strong> {task.type}</p>
-            <p><strong>Listing:</strong> {task.listingId}</p>
-            <p><strong>Due:</strong> {task.dueAt ? new Date(task.dueAt).toLocaleString() : "—"}</p>
-            <p><strong>Description:</strong> {task.description ?? "—"}</p>
+            <p>
+              <strong>Status:</strong> {task.status}
+            </p>
+            <p>
+              <strong>Type:</strong> {task.type}
+            </p>
+            <p>
+              <strong>Listing:</strong> {task.listingId}
+            </p>
+            <p>
+              <strong>Due:</strong> {task.dueAt ? new Date(task.dueAt).toLocaleString() : "—"}
+            </p>
+            <p>
+              <strong>Description:</strong> {task.description ?? "—"}
+            </p>
             {requiresEvidence && <Badge variant="outline">Document evidence required</Badge>}
           </CardContent>
         </Card>
@@ -180,17 +193,31 @@ function TaskDetailPage() {
 
             <div className="space-y-2">
               <Label htmlFor="status">Status update</Label>
-              <Input id="status" value={status} onChange={(e) => setStatus(e.target.value)} placeholder="IN_PROGRESS or COMPLETED" />
+              <Input
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                placeholder="IN_PROGRESS or COMPLETED"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Completion / revision notes</Label>
-              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Summarize work completed and any remaining issues." />
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Summarize work completed and any remaining issues."
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="evidence">Evidence document</Label>
-              <Input id="evidence" type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <Input
+                id="evidence"
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              />
             </div>
 
             <Button onClick={submit} disabled={patchMutation.isPending || uploadMutation.isPending}>

@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useMyTasksQuery, usePatchTaskMutation, useTaskKpiCounts, type TaskDto } from "@/hooks/use-tasks";
+import {
+  useMyTasksQuery,
+  usePatchTaskMutation,
+  useTaskKpiCounts,
+  type TaskDto,
+} from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { ApiError } from "@/lib/api";
 
@@ -40,7 +45,11 @@ function apiStatusToCard(status: string): TaskStatus {
 function formatDue(iso: string | null) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   } catch {
     return "—";
   }
@@ -51,7 +60,7 @@ function ProTasks() {
   const [q, setQ] = useState("");
 
   const { data, isLoading, isError, error, refetch } = useMyTasksQuery({ pageSize: 100 });
-  const tasks = data?.tasks ?? [];
+  const tasks = useMemo(() => data?.tasks ?? [], [data?.tasks]);
   const kpis = useTaskKpiCounts();
 
   const { data: listingsData } = useListingsQuery();
@@ -80,9 +89,9 @@ function ProTasks() {
 
   const counts = {
     all: tasks.length,
-    pending: kpis.pending,
-    in_progress: kpis.inProgress,
-    completed: kpis.completed,
+    pending: kpis.data?.pending ?? 0,
+    in_progress: kpis.data?.inProgress ?? 0,
+    completed: kpis.data?.completed ?? 0,
   };
 
   const patchMutation = usePatchTaskMutation();
@@ -138,7 +147,9 @@ function ProTasks() {
                 type="button"
                 onClick={() => setFilter(f.id)}
                 className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                  active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f.label}
@@ -155,7 +166,12 @@ function ProTasks() {
         </div>
         <div className="relative ml-auto min-w-[220px] flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks…" className="h-10 pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search tasks…"
+            className="h-10 pl-9"
+          />
         </div>
       </div>
 
@@ -170,14 +186,18 @@ function ProTasks() {
         )}
         {visible.map((t) => (
           <div key={t.id} className="space-y-3">
-            <Link to="/dashboard/professional/tasks/$taskId" params={{ taskId: t.id }} className="block">
-            <TaskCard
-              title={t.title}
-              property={listingTitleById.get(t.listingId) ?? t.listingId}
-              due={formatDue(t.dueAt)}
-              status={apiStatusToCard(t.status)}
-              type={t.type}
-            />
+            <Link
+              to="/dashboard/professional/tasks/$taskId"
+              params={{ taskId: t.id }}
+              className="block"
+            >
+              <TaskCard
+                title={t.title}
+                property={listingTitleById.get(t.listingId) ?? t.listingId}
+                due={formatDue(t.dueAt)}
+                status={apiStatusToCard(t.status)}
+                type={t.type}
+              />
             </Link>
             {t.status !== "COMPLETED" && (
               <Button

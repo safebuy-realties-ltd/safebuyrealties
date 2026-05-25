@@ -28,18 +28,18 @@ Reading order: §1 explains the sources; §2–§9 are per-source extractions; *
 
 ### 1.1 Sources ingested
 
-| # | Source | Type | Location | Role in project |
-|---|--------|------|----------|-----------------|
-| 1 | Static HTML demo | 66-page static site | `safebuyrealtiesng-html/` repo | Client's own vision of look/feel/scope — strongest experiential signal |
-| 2 | Letter of Engagement (LOE) | PDF, 4 pp | `docs/inputs/LOE.pdf` | Commercially binding scope (₦1.5M MVP) |
-| 3 | Client Requirements Document | DOCX | `docs/inputs/client-requirements.docx` | Most comprehensive functional description |
-| 4 | Client Legal Comments | DOCX | `docs/inputs/client-legal-comments.docx` | Non-functional / contractual / compliance expectations |
-| 5 | Professional Ecosystem Document | DOCX | `docs/inputs/professional-ecosystem.docx` | Defines the Nigerian professional network |
-| 6 | Corne Labs Proposal | PDF, 9 pp | `docs/inputs/corne-labs-proposal.pdf` | Agency's original product articulation (₦2.8M) |
-| 7 | Existing PRD | Markdown | `docs/inputs/existing-prd.md` (= `docs/PRD.md`) | Thin starting-point PRD |
-| 8 | Active codebase — frontend | React 19 / Vite / TanStack | `safebuyrealties/src/` | Current build (FE) |
-| 9 | Active codebase — backend | NestJS / Prisma / Postgres | `safebuyrealties/backend/` | Current build (BE) |
-| — | Prior tech audit | Markdown | `docs/TECH_AUDIT.md` (dated 2026-05-02) | **Stale** earlier audit; partially superseded by current code |
+| #   | Source                          | Type                       | Location                                        | Role in project                                                        |
+| --- | ------------------------------- | -------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- |
+| 1   | Static HTML demo                | 66-page static site        | `safebuyrealtiesng-html/` repo                  | Client's own vision of look/feel/scope — strongest experiential signal |
+| 2   | Letter of Engagement (LOE)      | PDF, 4 pp                  | `docs/inputs/LOE.pdf`                           | Commercially binding scope (₦1.5M MVP)                                 |
+| 3   | Client Requirements Document    | DOCX                       | `docs/inputs/client-requirements.docx`          | Most comprehensive functional description                              |
+| 4   | Client Legal Comments           | DOCX                       | `docs/inputs/client-legal-comments.docx`        | Non-functional / contractual / compliance expectations                 |
+| 5   | Professional Ecosystem Document | DOCX                       | `docs/inputs/professional-ecosystem.docx`       | Defines the Nigerian professional network                              |
+| 6   | Corne Labs Proposal             | PDF, 9 pp                  | `docs/inputs/corne-labs-proposal.pdf`           | Agency's original product articulation (₦2.8M)                         |
+| 7   | Existing PRD                    | Markdown                   | `docs/inputs/existing-prd.md` (= `docs/PRD.md`) | Thin starting-point PRD                                                |
+| 8   | Active codebase — frontend      | React 19 / Vite / TanStack | `safebuyrealties/src/`                          | Current build (FE)                                                     |
+| 9   | Active codebase — backend       | NestJS / Prisma / Postgres | `safebuyrealties/backend/`                      | Current build (BE)                                                     |
+| —   | Prior tech audit                | Markdown                   | `docs/TECH_AUDIT.md` (dated 2026-05-02)         | **Stale** earlier audit; partially superseded by current code          |
 
 ### 1.2 Method
 
@@ -78,13 +78,13 @@ rounded cards, dark and light themes, Chart.js dashboards, WhatsApp float, AOS a
 
 ### 2.2 Public / marketing (root + `pages/public/`)
 
-| Page | Purpose | Notable content |
-|------|---------|-----------------|
-| `index.html` | Landing | Hero **services carousel of 15 services** (below); 6 role cards (Buyers, Sellers, Professionals, Agents, Developers, Diaspora); featured properties from `properties.json`; search bar (location/type/budget/keyword); "why choose us" |
-| `public/listings.html` | All verified listings | Responsive grid, status badges, "View Details", WhatsApp float |
-| `public/properties/property-detail.html` | Dynamic property page (by id) | Hero image slider, specs grid (beds/baths/land area/build type), features, gallery, lawyer/surveyor verification info, CTAs: **Start Due Diligence**, Inquire, Schedule Inspection; seeds `localStorage 'safebuy_flow'` |
-| `public/properties/property-bourdillon-ikoyi.html` | Hardcoded sample | 5-Bed Oceanview, Ikoyi, ₦850,000,000, Verified |
-| `public/about.html`, `services.html`, `how-it-works.html`, `contact.html`, `blog.html`, `guides.html`, `privacy.html`, `terms.html` | Marketing / legal / content | About (mission, stats, team), Services (15 services w/ pricing & "Inquire"), How-it-works (process), Contact (form + Lagos/Abuja offices), Blog/Guides (content hubs), Privacy/Terms (legal text) |
+| Page                                                                                                                                | Purpose                       | Notable content                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                                                                                                                        | Landing                       | Hero **services carousel of 15 services** (below); 6 role cards (Buyers, Sellers, Professionals, Agents, Developers, Diaspora); featured properties from `properties.json`; search bar (location/type/budget/keyword); "why choose us" |
+| `public/listings.html`                                                                                                              | All verified listings         | Responsive grid, status badges, "View Details", WhatsApp float                                                                                                                                                                         |
+| `public/properties/property-detail.html`                                                                                            | Dynamic property page (by id) | Hero image slider, specs grid (beds/baths/land area/build type), features, gallery, lawyer/surveyor verification info, CTAs: **Start Due Diligence**, Inquire, Schedule Inspection; seeds `localStorage 'safebuy_flow'`                |
+| `public/properties/property-bourdillon-ikoyi.html`                                                                                  | Hardcoded sample              | 5-Bed Oceanview, Ikoyi, ₦850,000,000, Verified                                                                                                                                                                                         |
+| `public/about.html`, `services.html`, `how-it-works.html`, `contact.html`, `blog.html`, `guides.html`, `privacy.html`, `terms.html` | Marketing / legal / content   | About (mission, stats, team), Services (15 services w/ pricing & "Inquire"), How-it-works (process), Contact (form + Lagos/Abuja offices), Blog/Guides (content hubs), Privacy/Terms (legal text)                                      |
 
 **The 15 verification services** (home carousel + services page): Property Due Diligence;
 Land Search/Charting (Govt Acquisition Check); C of O Confirmation; Title Verification &
@@ -117,20 +117,21 @@ flowchart LR
   S6 --> S7[7. Payment Success -> Dashboard]
 ```
 
-| Step | File | What it does |
-|------|------|--------------|
-| 1 | `property-confirmation.html` | Confirm selected property; trust badges (Lawyer Verified, Escrow Protected, Physical Inspection, Diaspora Friendly) |
-| 2 | `buyer-info.html` | Capture full name, email, phone, country, state/region |
-| 3 | `poa.html` | **Power of Attorney execution** (detail below) |
-| 4 | `services.html` | Choose **3 bundles** — Standard ₦2,950,000 / Premium ₦4,200,000 (most popular) / Elite ₦5,850,000 — or **à-la-carte** services; live subtotal + 7.5% VAT + total; escrow/no-hidden-fees badges |
-| 5 | `summary.html` | Review order; "nothing charged yet" |
-| 6 | `payment.html` | 4 methods (Card, Bank Transfer, USSD, Online platform = Paystack/Flutterwave); order summary w/ VAT; **100% Escrow Protected** seal; price-locked badge; "Save & pay later" |
-| 7 | `payment-success.html` | Transaction id, next steps, "Access Dashboard" — creates buyer dashboard access |
+| Step | File                         | What it does                                                                                                                                                                                   |
+| ---- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `property-confirmation.html` | Confirm selected property; trust badges (Lawyer Verified, Escrow Protected, Physical Inspection, Diaspora Friendly)                                                                            |
+| 2    | `buyer-info.html`            | Capture full name, email, phone, country, state/region                                                                                                                                         |
+| 3    | `poa.html`                   | **Power of Attorney execution** (detail below)                                                                                                                                                 |
+| 4    | `services.html`              | Choose **3 bundles** — Standard ₦2,950,000 / Premium ₦4,200,000 (most popular) / Elite ₦5,850,000 — or **à-la-carte** services; live subtotal + 7.5% VAT + total; escrow/no-hidden-fees badges |
+| 5    | `summary.html`               | Review order; "nothing charged yet"                                                                                                                                                            |
+| 6    | `payment.html`               | 4 methods (Card, Bank Transfer, USSD, Online platform = Paystack/Flutterwave); order summary w/ VAT; **100% Escrow Protected** seal; price-locked badge; "Save & pay later"                    |
+| 7    | `payment-success.html`       | Transaction id, next steps, "Access Dashboard" — creates buyer dashboard access                                                                                                                |
 
 Supporting flow pages: `onboarding.html`, `setup.html`, `buyer-account-access.html`,
 `poa-terms.html`, `checkout.html`, plus a `due-flow.html` entry.
 
 **Power of Attorney step (`poa.html`) — detail.** This is the legal heart of the product:
+
 - Property summary + appointed **law firm** branding (Goldrush Partners LP; partner Femi
   Adisa-Isikalu; license `SBR-LAW-GLDR25A7-001`; "LASREA-licensed, 1,200+ titles perfected").
 - **Legal framing** citing Evidence Act 2011 & Electronic Transactions Act 2023: must be in
@@ -146,17 +147,17 @@ Supporting flow pages: `onboarding.html`, `setup.html`, `buyer-account-access.ht
 
 > Note: the demo's PoA captures consent + signature visually. The **Client Requirements doc**
 > (§4) extends this to **hash generation / document fingerprinting / QR code / PDF generation /
-> secure archival** as part of the legal audit trail. The demo shows the *experience*; the
-> requirements doc specifies the *integrity mechanics*.
+> secure archival** as part of the legal audit trail. The demo shows the _experience_; the
+> requirements doc specifies the _integrity mechanics_.
 
 ### 2.5 Role dashboards (`pages/dashboard/`)
 
-| Page | Role | Sidebar / content highlights |
-|------|------|------------------------------|
-| `buyer-dashboard.html` | Buyer | Sidebar: Dashboard, My Properties, Service Status, Due Diligence Reports, Messages/Chat, Payments & Escrow, Documents, Profile. Stats (monitored, active DD cases, completed, pending payments); charts; recent cases table; theme toggle |
-| `seller-dashboard.html` | Seller | Sidebar: Dashboard, My Properties, Buyer Inquiries, Offers Received, Transactions, Documents. Stats (listed, inquiries, offers, sold); charts; properties table (views/inquiries) |
-| `professional-dashboard.html` | Professional | Sidebar: Dashboard, My Assignments, Inspections, DD Reports, Earnings, Profile & Certification. Stats (active assignments, completed reports, pending review, earnings); assignment table; earnings trend |
-| `overview.html`, `properties.html`, `chat.html`, `case-details.html` | Role-aware | Generic overview, property management, **chat/messaging UI**, single case/transaction detail (timeline, documents, status) |
+| Page                                                                 | Role         | Sidebar / content highlights                                                                                                                                                                                                              |
+| -------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buyer-dashboard.html`                                               | Buyer        | Sidebar: Dashboard, My Properties, Service Status, Due Diligence Reports, Messages/Chat, Payments & Escrow, Documents, Profile. Stats (monitored, active DD cases, completed, pending payments); charts; recent cases table; theme toggle |
+| `seller-dashboard.html`                                              | Seller       | Sidebar: Dashboard, My Properties, Buyer Inquiries, Offers Received, Transactions, Documents. Stats (listed, inquiries, offers, sold); charts; properties table (views/inquiries)                                                         |
+| `professional-dashboard.html`                                        | Professional | Sidebar: Dashboard, My Assignments, Inspections, DD Reports, Earnings, Profile & Certification. Stats (active assignments, completed reports, pending review, earnings); assignment table; earnings trend                                 |
+| `overview.html`, `properties.html`, `chat.html`, `case-details.html` | Role-aware   | Generic overview, property management, **chat/messaging UI**, single case/transaction detail (timeline, documents, status)                                                                                                                |
 
 ### 2.6 Admin / staff / super-admin (`pages/admin/` — 31 pages)
 
@@ -212,13 +213,13 @@ primary user types.
 
 ### 3.1 Scope of work (role-based)
 
-| Role | LOE capabilities |
-|------|------------------|
-| **Buyers** | Register/manage account; browse **verified** listings; initiate transactions; **pay for due diligence and property acquisition**; track progress on dashboard |
-| **Sellers** | Register/manage; submit listings; upload documentation; track verification status |
-| **Property Professionals** (inspectors, surveyors, legal reps, etc.) | Register/maintain profile; be assigned to verification/DD; upload reports/supporting docs; update task status |
-| **Internal Staff** | Review submitted documents; manage verification workflows; approve/reject listings; update property status |
-| **Administrators** | Full control: user management; property approval & status control; platform monitoring/oversight |
+| Role                                                                 | LOE capabilities                                                                                                                                              |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Buyers**                                                           | Register/manage account; browse **verified** listings; initiate transactions; **pay for due diligence and property acquisition**; track progress on dashboard |
+| **Sellers**                                                          | Register/manage; submit listings; upload documentation; track verification status                                                                             |
+| **Property Professionals** (inspectors, surveyors, legal reps, etc.) | Register/maintain profile; be assigned to verification/DD; upload reports/supporting docs; update task status                                                 |
+| **Internal Staff**                                                   | Review submitted documents; manage verification workflows; approve/reject listings; update property status                                                    |
+| **Administrators**                                                   | Full control: user management; property approval & status control; platform monitoring/oversight                                                              |
 
 ### 3.2 Core platform features (LOE)
 
@@ -231,8 +232,8 @@ Buyers initiate payments → property verification completed → transactions tr
 release dependent on completion of required conditions**. (Escrow described as conditional fund
 release; no escrow-config UI specified.)
 
-> **LOE scope boundary (verbatim intent):** *"Any features not explicitly stated above are
-> considered out of scope for this phase."*
+> **LOE scope boundary (verbatim intent):** _"Any features not explicitly stated above are
+> considered out of scope for this phase."_
 
 ### 3.4 Milestones, commercials, terms
 
@@ -274,8 +275,8 @@ professionals/sellers/staff.
 ### 4.3 Actors (5 named)
 
 Buyers; Sellers; Property Professionals (agents, lawyers, surveyors, inspectors);
-Internal Staff; Administrators. *(Note: the per-role sidebars in §4.9 expand this to 7 by
-splitting out Agents/Brokers and Super Admin.)*
+Internal Staff; Administrators. _(Note: the per-role sidebars in §4.9 expand this to 7 by
+splitting out Agents/Brokers and Super Admin.)_
 
 ### 4.4 Seller flow
 
@@ -297,11 +298,11 @@ actions (data integrity; anti-manipulation).
 - Buyer registers → personalized dashboard; browse/filter by **verified**; **save/like**;
   notifications on status change. **Buyers cannot pay on unverified properties.**
 - **Defining feature: due-diligence payments are separate from property-purchase payments.**
-- Selecting a verified property enters a **structured multi-step purchase flow** — *all steps
-  sequential, state-aware, and resumable*:
+- Selecting a verified property enters a **structured multi-step purchase flow** — _all steps
+  sequential, state-aware, and resumable_:
   1. Property confirmation → 2. **Execution of Power of Attorney** → 3. Buyer information capture
-  → 4. Selection of due-diligence services/bundles → 5. Transaction summary & review →
-  6. **Payment for due-diligence services only** → 7. Redirection to dashboard.
+     → 4. Selection of due-diligence services/bundles → 5. Transaction summary & review →
+  2. **Payment for due-diligence services only** → 7. Redirection to dashboard.
 
 ### 4.7 Power of Attorney execution (integrity mechanics)
 
@@ -362,7 +363,7 @@ as part of the **legal audit trail** for compliance & dispute resolution.
 ### 4.10 Stated current state & future enhancements (per the client doc)
 
 The doc claims core flows, standardized DD flow, status governance, **live digital PoA**, and
-all four dashboards are *operational* (this is the **client's** assertion — Phase 3 will test it
+all four dashboards are _operational_ (this is the **client's** assertion — Phase 3 will test it
 against the actual repo). Listed enhancements: **escrow-based property-purchase payments**,
 expanded regulatory reporting, **advanced fraud detection**, **mobile app**, marketplace
 expansion for verified professionals.
@@ -373,14 +374,14 @@ expansion for verified professionals.
 
 A lawyer's markup of the LOE. Product-relevant signals (the rest is contract negotiation):
 
-- **NDPR compliance & data ownership** are explicit expectations: *"No data ownership / NDPR
-  compliance warranties (you will hold personal and transaction data)"* — flagged as a critical
+- **NDPR compliance & data ownership** are explicit expectations: _"No data ownership / NDPR
+  compliance warranties (you will hold personal and transaction data)"_ — flagged as a critical
   gap. Data ownership must remain SafeBuy's.
-- **Security obligation:** *"No security audit or penetration-testing obligation before go-live"*
+- **Security obligation:** _"No security audit or penetration-testing obligation before go-live"_
   — flagged as critical for a **payment + document-verification real-estate platform**. Wants a
   security audit prior to final delivery.
-- **Escrow legal safeguards:** *"No escrow-specific legal safeguards or fund-release conditions
-  clearly defined."* Fund-release conditions must be explicit.
+- **Escrow legal safeguards:** _"No escrow-specific legal safeguards or fund-release conditions
+  clearly defined."_ Fund-release conditions must be explicit.
 - **Payment regulatory compliance:** Paystack/Flutterwave named but no responsibility for CBN/AML
   compliance — wants this addressed.
 - **Governing law:** add Nigeria / Lagos State jurisdiction + mediation clause.
@@ -406,12 +407,12 @@ with **Formal (licensed)** and **Informal/support** categories.
 
 ### 6.1 Purchase phase — formal (essential)
 
-| Professional | Body | Core function |
-|--------------|------|---------------|
-| Real Estate Lawyer / Solicitor | NBA | Full due diligence; title search; verify C of O, Governor's Consent, Deed of Assignment, Survey Plan; check litigation/acquisition/encumbrances; draft Agreement of Sale & Deed of Assignment; witness. **Non-negotiable.** |
-| Registered Land Surveyor | SURCON (Surveyors Council of Nigeria) | Verify beacons/boundaries on-site; confirm survey-plan coordinates; topography/soil/flood risk; fresh survey |
-| Estate Valuer / Appraiser | NIESV | Independent valuation (avoid overpaying; mortgage/bank) |
-| Government Registry Officials | Land Registry / Surveyor-General / Planning Authority | Official searches (accessed via lawyer/surveyor, not hired directly) |
+| Professional                   | Body                                                  | Core function                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real Estate Lawyer / Solicitor | NBA                                                   | Full due diligence; title search; verify C of O, Governor's Consent, Deed of Assignment, Survey Plan; check litigation/acquisition/encumbrances; draft Agreement of Sale & Deed of Assignment; witness. **Non-negotiable.** |
+| Registered Land Surveyor       | SURCON (Surveyors Council of Nigeria)                 | Verify beacons/boundaries on-site; confirm survey-plan coordinates; topography/soil/flood risk; fresh survey                                                                                                                |
+| Estate Valuer / Appraiser      | NIESV                                                 | Independent valuation (avoid overpaying; mortgage/bank)                                                                                                                                                                     |
+| Government Registry Officials  | Land Registry / Surveyor-General / Planning Authority | Official searches (accessed via lawyer/surveyor, not hired directly)                                                                                                                                                        |
 
 Purchase-phase **informal/support:** Real Estate Agent/Broker/Marketer (introductions,
 negotiation — many unlicensed); Community Leaders/Family Heads/Baale (customary-land consent);
@@ -512,7 +513,7 @@ Transactions). **Design system: Deep Classy Green `#0B6B3A`, white/light-gray, c
 
 ## 9. Active codebase inventory (high-level — detailed audit deferred to Phase 3)
 
-> Scope here is *inventory only* so the master feature list can mark what exists. Honest
+> Scope here is _inventory only_ so the master feature list can mark what exists. Honest
 > implemented/partial/broken/mock assessment, quality and security analysis are **Phase 3**.
 > Note: the active build is **more advanced than the stale `docs/TECH_AUDIT.md` (2026-05-02)**
 > implies (e.g. transactions/payments are now wired; auth uses HttpOnly cookies).
@@ -531,17 +532,18 @@ Public: `/` (static landing), `/login`, `/register` (Buyer/Seller only), `/listi
 Buyer: `/dashboard/buyer`, `/buyer/listings`, `/buyer/transactions` (payments + escrow timeline).
 Seller: `/dashboard/seller`, `/seller/listings`, `/seller/documents` (upload + submit-for-review).
 Professional: `/dashboard/professional`, `/professional/tasks`, `/professional/tasks/$id` (report
-+ evidence upload). Staff: `/dashboard/staff`, `/staff/workflow`, `/staff/submissions`. Admin:
-`/dashboard/admin`, `/admin/users`, `/admin/listings`.
 
-- **Wired & working (~14 routes):** auth, buyer browse/transaction/payment (mock-capable), seller
+- evidence upload). Staff: `/dashboard/staff`, `/staff/workflow`, `/staff/submissions`. Admin:
+  `/dashboard/admin`, `/admin/users`, `/admin/listings`.
+
+* **Wired & working (~14 routes):** auth, buyer browse/transaction/payment (mock-capable), seller
   listing create + document upload + submit, professional task detail (w/ evidence), admin
   user-role & listing-status management.
-- **4 known runtime bugs (FE):** `/staff/workflow` uses undefined `patchStepMutation` and missing
+* **4 known runtime bugs (FE):** `/staff/workflow` uses undefined `patchStepMutation` and missing
   `useCreateTaskMutation`; `/staff/submissions` calls undefined `approve()`; professional dashboard
-  + tasks use unimplemented `useTaskKpiCounts`. These break staff approve/reject and professional
-  stat cards.
-- **Absent from FE:** Power of Attorney, messaging/chat, notifications UI, saved/liked properties,
+  - tasks use unimplemented `useTaskKpiCounts`. These break staff approve/reject and professional
+    stat cards.
+* **Absent from FE:** Power of Attorney, messaging/chat, notifications UI, saved/liked properties,
   advanced search/map, analytics dashboards, schedule-inspection (button disabled), agent/broker &
   super-admin surfaces.
 
@@ -582,109 +584,109 @@ password reset, refresh tokens, rate limiting.**
 Deduplicated capabilities across **all** sources. Columns: feature; serving role(s); which
 sources assert it (**LOE** / **REQ** = client requirements / **DEMO** / **PROP** = proposal /
 **PRD** = existing PRD / **LEGAL** = legal comments / **ECO** = ecosystem); and presence in the
-current build (✅ built · 🟡 partial · 🔴 absent · — n/a) as a *coarse* flag only (Phase 3
+current build (✅ built · 🟡 partial · 🔴 absent · — n/a) as a _coarse_ flag only (Phase 3
 verifies). "In LOE?" marks whether it falls inside the signed scope.
 
 ### 10.1 Accounts, identity & access
 
-| Feature | Roles | Sources | Build | In LOE? |
-|---------|-------|---------|-------|---------|
-| Register / login / session | All | LOE, REQ, DEMO, PROP, PRD | ✅ | Yes |
-| Self-registration role selection | Buyer, Seller, Agent, Professional | DEMO | 🟡 (Buyer/Seller only) | Partial |
-| Identity verification / KYC at onboarding | Seller, Buyer | REQ, DEMO | 🔴 | Implied |
-| KYC/AML rules & review | Staff, Admin, SuperAdmin | REQ, DEMO | 🔴 | No |
-| Role-based access control (RBAC) | All | LOE, REQ, DEMO, PRD | ✅ | Yes |
-| Custom roles & permission matrix | SuperAdmin | REQ, DEMO | 🔴 | No |
-| Profile management / credentials | All; Professional (credentials) | REQ, DEMO | 🟡 | Yes |
-| 2FA / session management | Admin, SuperAdmin | DEMO | 🔴 | No |
-| Password reset / email verification | All | (gap) | 🔴 | Implied |
+| Feature                                   | Roles                              | Sources                   | Build                  | In LOE? |
+| ----------------------------------------- | ---------------------------------- | ------------------------- | ---------------------- | ------- |
+| Register / login / session                | All                                | LOE, REQ, DEMO, PROP, PRD | ✅                     | Yes     |
+| Self-registration role selection          | Buyer, Seller, Agent, Professional | DEMO                      | 🟡 (Buyer/Seller only) | Partial |
+| Identity verification / KYC at onboarding | Seller, Buyer                      | REQ, DEMO                 | 🔴                     | Implied |
+| KYC/AML rules & review                    | Staff, Admin, SuperAdmin           | REQ, DEMO                 | 🔴                     | No      |
+| Role-based access control (RBAC)          | All                                | LOE, REQ, DEMO, PRD       | ✅                     | Yes     |
+| Custom roles & permission matrix          | SuperAdmin                         | REQ, DEMO                 | 🔴                     | No      |
+| Profile management / credentials          | All; Professional (credentials)    | REQ, DEMO                 | 🟡                     | Yes     |
+| 2FA / session management                  | Admin, SuperAdmin                  | DEMO                      | 🔴                     | No      |
+| Password reset / email verification       | All                                | (gap)                     | 🔴                     | Implied |
 
 ### 10.2 Roles present across sources
 
-| Role | LOE | REQ | DEMO | PRD | Build |
-|------|-----|-----|------|-----|-------|
-| Buyer | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Seller | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Property Professional (multi-type) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Internal Staff | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Administrator | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Agent / Broker** | (subsumed) | ✅ | ✅ | 🔴 | 🔴 |
-| **Super Admin** | (subsumed in Admin) | ✅ | ✅ | 🔴 | 🔴 |
+| Role                               | LOE                 | REQ | DEMO | PRD | Build |
+| ---------------------------------- | ------------------- | --- | ---- | --- | ----- |
+| Buyer                              | ✅                  | ✅  | ✅   | ✅  | ✅    |
+| Seller                             | ✅                  | ✅  | ✅   | ✅  | ✅    |
+| Property Professional (multi-type) | ✅                  | ✅  | ✅   | ✅  | ✅    |
+| Internal Staff                     | ✅                  | ✅  | ✅   | ✅  | ✅    |
+| Administrator                      | ✅                  | ✅  | ✅   | ✅  | ✅    |
+| **Agent / Broker**                 | (subsumed)          | ✅  | ✅   | 🔴  | 🔴    |
+| **Super Admin**                    | (subsumed in Admin) | ✅  | ✅   | 🔴  | 🔴    |
 
 ### 10.3 Listings & property registry
 
-| Feature | Roles | Sources | Build | In LOE? |
-|---------|-------|---------|-------|---------|
-| Submit listing (location, price, docs, images) | Seller, Agent, Staff | LOE, REQ, DEMO, PROP, PRD | ✅ (no image mgmt) | Yes |
-| Listing media (hero slider + gallery) | Seller, Staff | DEMO | 🔴 | Partial |
-| Property detail page (specs, features, gallery) | Public, Buyer | DEMO, PROP | 🟡 (no specs fields) | Yes |
-| Status governance: Pending Review/Verified/Under Offer/Sold/Needs More Info/Rejected | System | REQ, DEMO | 🟡 (different enum) | Yes |
-| Status views/registry filtering by status | Staff, Admin, SuperAdmin | REQ, DEMO | 🟡 | Yes |
-| Search & filtering (location/price/type/size/beds/amenities) | Buyer, Public | PROP, DEMO | 🟡 (client-side basic) | No (LOE) |
-| Saved searches | Buyer | PROP, REQ | 🔴 | No |
-| Saved / liked properties | Buyer | REQ, DEMO | 🔴 | No |
-| Map-based discovery | Buyer | PROP | 🔴 | No (future) |
+| Feature                                                                              | Roles                    | Sources                   | Build                  | In LOE?     |
+| ------------------------------------------------------------------------------------ | ------------------------ | ------------------------- | ---------------------- | ----------- |
+| Submit listing (location, price, docs, images)                                       | Seller, Agent, Staff     | LOE, REQ, DEMO, PROP, PRD | ✅ (no image mgmt)     | Yes         |
+| Listing media (hero slider + gallery)                                                | Seller, Staff            | DEMO                      | 🔴                     | Partial     |
+| Property detail page (specs, features, gallery)                                      | Public, Buyer            | DEMO, PROP                | 🟡 (no specs fields)   | Yes         |
+| Status governance: Pending Review/Verified/Under Offer/Sold/Needs More Info/Rejected | System                   | REQ, DEMO                 | 🟡 (different enum)    | Yes         |
+| Status views/registry filtering by status                                            | Staff, Admin, SuperAdmin | REQ, DEMO                 | 🟡                     | Yes         |
+| Search & filtering (location/price/type/size/beds/amenities)                         | Buyer, Public            | PROP, DEMO                | 🟡 (client-side basic) | No (LOE)    |
+| Saved searches                                                                       | Buyer                    | PROP, REQ                 | 🔴                     | No          |
+| Saved / liked properties                                                             | Buyer                    | REQ, DEMO                 | 🔴                     | No          |
+| Map-based discovery                                                                  | Buyer                    | PROP                      | 🔴                     | No (future) |
 
 ### 10.4 Verification & professional workflow
 
-| Feature | Roles | Sources | Build | In LOE? |
-|---------|-------|---------|-------|---------|
-| Document upload for listing | Seller, Staff | LOE, REQ, DEMO, PRD | ✅ (local disk, no MIME check) | Yes |
-| Internal verification workflow (multi-step) | Staff, Professional | LOE, REQ, DEMO, PRD | ✅ (8-step template) | Yes |
-| Assign professionals to steps/cases | Staff | LOE, REQ, DEMO, PRD | 🟡 (FE assign buggy) | Yes |
-| Professional report upload + risk flags | Professional | REQ, DEMO, PRD, ECO | 🟡 (task evidence only) | Yes |
-| Approve / reject / request-more-info | Staff, Admin | LOE, REQ, DEMO | 🟡 (FE approve broken) | Yes |
-| Professional credentialing by regulator (NBA/SURCON/NIESV/ARCON/COREN/NIQS/CORBON) | Professional, Admin | ECO, PRD | 🔴 | Implied |
-| Inspection scheduling (slots, no double-book, logged) | Buyer, Professional, Staff | REQ, PROP, DEMO | 🔴 | Implied |
-| Task queue & status updates | Staff, Professional | REQ, PRD | 🟡 | Yes |
+| Feature                                                                            | Roles                      | Sources             | Build                          | In LOE? |
+| ---------------------------------------------------------------------------------- | -------------------------- | ------------------- | ------------------------------ | ------- |
+| Document upload for listing                                                        | Seller, Staff              | LOE, REQ, DEMO, PRD | ✅ (local disk, no MIME check) | Yes     |
+| Internal verification workflow (multi-step)                                        | Staff, Professional        | LOE, REQ, DEMO, PRD | ✅ (8-step template)           | Yes     |
+| Assign professionals to steps/cases                                                | Staff                      | LOE, REQ, DEMO, PRD | 🟡 (FE assign buggy)           | Yes     |
+| Professional report upload + risk flags                                            | Professional               | REQ, DEMO, PRD, ECO | 🟡 (task evidence only)        | Yes     |
+| Approve / reject / request-more-info                                               | Staff, Admin               | LOE, REQ, DEMO      | 🟡 (FE approve broken)         | Yes     |
+| Professional credentialing by regulator (NBA/SURCON/NIESV/ARCON/COREN/NIQS/CORBON) | Professional, Admin        | ECO, PRD            | 🔴                             | Implied |
+| Inspection scheduling (slots, no double-book, logged)                              | Buyer, Professional, Staff | REQ, PROP, DEMO     | 🔴                             | Implied |
+| Task queue & status updates                                                        | Staff, Professional        | REQ, PRD            | 🟡                             | Yes     |
 
 ### 10.5 Buyer transaction, PoA, payments & escrow
 
-| Feature | Roles | Sources | Build | In LOE? |
-|---------|-------|---------|-------|---------|
-| Multi-step DD purchase flow (resumable, state-aware) | Buyer | REQ, DEMO | 🔴 (no wizard) | Partial |
-| **Power of Attorney execution (consent + e-signature)** | Buyer | REQ, DEMO | 🔴 | No |
-| **PoA integrity: hash/fingerprint, QR, PDF, archive** | Buyer, System | REQ | 🔴 | No |
-| DD service catalog (15 services) + bundles (Standard/Premium/Elite) + à-la-carte | Buyer, Admin | DEMO | 🔴 | No |
-| **Separation of DD payment vs property-purchase payment** | Buyer | REQ, PROP | 🔴 | Partial |
-| Payment integration (Paystack/Flutterwave) | Buyer | LOE, REQ, DEMO, PROP, PRD | 🟡 (Paystack only, mock) | Yes |
-| VAT (7.5%) handling | System | DEMO | 🔴 | No |
-| Transaction tracking & lifecycle | Buyer, Staff | LOE, REQ, DEMO, PRD | ✅ (3-state) | Yes |
-| Property reservation / anti-double-sell on Under Offer | System | REQ | 🔴 | Implied |
-| **Escrow: funds held; release on conditions met** | Buyer, Seller, Admin | LOE, REQ, DEMO, PROP, LEGAL | 🔴 (status only) | Yes (concept) |
-| **Escrow & payment configuration UI** | Admin, SuperAdmin | REQ, DEMO | 🔴 | No |
-| Payouts to sellers; commission to agents | Seller, Agent, Admin | REQ, DEMO | 🔴 | No |
-| Refunds | Buyer, Admin | DEMO | 🔴 (enum only) | No |
+| Feature                                                                          | Roles                | Sources                     | Build                    | In LOE?       |
+| -------------------------------------------------------------------------------- | -------------------- | --------------------------- | ------------------------ | ------------- |
+| Multi-step DD purchase flow (resumable, state-aware)                             | Buyer                | REQ, DEMO                   | 🔴 (no wizard)           | Partial       |
+| **Power of Attorney execution (consent + e-signature)**                          | Buyer                | REQ, DEMO                   | 🔴                       | No            |
+| **PoA integrity: hash/fingerprint, QR, PDF, archive**                            | Buyer, System        | REQ                         | 🔴                       | No            |
+| DD service catalog (15 services) + bundles (Standard/Premium/Elite) + à-la-carte | Buyer, Admin         | DEMO                        | 🔴                       | No            |
+| **Separation of DD payment vs property-purchase payment**                        | Buyer                | REQ, PROP                   | 🔴                       | Partial       |
+| Payment integration (Paystack/Flutterwave)                                       | Buyer                | LOE, REQ, DEMO, PROP, PRD   | 🟡 (Paystack only, mock) | Yes           |
+| VAT (7.5%) handling                                                              | System               | DEMO                        | 🔴                       | No            |
+| Transaction tracking & lifecycle                                                 | Buyer, Staff         | LOE, REQ, DEMO, PRD         | ✅ (3-state)             | Yes           |
+| Property reservation / anti-double-sell on Under Offer                           | System               | REQ                         | 🔴                       | Implied       |
+| **Escrow: funds held; release on conditions met**                                | Buyer, Seller, Admin | LOE, REQ, DEMO, PROP, LEGAL | 🔴 (status only)         | Yes (concept) |
+| **Escrow & payment configuration UI**                                            | Admin, SuperAdmin    | REQ, DEMO                   | 🔴                       | No            |
+| Payouts to sellers; commission to agents                                         | Seller, Agent, Admin | REQ, DEMO                   | 🔴                       | No            |
+| Refunds                                                                          | Buyer, Admin         | DEMO                        | 🔴 (enum only)           | No            |
 
 ### 10.6 Cross-cutting
 
-| Feature | Roles | Sources | Build | In LOE? |
-|---------|-------|---------|-------|---------|
-| In-app messaging / case chat | All | REQ, DEMO, PROP | 🔴 | No |
-| Notifications (in-app) | All | REQ, DEMO, PRD | 🟡 (toasts only) | No |
-| Notifications (email / SMS) | All | PROP, PRD | 🔴 | No |
-| **Audit logs (time-stamped, every action)** | Staff, Admin, SuperAdmin | REQ, LEGAL | 🔴 | Implied |
-| Document management (per case/listing) | All | REQ, DEMO | 🟡 | Yes |
-| Analytics & reporting / business analytics | Admin, SuperAdmin, Seller, Agent | REQ, DEMO, PROP | 🔴 | No (Admin oversight only) |
-| Marketplace/content/page management | Admin, SuperAdmin | REQ, DEMO | 🔴 | No |
-| System integrations config (maps, payments, docs) | SuperAdmin | REQ, DEMO | 🔴 | No |
-| Support tickets / escalations | Staff, Admin | REQ, DEMO | 🔴 | No |
-| Billing / revenue / subscriptions | SuperAdmin | REQ, DEMO | 🔴 | No |
+| Feature                                           | Roles                            | Sources         | Build            | In LOE?                   |
+| ------------------------------------------------- | -------------------------------- | --------------- | ---------------- | ------------------------- |
+| In-app messaging / case chat                      | All                              | REQ, DEMO, PROP | 🔴               | No                        |
+| Notifications (in-app)                            | All                              | REQ, DEMO, PRD  | 🟡 (toasts only) | No                        |
+| Notifications (email / SMS)                       | All                              | PROP, PRD       | 🔴               | No                        |
+| **Audit logs (time-stamped, every action)**       | Staff, Admin, SuperAdmin         | REQ, LEGAL      | 🔴               | Implied                   |
+| Document management (per case/listing)            | All                              | REQ, DEMO       | 🟡               | Yes                       |
+| Analytics & reporting / business analytics        | Admin, SuperAdmin, Seller, Agent | REQ, DEMO, PROP | 🔴               | No (Admin oversight only) |
+| Marketplace/content/page management               | Admin, SuperAdmin                | REQ, DEMO       | 🔴               | No                        |
+| System integrations config (maps, payments, docs) | SuperAdmin                       | REQ, DEMO       | 🔴               | No                        |
+| Support tickets / escalations                     | Staff, Admin                     | REQ, DEMO       | 🔴               | No                        |
+| Billing / revenue / subscriptions                 | SuperAdmin                       | REQ, DEMO       | 🔴               | No                        |
 
 ### 10.7 Non-functional & compliance
 
-| Requirement | Sources | Build | In LOE? |
-|-------------|---------|-------|---------|
-| Production-grade stability | LOE, LEGAL | — | Yes |
-| **NDPR compliance / data ownership** | LEGAL, REQ | 🔴 | Implied (LEGAL) |
-| **Pre-launch security audit / pentest** | LEGAL | 🔴 | Requested |
-| Document integrity (hash/QR/audit trail) | REQ | 🔴 | No |
-| Escrow fund-release legal safeguards | LEGAL, REQ | 🔴 | Partial |
-| Payment regulatory compliance (CBN/AML) | LEGAL | 🔴 | No |
-| Mobile responsiveness | PROP, DEMO | 🟡 | Implied |
-| Accessibility | (quality bar) | 🟡 | Implied |
-| Secure cloud hosting, SSL, backups, monitoring | LOE, PROP | 🟡 | Yes |
-| Full code + login handover, no retained access | LEGAL, LOE | — | Yes |
+| Requirement                                    | Sources       | Build | In LOE?         |
+| ---------------------------------------------- | ------------- | ----- | --------------- |
+| Production-grade stability                     | LOE, LEGAL    | —     | Yes             |
+| **NDPR compliance / data ownership**           | LEGAL, REQ    | 🔴    | Implied (LEGAL) |
+| **Pre-launch security audit / pentest**        | LEGAL         | 🔴    | Requested       |
+| Document integrity (hash/QR/audit trail)       | REQ           | 🔴    | No              |
+| Escrow fund-release legal safeguards           | LEGAL, REQ    | 🔴    | Partial         |
+| Payment regulatory compliance (CBN/AML)        | LEGAL         | 🔴    | No              |
+| Mobile responsiveness                          | PROP, DEMO    | 🟡    | Implied         |
+| Accessibility                                  | (quality bar) | 🟡    | Implied         |
+| Secure cloud hosting, SSL, backups, monitoring | LOE, PROP     | 🟡    | Yes             |
+| Full code + login handover, no retained access | LEGAL, LOE    | —     | Yes             |
 
 ### 10.8 Future / expansion (explicitly later-phase)
 
@@ -697,20 +699,20 @@ subscriptions, seller analytics (PROP); build-phase professional orchestration &
 
 ## 11. Source conflicts & ambiguities (flagged here; resolved in Phase 2)
 
-| # | Conflict | Sources | Preliminary note (resolution = Phase 2) |
-|---|----------|---------|------------------------------------------|
-| C1 | **5 roles vs 7 roles.** LOE/PRD name 5; REQ sidebars + DEMO add **Agent/Broker** and **Super Admin**. | LOE/PRD vs REQ/DEMO | Likely resolve to 7 (Agent/Broker and Super Admin are first-class in client's mental model); confirm with Goodness/client. |
-| C2 | **Status vocabulary mismatch.** Client uses Pending Review/Verified/**Under Offer**/**Sold**/Needs More Info/Rejected; build uses DRAFT/PENDING_REVIEW/**ASSIGNED**/**IN_VERIFICATION**/VERIFIED/**LIVE**/REJECTED/ARCHIVED. | REQ/DEMO vs build | Map the two vocabularies; client-facing labels must match REQ; internal pipeline states can persist behind them. |
-| C3 | **Power of Attorney + document integrity** (hash/QR/PDF/archive) is central in REQ + DEMO but **absent from LOE scope** and from the build. | REQ/DEMO vs LOE/build | Define fully in Master PRD; phasing decision (in/out of current delivery) is Goodness's call in Phase 5. |
-| C4 | **Escrow depth.** LOE = conditional fund release (concept). REQ/DEMO = escrow + **escrow & payment configuration UI** + payouts/commission. PROP = funds held in escrow until conditions met. Build = status only, no escrow logic. | All | Define full escrow model; flag that true escrow may need a regulated provider / CBN considerations (per LEGAL). |
-| C5 | **DD-payment vs purchase-payment separation.** REQ makes this a *defining feature*; build conflates payment with a single transaction; demo shows DD-only payment in the wizard. | REQ vs build | Master PRD must model two distinct payment intents. |
-| C6 | **Service catalog & pricing.** DEMO defines 15 services + 3 bundles + VAT; no source-of-truth pricing entity in build. | DEMO vs build | Define a Service/Bundle catalog entity; pricing is client config. |
-| C7 | **Commercial figures.** LOE ₦1.5M / 60-day support / ₦75k maint. vs Proposal ₦2.8M / 30-day / ₦100k–₦600k. | LOE vs PROP | **LOE governs** (signed, later). Non-product; recorded for completeness. |
-| C8 | **Client's "current state" claims vs reality.** REQ asserts PoA is *live* and all dashboards *operational*; the build has no PoA and several broken staff/professional flows. | REQ vs build | Phase 3 audit will state the honest position; do not take REQ's status claims at face value. |
-| C9 | **Professional taxonomy breadth.** ECO defines 7+ formal types across purchase **and** build phases (incl. Town Planner, Geotechnical, M&E); build enum omits some; build-phase orchestration is unscoped. | ECO/PRD vs build | Master PRD defines the full taxonomy; build-phase professionals likely Future. |
-| C10 | **Notifications/messaging expectation.** REQ/DEMO/PROP assume in-app chat + notifications (and email/SMS); LOE omits; build has toasts only. | REQ/DEMO/PROP vs LOE/build | Define; phasing per Goodness. |
-| C11 | **Inspection scheduling.** REQ specifies slot management + no double-booking + logging; demo has a schedule screen; build has none (disabled button). | REQ/DEMO vs build | Define; candidate for Launch-Ready or Phase 2. |
-| C12 | **Listing media.** DEMO expects rich hero/gallery image management; build stores documents but not listing images. | DEMO vs build | Define media model. |
+| #   | Conflict                                                                                                                                                                                                                            | Sources                    | Preliminary note (resolution = Phase 2)                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| C1  | **5 roles vs 7 roles.** LOE/PRD name 5; REQ sidebars + DEMO add **Agent/Broker** and **Super Admin**.                                                                                                                               | LOE/PRD vs REQ/DEMO        | Likely resolve to 7 (Agent/Broker and Super Admin are first-class in client's mental model); confirm with Goodness/client. |
+| C2  | **Status vocabulary mismatch.** Client uses Pending Review/Verified/**Under Offer**/**Sold**/Needs More Info/Rejected; build uses DRAFT/PENDING_REVIEW/**ASSIGNED**/**IN_VERIFICATION**/VERIFIED/**LIVE**/REJECTED/ARCHIVED.        | REQ/DEMO vs build          | Map the two vocabularies; client-facing labels must match REQ; internal pipeline states can persist behind them.           |
+| C3  | **Power of Attorney + document integrity** (hash/QR/PDF/archive) is central in REQ + DEMO but **absent from LOE scope** and from the build.                                                                                         | REQ/DEMO vs LOE/build      | Define fully in Master PRD; phasing decision (in/out of current delivery) is Goodness's call in Phase 5.                   |
+| C4  | **Escrow depth.** LOE = conditional fund release (concept). REQ/DEMO = escrow + **escrow & payment configuration UI** + payouts/commission. PROP = funds held in escrow until conditions met. Build = status only, no escrow logic. | All                        | Define full escrow model; flag that true escrow may need a regulated provider / CBN considerations (per LEGAL).            |
+| C5  | **DD-payment vs purchase-payment separation.** REQ makes this a _defining feature_; build conflates payment with a single transaction; demo shows DD-only payment in the wizard.                                                    | REQ vs build               | Master PRD must model two distinct payment intents.                                                                        |
+| C6  | **Service catalog & pricing.** DEMO defines 15 services + 3 bundles + VAT; no source-of-truth pricing entity in build.                                                                                                              | DEMO vs build              | Define a Service/Bundle catalog entity; pricing is client config.                                                          |
+| C7  | **Commercial figures.** LOE ₦1.5M / 60-day support / ₦75k maint. vs Proposal ₦2.8M / 30-day / ₦100k–₦600k.                                                                                                                          | LOE vs PROP                | **LOE governs** (signed, later). Non-product; recorded for completeness.                                                   |
+| C8  | **Client's "current state" claims vs reality.** REQ asserts PoA is _live_ and all dashboards _operational_; the build has no PoA and several broken staff/professional flows.                                                       | REQ vs build               | Phase 3 audit will state the honest position; do not take REQ's status claims at face value.                               |
+| C9  | **Professional taxonomy breadth.** ECO defines 7+ formal types across purchase **and** build phases (incl. Town Planner, Geotechnical, M&E); build enum omits some; build-phase orchestration is unscoped.                          | ECO/PRD vs build           | Master PRD defines the full taxonomy; build-phase professionals likely Future.                                             |
+| C10 | **Notifications/messaging expectation.** REQ/DEMO/PROP assume in-app chat + notifications (and email/SMS); LOE omits; build has toasts only.                                                                                        | REQ/DEMO/PROP vs LOE/build | Define; phasing per Goodness.                                                                                              |
+| C11 | **Inspection scheduling.** REQ specifies slot management + no double-booking + logging; demo has a schedule screen; build has none (disabled button).                                                                               | REQ/DEMO vs build          | Define; candidate for Launch-Ready or Phase 2.                                                                             |
+| C12 | **Listing media.** DEMO expects rich hero/gallery image management; build stores documents but not listing images.                                                                                                                  | DEMO vs build              | Define media model.                                                                                                        |
 
 ---
 

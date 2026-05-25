@@ -13,6 +13,7 @@ export function useUpdateListingMutation() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["listings"] });
       void qc.invalidateQueries({ queryKey: ["listing"] });
+      void qc.invalidateQueries({ queryKey: ["staff", "queue"] });
     },
   });
 }

@@ -18,9 +18,7 @@ export class TransactionsService {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
   }
 
-  private serialize(
-    tx: Prisma.TransactionGetPayload<{ include: { listing: true } }>,
-  ) {
+  private serialize(tx: Prisma.TransactionGetPayload<{ include: { listing: true } }>) {
     const l = tx.listing;
     return {
       id: tx.id,

@@ -27,11 +27,7 @@ export class UsersController {
   }
 
   @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() dto: UpdateUserDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  update(@Param("id") id: string, @Body() dto: UpdateUserDto, @CurrentUser() user: JwtPayload) {
     return this.users.update(id, dto, user);
   }
 }

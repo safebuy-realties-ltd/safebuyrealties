@@ -266,11 +266,7 @@ export class ListingsService {
     return allowed?.includes(next) ?? false;
   }
 
-  private assertStatusTransition(
-    from: ListingStatus,
-    to: ListingStatus,
-    role: UserRole,
-  ) {
+  private assertStatusTransition(from: ListingStatus, to: ListingStatus, role: UserRole) {
     if (from === to) return;
     if (this.isStaff(role)) {
       return;
@@ -288,8 +284,7 @@ export class ListingsService {
         listingId,
         type: t.type,
         order: t.order,
-        status:
-          t.order === 0 ? VerificationStepStatus.COMPLETED : VerificationStepStatus.PENDING,
+        status: t.order === 0 ? VerificationStepStatus.COMPLETED : VerificationStepStatus.PENDING,
         completedAt: t.order === 0 ? new Date() : null,
       })),
     });

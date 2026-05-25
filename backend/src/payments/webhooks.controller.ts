@@ -7,10 +7,7 @@ export class WebhooksController {
   constructor(private payments: PaymentsService) {}
 
   @Post(":provider")
-  async handle(
-    @Param("provider") provider: string,
-    @Req() req: Request & { rawBody?: Buffer },
-  ) {
+  async handle(@Param("provider") provider: string, @Req() req: Request & { rawBody?: Buffer }) {
     if (provider !== "paystack") {
       return { received: false };
     }

@@ -4,7 +4,15 @@ import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLay
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, ShieldCheck, ShieldAlert, Clock } from "lucide-react";
+import {
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+} from "lucide-react";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { statusBadgeClass, statusIsPublic, statusLabel } from "@/lib/listing-status";
 
@@ -37,7 +45,11 @@ function statusIcon(status: string) {
 function formatNgn(amount: string) {
   const n = Number(amount);
   if (!Number.isFinite(n)) return amount;
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function listingToRow(l: {
@@ -86,13 +98,14 @@ function BrowseListings() {
     const filtered = baseRows.filter((r) => {
       if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (beds !== "any" && r.beds < Number(beds)) return false;
-      if (q && !(`${r.title} ${r.location}`.toLowerCase().includes(q.toLowerCase()))) return false;
+      if (q && !`${r.title} ${r.location}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
     const sorted = [...filtered].sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
-      if (typeof av === "number" && typeof bv === "number") return sortDir === "asc" ? av - bv : bv - av;
+      if (typeof av === "number" && typeof bv === "number")
+        return sortDir === "asc" ? av - bv : bv - av;
       return sortDir === "asc"
         ? String(av).localeCompare(String(bv))
         : String(bv).localeCompare(String(av));
@@ -216,10 +229,14 @@ function BrowseListings() {
         </div>
         <div className="divide-y divide-border/60">
           {isLoading && (
-            <div className="px-5 py-10 text-center text-sm text-muted-foreground">Loading listings…</div>
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+              Loading listings…
+            </div>
           )}
           {!isLoading && rows.length === 0 && (
-            <div className="px-5 py-10 text-center text-sm text-muted-foreground">No listings match your filters.</div>
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+              No listings match your filters.
+            </div>
           )}
           {!isLoading &&
             rows.map((r) => {
@@ -235,9 +252,15 @@ function BrowseListings() {
                     <p className="font-medium text-foreground">{r.title}</p>
                     <p className="text-xs text-muted-foreground md:hidden">{r.location}</p>
                   </div>
-                  <div className="col-span-3 hidden text-muted-foreground md:block">{r.location}</div>
-                  <div className="col-span-2 font-semibold text-primary md:text-right">{r.price}</div>
-                  <div className="col-span-1 text-muted-foreground md:text-right">{r.beds || "—"}</div>
+                  <div className="col-span-3 hidden text-muted-foreground md:block">
+                    {r.location}
+                  </div>
+                  <div className="col-span-2 font-semibold text-primary md:text-right">
+                    {r.price}
+                  </div>
+                  <div className="col-span-1 text-muted-foreground md:text-right">
+                    {r.beds || "—"}
+                  </div>
                   <div className="col-span-2">
                     <Badge variant="outline" className={`gap-1 ${statusBadgeClass(r.status)}`}>
                       <Icon className="h-3 w-3" /> {statusLabel(r.status)}

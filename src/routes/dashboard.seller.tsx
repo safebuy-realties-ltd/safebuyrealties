@@ -35,7 +35,7 @@ function formatMoney(amount: string, currency: string) {
 
 function SellerOverview() {
   const { data, isLoading, isError, error, refetch } = useListingsQuery();
-  const listings = data?.listings ?? [];
+  const listings = useMemo(() => data?.listings ?? [], [data?.listings]);
 
   const firstListingId = listings[0]?.id ?? null;
   const { data: previewDocs } = useListingDocumentsQuery(firstListingId);
@@ -69,7 +69,8 @@ function SellerOverview() {
           setTitle("");
           toast.success("Draft listing created.");
         },
-        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not create listing."),
+        onError: (e) =>
+          toast.error(e instanceof ApiError ? e.message : "Could not create listing."),
       },
     );
   };
@@ -100,8 +101,16 @@ function SellerOverview() {
       <div className="mb-6 rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
         <p className="text-sm font-medium">Create listing draft</p>
         <div className="mt-2 flex gap-2">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Listing title" />
-          <Button type="button" onClick={createDraft} disabled={createListing.isPending || !title.trim()}>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Listing title"
+          />
+          <Button
+            type="button"
+            onClick={createDraft}
+            disabled={createListing.isPending || !title.trim()}
+          >
             {createListing.isPending ? "Creating…" : "Create draft"}
           </Button>
         </div>
@@ -109,8 +118,16 @@ function SellerOverview() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Your listings" value={String(stats.total)} hint={`${stats.live} live`} />
-        <StatCard label="In verification" value={String(stats.inVerification)} hint="Pipeline stages" />
-        <StatCard label="Documents (first listing)" value={String(previewDocs?.length ?? 0)} hint="Upload more in Documents" />
+        <StatCard
+          label="In verification"
+          value={String(stats.inVerification)}
+          hint="Pipeline stages"
+        />
+        <StatCard
+          label="Documents (first listing)"
+          value={String(previewDocs?.length ?? 0)}
+          hint="Upload more in Documents"
+        />
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-3">
@@ -128,15 +145,14 @@ function SellerOverview() {
             {!isLoading && recentListings.length === 0 && (
               <p className="py-6 text-center text-sm text-muted-foreground">No listings yet.</p>
             )}
-            {!isLoading &&
-              recentListings.map((l) => (
-                <ListingRow key={l.id} listing={l} />
-              ))}
+            {!isLoading && recentListings.map((l) => <ListingRow key={l.id} listing={l} />)}
           </div>
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
           <h2 className="text-lg font-semibold">Documents</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Latest uploads for your first listing.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Latest uploads for your first listing.
+          </p>
           <div className="mt-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/40 p-6 text-center">
             <Upload className="h-6 w-6 text-muted-foreground" />
             <p className="mt-2 text-sm font-medium">Upload in Documents</p>
@@ -146,7 +162,9 @@ function SellerOverview() {
           </div>
           <div className="mt-4 space-y-2">
             {(previewDocs ?? []).length === 0 && (
-              <p className="text-xs text-muted-foreground">No documents yet for the first listing.</p>
+              <p className="text-xs text-muted-foreground">
+                No documents yet for the first listing.
+              </p>
             )}
             {(previewDocs ?? []).slice(0, 4).map((d) => (
               <div
@@ -168,7 +186,11 @@ function ListingRow({ listing }: { listing: ListingDto }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 py-3">
       <div className="min-w-0">
-        <Link to="/listings/$listingId" params={{ listingId: listing.id }} className="font-medium text-foreground hover:underline">
+        <Link
+          to="/listings/$listingId"
+          params={{ listingId: listing.id }}
+          className="font-medium text-foreground hover:underline"
+        >
           {listing.title}
         </Link>
         <p className="text-sm text-muted-foreground">

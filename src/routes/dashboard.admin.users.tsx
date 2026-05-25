@@ -52,7 +52,7 @@ function AdminUsers() {
     page,
     pageSize: PAGE_SIZE,
   });
-  const users = data?.users ?? [];
+  const users = useMemo(() => data?.users ?? [], [data?.users]);
   const total = data?.meta?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -90,7 +90,11 @@ function AdminUsers() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Page" value={isLoading ? "…" : `${users.length} / ${total}`} hint="This page" />
+        <StatCard
+          label="Page"
+          value={isLoading ? "…" : `${users.length} / ${total}`}
+          hint="This page"
+        />
         <StatCard label="Total (server)" value={isLoading ? "…" : String(total)} />
         <StatCard label="Filter" value={roleFilter === "all" ? "All roles" : roleFilter} />
         <StatCard label="Search" value={q ? "On" : "Off"} />
@@ -142,11 +146,16 @@ function AdminUsers() {
             <li className="px-5 py-10 text-center text-sm text-muted-foreground">Loading…</li>
           )}
           {!isLoading && filteredLocal.length === 0 && (
-            <li className="px-5 py-10 text-center text-sm text-muted-foreground">No users on this page.</li>
+            <li className="px-5 py-10 text-center text-sm text-muted-foreground">
+              No users on this page.
+            </li>
           )}
           {!isLoading &&
             filteredLocal.map((u) => (
-              <li key={u.id} className="grid grid-cols-1 gap-3 px-5 py-4 text-sm md:grid-cols-12 md:items-center md:gap-4">
+              <li
+                key={u.id}
+                className="grid grid-cols-1 gap-3 px-5 py-4 text-sm md:grid-cols-12 md:items-center md:gap-4"
+              >
                 <div className="col-span-4 flex min-w-0 items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className="bg-primary-soft text-xs text-primary">
@@ -190,7 +199,12 @@ function AdminUsers() {
             Page {page} of {totalPages} · {total} users
           </span>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
             <Button

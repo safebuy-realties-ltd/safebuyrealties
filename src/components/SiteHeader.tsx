@@ -8,9 +8,15 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Logo />
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          <a href="/#features" className="hover:text-foreground transition-colors">Features</a>
-          <a href="/#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="/#trust" className="hover:text-foreground transition-colors">Trust & Safety</a>
+          <a href="/#features" className="hover:text-foreground transition-colors">
+            Features
+          </a>
+          <a href="/#how" className="hover:text-foreground transition-colors">
+            How it works
+          </a>
+          <a href="/#trust" className="hover:text-foreground transition-colors">
+            Trust & Safety
+          </a>
         </nav>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">

@@ -153,7 +153,9 @@ function Transactions() {
         )}
         {!isLoading && (items ?? []).length === 0 && (
           <div className="rounded-xl border border-border/60 bg-card p-10 text-center shadow-[var(--shadow-card)]">
-            <p className="text-sm text-muted-foreground">You have not started any transactions yet.</p>
+            <p className="text-sm text-muted-foreground">
+              You have not started any transactions yet.
+            </p>
             <Button className="mt-4" asChild>
               <Link to="/dashboard/buyer/listings">
                 Browse listings <ArrowRight className="ml-1 h-4 w-4" />
@@ -214,7 +216,9 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
     <article className="rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 p-5">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Transaction</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Transaction
+          </p>
           <h3 className="mt-1 text-base font-semibold text-foreground">{tx.listing.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {tx.listing.location} · <span className="font-semibold text-foreground">{amount}</span>
@@ -226,7 +230,9 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
           </Badge>
           {canPay && (
             <Button size="sm" onClick={() => pay()} disabled={payMutation.isPending}>
-              {payMutation.isPending ? "Processing…" : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
+              {payMutation.isPending
+                ? "Processing…"
+                : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
@@ -242,7 +248,11 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
           <span className="absolute bottom-2 left-[9px] top-2 w-px bg-border" aria-hidden />
           {steps.map((step) => {
             const Icon = step.done ? CheckCircle2 : step.current ? Clock : Circle;
-            const color = step.done ? "text-success" : step.current ? "text-primary" : "text-muted-foreground";
+            const color = step.done
+              ? "text-success"
+              : step.current
+                ? "text-primary"
+                : "text-muted-foreground";
             return (
               <li key={step.key} className="relative">
                 <span
@@ -253,7 +263,9 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p
                     className={`text-sm ${
-                      step.done || step.current ? "font-medium text-foreground" : "text-muted-foreground"
+                      step.done || step.current
+                        ? "font-medium text-foreground"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {step.label}
@@ -264,7 +276,8 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
           })}
         </ol>
         <p className="mt-4 text-xs text-muted-foreground">
-          Started {new Date(tx.createdAt).toLocaleString()} · Updated {new Date(tx.updatedAt).toLocaleString()}
+          Started {new Date(tx.createdAt).toLocaleString()} · Updated{" "}
+          {new Date(tx.updatedAt).toLocaleString()}
         </p>
         {storedPayment?.reference && (
           <p className="mt-1 text-xs text-muted-foreground">

@@ -24,5 +24,3 @@ export class ListListingsQueryDto {
   @IsUUID()
   sellerId?: string;
 }
-
-

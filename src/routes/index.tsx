@@ -23,8 +23,7 @@ function Landing() {
                 Trusted by 12,000+ verified buyers and sellers
               </div>
               <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-                Real estate you can{" "}
-                <span className="text-primary">actually trust.</span>
+                Real estate you can <span className="text-primary">actually trust.</span>
               </h1>
               <p className="mx-auto mt-5 max-w-2xl text-balance text-lg text-muted-foreground">
                 SafeBuyRealties verifies every listing, document, and professional involved in your
@@ -32,16 +31,24 @@ function Landing() {
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Button asChild size="lg" className="shadow-[var(--shadow-elegant)]">
-                  <Link to="/register">Get started <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                  <Link to="/register">
+                    Get started <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/login">Log in</Link>
                 </Button>
               </div>
               <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Verified titles</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Escrow-secured payments</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Licensed professionals</span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" /> Verified titles
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" /> Escrow-secured payments
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" /> Licensed professionals
+                </span>
               </div>
             </div>
 
@@ -64,7 +71,8 @@ function Landing() {
                 Confidence built into every step
               </h2>
               <p className="mt-3 text-muted-foreground">
-                A complete verification system, secure payment rails, and licensed professionals — all in one place.
+                A complete verification system, secure payment rails, and licensed professionals —
+                all in one place.
               </p>
             </div>
 
@@ -86,7 +94,10 @@ function Landing() {
                   desc: "Licensed surveyors, lawyers, and inspectors handle every assessment.",
                 },
               ].map((f) => (
-                <div key={f.title} className="rounded-2xl border border-border/60 bg-card p-7 shadow-[var(--shadow-card)]">
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-border/60 bg-card p-7 shadow-[var(--shadow-card)]"
+                >
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
                     <f.icon className="h-5 w-5" />
                   </span>
@@ -103,16 +114,37 @@ function Landing() {
           <div className="mx-auto max-w-7xl px-6 py-24">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-sm font-medium text-primary">How it works</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">A safer path from listing to closing</h2>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+                A safer path from listing to closing
+              </h2>
             </div>
             <div className="mt-14 grid gap-6 md:grid-cols-4">
               {[
-                { n: "01", t: "List or browse", d: "Create a listing or explore verified properties." },
-                { n: "02", t: "Document review", d: "Our staff routes documents to the right professional." },
-                { n: "03", t: "Field verification", d: "Surveyors and lawyers validate on the ground." },
-                { n: "04", t: "Secure closing", d: "Escrow releases funds when conditions are met." },
+                {
+                  n: "01",
+                  t: "List or browse",
+                  d: "Create a listing or explore verified properties.",
+                },
+                {
+                  n: "02",
+                  t: "Document review",
+                  d: "Our staff routes documents to the right professional.",
+                },
+                {
+                  n: "03",
+                  t: "Field verification",
+                  d: "Surveyors and lawyers validate on the ground.",
+                },
+                {
+                  n: "04",
+                  t: "Secure closing",
+                  d: "Escrow releases funds when conditions are met.",
+                },
               ].map((s) => (
-                <div key={s.n} className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+                <div
+                  key={s.n}
+                  className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]"
+                >
                   <p className="text-xs font-semibold tracking-widest text-primary">{s.n}</p>
                   <h3 className="mt-3 font-semibold text-foreground">{s.t}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
@@ -137,7 +169,12 @@ function Landing() {
                 <Button asChild size="lg" variant="secondary">
                   <Link to="/register">Create free account</Link>
                 </Button>
-                <Button asChild size="lg" variant="ghost" className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="ghost"
+                  className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+                >
                   <Link to="/login">I already have one</Link>
                 </Button>
               </div>

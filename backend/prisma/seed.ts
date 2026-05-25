@@ -192,24 +192,150 @@ async function main() {
   });
 
   const listingsData = [
-    mk("Draft Bungalow Ikoyi", seller.id, ListingStatus.DRAFT, "45000000", "Ikoyi, Lagos", "Draft only — not submitted."),
-    mk("Draft Plot Enugu", seller.id, ListingStatus.DRAFT, "12000000", "Enugu", "Land parcel draft."),
-    mk("Penthouse Pending Review", seller2.id, ListingStatus.PENDING_REVIEW, "320000000", "Victoria Island, Lagos", "Luxury penthouse awaiting staff review."),
-    mk("Duplex Pending Review", seller.id, ListingStatus.PENDING_REVIEW, "185000000", "Lekki Phase 1", "Family duplex with BQ."),
-    mk("Terrace ASSIGNED Pipeline", seller2.id, ListingStatus.ASSIGNED, "98000000", "Ajah, Lagos", "Staff assigned — verification ongoing."),
-    mk("Bungalow IN_VERIFICATION", seller.id, ListingStatus.IN_VERIFICATION, "72000000", "Ibadan", "Field checks in progress."),
-    mk("Townhouse IN_VERIFICATION", seller2.id, ListingStatus.IN_VERIFICATION, "142000000", "Abuja", "Legal and survey parallel."),
-    mk("Estate Block VERIFIED", seller.id, ListingStatus.VERIFIED, "265000000", "Lekki", "Verified — ready to go live."),
-    mk("Apartment VERIFIED", seller2.id, ListingStatus.VERIFIED, "55000000", "Port Harcourt", "Verified apartment."),
-    mk("LIVE Acacia Hills Estate", seller.id, ListingStatus.LIVE, "125000000", "Lagos", "Seed flagship LIVE property for buyers."),
-    mk("LIVE Riverside Townhouse", seller2.id, ListingStatus.LIVE, "98000000", "Port Harcourt", "Waterfront townhouse."),
-    mk("LIVE Garden Court Residence", seller.id, ListingStatus.LIVE, "210000000", "Lekki", "Gated community family home."),
-    mk("LIVE Maple Heights Apartment", seller2.id, ListingStatus.LIVE, "67000000", "Abuja", "High-rise apartment."),
-    mk("LIVE Cedar Park Villa", seller.id, ListingStatus.LIVE, "310000000", "Ikoyi", "Premium villa with pool."),
-    mk("LIVE Sunset Bay Condo", seller2.id, ListingStatus.LIVE, "88000000", "Victoria Island", "Modern condo near business district."),
-    mk("LIVE Palm Grove Duplex", seller.id, ListingStatus.LIVE, "155000000", "Ajah", "Corner duplex with parking."),
-    mk("REJECTED Incomplete Title", seller2.id, ListingStatus.REJECTED, "40000000", "Oshodi", "Rejected: documentation issues."),
-    mk("ARCHIVED Old Listing", seller.id, ListingStatus.ARCHIVED, "33000000", "Surulere", "Archived seller withdrawal."),
+    mk(
+      "Draft Bungalow Ikoyi",
+      seller.id,
+      ListingStatus.DRAFT,
+      "45000000",
+      "Ikoyi, Lagos",
+      "Draft only — not submitted.",
+    ),
+    mk(
+      "Draft Plot Enugu",
+      seller.id,
+      ListingStatus.DRAFT,
+      "12000000",
+      "Enugu",
+      "Land parcel draft.",
+    ),
+    mk(
+      "Penthouse Pending Review",
+      seller2.id,
+      ListingStatus.PENDING_REVIEW,
+      "320000000",
+      "Victoria Island, Lagos",
+      "Luxury penthouse awaiting staff review.",
+    ),
+    mk(
+      "Duplex Pending Review",
+      seller.id,
+      ListingStatus.PENDING_REVIEW,
+      "185000000",
+      "Lekki Phase 1",
+      "Family duplex with BQ.",
+    ),
+    mk(
+      "Terrace ASSIGNED Pipeline",
+      seller2.id,
+      ListingStatus.ASSIGNED,
+      "98000000",
+      "Ajah, Lagos",
+      "Staff assigned — verification ongoing.",
+    ),
+    mk(
+      "Bungalow IN_VERIFICATION",
+      seller.id,
+      ListingStatus.IN_VERIFICATION,
+      "72000000",
+      "Ibadan",
+      "Field checks in progress.",
+    ),
+    mk(
+      "Townhouse IN_VERIFICATION",
+      seller2.id,
+      ListingStatus.IN_VERIFICATION,
+      "142000000",
+      "Abuja",
+      "Legal and survey parallel.",
+    ),
+    mk(
+      "Estate Block VERIFIED",
+      seller.id,
+      ListingStatus.VERIFIED,
+      "265000000",
+      "Lekki",
+      "Verified — ready to go live.",
+    ),
+    mk(
+      "Apartment VERIFIED",
+      seller2.id,
+      ListingStatus.VERIFIED,
+      "55000000",
+      "Port Harcourt",
+      "Verified apartment.",
+    ),
+    mk(
+      "LIVE Acacia Hills Estate",
+      seller.id,
+      ListingStatus.LIVE,
+      "125000000",
+      "Lagos",
+      "Seed flagship LIVE property for buyers.",
+    ),
+    mk(
+      "LIVE Riverside Townhouse",
+      seller2.id,
+      ListingStatus.LIVE,
+      "98000000",
+      "Port Harcourt",
+      "Waterfront townhouse.",
+    ),
+    mk(
+      "LIVE Garden Court Residence",
+      seller.id,
+      ListingStatus.LIVE,
+      "210000000",
+      "Lekki",
+      "Gated community family home.",
+    ),
+    mk(
+      "LIVE Maple Heights Apartment",
+      seller2.id,
+      ListingStatus.LIVE,
+      "67000000",
+      "Abuja",
+      "High-rise apartment.",
+    ),
+    mk(
+      "LIVE Cedar Park Villa",
+      seller.id,
+      ListingStatus.LIVE,
+      "310000000",
+      "Ikoyi",
+      "Premium villa with pool.",
+    ),
+    mk(
+      "LIVE Sunset Bay Condo",
+      seller2.id,
+      ListingStatus.LIVE,
+      "88000000",
+      "Victoria Island",
+      "Modern condo near business district.",
+    ),
+    mk(
+      "LIVE Palm Grove Duplex",
+      seller.id,
+      ListingStatus.LIVE,
+      "155000000",
+      "Ajah",
+      "Corner duplex with parking.",
+    ),
+    mk(
+      "REJECTED Incomplete Title",
+      seller2.id,
+      ListingStatus.REJECTED,
+      "40000000",
+      "Oshodi",
+      "Rejected: documentation issues.",
+    ),
+    mk(
+      "ARCHIVED Old Listing",
+      seller.id,
+      ListingStatus.ARCHIVED,
+      "33000000",
+      "Surulere",
+      "Archived seller withdrawal.",
+    ),
   ];
 
   const listings = await prisma.$transaction(
@@ -218,7 +344,9 @@ async function main() {
         data: {
           ...d,
           verifiedAt:
-            d.status === ListingStatus.VERIFIED || d.status === ListingStatus.LIVE ? new Date() : null,
+            d.status === ListingStatus.VERIFIED || d.status === ListingStatus.LIVE
+              ? new Date()
+              : null,
         },
       }),
     ),
@@ -247,7 +375,12 @@ async function main() {
     });
   }
 
-  const docFor = async (listingId: string, uploadedById: string, category: string, name: string) => {
+  const docFor = async (
+    listingId: string,
+    uploadedById: string,
+    category: string,
+    name: string,
+  ) => {
     await prisma.document.create({
       data: {
         listingId,
@@ -261,11 +394,31 @@ async function main() {
     });
   };
 
-  await docFor(byTitle("Penthouse Pending Review").id, seller2.id, "title_deed", "coa_penthouse.pdf");
-  await docFor(byTitle("Penthouse Pending Review").id, seller2.id, "survey_plan", "survey_penthouse.pdf");
-  await docFor(byTitle("Bungalow IN_VERIFICATION").id, seller.id, "title_deed", "title_bungalow.pdf");
+  await docFor(
+    byTitle("Penthouse Pending Review").id,
+    seller2.id,
+    "title_deed",
+    "coa_penthouse.pdf",
+  );
+  await docFor(
+    byTitle("Penthouse Pending Review").id,
+    seller2.id,
+    "survey_plan",
+    "survey_penthouse.pdf",
+  );
+  await docFor(
+    byTitle("Bungalow IN_VERIFICATION").id,
+    seller.id,
+    "title_deed",
+    "title_bungalow.pdf",
+  );
   await docFor(byTitle("LIVE Acacia Hills Estate").id, seller.id, "title_deed", "acacia_title.pdf");
-  await docFor(byTitle("LIVE Acacia Hills Estate").id, seller.id, "survey_plan", "acacia_survey.pdf");
+  await docFor(
+    byTitle("LIVE Acacia Hills Estate").id,
+    seller.id,
+    "survey_plan",
+    "acacia_survey.pdf",
+  );
 
   await prisma.task.createMany({
     data: [
@@ -388,7 +541,9 @@ async function main() {
     { role: "PRO (surveyor)", email: surveyor.email },
     { role: "PRO (valuer)", email: valuer.email },
   ]);
-  console.log(`Listings: ${listings.length} | Transactions sample: initiated=${txInit.id.slice(0, 8)}…`);
+  console.log(
+    `Listings: ${listings.length} | Transactions sample: initiated=${txInit.id.slice(0, 8)}…`,
+  );
 }
 
 main()

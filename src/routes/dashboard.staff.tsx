@@ -17,14 +17,22 @@ const PIPELINE = ["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION"] as const;
 
 function StaffOverview() {
   const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 200 });
-  const listings = data?.listings ?? [];
+  const listings = useMemo(() => data?.listings ?? [], [data?.listings]);
 
   const stats = useMemo(() => {
-    const pipeline = listings.filter((l) => PIPELINE.includes(l.status as (typeof PIPELINE)[number]));
+    const pipeline = listings.filter((l) =>
+      PIPELINE.includes(l.status as (typeof PIPELINE)[number]),
+    );
     const assigned = listings.filter((l) => l.status === "ASSIGNED").length;
     const inVer = listings.filter((l) => l.status === "IN_VERIFICATION").length;
     const pending = listings.filter((l) => l.status === "PENDING_REVIEW").length;
-    return { pipeline: pipeline.length, pending, assigned, inVer, live: listings.filter((l) => l.status === "LIVE").length };
+    return {
+      pipeline: pipeline.length,
+      pending,
+      assigned,
+      inVer,
+      live: listings.filter((l) => l.status === "LIVE").length,
+    };
   }, [listings]);
 
   const recent = useMemo(
@@ -50,7 +58,11 @@ function StaffOverview() {
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="In pipeline" value={isLoading ? "…" : String(stats.pipeline)} hint="Review + verify" />
+        <StatCard
+          label="In pipeline"
+          value={isLoading ? "…" : String(stats.pipeline)}
+          hint="Review + verify"
+        />
         <StatCard label="Pending review" value={isLoading ? "…" : String(stats.pending)} />
         <StatCard label="In verification" value={isLoading ? "…" : String(stats.inVer)} />
         <StatCard label="Live" value={isLoading ? "…" : String(stats.live)} hint="Published" />
@@ -66,13 +78,17 @@ function StaffOverview() {
         <div className="divide-y divide-border/60">
           {isLoading && <p className="p-6 text-sm text-muted-foreground">Loading…</p>}
           {!isLoading && recent.length === 0 && (
-            <p className="p-6 text-sm text-muted-foreground">No listings in this pipeline right now.</p>
+            <p className="p-6 text-sm text-muted-foreground">
+              No listings in this pipeline right now.
+            </p>
           )}
           {!isLoading &&
             recent.map((l) => (
               <div key={l.id} className="grid grid-cols-12 items-center gap-4 px-5 py-4 text-sm">
                 <div className="col-span-4 font-medium text-foreground">{l.title}</div>
-                <div className="col-span-3 text-muted-foreground">{l.sellerName ?? l.sellerId.slice(0, 8)}</div>
+                <div className="col-span-3 text-muted-foreground">
+                  {l.sellerName ?? l.sellerId.slice(0, 8)}
+                </div>
                 <div className="col-span-3">
                   <Badge variant="outline">{l.status.replace(/_/g, " ")}</Badge>
                 </div>

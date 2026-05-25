@@ -14,7 +14,12 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
-import { useAssignVerificationMutation, useVerificationListingQuery } from "@/hooks/use-verification";
+import {
+  useAssignVerificationMutation,
+  useVerificationListingQuery,
+  usePatchVerificationStepMutation,
+  useVerificationActivityQuery,
+} from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
 import { useCreateTaskMutation } from "@/hooks/use-tasks";
@@ -33,8 +38,13 @@ export const Route = createFileRoute("/dashboard/staff/workflow")({
 function StaffWorkflow() {
   const { listing: listingFromSearch } = Route.useSearch();
   const [filter, setFilter] = useState<"all" | StaffQueueFilter>("all");
-  const { data: queueData, isLoading: listingsLoading, isError: listingsError, error: listingsErr } = useStaffQueueQuery(filter);
-  const cards = queueData?.cards ?? [];
+  const {
+    data: queueData,
+    isLoading: listingsLoading,
+    isError: listingsError,
+    error: listingsErr,
+  } = useStaffQueueQuery(filter);
+  const cards = useMemo(() => queueData?.cards ?? [], [queueData?.cards]);
 
   const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
   const professionals = prosData?.users ?? [];
@@ -73,6 +83,7 @@ function StaffWorkflow() {
 
   const assignMutation = useAssignVerificationMutation();
   const createTaskMutation = useCreateTaskMutation();
+  const patchStepMutation = usePatchVerificationStepMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
   const {
     data: activity = [],
@@ -106,7 +117,9 @@ function StaffWorkflow() {
             });
             toast.success("Verification step assigned and task synced.");
           } catch (e) {
-            toast.error(e instanceof ApiError ? e.message : "Assignment saved, but task sync failed.");
+            toast.error(
+              e instanceof ApiError ? e.message : "Assignment saved, but task sync failed.",
+            );
           }
         },
         onError: (e) => {
@@ -122,7 +135,8 @@ function StaffWorkflow() {
     patchStepMutation.mutate(
       { stepId, listingId: selectedListingId, body: { status } },
       {
-        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
+        onSuccess: () =>
+          toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
       },
     );
@@ -165,7 +179,14 @@ function StaffWorkflow() {
               <p className="text-muted-foreground">No listings match.</p>
             )}
             {["all", "pending", "in_progress", "completed", "rejected"].map((f) => (
-              <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f as "all" | StaffQueueFilter)}>{f.replace("_", " ")}</Button>
+              <Button
+                key={f}
+                size="sm"
+                variant={filter === f ? "default" : "outline"}
+                onClick={() => setFilter(f as "all" | StaffQueueFilter)}
+              >
+                {f.replace("_", " ")}
+              </Button>
             ))}
             {filteredListings.map((l) => (
               <button
@@ -173,7 +194,9 @@ function StaffWorkflow() {
                 type="button"
                 onClick={() => setSelectedListingId(l.listingId)}
                 className={`flex w-full flex-col rounded border px-2 py-2 text-left ${
-                  selectedListingId === l.listingId ? "border-primary bg-primary/5" : "border-transparent hover:bg-muted/50"
+                  selectedListingId === l.listingId
+                    ? "border-primary bg-primary/5"
+                    : "border-transparent hover:bg-muted/50"
                 }`}
               >
                 <span className="font-medium">{l.title}</span>
@@ -188,25 +211,36 @@ function StaffWorkflow() {
         <section className="rounded-lg border border-border bg-card p-4">
           <h2 className="text-sm font-semibold">Verification steps</h2>
           {!selectedListingId && (
-            <p className="mt-3 text-sm text-muted-foreground">Select a listing to load its verification pipeline.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Select a listing to load its verification pipeline.
+            </p>
           )}
           {selectedListing && (
             <p className="mt-2 text-xs text-muted-foreground">
-              {selectedListing.title} — steps are created when a listing enters review (e.g. PENDING_REVIEW).
+              {selectedListing.title} — steps are created when a listing enters review (e.g.
+              PENDING_REVIEW).
             </p>
           )}
           {selectedListingId && stepsError && (
             <div className="mt-3 text-sm text-destructive">
               {stepsErr instanceof ApiError ? stepsErr.message : "Failed to load steps."}
-              <Button variant="outline" size="sm" className="ml-2 h-7" onClick={() => void refetchSteps()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-2 h-7"
+                onClick={() => void refetchSteps()}
+              >
                 Retry
               </Button>
             </div>
           )}
-          {selectedListingId && stepsLoading && <p className="mt-3 text-sm text-muted-foreground">Loading steps…</p>}
+          {selectedListingId && stepsLoading && (
+            <p className="mt-3 text-sm text-muted-foreground">Loading steps…</p>
+          )}
           {selectedListingId && !stepsLoading && !stepsError && steps && steps.length === 0 && (
             <p className="mt-3 text-sm text-muted-foreground">
-              No verification steps for this listing yet. Move the listing to PENDING_REVIEW to generate steps.
+              No verification steps for this listing yet. Move the listing to PENDING_REVIEW to
+              generate steps.
             </p>
           )}
           {steps && steps.length > 0 && (
@@ -217,7 +251,9 @@ function StaffWorkflow() {
                     <span className="font-medium">{s.label}</span>
                     <Badge variant="outline">{s.status}</Badge>
                     {s.assignedProfessionalId && (
-                      <span className="text-xs text-muted-foreground">Assigned pro id: {s.assignedProfessionalId}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Assigned pro id: {s.assignedProfessionalId}
+                      </span>
                     )}
                   </div>
                   <div className="mt-2 flex flex-wrap items-end gap-2">
@@ -226,7 +262,9 @@ function StaffWorkflow() {
                       <Select
                         disabled={prosLoading || professionals.length === 0}
                         value={professionalByStep[s.type] ?? ""}
-                        onValueChange={(v) => setProfessionalByStep((prev) => ({ ...prev, [s.type]: v }))}
+                        onValueChange={(v) =>
+                          setProfessionalByStep((prev) => ({ ...prev, [s.type]: v }))
+                        }
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue placeholder={prosLoading ? "Loading…" : "Select"} />
@@ -243,7 +281,9 @@ function StaffWorkflow() {
                     <Button
                       size="sm"
                       className="h-9"
-                      disabled={assignMutation.isPending || createTaskMutation.isPending || prosLoading}
+                      disabled={
+                        assignMutation.isPending || createTaskMutation.isPending || prosLoading
+                      }
                       onClick={() => assignStep(s.type)}
                     >
                       Assign
@@ -273,8 +313,12 @@ function StaffWorkflow() {
           )}
           <div className="mt-5 border-t border-border/60 pt-4">
             <h3 className="text-sm font-semibold">Activity log</h3>
-            {activityLoading && <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>}
-            {activityError && <p className="mt-2 text-sm text-destructive">Could not load activity.</p>}
+            {activityLoading && (
+              <p className="mt-2 text-sm text-muted-foreground">Loading activity…</p>
+            )}
+            {activityError && (
+              <p className="mt-2 text-sm text-destructive">Could not load activity.</p>
+            )}
             {!activityLoading && !activityError && activity.length === 0 && (
               <p className="mt-2 text-sm text-muted-foreground">No workflow activity yet.</p>
             )}

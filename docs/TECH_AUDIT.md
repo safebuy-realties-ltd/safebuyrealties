@@ -7,16 +7,19 @@ This audit reviews implementation across frontend, backend, database, and PRD al
 ## 1) System overview
 
 ### Backend implemented
+
 - NestJS modules: auth, users, listings, documents, verification, tasks, payments, health.
 - JWT auth with role-aware guards and global request validation.
 - Prisma/PostgreSQL data model for users/listings/documents/verification steps/tasks/transactions/payments.
 
 ### Frontend implemented
+
 - React + Vite + TanStack Router/Query shell with role-based dashboard routes.
 - Auth provider with token persistence and `/auth/me` hydration.
 - Buyer listings page wired to backend listings API.
 
 ### End-to-end flows that actually work
+
 - Register/login/me flow (buyer/seller self-registration only).
 - Authenticated listing CRUD with role and status-transition constraints.
 - Document upload metadata + local filesystem storage via `/documents/upload`.
@@ -80,6 +83,7 @@ This audit reviews implementation across frontend, backend, database, and PRD al
 ## 8) Deviation from PRD
 
 Implemented vs PRD:
+
 - Auth endpoints: implemented.
 - Users endpoints: implemented.
 - Listings CRUD + status model: implemented.
@@ -89,6 +93,7 @@ Implemented vs PRD:
 - Payments initiate/webhook/get: implemented.
 
 Missing or materially incomplete for PRD intent:
+
 - End-to-end buyer due-diligence initiation flow is not implemented in frontend.
 - Professional workflow UI is mostly presentational; no full report upload/risk decision integration.
 - Internal staff workflow UI appears mostly static and not fully wired.

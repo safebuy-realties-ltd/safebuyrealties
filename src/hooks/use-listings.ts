@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, type ApiEnvelope } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export type ListingDto = {
@@ -47,7 +47,14 @@ export function useListingsQuery(options?: ListingsQueryOptions) {
   const sellerId = options?.ownedOnly ? user?.id : options?.sellerId;
   const q = listingsQueryString({ ...options, sellerId });
   return useQuery({
-    queryKey: ["listings", user?.id ?? "anon", options?.status ?? null, sellerId ?? null, options?.page ?? 1, options?.pageSize ?? 20],
+    queryKey: [
+      "listings",
+      user?.id ?? "anon",
+      options?.status ?? null,
+      sellerId ?? null,
+      options?.page ?? 1,
+      options?.pageSize ?? 20,
+    ],
     queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
     enabled: isReady && !!user,
     select: (envelope) => ({
@@ -61,9 +68,11 @@ export function useListingQuery(listingId: string, initialData?: ListingDto) {
   return useQuery({
     queryKey: ["listing", listingId],
     queryFn: () => apiRequest<ListingDto>(`/listings/${listingId}`),
-    select: (envelope) => envelope.data,
+    select: (envelope) => envelope.data as ListingDto,
     enabled: !!listingId,
-    initialData,
+    initialData: initialData
+      ? ({ data: initialData } satisfies ApiEnvelope<ListingDto>)
+      : undefined,
   });
 }
 

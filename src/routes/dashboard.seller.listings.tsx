@@ -53,10 +53,7 @@ function SellerListingsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Your listings"
-        description="Create and manage your property listings."
-      />
+      <PageHeader title="Your listings" description="Create and manage your property listings." />
 
       <CreateListingForm
         isSubmitting={createListing.isPending}
@@ -66,15 +63,22 @@ function SellerListingsPage() {
 
       <div className="mt-6 rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
         <h2 className="text-lg font-semibold">Owned listings</h2>
-        <p className="mb-4 text-sm text-muted-foreground">Showing listings owned by {user?.name ?? "you"}.</p>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Showing listings owned by {user?.name ?? "you"}.
+        </p>
 
         {isLoading && <p className="text-sm text-muted-foreground">Loading listings…</p>}
 
-        {!isLoading && listings.length === 0 && <p className="text-sm text-muted-foreground">No listings yet.</p>}
+        {!isLoading && listings.length === 0 && (
+          <p className="text-sm text-muted-foreground">No listings yet.</p>
+        )}
 
         <div className="space-y-3">
           {listings.map((listing) => (
-            <div key={listing.id} className="flex items-center justify-between rounded-md border border-border/60 px-4 py-3">
+            <div
+              key={listing.id}
+              className="flex items-center justify-between rounded-md border border-border/60 px-4 py-3"
+            >
               <div>
                 <p className="font-medium">{listing.title}</p>
                 <p className="text-sm text-muted-foreground">{listing.location}</p>
@@ -128,7 +132,8 @@ function CreateListingForm({
         const baths = Number(form.baths);
         if (form.baths.trim() && Number.isFinite(baths)) payload.baths = baths;
         const landAreaSqm = Number(form.landAreaSqm);
-        if (form.landAreaSqm.trim() && Number.isFinite(landAreaSqm)) payload.landAreaSqm = landAreaSqm;
+        if (form.landAreaSqm.trim() && Number.isFinite(landAreaSqm))
+          payload.landAreaSqm = landAreaSqm;
         if (form.buildType.trim()) payload.buildType = form.buildType.trim();
         onSubmit(payload);
       }}

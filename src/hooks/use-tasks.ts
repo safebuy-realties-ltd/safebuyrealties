@@ -50,7 +50,10 @@ export function useMyTasksQuery(opts?: { status?: string; page?: number; pageSiz
 export function usePatchTaskMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; body: { status?: string; completionNotes?: string; checklist?: unknown; report?: unknown } }) =>
+    mutationFn: (args: {
+      id: string;
+      body: { status?: string; completionNotes?: string; checklist?: unknown; report?: unknown };
+    }) =>
       apiRequest<TaskDto>(`/tasks/${args.id}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
@@ -62,7 +65,6 @@ export function usePatchTaskMutation() {
   });
 }
 
-
 export function useMyTaskByIdQuery(taskId: string | null) {
   const { user, isReady } = useAuth();
   const isProfessional = user?.role === "professional";
@@ -70,5 +72,60 @@ export function useMyTaskByIdQuery(taskId: string | null) {
     queryKey: ["tasks", "me", "detail", taskId],
     queryFn: () => apiRequest<TaskDto>(`/tasks/me/${taskId}`),
     enabled: isReady && isProfessional && !!taskId,
+  });
+}
+
+export function useTaskKpiCounts() {
+  const { user, isReady } = useAuth();
+  const isProfessional = user?.role === "professional";
+
+  return useQuery({
+    queryKey: ["tasks", "me", "counts"],
+    queryFn: async () => {
+      const statuses = ["pending", "in_progress", "completed"];
+      const counts = { pending: 0, inProgress: 0, completed: 0 };
+
+      for (const status of statuses) {
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const q = tasksMeQueryString({ status, page, pageSize: 100 });
+          const result = await apiRequest<TaskDto[]>(`/tasks/me${q}`);
+          const meta = result.meta as TasksMeMeta | undefined;
+
+          if (status === "pending") counts.pending += result.data.length;
+          else if (status === "in_progress") counts.inProgress += result.data.length;
+          else if (status === "completed") counts.completed += result.data.length;
+
+          hasMore = !!(meta && meta.page * meta.pageSize < meta.total);
+          page++;
+        }
+      }
+
+      return counts;
+    },
+    enabled: isReady && isProfessional,
+  });
+}
+
+export function useCreateTaskMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      listingId: string;
+      assigneeId: string;
+      title: string;
+      type: string;
+      description: string;
+    }) =>
+      apiRequest<TaskDto>("/tasks", {
+        method: "POST",
+        body: JSON.stringify(args),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tasks", "me"] });
+      void qc.invalidateQueries({ queryKey: ["tasks", "me", "counts"] });
+    },
   });
 }
