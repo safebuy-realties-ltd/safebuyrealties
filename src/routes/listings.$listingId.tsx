@@ -18,13 +18,18 @@ import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
 import { useCreateTransactionMutation } from "@/hooks/use-transactions";
-import { ApiError, apiRequest } from "@/lib/api";
+import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import type { ListingDto } from "@/hooks/use-listings";
 
 const PLACEHOLDER_IMG =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
+
+function uploadAssetUrl(storageKey: string): string {
+  const origin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
+  return `${origin}/uploads/${storageKey}`;
+}
 
 export const Route = createFileRoute("/listings/$listingId")({
   loader: async ({ params }) => {
@@ -46,6 +51,11 @@ function formatMoney(amount: string, currency: string) {
   } catch {
     return `${currency} ${amount}`;
   }
+}
+
+function specValue(value: number | string | null | undefined, suffix = ""): string {
+  if (value == null || value === "") return "—";
+  return `${value}${suffix}`;
 }
 
 function formatSize(bytes: number) {
@@ -192,14 +202,39 @@ function ListingDetail() {
 
   const priceLabel = formatMoney(resolvedListing.price, resolvedListing.currency);
   const verified = resolvedListing.status === "LIVE";
+  const heroDoc = documents?.find((d) => d.category === "listing_hero");
+  const heroSrc = heroDoc ? uploadAssetUrl(heroDoc.storageKey) : PLACEHOLDER_IMG;
+  const galleryPhotos = (documents ?? []).filter((d) => d.category === "listing_gallery");
+  const verificationDocs = (documents ?? []).filter(
+    (d) => d.category !== "listing_hero" && d.category !== "listing_gallery",
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
-          <img src={PLACEHOLDER_IMG} alt={resolvedListing.title} className="aspect-[21/9] w-full object-cover" />
+          <img src={heroSrc} alt={resolvedListing.title} className="aspect-[21/9] w-full object-cover" />
         </div>
+
+        {galleryPhotos.length > 0 && (
+          <section className="mt-4" aria-label="Property gallery">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+              {galleryPhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="overflow-hidden rounded-lg border border-border/60 bg-muted aspect-square"
+                >
+                  <img
+                    src={uploadAssetUrl(photo.storageKey)}
+                    alt={photo.fileName}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
@@ -223,14 +258,20 @@ function ListingDetail() {
 
             <div className="mt-6 flex flex-wrap gap-6 border-y border-border/60 py-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <BedDouble className="h-4 w-4" /> —
+                <BedDouble className="h-4 w-4" /> {specValue(resolvedListing.beds)}
               </span>
               <span className="flex items-center gap-1.5">
-                <Bath className="h-4 w-4" /> —
+                <Bath className="h-4 w-4" /> {specValue(resolvedListing.baths)}
               </span>
               <span className="flex items-center gap-1.5">
-                <Maximize className="h-4 w-4" /> —
+                <Maximize className="h-4 w-4" />{" "}
+                {resolvedListing.landAreaSqm != null
+                  ? specValue(resolvedListing.landAreaSqm, " m²")
+                  : "—"}
               </span>
+              {resolvedListing.buildType && (
+                <span className="text-foreground">{resolvedListing.buildType}</span>
+              )}
             </div>
 
             <section className="mt-8">
@@ -246,7 +287,7 @@ function ListingDetail() {
                     ? "Sign in to view uploaded documents."
                     : docsLoading
                       ? "Loading…"
-                      : `${documents?.length ?? 0} on file`}
+                      : `${verificationDocs.length} on file`}
                 </span>
               </div>
               {!isAuthenticated && (
@@ -255,11 +296,11 @@ function ListingDetail() {
               {isAuthenticated && docsLoading && (
                 <p className="mt-3 text-sm text-muted-foreground">Loading documents…</p>
               )}
-              {isAuthenticated && !docsLoading && (documents ?? []).length === 0 && (
+              {isAuthenticated && !docsLoading && verificationDocs.length === 0 && (
                 <p className="mt-3 text-sm text-muted-foreground">No documents uploaded for this listing yet.</p>
               )}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {(documents ?? []).map((d) => (
+                {verificationDocs.map((d) => (
                   <div
                     key={d.id}
                     className="flex min-w-0 items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"

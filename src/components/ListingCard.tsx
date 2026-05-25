@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
 import { BedDouble, Bath, Maximize, ShieldCheck } from "lucide-react";
+import { statusBadgeClass, statusIsPublic, statusLabel } from "@/lib/listing-status";
 
 export type Listing = {
   id: string;
@@ -10,11 +11,17 @@ export type Listing = {
   beds: number;
   baths: number;
   area: string;
-  verified: boolean;
+  /** @deprecated Prefer `status`; kept for sample data */
+  verified?: boolean;
+  status?: string;
   image: string;
 };
 
 export function ListingCard({ listing }: { listing: Listing }) {
+  const status = listing.status;
+  const showVerified =
+    status != null ? statusIsPublic(status) : (listing.verified ?? false);
+
   return (
     <Link
       to="/listings/$listingId"
@@ -27,9 +34,17 @@ export function ListingCard({ listing }: { listing: Listing }) {
           alt={listing.title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {listing.verified && (
+        {showVerified && (
           <Badge className="absolute left-3 top-3 gap-1 bg-background/95 text-primary border-0 shadow-sm">
             <ShieldCheck className="h-3 w-3" /> Verified
+          </Badge>
+        )}
+        {status && !statusIsPublic(status) && (
+          <Badge
+            variant="outline"
+            className={`absolute right-3 top-3 ${statusBadgeClass(status)}`}
+          >
+            {statusLabel(status)}
           </Badge>
         )}
       </div>

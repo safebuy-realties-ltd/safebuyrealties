@@ -5,6 +5,7 @@ import { ListingCard, type Listing } from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
+import { statusIsPublic } from "@/lib/listing-status";
 import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useMyTransactionsQuery } from "@/hooks/use-transactions";
 
@@ -42,7 +43,8 @@ function toListingCard(l: ListingDto): Listing {
     beds: 0,
     baths: 0,
     area: "—",
-    verified: l.status === "LIVE",
+    status: l.status,
+    verified: statusIsPublic(l.status),
     image: PLACEHOLDER_IMG,
   };
 }
@@ -59,7 +61,10 @@ function BuyerOverview() {
   const listings = listingsData?.listings ?? [];
   const { data: txs, isLoading: loadTxs } = useMyTransactionsQuery();
 
-  const previewListings = useMemo(() => listings.slice(0, 6).map(toListingCard), [listings]);
+  const previewListings = useMemo(
+    () => listings.filter((l) => statusIsPublic(l.status)).slice(0, 6).map(toListingCard),
+    [listings],
+  );
   const previewTxs = useMemo(() => (txs ?? []).slice(0, 5), [txs]);
 
   const stats = useMemo(() => {
