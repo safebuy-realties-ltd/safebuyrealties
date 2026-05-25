@@ -13,7 +13,9 @@ import { setResponseHeader } from "@tanstack/react-start/server";
  */
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
   const apiOrigin = (() => {
-    const raw = process.env.VITE_API_URL ?? (process.env.NODE_ENV === "production" ? "/api/v1" : "http://localhost:3001/api/v1");
+    const raw =
+      process.env.VITE_API_URL ??
+      (process.env.NODE_ENV === "production" ? "/api/v1" : "http://localhost:3001/api/v1");
     if (raw.startsWith("/")) return "";
     try {
       return new URL(raw).origin;

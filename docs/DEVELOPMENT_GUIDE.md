@@ -67,14 +67,15 @@ Every checklist item uses the layers that apply:
 
 **Policy:** New service methods, hooks, and non-trivial UI behavior **require** a test in the same PR. Bug fixes **require** a regression test.
 
-### CI must run tests (target state)
+### CI must run tests
 
-Today CI runs **tsc + eslint** only. **Every PR should add or update tests**; infra PR `feat/ci-tests` should add:
+On every PR to `main`, `.github/workflows/ci.yml` runs:
 
-- `npm test` on frontend changes
-- `cd backend && npm test` on backend changes (after Jest bootstrap)
+- **Frontend** (when `src/**` etc. change): `tsc`, ESLint, **`npm test`**
+- **Backend** (when `backend/**` changes): `tsc`, **`npm test`**
+- **`CI (required)`** — aggregate gate; must be green before merge
 
-Do not merge PRs that drop CI checks or skip tests for new behavior.
+Branch protection should require **`CI (required)`** on `main` (see `docs/BRANCH_PROTECTION.md`). Do not merge PRs that drop checks or skip tests for new behavior.
 
 ---
 
