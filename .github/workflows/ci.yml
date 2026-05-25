@@ -107,13 +107,14 @@ jobs:
       - name: Frontend checks (when frontend paths changed)
         if: needs.changes.outputs.frontend == 'true'
         run: |
-          for job in frontend-typecheck frontend-test; do
-            result="${{ needs[job].result }}"
-            if [ "$result" != "success" ]; then
-              echo "$job failed or was cancelled: $result"
-              exit 1
-            fi
-          done
+          if [ "${{ needs.frontend-typecheck.result }}" != "success" ]; then
+            echo "frontend-typecheck: ${{ needs.frontend-typecheck.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.frontend-test.result }}" != "success" ]; then
+            echo "frontend-test: ${{ needs.frontend-test.result }}"
+            exit 1
+          fi
 
       - name: Backend checks (when backend paths changed)
         if: needs.changes.outputs.backend == 'true'
