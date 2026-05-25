@@ -18,6 +18,7 @@ import { Route as DashboardSellerRouteImport } from './routes/dashboard.seller'
 import { Route as DashboardProfessionalRouteImport } from './routes/dashboard.professional'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard.buyer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardSellerIndexRouteImport } from './routes/dashboard.seller.index'
 import { Route as DashboardStaffWorkflowRouteImport } from './routes/dashboard.staff.workflow'
 import { Route as DashboardStaffSubmissionsRouteImport } from './routes/dashboard.staff.submissions'
 import { Route as DashboardSellerListingsRouteImport } from './routes/dashboard.seller.listings'
@@ -73,6 +74,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/dashboard/admin',
   path: '/dashboard/admin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSellerIndexRoute = DashboardSellerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardSellerRoute,
 } as any)
 const DashboardStaffWorkflowRoute = DashboardStaffWorkflowRouteImport.update({
   id: '/workflow',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
+  '/dashboard/seller/': typeof DashboardSellerIndexRoute
   '/dashboard/professional/tasks/$taskId': typeof DashboardProfessionalTasksTaskIdRoute
 }
 export interface FileRoutesByTo {
@@ -158,7 +165,6 @@ export interface FileRoutesByTo {
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
   '/dashboard/professional': typeof DashboardProfessionalRouteWithChildren
-  '/dashboard/seller': typeof DashboardSellerRouteWithChildren
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
@@ -170,6 +176,7 @@ export interface FileRoutesByTo {
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
+  '/dashboard/seller': typeof DashboardSellerIndexRoute
   '/dashboard/professional/tasks/$taskId': typeof DashboardProfessionalTasksTaskIdRoute
 }
 export interface FileRoutesById {
@@ -192,6 +199,7 @@ export interface FileRoutesById {
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
+  '/dashboard/seller/': typeof DashboardSellerIndexRoute
   '/dashboard/professional/tasks/$taskId': typeof DashboardProfessionalTasksTaskIdRoute
 }
 export interface FileRouteTypes {
@@ -215,6 +223,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/listings'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
+    | '/dashboard/seller/'
     | '/dashboard/professional/tasks/$taskId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -224,7 +233,6 @@ export interface FileRouteTypes {
     | '/dashboard/admin'
     | '/dashboard/buyer'
     | '/dashboard/professional'
-    | '/dashboard/seller'
     | '/dashboard/staff'
     | '/listings/$listingId'
     | '/dashboard/admin/listings'
@@ -236,6 +244,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/listings'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
+    | '/dashboard/seller'
     | '/dashboard/professional/tasks/$taskId'
   id:
     | '__root__'
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/listings'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
+    | '/dashboard/seller/'
     | '/dashboard/professional/tasks/$taskId'
   fileRoutesById: FileRoutesById
 }
@@ -336,6 +346,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/seller/': {
+      id: '/dashboard/seller/'
+      path: '/'
+      fullPath: '/dashboard/seller/'
+      preLoaderRoute: typeof DashboardSellerIndexRouteImport
+      parentRoute: typeof DashboardSellerRoute
     }
     '/dashboard/staff/workflow': {
       id: '/dashboard/staff/workflow'
@@ -469,11 +486,13 @@ const DashboardProfessionalRouteWithChildren =
 interface DashboardSellerRouteChildren {
   DashboardSellerDocumentsRoute: typeof DashboardSellerDocumentsRoute
   DashboardSellerListingsRoute: typeof DashboardSellerListingsRoute
+  DashboardSellerIndexRoute: typeof DashboardSellerIndexRoute
 }
 
 const DashboardSellerRouteChildren: DashboardSellerRouteChildren = {
   DashboardSellerDocumentsRoute: DashboardSellerDocumentsRoute,
   DashboardSellerListingsRoute: DashboardSellerListingsRoute,
+  DashboardSellerIndexRoute: DashboardSellerIndexRoute,
 }
 
 const DashboardSellerRouteWithChildren = DashboardSellerRoute._addFileChildren(
