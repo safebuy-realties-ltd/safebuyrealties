@@ -67,6 +67,11 @@ Before stopping:
 
 The next tool or session picks up by reading the checklist, finding `[~]` or the first `[ ]`, and continuing.
 
+## Git workflow (required)
+
+- **Never push directly to `main`.** Create a branch (`fix/…` or `feat/…`), commit there, push the branch, open a PR to `main`. See `docs/GIT_WORKFLOW.md`.
+- Merge only after CI/preview checks; user merges on GitHub.
+
 ## Rules You Must Not Break
 
 - Never mark an item done without running validation

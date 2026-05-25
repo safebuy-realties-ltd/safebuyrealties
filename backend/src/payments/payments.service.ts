@@ -22,6 +22,13 @@ export class PaymentsService {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
   }
 
+  /** Supports PAYSTACK_SECRET_KEY (production) or PAYSTACK_TEST_SECRET_KEY (local .env). */
+  private paystackSecret(): string | undefined {
+    const primary = this.config.get<string>("PAYSTACK_SECRET_KEY")?.trim();
+    if (primary) return primary;
+    return this.config.get<string>("PAYSTACK_TEST_SECRET_KEY")?.trim() || undefined;
+  }
+
   private serializePayment(p: {
     id: string;
     listingId: string | null;
@@ -103,7 +110,7 @@ export class PaymentsService {
     }
 
     const payer = await this.prisma.user.findUniqueOrThrow({ where: { id: actor.sub } });
-    const secret = this.config.get<string>("PAYSTACK_SECRET_KEY");
+    const secret = this.paystackSecret();
     const amountMinor = Math.round(Number(dto.amount) * 100);
 
     if (!secret) {
@@ -199,7 +206,7 @@ export class PaymentsService {
   }
 
   verifyPaystackSignature(rawBody: Buffer, signature: string | undefined): boolean {
-    const secret = this.config.get<string>("PAYSTACK_SECRET_KEY");
+    const secret = this.paystackSecret();
     if (!secret || !signature) return false;
     const hash = createHmac("sha512", secret).update(rawBody).digest("hex");
     try {

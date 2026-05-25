@@ -147,7 +147,7 @@ async function main() {
   // Seller: listings
   await loginAs("seller@safebuyrealties.test");
   {
-    const { res, json } = await req("/listings/me?page=1&pageSize=20");
+    const { res, json } = await req("/listings?page=1&pageSize=20");
     const rows = json?.data ?? [];
     record("seller.listings", res.ok ? "pass" : "fail", `${rows.length} listing(s)`);
     globalThis._sellerListingId = rows.find((l) => l.status === "DRAFT" || l.status === "PENDING_REVIEW")?.id ?? rows[0]?.id;
