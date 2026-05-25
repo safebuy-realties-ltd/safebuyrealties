@@ -61,9 +61,9 @@ export function useListingQuery(listingId: string, initialData?: ListingDto) {
   return useQuery({
     queryKey: ["listing", listingId],
     queryFn: () => apiRequest<ListingDto>(`/listings/${listingId}`),
-    select: (envelope) => envelope.data,
+    select: (envelope) => envelope.data as ListingDto,
     enabled: !!listingId,
-    initialData,
+    initialData: initialData ? ({ data: initialData } as any) : undefined,
   });
 }
 
