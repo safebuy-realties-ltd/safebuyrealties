@@ -12,6 +12,6 @@ import { nitro } from "nitro/vite";
 const deployToVercel = process.env.VERCEL === "1";
 
 export default defineConfig({
-  cloudflare: !deployToVercel,
+  cloudflare: deployToVercel ? false : undefined,
   plugins: deployToVercel ? [nitro({ preset: "vercel" })] : [],
 });
