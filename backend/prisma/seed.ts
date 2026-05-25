@@ -104,7 +104,9 @@ async function createVerificationSteps(
 }
 
 async function main() {
-  await wipe();
+  if (process.env.SEED_NO_WIPE !== "1") {
+    await wipe();
+  }
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
 
   const admin = await upsertUser({

@@ -6,7 +6,38 @@ on:
     branches: ["**"]
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'index.html'
+              - 'vite.config.ts'
+              - 'vitest.config.ts'
+              - 'tsconfig.json'
+              - 'tsconfig.*.json'
+              - 'components.json'
+              - 'eslint.config.*'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vercel.json'
+              - 'scripts/vercel-ignore-frontend.mjs'
+              - '.github/workflows/ci.yml'
+            backend:
+              - 'backend/**'
+
   typecheck:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +50,8 @@ jobs:
       - run: npx eslint src --max-warnings 0
 
   backend-typecheck:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

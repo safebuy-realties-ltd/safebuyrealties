@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://safebuyrealties.vercel.app/api/v1/:path*"
+    }
+  ],
+  "ignoreCommand": "node scripts/vercel-ignore-frontend.mjs"
+}

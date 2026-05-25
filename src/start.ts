@@ -13,8 +13,10 @@ import { setResponseHeader } from "@tanstack/react-start/server";
  */
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
   const apiOrigin = (() => {
+    const raw = process.env.VITE_API_URL ?? (process.env.NODE_ENV === "production" ? "/api/v1" : "http://localhost:3001/api/v1");
+    if (raw.startsWith("/")) return "";
     try {
-      return new URL(process.env.VITE_API_URL ?? "http://localhost:3001").origin;
+      return new URL(raw).origin;
     } catch {
       return "http://localhost:3001";
     }
@@ -29,7 +31,7 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    `connect-src 'self' ${apiOrigin} https:`,
+    `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""} https:`,
     "script-src 'self' 'unsafe-inline'",
     "upgrade-insecure-requests",
   ].join("; ");

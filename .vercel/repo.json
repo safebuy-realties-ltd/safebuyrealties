@@ -6,6 +6,12 @@
       "name": "safebuyrealties-app",
       "directory": ".",
       "orgId": "team_ZOR6qsUX3sPCxxpC2k6lypkK"
+    },
+    {
+      "id": "prj_Y48L3TDfuZ5LsS8yyGA2mtEuTvGu",
+      "name": "safebuyrealties",
+      "directory": "backend",
+      "orgId": "team_ZOR6qsUX3sPCxxpC2k6lypkK"
     }
   ]
 }

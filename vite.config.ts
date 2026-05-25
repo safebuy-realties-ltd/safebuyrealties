@@ -14,4 +14,14 @@ const deployToVercel = process.env.VERCEL === "1";
 export default defineConfig({
   cloudflare: deployToVercel ? false : undefined,
   plugins: deployToVercel ? [nitro({ preset: "vercel" })] : [],
+  vite: {
+    server: {
+      proxy: {
+        "/api/v1": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 });

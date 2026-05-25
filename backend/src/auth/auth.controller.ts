@@ -10,25 +10,28 @@ import { JwtPayload } from "./jwt.strategy";
 const COOKIE_NAME = "sbr_session";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-function setSessionCookie(res: Response, token: string) {
+function sessionCookieOptions() {
   const isProd = process.env.NODE_ENV === "production";
-  res.cookie(COOKIE_NAME, token, {
+  // SameSite=Lax works when the browser talks to the API on the same origin
+  // (Vercel rewrite /api/v1 → backend). SameSite=None is only needed for direct
+  // cross-subdomain calls, which third-party cookie rules often block.
+  return {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "none" : "lax",
+    sameSite: "lax" as const,
     path: "/",
+  };
+}
+
+function setSessionCookie(res: Response, token: string) {
+  res.cookie(COOKIE_NAME, token, {
+    ...sessionCookieOptions(),
     maxAge: SEVEN_DAYS_MS,
   });
 }
 
 function clearSessionCookie(res: Response) {
-  const isProd = process.env.NODE_ENV === "production";
-  res.clearCookie(COOKIE_NAME, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
-    path: "/",
-  });
+  res.clearCookie(COOKIE_NAME, sessionCookieOptions());
 }
 
 @Controller("auth")
