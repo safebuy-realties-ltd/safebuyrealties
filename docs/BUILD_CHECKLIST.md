@@ -21,9 +21,10 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-25
 - **Tool:** Cursor (Composer)
-- **In progress:** Step 2 item 1 — Prisma schema listing spec + `ListingMedia`; Jest serialization tests; migration `listing-spec-and-media`
-- **Branch:** `feat/step2-listing-spec-media`
-- **Next after merge:** Step 2 item 2 — Object storage service
+- **In progress:** Step 2 item 2 — Object storage service (`feat/step2-object-storage`)
+- **Done this session:** `StorageService` (local + S3), documents upload wired; Jest tests (storage + documents)
+- **Gate A:** `npm test` (9), `npm run validate:tsc` — pass locally
+- **Next:** PR → preview — seller document upload on Vercel (local driver uses `STORAGE_LOCAL_PATH` / ephemeral FS on serverless; note for validation)
 - **Blockers:** None
 
 ---
@@ -67,13 +68,12 @@ These four issues cause dashboard screens to crash on load. Fix them before anyt
 
 These are building blocks that other features depend on. Build them in order.
 
-- [~] **Prisma schema — listing spec and media fields**
-  - Add to `Listing` model: `beds Int?`, `baths Int?`, `landAreaSqm Decimal? @db.Decimal(10,2)`, `buildType String?`
-  - Add new model `ListingMedia`: `id String @id @default(uuid())`, `listingId String`, `listing Listing @relation(...)`, `storageKey String`, `type String` (values: `hero`, `gallery`), `sortOrder Int @default(0)`, `createdAt DateTime @default(now())`
-  - Run `npx prisma migrate dev --name listing-spec-and-media`
-  - Validation: migration succeeds, `npx prisma generate` succeeds, `cd backend && npx tsc --noEmit` passes
+- [x] **Prisma schema — listing spec and media fields** (PR #25)
+  - `Listing` spec fields + `ListingMedia` / `ListingMediaType`; migration `20260525143000_listing_spec_and_media`
+  - Tests: `backend/src/listings/listings.service.spec.ts`
+  - Validated: production deploy migrate OK (`dpl_5MCjDEtMJThyHSHQ4nEpTeeHYRuq`)
 
-- [ ] **Object storage service**
+- [~] **Object storage service**
   - Create `backend/src/storage/storage.service.ts` and `backend/src/storage/storage.module.ts`
   - The service reads `STORAGE_DRIVER` env var (`local` or `s3`). Default to `local` for dev.
   - Local driver: reads/writes files to `STORAGE_LOCAL_PATH` (default `./uploads`). `getSignedUrl()` returns `/uploads/{key}`
