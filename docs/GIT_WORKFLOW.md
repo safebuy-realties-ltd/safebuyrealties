@@ -35,12 +35,27 @@ After review, **merge the PR on GitHub** (squash or merge commit per team prefer
 
 ## CI before merge
 
-- Open the PR → wait for GitHub Actions (typecheck + eslint; tests when enabled).
-- Do **not** merge if CI is red.
+PRs to `main` must pass the **`CI (required)`** check (aggregate gate in `.github/workflows/ci.yml`):
+
+| Job | When it runs | Commands |
+| --- | --- | --- |
+| `frontend-typecheck` | Frontend paths changed | `tsc`, `eslint` |
+| `frontend-test` | Frontend paths changed | `npm test` (Vitest) |
+| `backend-check` | `backend/**` changed | `tsc`, `npm test` (Jest) |
+| **`CI (required)`** | Every PR to `main` | Fails if any applicable job above failed |
+
+- Do **not** merge if **`CI (required)`** or any applicable job is red.
 - Re-run `npm run validate:tsc` and `npm test` locally if CI fails.
+
+## Protect `main` (no direct pushes)
+
+Configure branch protection in GitHub (one-time, repo admin). This repo cannot set rules via API on the free private plan — use the UI:
+
+**See `docs/BRANCH_PROTECTION.md`** for step-by-step settings (require PR, require **`CI (required)`**, block direct push to `main`).
 
 ## Related docs
 
+- `docs/BRANCH_PROTECTION.md` — require PR + green CI on `main`
 - `docs/DEVELOPMENT_GUIDE.md` — TDD, validation layers, step roadmap
 - `docs/AGENT_PROMPT.md` — agent loop
 - `docs/VERCEL_VALIDATION.md` — deploy testing

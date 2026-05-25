@@ -75,6 +75,11 @@ enum TransactionStatus {
   COMPLETED
 }
 
+enum ListingMediaType {
+  HERO
+  GALLERY
+}
+
 model User {
   id                 String              @id @default(uuid())
   email              String              @unique
@@ -128,8 +133,8 @@ model ListingMedia {
   listingId  String
   listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   storageKey String
-  type       String
-  sortOrder  Int      @default(0)
+  type       ListingMediaType
+  sortOrder  Int              @default(0)
   createdAt  DateTime @default(now())
 
   @@index([listingId])

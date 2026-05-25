@@ -4,11 +4,13 @@ ADD COLUMN "baths" INTEGER,
 ADD COLUMN "landAreaSqm" DECIMAL(10,2),
 ADD COLUMN "buildType" TEXT;
 
+CREATE TYPE "ListingMediaType" AS ENUM ('HERO', 'GALLERY');
+
 CREATE TABLE "ListingMedia" (
     "id" TEXT NOT NULL,
     "listingId" TEXT NOT NULL,
     "storageKey" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "type" "ListingMediaType" NOT NULL,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

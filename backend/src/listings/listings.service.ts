@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import {
+  ListingMediaType,
   ListingStatus,
   UserRole,
   Prisma,
@@ -54,7 +55,7 @@ export class ListingsService {
         id: string;
         listingId: string;
         storageKey: string;
-        type: string;
+        type: ListingMediaType;
         sortOrder: number;
         createdAt: Date;
       }[];
@@ -86,7 +87,7 @@ export class ListingsService {
         id: m.id,
         listingId: m.listingId,
         storageKey: m.storageKey,
-        type: m.type,
+        type: m.type === ListingMediaType.HERO ? "hero" : "gallery",
         sortOrder: m.sortOrder,
         createdAt: m.createdAt.toISOString(),
       })),
@@ -95,8 +96,14 @@ export class ListingsService {
 
   private listingInclude = {
     seller: { select: { firstName: true, lastName: true } },
-    media: { orderBy: { sortOrder: "asc" as const } },
-  };
+    media: {
+      orderBy: [
+        { sortOrder: "asc" as const },
+        { createdAt: "asc" as const },
+        { id: "asc" as const },
+      ],
+    },
+  } satisfies Prisma.ListingInclude;
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;

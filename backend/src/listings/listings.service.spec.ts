@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ListingStatus, Prisma } from "@prisma/client";
+import { ListingMediaType, ListingStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ListingsService } from "./listings.service";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -35,7 +35,7 @@ const baseListing = {
       id: "media-1",
       listingId: "listing-1",
       storageKey: "listings/listing-1/hero.jpg",
-      type: "hero",
+      type: ListingMediaType.HERO,
       sortOrder: 0,
       createdAt: new Date("2026-01-15T11:00:00.000Z"),
     },
@@ -43,7 +43,7 @@ const baseListing = {
       id: "media-2",
       listingId: "listing-1",
       storageKey: "listings/listing-1/gallery-1.jpg",
-      type: "gallery",
+      type: ListingMediaType.GALLERY,
       sortOrder: 1,
       createdAt: new Date("2026-01-15T11:01:00.000Z"),
     },
