@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, type DragEvent, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type ChangeEvent,
+} from "react";
 import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,12 +55,48 @@ type DocType =
   | "listing_gallery"
   | "other";
 
-const docTypes: { id: DocType; label: string; desc: string; icon: typeof Scale; required: boolean }[] = [
-  { id: "title_deed", label: "Title Deed", desc: "Certificate of Occupancy or equivalent", icon: Scale, required: true },
-  { id: "survey_plan", label: "Survey Plan", desc: "Registered surveyor's plan", icon: Map, required: true },
-  { id: "building_approval", label: "Building Approval", desc: "Government building permit", icon: Building2, required: false },
-  { id: "tax_receipt", label: "Tax Receipts", desc: "Recent property tax payments", icon: Receipt, required: false },
-  { id: "listing_hero", label: "Hero Image", desc: "Main property photo", icon: ImageIcon, required: false },
+const docTypes: {
+  id: DocType;
+  label: string;
+  desc: string;
+  icon: typeof Scale;
+  required: boolean;
+}[] = [
+  {
+    id: "title_deed",
+    label: "Title Deed",
+    desc: "Certificate of Occupancy or equivalent",
+    icon: Scale,
+    required: true,
+  },
+  {
+    id: "survey_plan",
+    label: "Survey Plan",
+    desc: "Registered surveyor's plan",
+    icon: Map,
+    required: true,
+  },
+  {
+    id: "building_approval",
+    label: "Building Approval",
+    desc: "Government building permit",
+    icon: Building2,
+    required: false,
+  },
+  {
+    id: "tax_receipt",
+    label: "Tax Receipts",
+    desc: "Recent property tax payments",
+    icon: Receipt,
+    required: false,
+  },
+  {
+    id: "listing_hero",
+    label: "Hero Image",
+    desc: "Main property photo",
+    icon: ImageIcon,
+    required: false,
+  },
   {
     id: "listing_gallery",
     label: "Gallery Photos",
@@ -96,9 +140,13 @@ function userVisibleApiError(error: unknown, fallback: string) {
 
 function SellerDocuments() {
   const qc = useQueryClient();
-  const { data: listingsData, isLoading: listingsLoading, isError: listingsIsError, error: listingsErr } =
-    useListingsQuery();
-  const listings = listingsData?.listings ?? [];
+  const {
+    data: listingsData,
+    isLoading: listingsLoading,
+    isError: listingsIsError,
+    error: listingsErr,
+  } = useListingsQuery();
+  const listings = useMemo(() => listingsData?.listings ?? [], [listingsData?.listings]);
 
   const [listingId, setListingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<DocType>("title_deed");
@@ -241,11 +289,15 @@ function SellerDocuments() {
       )}
 
       <div className="mb-6">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Listing</p>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Listing
+        </p>
         {listingsLoading ? (
           <p className="text-sm text-muted-foreground">Loading listings…</p>
         ) : listings.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Create a listing before uploading documents.</p>
+          <p className="text-sm text-muted-foreground">
+            Create a listing before uploading documents.
+          </p>
         ) : (
           <Select value={listingId ?? undefined} onValueChange={(v) => setListingId(v)}>
             <SelectTrigger className="max-w-md">
@@ -283,7 +335,9 @@ function SellerDocuments() {
               >
                 <span
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground"
                   }`}
                 >
                   <d.icon className="h-4 w-4" />
@@ -342,7 +396,8 @@ function SellerDocuments() {
               <Upload className="h-5 w-5 text-primary" />
             </div>
             <p className="mt-4 text-sm font-medium text-foreground">
-              Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files here
+              Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files
+              here
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {isListingImageCategory(activeType)
@@ -378,13 +433,19 @@ function SellerDocuments() {
             </div>
             <ul className="divide-y divide-border/60">
               {!listingId && (
-                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Select a listing first.</li>
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  Select a listing first.
+                </li>
               )}
               {listingId && docsLoading && (
-                <li className="px-5 py-8 text-center text-sm text-muted-foreground">Loading documents…</li>
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  Loading documents…
+                </li>
               )}
               {listingId && !docsLoading && (documents ?? []).length === 0 && (
-                <li className="px-5 py-8 text-center text-sm text-muted-foreground">No files uploaded yet.</li>
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  No files uploaded yet.
+                </li>
               )}
               {listingId &&
                 !docsLoading &&
@@ -399,7 +460,9 @@ function SellerDocuments() {
                         <p className="text-xs text-muted-foreground">{formatSize(f.sizeBytes)}</p>
                       </div>
                       <div className="mt-1 flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">{categoryLabel(f.category)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {categoryLabel(f.category)}
+                        </span>
                         <span className="flex items-center gap-1 text-xs font-medium text-[oklch(0.4_0.12_155)]">
                           <CheckCircle2 className="h-3.5 w-3.5" /> Uploaded
                         </span>
@@ -414,20 +477,24 @@ function SellerDocuments() {
             <div className="w-full space-y-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
-                When required documents are uploaded, submit this listing for staff review. Staff assign professionals
-                from their workflow.
+                When required documents are uploaded, submit this listing for staff review. Staff
+                assign professionals from their workflow.
               </div>
-              {selectedListing && selectedListing.status !== "DRAFT" && selectedListing.status !== "REJECTED" && (
-                <p className="text-xs text-muted-foreground">
-                  This listing is{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedListing.status.replace(/_/g, " ")}
-                  </span>
-                  . Submission for review is only available from Draft or Rejected.
-                </p>
-              )}
+              {selectedListing &&
+                selectedListing.status !== "DRAFT" &&
+                selectedListing.status !== "REJECTED" && (
+                  <p className="text-xs text-muted-foreground">
+                    This listing is{" "}
+                    <span className="font-medium text-foreground">
+                      {selectedListing.status.replace(/_/g, " ")}
+                    </span>
+                    . Submission for review is only available from Draft or Rejected.
+                  </p>
+                )}
               {missingRequiredDocs.length > 0 && (
-                <p className="text-xs text-destructive">Missing required categories: {missingRequiredDocs.join(", ")}</p>
+                <p className="text-xs text-destructive">
+                  Missing required categories: {missingRequiredDocs.join(", ")}
+                </p>
               )}
               {submitError && <p className="text-xs text-destructive">{submitError}</p>}
               <div className="flex justify-end">
@@ -446,24 +513,39 @@ function SellerDocuments() {
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Verification status</h3>
               {verificationError && (
-                <button className="text-xs underline" type="button" onClick={() => void refetchVerification()}>
+                <button
+                  className="text-xs underline"
+                  type="button"
+                  onClick={() => void refetchVerification()}
+                >
                   Retry
                 </button>
               )}
             </div>
-            {verificationLoading && <p className="mt-2 text-muted-foreground">Loading verification details…</p>}
+            {verificationLoading && (
+              <p className="mt-2 text-muted-foreground">Loading verification details…</p>
+            )}
             {verificationError && (
               <p className="mt-2 text-destructive">
-                {verificationErr instanceof Error ? verificationErr.message : "Failed to fetch verification details."}
+                {verificationErr instanceof Error
+                  ? verificationErr.message
+                  : "Failed to fetch verification details."}
               </p>
             )}
-            {!verificationLoading && !verificationError && (verificationSteps ?? []).length === 0 && (
-              <p className="mt-2 text-muted-foreground">No verification steps yet for this listing.</p>
-            )}
+            {!verificationLoading &&
+              !verificationError &&
+              (verificationSteps ?? []).length === 0 && (
+                <p className="mt-2 text-muted-foreground">
+                  No verification steps yet for this listing.
+                </p>
+              )}
             {(verificationSteps ?? []).length > 0 && (
               <ul className="mt-3 space-y-2">
                 {verificationSteps?.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between rounded border border-border/60 px-3 py-2">
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between rounded border border-border/60 px-3 py-2"
+                  >
                     <span>{s.label}</span>
                     <span className="text-xs text-muted-foreground">{s.status}</span>
                   </li>

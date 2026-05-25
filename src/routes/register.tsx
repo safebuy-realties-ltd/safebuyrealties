@@ -13,7 +13,12 @@ export const Route = createFileRoute("/register")({
 });
 
 const roles: { id: Role; label: string; desc: string; icon: typeof ShoppingBag }[] = [
-  { id: "buyer", label: "Buyer", desc: "Browse and purchase verified properties", icon: ShoppingBag },
+  {
+    id: "buyer",
+    label: "Buyer",
+    desc: "Browse and purchase verified properties",
+    icon: ShoppingBag,
+  },
   { id: "seller", label: "Seller", desc: "List and sell with verification", icon: Home },
 ];
 
@@ -60,7 +65,9 @@ function RegisterPage() {
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="relative hidden bg-[var(--gradient-hero)] lg:block">
         <div className="absolute inset-0 flex flex-col justify-end p-12 text-primary-foreground">
-          <h2 className="max-w-md text-3xl font-semibold leading-tight">Join the verified real estate network.</h2>
+          <h2 className="max-w-md text-3xl font-semibold leading-tight">
+            Join the verified real estate network.
+          </h2>
           <p className="mt-4 max-w-md text-primary-foreground/80">
             Create your account in under a minute and start transacting with confidence.
           </p>
@@ -70,7 +77,9 @@ function RegisterPage() {
         <Logo />
         <div className="mx-auto w-full max-w-md">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Choose buyer or seller to get started.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose buyer or seller to get started.
+          </p>
 
           <div className="mt-6 grid gap-2">
             {roles.map((r) => (
@@ -86,7 +95,9 @@ function RegisterPage() {
               >
                 <span
                   className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                    role === r.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                    role === r.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground"
                   }`}
                 >
                   <r.icon className="h-4 w-4" />
@@ -103,11 +114,21 @@ function RegisterPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="first">First name</Label>
-                <Input id="first" placeholder="Jane" value={firstName} onChange={(e) => setFirst(e.target.value)} />
+                <Input
+                  id="first"
+                  placeholder="Jane"
+                  value={firstName}
+                  onChange={(e) => setFirst(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last">Last name</Label>
-                <Input id="last" placeholder="Doe" value={lastName} onChange={(e) => setLast(e.target.value)} />
+                <Input
+                  id="last"
+                  placeholder="Doe"
+                  value={lastName}
+                  onChange={(e) => setLast(e.target.value)}
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -143,7 +164,9 @@ function RegisterPage() {
             </Link>
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} SafeBuyRealties</p>
+        <p className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} SafeBuyRealties
+        </p>
       </div>
     </div>
   );

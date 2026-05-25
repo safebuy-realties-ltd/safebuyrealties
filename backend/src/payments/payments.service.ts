@@ -220,8 +220,7 @@ export class PaymentsService {
     });
     if (!payment) return { received: true };
 
-    const success =
-      payload.event === "charge.success" && payload.data?.status === "success";
+    const success = payload.event === "charge.success" && payload.data?.status === "success";
     const failed = payload.event === "charge.failed" || payload.data?.status === "failed";
 
     if (success) {

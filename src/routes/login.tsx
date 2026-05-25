@@ -49,7 +49,9 @@ function LoginPage() {
         <Logo />
         <div className="mx-auto w-full max-w-sm">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Log in to your SafeBuyRealties account.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Log in to your SafeBuyRealties account.
+          </p>
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
@@ -92,11 +94,15 @@ function LoginPage() {
             </Link>
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} SafeBuyRealties</p>
+        <p className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} SafeBuyRealties
+        </p>
       </div>
       <div className="relative hidden bg-[var(--gradient-hero)] lg:block">
         <div className="absolute inset-0 flex flex-col justify-end p-12 text-primary-foreground">
-          <h2 className="max-w-md text-3xl font-semibold leading-tight">Verified listings. Safer transactions.</h2>
+          <h2 className="max-w-md text-3xl font-semibold leading-tight">
+            Verified listings. Safer transactions.
+          </h2>
           <p className="mt-4 max-w-md text-primary-foreground/80">
             Sign in to continue due diligence, manage listings, and collaborate with professionals.
           </p>

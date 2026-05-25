@@ -9,8 +9,7 @@ import { statusIsPublic } from "@/lib/listing-status";
 import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useMyTransactionsQuery } from "@/hooks/use-transactions";
 
-const PLACEHOLDER_IMG =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
+const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
 
 export const Route = createFileRoute("/dashboard/buyer")({
   component: () => (
@@ -58,11 +57,15 @@ function txBadgeClass(status: string) {
 function BuyerOverview() {
   const { user } = useAuth();
   const { data: listingsData, isLoading: loadListings } = useListingsQuery();
-  const listings = listingsData?.listings ?? [];
+  const listings = useMemo(() => listingsData?.listings ?? [], [listingsData?.listings]);
   const { data: txs, isLoading: loadTxs } = useMyTransactionsQuery();
 
   const previewListings = useMemo(
-    () => listings.filter((l) => statusIsPublic(l.status)).slice(0, 6).map(toListingCard),
+    () =>
+      listings
+        .filter((l) => statusIsPublic(l.status))
+        .slice(0, 6)
+        .map(toListingCard),
     [listings],
   );
   const previewTxs = useMemo(() => (txs ?? []).slice(0, 5), [txs]);
@@ -88,7 +91,11 @@ function BuyerOverview() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Live listings" value={loadListings ? "…" : String(stats.listings)} hint="Browse" />
+        <StatCard
+          label="Live listings"
+          value={loadListings ? "…" : String(stats.listings)}
+          hint="Browse"
+        />
         <StatCard label="Active transactions" value={loadTxs ? "…" : String(stats.activeTx)} />
         <StatCard label="Completed" value={loadTxs ? "…" : String(stats.doneTx)} />
       </div>
@@ -120,7 +127,9 @@ function BuyerOverview() {
         </div>
         {loadTxs && <p className="text-sm text-muted-foreground">Loading…</p>}
         {!loadTxs && previewTxs.length === 0 && (
-          <p className="text-sm text-muted-foreground">No transactions yet. Start one from a listing.</p>
+          <p className="text-sm text-muted-foreground">
+            No transactions yet. Start one from a listing.
+          </p>
         )}
         <div className="mt-4 divide-y divide-border/60">
           {previewTxs.map((t) => (

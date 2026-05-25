@@ -57,12 +57,14 @@ const roleLabels: Record<Role, string> = {
 };
 
 function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((s) => s[0]?.toUpperCase())
-    .join("") || "U";
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase())
+      .join("") || "U"
+  );
 }
 
 export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
@@ -153,7 +155,10 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
           <div className="flex flex-1 items-center gap-3">
             <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search listings, tasks, documents…" className="h-9 pl-9 bg-secondary/50 border-transparent" />
+              <Input
+                placeholder="Search listings, tasks, documents…"
+                className="h-9 pl-9 bg-secondary/50 border-transparent"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -169,15 +174,21 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
             </button>
           </div>
         </header>
-        <main className="flex-1 p-6 md:p-8">
-          {children ?? <Outlet />}
-        </main>
+        <main className="flex-1 p-6 md:p-8">{children ?? <Outlet />}</main>
       </div>
     </div>
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: React.ReactNode;
+}) {
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>

@@ -32,7 +32,9 @@ export function TaskCard({
     <div className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)] transition-all hover:shadow-[var(--shadow-elegant)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{type}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {type}
+          </p>
           <h3 className="mt-1 text-base font-semibold text-foreground">{title}</h3>
         </div>
         <Badge variant="outline" className={statusStyles[status]}>
@@ -40,8 +42,14 @@ export function TaskCard({
         </Badge>
       </div>
       <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-        <p className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" />{property}</p>
-        <p className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5" />Due {due}</p>
+        <p className="flex items-center gap-2">
+          <MapPin className="h-3.5 w-3.5" />
+          {property}
+        </p>
+        <p className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5" />
+          Due {due}
+        </p>
       </div>
     </div>
   );

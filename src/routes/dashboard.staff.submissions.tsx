@@ -21,7 +21,7 @@ export const Route = createFileRoute("/dashboard/staff/submissions")({
 function StaffSubmissions() {
   const [filter, setFilter] = useState<"all" | StaffQueueFilter>("all");
   const { data, isLoading, isError, error, refetch } = useStaffQueueQuery(filter);
-  const rows = data?.tableRows ?? [];
+  const rows = useMemo(() => data?.tableRows ?? [], [data?.tableRows]);
   const [q, setQ] = useState("");
   const updateListing = useUpdateListingMutation();
 

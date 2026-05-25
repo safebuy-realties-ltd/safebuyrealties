@@ -44,7 +44,7 @@ function StaffWorkflow() {
     isError: listingsError,
     error: listingsErr,
   } = useStaffQueueQuery(filter);
-  const cards = queueData?.cards ?? [];
+  const cards = useMemo(() => queueData?.cards ?? [], [queueData?.cards]);
 
   const { data: prosData, isLoading: prosLoading } = useProfessionalsQuery();
   const professionals = prosData?.users ?? [];

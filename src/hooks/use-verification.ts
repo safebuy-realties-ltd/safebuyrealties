@@ -73,7 +73,9 @@ export function useVerificationActivityQuery(listingId: string, enabled = true) 
   return useQuery({
     queryKey: ["verification", "activity", listingId],
     queryFn: async () => {
-      const env = await apiRequest<VerificationActivityDto[]>(`/verification/listing/${listingId}/activity`);
+      const env = await apiRequest<VerificationActivityDto[]>(
+        `/verification/listing/${listingId}/activity`,
+      );
       return env.data;
     },
     enabled: enabled && !!listingId,

@@ -23,8 +23,7 @@ import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import type { ListingDto } from "@/hooks/use-listings";
 
-const PLACEHOLDER_IMG =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
+const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
 function uploadAssetUrl(storageKey: string): string {
   const origin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
@@ -96,12 +95,20 @@ function ListingDetail() {
   const loaderListing = Route.useLoaderData();
   const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
-  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId, loaderListing);
+  const {
+    data: listing,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useListingQuery(listingId, loaderListing);
   const createTransaction = useCreateTransactionMutation();
   const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
 
   const canFetchExtras = isReady && isAuthenticated && !!listingId;
-  const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(canFetchExtras ? listingId : null);
+  const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(
+    canFetchExtras ? listingId : null,
+  );
   const {
     data: verSteps,
     isLoading: verLoading,
@@ -158,7 +165,9 @@ function ListingDetail() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-6 py-16 text-center text-sm text-muted-foreground">Loading…</main>
+        <main className="mx-auto max-w-7xl px-6 py-16 text-center text-sm text-muted-foreground">
+          Loading…
+        </main>
       </div>
     );
   }
@@ -172,7 +181,9 @@ function ListingDetail() {
           <SiteHeader />
           <div className="flex flex-1 flex-col items-center justify-center px-4">
             <h1 className="text-2xl font-semibold text-foreground">Listing not found</h1>
-            <p className="mt-2 text-sm text-muted-foreground">This property is unavailable or you do not have access.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This property is unavailable or you do not have access.
+            </p>
             <Button asChild className="mt-6">
               <Link to="/">Go home</Link>
             </Button>
@@ -214,7 +225,11 @@ function ListingDetail() {
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
-          <img src={heroSrc} alt={resolvedListing.title} className="aspect-[21/9] w-full object-cover" />
+          <img
+            src={heroSrc}
+            alt={resolvedListing.title}
+            className="aspect-[21/9] w-full object-cover"
+          />
         </div>
 
         {galleryPhotos.length > 0 && (
@@ -244,9 +259,13 @@ function ListingDetail() {
                   <MapPin className="h-3.5 w-3.5" />
                   {resolvedListing.location}
                 </p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-tight">{resolvedListing.title}</h1>
+                <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+                  {resolvedListing.title}
+                </h1>
                 {resolvedListing.sellerName && (
-                  <p className="mt-1 text-sm text-muted-foreground">Listed by {resolvedListing.sellerName}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Listed by {resolvedListing.sellerName}
+                  </p>
                 )}
               </div>
               {verified && (
@@ -276,7 +295,9 @@ function ListingDetail() {
 
             <section className="mt-8">
               <h2 className="text-lg font-semibold">About this property</h2>
-              <p className="mt-3 leading-relaxed text-muted-foreground">{resolvedListing.description}</p>
+              <p className="mt-3 leading-relaxed text-muted-foreground">
+                {resolvedListing.description}
+              </p>
             </section>
 
             <section className="mt-10">
@@ -291,13 +312,17 @@ function ListingDetail() {
                 </span>
               </div>
               {!isAuthenticated && (
-                <p className="mt-3 text-sm text-muted-foreground">Log in as a buyer or seller to see document uploads.</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Log in as a buyer or seller to see document uploads.
+                </p>
               )}
               {isAuthenticated && docsLoading && (
                 <p className="mt-3 text-sm text-muted-foreground">Loading documents…</p>
               )}
               {isAuthenticated && !docsLoading && verificationDocs.length === 0 && (
-                <p className="mt-3 text-sm text-muted-foreground">No documents uploaded for this listing yet.</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No documents uploaded for this listing yet.
+                </p>
               )}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {verificationDocs.map((d) => (
@@ -325,7 +350,9 @@ function ListingDetail() {
 
           <aside className="space-y-6">
             <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Asking price</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Asking price
+              </p>
               <p className="mt-2 text-3xl font-semibold text-primary">{priceLabel}</p>
               {canStartTransaction ? (
                 <Button
@@ -353,7 +380,9 @@ function ListingDetail() {
                 className="mt-2 w-full"
                 type="button"
                 onClick={() => void handleMakeOffer()}
-                disabled={createTransaction.isPending || !isBuyer || listing.status !== "LIVE"}
+                disabled={
+                  createTransaction.isPending || !isBuyer || resolvedListing?.status !== "LIVE"
+                }
               >
                 Make an offer
               </Button>
@@ -367,21 +396,36 @@ function ListingDetail() {
 
             <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-semibold">Verification milestones</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Progress from the verification API.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Progress from the verification API.
+              </p>
               <div className="mt-5">
                 {!isAuthenticated && (
-                  <p className="text-sm text-muted-foreground">Sign in to see verification steps for this listing.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to see verification steps for this listing.
+                  </p>
                 )}
-                {isAuthenticated && verLoading && <p className="text-sm text-muted-foreground">Loading steps…</p>}
+                {isAuthenticated && verLoading && (
+                  <p className="text-sm text-muted-foreground">Loading steps…</p>
+                )}
                 {isAuthenticated && verError && (
-                  <p className="text-sm text-muted-foreground">Verification details are not available for your role.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Verification details are not available for your role.
+                  </p>
                 )}
-                {isAuthenticated && !verLoading && !verError && trackerSteps && trackerSteps.length > 0 && (
-                  <VerificationTracker steps={trackerSteps} />
-                )}
-                {isAuthenticated && !verLoading && !verError && (!trackerSteps || trackerSteps.length === 0) && (
-                  <p className="text-sm text-muted-foreground">No verification steps yet (listing not in review).</p>
-                )}
+                {isAuthenticated &&
+                  !verLoading &&
+                  !verError &&
+                  trackerSteps &&
+                  trackerSteps.length > 0 && <VerificationTracker steps={trackerSteps} />}
+                {isAuthenticated &&
+                  !verLoading &&
+                  !verError &&
+                  (!trackerSteps || trackerSteps.length === 0) && (
+                    <p className="text-sm text-muted-foreground">
+                      No verification steps yet (listing not in review).
+                    </p>
+                  )}
               </div>
             </div>
           </aside>

@@ -60,7 +60,7 @@ function ProTasks() {
   const [q, setQ] = useState("");
 
   const { data, isLoading, isError, error, refetch } = useMyTasksQuery({ pageSize: 100 });
-  const tasks = data?.tasks ?? [];
+  const tasks = useMemo(() => data?.tasks ?? [], [data?.tasks]);
   const kpis = useTaskKpiCounts();
 
   const { data: listingsData } = useListingsQuery();

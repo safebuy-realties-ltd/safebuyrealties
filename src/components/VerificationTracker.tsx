@@ -32,7 +32,9 @@ export function VerificationTracker({
         <div className="mb-5">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-foreground">Verification progress</span>
-            <span className="text-muted-foreground">{completed}/{total} milestones</span>
+            <span className="text-muted-foreground">
+              {completed}/{total} milestones
+            </span>
           </div>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
             <div className="h-full bg-primary transition-all" style={{ width: `${percent}%` }} />

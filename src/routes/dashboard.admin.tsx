@@ -26,11 +26,19 @@ function initialsOf(n: string) {
 }
 
 function AdminOverview() {
-  const { data: usersData, isLoading: loadUsers, isError: usersErr } = useAdminUsersQuery({ page: 1, pageSize: 8 });
-  const { data: listingsData, isLoading: loadListings, isError: listingsErr } = useListingsQuery({ pageSize: 200 });
-  const users = usersData?.users ?? [];
+  const {
+    data: usersData,
+    isLoading: loadUsers,
+    isError: usersErr,
+  } = useAdminUsersQuery({ page: 1, pageSize: 8 });
+  const {
+    data: listingsData,
+    isLoading: loadListings,
+    isError: listingsErr,
+  } = useListingsQuery({ pageSize: 200 });
+  const users = useMemo(() => usersData?.users ?? [], [usersData?.users]);
   const totalUsers = usersData?.meta?.total ?? 0;
-  const listings = listingsData?.listings ?? [];
+  const listings = useMemo(() => listingsData?.listings ?? [], [listingsData?.listings]);
 
   const pendingReviews = useMemo(
     () => listings.filter((l) => l.status === "PENDING_REVIEW").length,
@@ -54,10 +62,22 @@ function AdminOverview() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Users (total)" value={loadUsers ? "…" : String(totalUsers)} hint="Registered" />
-        <StatCard label="Listings loaded" value={loadListings ? "…" : String(listings.length)} hint="This page batch" />
+        <StatCard
+          label="Users (total)"
+          value={loadUsers ? "…" : String(totalUsers)}
+          hint="Registered"
+        />
+        <StatCard
+          label="Listings loaded"
+          value={loadListings ? "…" : String(listings.length)}
+          hint="This page batch"
+        />
         <StatCard label="Pending review" value={loadListings ? "…" : String(pendingReviews)} />
-        <StatCard label="API" value={usersErr || listingsErr ? "Error" : "OK"} hint="Latest fetch" />
+        <StatCard
+          label="API"
+          value={usersErr || listingsErr ? "Error" : "OK"}
+          hint="Latest fetch"
+        />
       </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -92,8 +112,8 @@ function AdminOverview() {
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
           <h2 className="text-lg font-semibold">Quick links</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Payments and revenue rollups are not aggregated in this MVP; use buyer transactions and seeded payments in
-            the database for demos.
+            Payments and revenue rollups are not aggregated in this MVP; use buyer transactions and
+            seeded payments in the database for demos.
           </p>
           <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-muted-foreground">
             <li>
@@ -101,7 +121,9 @@ function AdminOverview() {
                 Moderate listing statuses
               </Link>
             </li>
-            <li>Staff verification: log in as staff@safebuyrealties.test to use the workflow screens.</li>
+            <li>
+              Staff verification: log in as staff@safebuyrealties.test to use the workflow screens.
+            </li>
           </ul>
         </div>
       </div>

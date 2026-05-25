@@ -35,7 +35,7 @@ function formatMoney(amount: string, currency: string) {
 
 function AdminListings() {
   const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 150 });
-  const listings = data?.listings ?? [];
+  const listings = useMemo(() => data?.listings ?? [], [data?.listings]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const update = useUpdateListingMutation();
@@ -72,11 +72,23 @@ function AdminListings() {
     );
   };
 
-  const statuses = ["DRAFT", "PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED", "LIVE", "REJECTED", "ARCHIVED"];
+  const statuses = [
+    "DRAFT",
+    "PENDING_REVIEW",
+    "ASSIGNED",
+    "IN_VERIFICATION",
+    "VERIFIED",
+    "LIVE",
+    "REJECTED",
+    "ARCHIVED",
+  ];
 
   return (
     <>
-      <PageHeader title="Listings overview" description="All listings (admin). Update status for demos." />
+      <PageHeader
+        title="Listings overview"
+        description="All listings (admin). Update status for demos."
+      />
 
       {isError && (
         <p className="mb-4 text-sm text-destructive">
@@ -90,7 +102,12 @@ function AdminListings() {
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Total" value={isLoading ? "…" : String(counts.all)} />
         <StatCard label="Live" value={isLoading ? "…" : String(counts.LIVE ?? 0)} />
-        <StatCard label="In review" value={isLoading ? "…" : String((counts.PENDING_REVIEW ?? 0) + (counts.IN_VERIFICATION ?? 0))} />
+        <StatCard
+          label="In review"
+          value={
+            isLoading ? "…" : String((counts.PENDING_REVIEW ?? 0) + (counts.IN_VERIFICATION ?? 0))
+          }
+        />
         <StatCard label="Draft" value={isLoading ? "…" : String(counts.DRAFT ?? 0)} />
       </div>
 
@@ -116,7 +133,12 @@ function AdminListings() {
         </div>
         <div className="relative ml-auto min-w-[220px] flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="h-10 pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search…"
+            className="h-10 pl-9"
+          />
         </div>
       </div>
 
@@ -138,9 +160,14 @@ function AdminListings() {
           )}
           {!isLoading &&
             visible.map((l) => (
-              <li key={l.id} className="grid grid-cols-1 gap-2 px-5 py-4 text-sm lg:grid-cols-12 lg:items-center lg:gap-4">
+              <li
+                key={l.id}
+                className="grid grid-cols-1 gap-2 px-5 py-4 text-sm lg:grid-cols-12 lg:items-center lg:gap-4"
+              >
                 <div className="col-span-3 font-medium text-foreground">{l.title}</div>
-                <div className="col-span-2 text-muted-foreground">{l.sellerName ?? l.sellerId.slice(0, 8)}</div>
+                <div className="col-span-2 text-muted-foreground">
+                  {l.sellerName ?? l.sellerId.slice(0, 8)}
+                </div>
                 <div className="col-span-2 text-muted-foreground">{l.location}</div>
                 <div className="col-span-2 text-foreground">{formatMoney(l.price, l.currency)}</div>
                 <div className="col-span-1">
@@ -149,13 +176,29 @@ function AdminListings() {
                   </Badge>
                 </div>
                 <div className="col-span-2 flex flex-wrap justify-end gap-1">
-                  <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => setStatus(l, "PENDING_REVIEW")}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={update.isPending}
+                    onClick={() => setStatus(l, "PENDING_REVIEW")}
+                  >
                     Review
                   </Button>
-                  <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => setStatus(l, "LIVE")}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={update.isPending}
+                    onClick={() => setStatus(l, "LIVE")}
+                  >
                     Live
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-destructive" disabled={update.isPending} onClick={() => setStatus(l, "REJECTED")}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    disabled={update.isPending}
+                    onClick={() => setStatus(l, "REJECTED")}
+                  >
                     Reject
                   </Button>
                 </div>
