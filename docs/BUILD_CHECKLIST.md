@@ -11,6 +11,8 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 **Validation (Vercel-first, no Docker):** Use `docs/VERCEL_VALIDATION.md`. Replace checklist `localhost:3001` curl examples with `https://safebuyrealties-app.vercel.app/api/v1` (or the current preview URL). Browser checks run on the deployed app after push.
 
+**How we build:** TDD + PR + CI — see `docs/DEVELOPMENT_GUIDE.md`. Full-stack items need API **and** UI verification on preview before `[x]`.
+
 ---
 
 ## Last Session Notes

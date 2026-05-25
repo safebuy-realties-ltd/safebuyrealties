@@ -33,8 +33,15 @@ After review, **merge the PR on GitHub** (squash or merge commit per team prefer
   `node scripts/sync-paystack-env-vercel.mjs`  
   after updating keys locally.
 
+## CI before merge
+
+- Open the PR → wait for GitHub Actions (typecheck + eslint; tests when enabled).
+- Do **not** merge if CI is red.
+- Re-run `npm run validate:tsc` and `npm test` locally if CI fails.
+
 ## Related docs
 
-- `docs/AGENT_PROMPT.md` — build loop
+- `docs/DEVELOPMENT_GUIDE.md` — TDD, validation layers, step roadmap
+- `docs/AGENT_PROMPT.md` — agent loop
 - `docs/VERCEL_VALIDATION.md` — deploy testing
 - `docs/VALIDATION_REPORT.md` — last known E2E status

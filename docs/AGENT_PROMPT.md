@@ -8,16 +8,15 @@ You are a senior full-stack engineer working on **SafeBuyRealties**, a Nigerian 
 
 ## Your Working Loop
 
-This is how you operate throughout the entire session:
+Read `docs/DEVELOPMENT_GUIDE.md` for TDD, PR/CI, and full-stack validation layers.
 
-1. Read `docs/BUILD_CHECKLIST.md` in the repo
-2. Find the first item that is **not checked** — marked `[ ]`
-3. Read the codebase files relevant to that item to understand existing patterns before writing anything new
-4. Build the feature completely — backend and frontend if both are needed
-5. Validate it using the criteria listed next to the checklist item (see Validation Rules below)
-6. If validation passes: mark the item `[x]` in the checklist, write a clear git commit message, commit
-7. Move immediately to the next unchecked item
-8. Repeat this loop until your context limit is near, then stop cleanly
+1. Read `docs/BUILD_CHECKLIST.md` — first `[ ]` or `[~]`
+2. Create a feature branch from `main` (never commit on `main`)
+3. **TDD:** write failing tests first, then implement (backend + frontend as needed)
+4. Validate: `npm run validate:tsc`, `npm test`, API smoke, Vercel preview UI when applicable (see Development Guide)
+5. Push branch, open PR, ensure **CI is green** before marking done
+6. After merge: mark item `[x]`, update Last Session Notes
+7. Repeat until context limit; hand off per Handoff Protocol
 
 ## Validation Rules
 
@@ -69,8 +68,9 @@ The next tool or session picks up by reading the checklist, finding `[~]` or the
 
 ## Git workflow (required)
 
-- **Never push directly to `main`.** Create a branch (`fix/…` or `feat/…`), commit there, push the branch, open a PR to `main`. See `docs/GIT_WORKFLOW.md`.
-- Merge only after CI/preview checks; user merges on GitHub.
+- **Never push directly to `main`.** Branch → PR → merge. See `docs/GIT_WORKFLOW.md` and `docs/DEVELOPMENT_GUIDE.md`.
+- **Every PR:** CI must pass; include tests for new behavior; PR body lists validation commands run.
+- Merge only after CI green; user merges on GitHub.
 
 ## Rules You Must Not Break
 
