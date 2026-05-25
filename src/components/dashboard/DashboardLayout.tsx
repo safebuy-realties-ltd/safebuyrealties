@@ -33,7 +33,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   professional: [
     { label: "Overview", to: "/dashboard/professional", icon: LayoutDashboard },
     { label: "Assigned Tasks", to: "/dashboard/professional/tasks", icon: ClipboardList },
-    { label: "Reports", to: "/dashboard/professional", icon: FileText },
+    { label: "Reports", to: "/dashboard/professional/tasks", icon: FileText },
   ],
   staff: [
     { label: "Overview", to: "/dashboard/staff", icon: LayoutDashboard },
