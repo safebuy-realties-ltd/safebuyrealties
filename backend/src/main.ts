@@ -6,12 +6,39 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 
+const VERCEL_PROJECT_SLUG = "safebuyrealties";
+
 function parseConfiguredOrigins(): string[] {
   return (
     process.env.FRONTEND_URL?.split(",")
       .map((s) => s.trim())
       .filter(Boolean) ?? []
   );
+}
+
+/** Hostnames for this team's Vercel project (production alias + deployment previews). */
+function isTrustedVercelHostname(hostname: string): boolean {
+  if (hostname === `${VERCEL_PROJECT_SLUG}.vercel.app`) {
+    return true;
+  }
+
+  const teamSlug =
+    process.env.VERCEL_TEAM_SLUG?.trim() || "goodness-ifejesu-olajides-projects";
+  const suffix = `-${teamSlug}.vercel.app`;
+  if (!hostname.endsWith(suffix)) {
+    return false;
+  }
+
+  const prefix = hostname.slice(0, -suffix.length);
+  if (prefix === VERCEL_PROJECT_SLUG) {
+    return true;
+  }
+  if (!prefix.startsWith(`${VERCEL_PROJECT_SLUG}-`)) {
+    return false;
+  }
+
+  const deploymentPart = prefix.slice(VERCEL_PROJECT_SLUG.length + 1);
+  return /^[a-z0-9-]+$/.test(deploymentPart);
 }
 
 function isAllowedCorsOrigin(origin: string, configuredOrigins: string[], isProd: boolean): boolean {
@@ -32,12 +59,7 @@ function isAllowedCorsOrigin(origin: string, configuredOrigins: string[], isProd
 
   try {
     const { protocol, hostname } = new URL(origin);
-    // Production + preview deploys on Vercel for this project
-    if (
-      protocol === "https:" &&
-      hostname.endsWith(".vercel.app") &&
-      hostname.includes("safebuyrealties")
-    ) {
+    if (protocol === "https:" && isTrustedVercelHostname(hostname)) {
       return true;
     }
   } catch {
