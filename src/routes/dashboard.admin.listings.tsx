@@ -34,7 +34,7 @@ function formatMoney(amount: string, currency: string) {
 }
 
 function AdminListings() {
-  const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 150 });
+  const { data, isLoading, isError, error, refetch } = useListingsQuery({ pageSize: 100 });
   const listings = useMemo(() => data?.listings ?? [], [data?.listings]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
