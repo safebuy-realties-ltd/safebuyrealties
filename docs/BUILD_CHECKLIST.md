@@ -21,11 +21,9 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-25
 - **Tool:** Cursor (Composer)
-- **Completed:** Step 1 — all five items validated and marked done
-- **Changes:** Fixed `useTaskKpiCounts` to query `PENDING` / `IN_PROGRESS` / `COMPLETED` (was lowercase, KPIs always zero)
-- **Gate A:** `npx tsc --noEmit` (root + backend) — pass. Hooks/workflow/submissions/CI already present in repo; code review confirms wiring.
-- **Gate A (browser):** Not run in that session. Re-run on Vercel: https://safebuyrealties-app.vercel.app — login `lawyer@safebuyrealties.test` / `staff@safebuyrealties.test` / `password123`; see `docs/VERCEL_VALIDATION.md` and `docs/demo-script-checklist.md`.
-- **Next:** Step 2 — **Prisma schema — listing spec and media fields** (first unchecked item)
+- **In progress:** Step 2 item 1 — Prisma schema listing spec + `ListingMedia`; Jest serialization tests; migration `listing-spec-and-media`
+- **Branch:** `feat/step2-listing-spec-media`
+- **Next after merge:** Step 2 item 2 — Object storage service
 - **Blockers:** None
 
 ---
@@ -69,7 +67,7 @@ These four issues cause dashboard screens to crash on load. Fix them before anyt
 
 These are building blocks that other features depend on. Build them in order.
 
-- [ ] **Prisma schema — listing spec and media fields**
+- [~] **Prisma schema — listing spec and media fields**
   - Add to `Listing` model: `beds Int?`, `baths Int?`, `landAreaSqm Decimal? @db.Decimal(10,2)`, `buildType String?`
   - Add new model `ListingMedia`: `id String @id @default(uuid())`, `listingId String`, `listing Listing @relation(...)`, `storageKey String`, `type String` (values: `hero`, `gallery`), `sortOrder Int @default(0)`, `createdAt DateTime @default(now())`
   - Run `npx prisma migrate dev --name listing-spec-and-media`

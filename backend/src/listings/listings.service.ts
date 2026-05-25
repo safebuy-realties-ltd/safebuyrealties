@@ -42,10 +42,22 @@ export class ListingsService {
       price: Prisma.Decimal;
       currency: string;
       status: ListingStatus;
+      beds?: number | null;
+      baths?: number | null;
+      landAreaSqm?: Prisma.Decimal | null;
+      buildType?: string | null;
       verifiedAt: Date | null;
       rejectionReason: string | null;
       createdAt: Date;
       updatedAt: Date;
+      media?: {
+        id: string;
+        listingId: string;
+        storageKey: string;
+        type: string;
+        sortOrder: number;
+        createdAt: Date;
+      }[];
     },
     seller?: { firstName: string; lastName: string } | null,
   ) {
@@ -62,12 +74,29 @@ export class ListingsService {
       price: l.price.toString(),
       currency: l.currency,
       status: l.status,
+      beds: l.beds ?? null,
+      baths: l.baths ?? null,
+      landAreaSqm: l.landAreaSqm != null ? Number(l.landAreaSqm) : null,
+      buildType: l.buildType ?? null,
       verifiedAt: l.verifiedAt?.toISOString() ?? null,
       rejectionReason: l.rejectionReason,
       createdAt: l.createdAt.toISOString(),
       updatedAt: l.updatedAt.toISOString(),
+      media: (l.media ?? []).map((m) => ({
+        id: m.id,
+        listingId: m.listingId,
+        storageKey: m.storageKey,
+        type: m.type,
+        sortOrder: m.sortOrder,
+        createdAt: m.createdAt.toISOString(),
+      })),
     };
   }
+
+  private listingInclude = {
+    seller: { select: { firstName: true, lastName: true } },
+    media: { orderBy: { sortOrder: "asc" as const } },
+  };
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
@@ -112,7 +141,7 @@ export class ListingsService {
     }
     const withSeller = await this.prisma.listing.findUniqueOrThrow({
       where: { id: listing.id },
-      include: { seller: { select: { firstName: true, lastName: true } } },
+      include: this.listingInclude,
     });
     return this.serializeListing(withSeller, withSeller.seller);
   }
@@ -153,7 +182,7 @@ export class ListingsService {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { updatedAt: "desc" },
-        include: { seller: { select: { firstName: true, lastName: true } } },
+        include: this.listingInclude,
       }),
     ]);
     return {
@@ -165,7 +194,7 @@ export class ListingsService {
   async findOne(id: string, actor: JwtPayload | null) {
     const listing = await this.prisma.listing.findUnique({
       where: { id },
-      include: { seller: { select: { firstName: true, lastName: true } } },
+      include: this.listingInclude,
     });
     if (!listing) throw new NotFoundException("Listing not found");
     if (!(await this.canAccessListing(listing, actor))) throw new ForbiddenException();
@@ -206,7 +235,7 @@ export class ListingsService {
 
     const out = await this.prisma.listing.findUniqueOrThrow({
       where: { id },
-      include: { seller: { select: { firstName: true, lastName: true } } },
+      include: this.listingInclude,
     });
     return this.serializeListing(out, out.seller);
   }
@@ -220,7 +249,7 @@ export class ListingsService {
     const updated = await this.prisma.listing.update({
       where: { id },
       data: { status: ListingStatus.ARCHIVED },
-      include: { seller: { select: { firstName: true, lastName: true } } },
+      include: this.listingInclude,
     });
     return this.serializeListing(updated, updated.seller);
   }

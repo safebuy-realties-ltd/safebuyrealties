@@ -105,17 +105,34 @@ model Listing {
   price            Decimal            @db.Decimal(18, 2)
   currency         String             @default("NGN")
   status           ListingStatus      @default(DRAFT)
+  beds             Int?
+  baths            Int?
+  landAreaSqm      Decimal?           @db.Decimal(10, 2)
+  buildType        String?
   verifiedAt       DateTime?
   rejectionReason  String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   documents        Document[]
+  media            ListingMedia[]
   verificationSteps VerificationStep[]
   tasks            Task[]
   payments         Payment[]
   transactions     Transaction[]
 
   @@index([sellerId, status])
+}
+
+model ListingMedia {
+  id         String   @id @default(uuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  storageKey String
+  type       String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([listingId])
 }
 
 model Document {
