@@ -68,6 +68,16 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isListingImageCategory(category: DocType): boolean {
+  return category === "listing_hero" || category === "listing_gallery";
+}
+
+function isImageUpload(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
+}
+
 function categoryLabel(category: string) {
   const d = docTypes.find((t) => t.id === category);
   return d?.label ?? category.replace(/_/g, " ");
@@ -169,6 +179,13 @@ function SellerDocuments() {
       if (!list?.length || !listingId) return;
       setUploadError(null);
       const files = Array.from(list);
+      if (isListingImageCategory(activeType)) {
+        const nonImages = files.filter((f) => !isImageUpload(f));
+        if (nonImages.length > 0) {
+          setUploadError("Hero and gallery uploads must be images (JPG, PNG, or WebP).");
+          return;
+        }
+      }
       if (activeType === "listing_gallery") {
         const existing = (documents ?? []).filter((d) => d.category === "listing_gallery").length;
         if (existing + files.length > 8) {
@@ -327,7 +344,11 @@ function SellerDocuments() {
             <p className="mt-4 text-sm font-medium text-foreground">
               Drag and drop {docTypes.find((d) => d.id === activeType)?.label.toLowerCase()} files here
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG up to 15MB each (API limit)</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isListingImageCategory(activeType)
+                ? "JPG, PNG, or WebP up to 15MB each (API limit)"
+                : "PDF, JPG, PNG up to 15MB each (API limit)"}
+            </p>
             <Button
               className="mt-5"
               disabled={!listingId || uploadMutation.isPending}
@@ -339,7 +360,11 @@ function SellerDocuments() {
               ref={inputRef}
               type="file"
               multiple
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept={
+                isListingImageCategory(activeType)
+                  ? "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  : ".pdf,.jpg,.jpeg,.png"
+              }
               className="hidden"
               disabled={!listingId || uploadMutation.isPending}
               onChange={onPick}
