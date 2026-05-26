@@ -25,9 +25,11 @@ import { Route as DashboardBuyerIndexRouteImport } from './routes/dashboard.buye
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as DashboardStaffWorkflowRouteImport } from './routes/dashboard.staff.workflow'
 import { Route as DashboardStaffSubmissionsRouteImport } from './routes/dashboard.staff.submissions'
+import { Route as DashboardStaffCredentialsRouteImport } from './routes/dashboard.staff.credentials'
 import { Route as DashboardSellerListingsRouteImport } from './routes/dashboard.seller.listings'
 import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard.seller.documents'
 import { Route as DashboardProfessionalTasksRouteImport } from './routes/dashboard.professional.tasks'
+import { Route as DashboardProfessionalCredentialsRouteImport } from './routes/dashboard.professional.credentials'
 import { Route as DashboardBuyerTransactionsRouteImport } from './routes/dashboard.buyer.transactions'
 import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.buyer.listings'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
@@ -117,6 +119,12 @@ const DashboardStaffSubmissionsRoute =
     path: '/submissions',
     getParentRoute: () => DashboardStaffRoute,
   } as any)
+const DashboardStaffCredentialsRoute =
+  DashboardStaffCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => DashboardStaffRoute,
+  } as any)
 const DashboardSellerListingsRoute = DashboardSellerListingsRouteImport.update({
   id: '/listings',
   path: '/listings',
@@ -132,6 +140,12 @@ const DashboardProfessionalTasksRoute =
   DashboardProfessionalTasksRouteImport.update({
     id: '/tasks',
     path: '/tasks',
+    getParentRoute: () => DashboardProfessionalRoute,
+  } as any)
+const DashboardProfessionalCredentialsRoute =
+  DashboardProfessionalCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
     getParentRoute: () => DashboardProfessionalRoute,
   } as any)
 const DashboardBuyerTransactionsRoute =
@@ -182,9 +196,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
+  '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
+  '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -204,9 +220,11 @@ export interface FileRoutesByTo {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
+  '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
+  '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
@@ -232,9 +250,11 @@ export interface FileRoutesById {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
+  '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
+  '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -261,9 +281,11 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/transactions'
+    | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
+    | '/dashboard/staff/credentials'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
     | '/dashboard/admin/'
@@ -283,9 +305,11 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/transactions'
+    | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
+    | '/dashboard/staff/credentials'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
     | '/dashboard/admin'
@@ -310,9 +334,11 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/transactions'
+    | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
+    | '/dashboard/staff/credentials'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
     | '/dashboard/admin/'
@@ -449,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStaffSubmissionsRouteImport
       parentRoute: typeof DashboardStaffRoute
     }
+    '/dashboard/staff/credentials': {
+      id: '/dashboard/staff/credentials'
+      path: '/credentials'
+      fullPath: '/dashboard/staff/credentials'
+      preLoaderRoute: typeof DashboardStaffCredentialsRouteImport
+      parentRoute: typeof DashboardStaffRoute
+    }
     '/dashboard/seller/listings': {
       id: '/dashboard/seller/listings'
       path: '/listings'
@@ -468,6 +501,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/dashboard/professional/tasks'
       preLoaderRoute: typeof DashboardProfessionalTasksRouteImport
+      parentRoute: typeof DashboardProfessionalRoute
+    }
+    '/dashboard/professional/credentials': {
+      id: '/dashboard/professional/credentials'
+      path: '/credentials'
+      fullPath: '/dashboard/professional/credentials'
+      preLoaderRoute: typeof DashboardProfessionalCredentialsRouteImport
       parentRoute: typeof DashboardProfessionalRoute
     }
     '/dashboard/buyer/transactions': {
@@ -565,11 +605,13 @@ const DashboardProfessionalTasksRouteWithChildren =
   )
 
 interface DashboardProfessionalRouteChildren {
+  DashboardProfessionalCredentialsRoute: typeof DashboardProfessionalCredentialsRoute
   DashboardProfessionalTasksRoute: typeof DashboardProfessionalTasksRouteWithChildren
   DashboardProfessionalIndexRoute: typeof DashboardProfessionalIndexRoute
 }
 
 const DashboardProfessionalRouteChildren: DashboardProfessionalRouteChildren = {
+  DashboardProfessionalCredentialsRoute: DashboardProfessionalCredentialsRoute,
   DashboardProfessionalTasksRoute: DashboardProfessionalTasksRouteWithChildren,
   DashboardProfessionalIndexRoute: DashboardProfessionalIndexRoute,
 }
@@ -596,12 +638,14 @@ const DashboardSellerRouteWithChildren = DashboardSellerRoute._addFileChildren(
 )
 
 interface DashboardStaffRouteChildren {
+  DashboardStaffCredentialsRoute: typeof DashboardStaffCredentialsRoute
   DashboardStaffSubmissionsRoute: typeof DashboardStaffSubmissionsRoute
   DashboardStaffWorkflowRoute: typeof DashboardStaffWorkflowRoute
   DashboardStaffIndexRoute: typeof DashboardStaffIndexRoute
 }
 
 const DashboardStaffRouteChildren: DashboardStaffRouteChildren = {
+  DashboardStaffCredentialsRoute: DashboardStaffCredentialsRoute,
   DashboardStaffSubmissionsRoute: DashboardStaffSubmissionsRoute,
   DashboardStaffWorkflowRoute: DashboardStaffWorkflowRoute,
   DashboardStaffIndexRoute: DashboardStaffIndexRoute,

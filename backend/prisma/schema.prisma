@@ -102,6 +102,7 @@ model User {
   tasksCreated       Task[]              @relation("TaskCreator")
   payments           Payment[]           @relation("PayerPayments")
   transactions       Transaction[]       @relation("BuyerTransactions")
+  professionalProfile ProfessionalProfile?
 }
 
 model Listing {
@@ -252,4 +253,19 @@ model PlatformConfig {
   flutterwaveEnabled Boolean  @default(false)
   maintenanceMode    Boolean  @default(false)
   updatedAt          DateTime @updatedAt
+}
+
+model ProfessionalProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  regulatoryBody String
+  licenseNumber  String
+  licenseExpiry  DateTime?
+  verifiedStatus String    @default("PENDING")
+  verifiedById   String?
+  verifiedAt     DateTime?
+  rejectionNote  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
