@@ -77,6 +77,16 @@ enum TransactionStatus {
   INITIATED
   IN_PROGRESS
   COMPLETED
+  DD_PURCHASED
+  DD_IN_PROGRESS
+  DD_COMPLETE
+  PURCHASE_PENDING
+  PURCHASE_IN_ESCROW
+}
+
+enum PaymentIntent {
+  DD_SERVICE
+  PROPERTY_PURCHASE
 }
 
 enum ListingMediaType {
@@ -223,6 +233,7 @@ model Payment {
   provider           String        @default("paystack")
   providerReference  String?       @unique
   status             PaymentStatus @default(PENDING)
+  intent             PaymentIntent @default(DD_SERVICE)
   metadata           Json          @default("{}")
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -307,4 +318,20 @@ model BundleItem {
 
   @@id([bundleId, itemId])
   @@map("bundle_items")
+}
+
+model DueDiligenceOrder {
+  id            String   @id @default(uuid())
+  transactionId String   @unique
+  buyerId       String
+  bundleId      String?
+  itemIds       Json     @default("[]")
+  subtotal      Decimal  @db.Decimal(18, 2)
+  vatAmount     Decimal  @db.Decimal(18, 2)
+  total         Decimal  @db.Decimal(18, 2)
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("due_diligence_orders")
 }

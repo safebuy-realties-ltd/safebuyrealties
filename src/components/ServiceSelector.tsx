@@ -110,7 +110,9 @@ export default function ServiceSelector({ onSelectionChange }: ServiceSelectorPr
   }
 
   const activeBundles = (bundles ?? []).filter((b) => b.active);
-  const activeItems = (items ?? []).filter((i) => i.active).sort((a, b) => a.sortOrder - b.sortOrder);
+  const activeItems = (items ?? [])
+    .filter((i) => i.active)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <div className="space-y-6">
@@ -122,9 +124,7 @@ export default function ServiceSelector({ onSelectionChange }: ServiceSelectorPr
             <div
               key={bundle.id}
               className={`relative flex flex-col rounded-xl border-2 bg-card p-6 shadow-sm transition-all ${
-                isSelected
-                  ? "border-primary shadow-md"
-                  : "border-border/60 hover:border-border"
+                isSelected ? "border-primary shadow-md" : "border-border/60 hover:border-border"
               }`}
             >
               {isSelected && (
@@ -144,7 +144,10 @@ export default function ServiceSelector({ onSelectionChange }: ServiceSelectorPr
 
               <ul className="mb-6 flex-1 space-y-1.5">
                 {bundle.items.map((item) => (
-                  <li key={item.id} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <li
+                    key={item.id}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
                     <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
                       ✓
                     </span>

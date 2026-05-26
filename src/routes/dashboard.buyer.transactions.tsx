@@ -38,10 +38,15 @@ function formatMoney(amount: string, currency: string) {
 function statusBadgeClass(status: string) {
   switch (status) {
     case "COMPLETED":
+    case "DD_COMPLETE":
       return "border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]";
     case "IN_PROGRESS":
+    case "DD_PURCHASED":
+    case "DD_IN_PROGRESS":
+    case "PURCHASE_IN_ESCROW":
       return "border-primary/20 bg-primary-soft text-primary";
     case "INITIATED":
+    case "PURCHASE_PENDING":
     default:
       return "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]";
   }
@@ -52,8 +57,17 @@ function statusLabel(status: string) {
     INITIATED: "Initiated",
     IN_PROGRESS: "In progress",
     COMPLETED: "Completed",
+    DD_PURCHASED: "Due Diligence Purchased",
+    DD_IN_PROGRESS: "Due Diligence In Progress",
+    DD_COMPLETE: "Due Diligence Complete",
+    PURCHASE_PENDING: "Purchase Pending",
+    PURCHASE_IN_ESCROW: "Purchase In Escrow",
   };
   return m[status] ?? status;
+}
+
+function paymentIntentLabel(intent: PaymentDto["intent"] | undefined) {
+  return intent === "PROPERTY_PURCHASE" ? "Property Purchase Payment" : "Due Diligence Payment";
 }
 
 function timelineForStatus(status: string) {
@@ -225,6 +239,9 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="border-border/60 bg-muted text-muted-foreground">
+            {paymentIntentLabel(payment?.intent)}
+          </Badge>
           <Badge variant="outline" className={`gap-1 ${statusBadgeClass(tx.status)}`}>
             {statusLabel(tx.status)}
           </Badge>

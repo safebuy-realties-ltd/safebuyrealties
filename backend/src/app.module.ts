@@ -16,6 +16,7 @@ import { AuditModule } from "./audit/audit.module";
 import { PlatformConfigModule } from "./platform-config/platform-config.module";
 import { ProfessionalsModule } from "./professionals/professionals.module";
 import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
+import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
     PlatformConfigModule,
     ProfessionalsModule,
     ServiceCatalogModule,
+    DueDiligenceModule,
     HealthModule,
   ],
   providers: [

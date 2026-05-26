@@ -5,6 +5,8 @@ import type { ListingDto } from "@/hooks/use-listings";
 
 export type TransactionDto = {
   id: string;
+  // status values: INITIATED | IN_PROGRESS | COMPLETED | DD_PURCHASED | DD_IN_PROGRESS
+  //              | DD_COMPLETE | PURCHASE_PENDING | PURCHASE_IN_ESCROW
   status: string;
   buyerId: string;
   listingId: string;
