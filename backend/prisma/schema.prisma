@@ -33,6 +33,8 @@ enum ListingStatus {
   IN_VERIFICATION
   VERIFIED
   LIVE
+  UNDER_OFFER
+  SOLD
   REJECTED
   ARCHIVED
 }
