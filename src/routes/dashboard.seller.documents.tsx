@@ -37,6 +37,7 @@ import { useListingDocumentsQuery, useUploadDocumentMutation } from "@/hooks/use
 import { useVerificationListingQuery } from "@/hooks/use-verification";
 import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
+import { statusLabel } from "@/lib/listing-status";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
   component: () => (
@@ -306,7 +307,7 @@ function SellerDocuments() {
             <SelectContent>
               {listings.map((l) => (
                 <SelectItem key={l.id} value={l.id}>
-                  {l.title} ({l.status.replace(/_/g, " ")})
+                  {l.title} ({statusLabel(l.status)})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -486,7 +487,7 @@ function SellerDocuments() {
                   <p className="text-xs text-muted-foreground">
                     This listing is{" "}
                     <span className="font-medium text-foreground">
-                      {selectedListing.status.replace(/_/g, " ")}
+                      {statusLabel(selectedListing.status)}
                     </span>
                     . Submission for review is only available from Draft or Rejected.
                   </p>

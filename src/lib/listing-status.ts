@@ -11,6 +11,10 @@ export function statusLabel(status: string): string {
       return "Verified";
     case "LIVE":
       return "Live";
+    case "UNDER_OFFER":
+      return "Under Offer";
+    case "SOLD":
+      return "Sold";
     case "REJECTED":
       return "Rejected";
     case "DRAFT":
@@ -33,8 +37,11 @@ export function statusBadgeClass(status: string): string {
       return "border-primary/20 bg-primary-soft text-primary";
     case "PENDING_REVIEW":
       return "border-warning/30 bg-warning/15 text-[oklch(0.45_0.13_75)]";
+    case "UNDER_OFFER":
+      return "border-blue-300/30 bg-blue-100/50 text-blue-700 dark:text-blue-300";
     case "REJECTED":
       return "border-destructive/30 bg-destructive/10 text-destructive";
+    case "SOLD":
     case "ARCHIVED":
     case "DRAFT":
     default:
