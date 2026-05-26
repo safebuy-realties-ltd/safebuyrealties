@@ -10,8 +10,9 @@ Single reference for how we build, test, validate, and ship. **Agents and humans
 | `docs/AGENT_PROMPT.md` | Paste into new AI sessions (short loop) |
 | `docs/BUILD_CHECKLIST.md` | Ordered work queue (`[ ]` / `[~]` / `[x]`) |
 | `docs/GIT_WORKFLOW.md` | Branch → PR → merge (never push `main` directly) |
-| `docs/VERCEL_VALIDATION.md` | Deploy URLs, migrations, curl, seed logins |
-| `docs/demo-script-checklist.md` | Manual browser journeys (Gate C) |
+| `docs/LOCAL_DEVELOPMENT.md` | **Primary** — local FE/BE, cloud Postgres, curl, L5 E2E |
+| `docs/VERCEL_VALIDATION.md` | Optional deploy / production smoke |
+| `docs/demo-script-checklist.md` | Manual browser journeys (Gate C on localhost:8080) |
 | `docs/VALIDATION_REPORT.md` | Last production validation snapshot |
 
 ---
@@ -35,13 +36,13 @@ Every checklist item uses the layers that apply:
 | **L1 — Unit** | Pure logic, hooks, services (mocked deps) | Every behavior change | `npm test` (FE), `cd backend && npm test` (BE, once Jest is wired) |
 | **L2 — Type** | TypeScript contracts | Every commit | `npm run validate:tsc` |
 | **L3 — Lint** | ESLint (frontend) | Every FE PR | `npx eslint src --max-warnings 0` |
-| **L4 — API** | HTTP contract vs deployed/preview API | New/changed endpoints | `npm run smoke:api`, `npm run validate:e2e`, item-specific curl |
-| **L5 — UI** | Route loads, role flow, no console errors | New/changed routes | Vercel **preview** URL + `docs/demo-script-checklist.md` |
-| **L6 — Gate C** | Milestone demo on staging/production | End of Steps 2, 5, 7, 10 | Full role walkthroughs on deployed app |
+| **L4 — API** | HTTP contract vs **local** API | New/changed endpoints | `npm run smoke:api`, item-specific curl to `localhost:3001` |
+| **L5 — UI** | Route loads, role flow, no console errors | New/changed routes | **http://localhost:8080** + `docs/demo-script-checklist.md` |
+| **L6 — Gate C** | Milestone demo on local stack | End of Steps 2, 5, 7, 10 | Full role walkthroughs (`docs/LOCAL_DEVELOPMENT.md`) |
 
 **Mark a checklist item `[x]` only when its listed validation passes** (checklist text + applicable layers above).
 
-**“End-to-end”** for a feature means: **L1 + L2 + L4 + L5** minimum (API and UI both exercised on the same preview deploy).
+**“End-to-end”** for a feature means: **L1 + L2 + L4 + L5** minimum (API and UI both exercised on the **local** stack).
 
 ---
 
@@ -102,8 +103,8 @@ gh pr create --base main --title "feat: …" --body "## Summary … ## Test plan
 **Merge checklist:**
 
 - [ ] CI green on GitHub
-- [ ] Vercel preview deploy succeeded (if FE/BE changed)
-- [ ] You ran applicable L4/L5 on preview
+- [ ] Local backend + frontend running (`docs/LOCAL_DEVELOPMENT.md`)
+- [ ] You ran applicable L4/L5 on localhost
 - [ ] No secrets in diff
 
 ---
