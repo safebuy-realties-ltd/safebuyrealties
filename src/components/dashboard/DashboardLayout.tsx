@@ -11,6 +11,7 @@ import {
   Bell,
   Search,
   LogOut,
+  ShoppingCart,
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -25,6 +26,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Overview", to: "/dashboard/buyer", icon: LayoutDashboard },
     { label: "Browse Listings", to: "/dashboard/buyer/listings", icon: Building2 },
     { label: "Transactions", to: "/dashboard/buyer/transactions", icon: FileText },
+    { label: "Services", to: "/dashboard/buyer/services", icon: ShoppingCart },
   ],
   seller: [
     { label: "Overview", to: "/dashboard/seller", icon: LayoutDashboard },
