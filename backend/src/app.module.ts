@@ -15,6 +15,7 @@ import { HealthModule } from "./health/health.module";
 import { AuditModule } from "./audit/audit.module";
 import { PlatformConfigModule } from "./platform-config/platform-config.module";
 import { ProfessionalsModule } from "./professionals/professionals.module";
+import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ProfessionalsModule } from "./professionals/professionals.module";
     TransactionsModule,
     PlatformConfigModule,
     ProfessionalsModule,
+    ServiceCatalogModule,
     HealthModule,
   ],
   providers: [

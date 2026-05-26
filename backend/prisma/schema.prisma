@@ -269,3 +269,42 @@ model ProfessionalProfile {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
+
+model ServiceCatalogItem {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  name        String
+  description String
+  basePrice   Decimal      @default(150000) @db.Decimal(18, 2)
+  active      Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  bundles     BundleItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("service_catalog_items")
+}
+
+model ServiceBundle {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  name        String
+  description String
+  basePrice   Decimal      @db.Decimal(18, 2)
+  active      Boolean      @default(true)
+  items       BundleItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("service_bundles")
+}
+
+model BundleItem {
+  bundleId String
+  itemId   String
+  bundle   ServiceBundle      @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  item     ServiceCatalogItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([bundleId, itemId])
+  @@map("bundle_items")
+}
