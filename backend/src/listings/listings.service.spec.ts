@@ -67,6 +67,7 @@ describe("ListingsService", () => {
       findUnique: jest.Mock;
       findUniqueOrThrow: jest.Mock;
       update: jest.Mock;
+      create: jest.Mock;
     };
     verificationStep: { count: jest.Mock; createMany: jest.Mock };
   };
@@ -78,6 +79,7 @@ describe("ListingsService", () => {
         findUnique: jest.fn(),
         findUniqueOrThrow: jest.fn(),
         update: jest.fn(),
+        create: jest.fn(),
       },
       verificationStep: {
         count: jest.fn().mockResolvedValue(1),
@@ -94,6 +96,49 @@ describe("ListingsService", () => {
     }).compile();
 
     service = module.get(ListingsService);
+  });
+
+  describe("create with spec fields", () => {
+    it("persists beds, baths, landAreaSqm, and buildType on create", async () => {
+      const created = { ...baseListing, beds: null, baths: null, landAreaSqm: null, buildType: null };
+      prisma.listing.create.mockResolvedValue(created);
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...baseListing,
+        beds: 4,
+        baths: 3,
+        landAreaSqm: new Prisma.Decimal("450"),
+        buildType: "Detached",
+      });
+
+      const result = await service.create(
+        {
+          title: "New Home",
+          description: "Desc",
+          location: "Abuja",
+          price: 1000000,
+          beds: 4,
+          baths: 3,
+          landAreaSqm: 450,
+          buildType: "Detached",
+        },
+        sellerActor,
+      );
+
+      expect(prisma.listing.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          beds: 4,
+          baths: 3,
+          landAreaSqm: 450,
+          buildType: "Detached",
+        }),
+      });
+      expect(result).toMatchObject({
+        beds: 4,
+        baths: 3,
+        landAreaSqm: 450,
+        buildType: "Detached",
+      });
+    });
   });
 
   describe("listing serialization (DTO)", () => {
