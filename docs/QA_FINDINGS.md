@@ -48,9 +48,9 @@ The product had **broad FE/BE contract drift**: UI was built ahead of APIs, layo
 
 | Field | Value |
 |-------|-------|
-| Keys in `backend/.env` | `PAYSTACK_TEST_SECRET_KEY` + `PAYSTACK_TEST_PUBLIC_KEY` set locally; `DATABASE_URL` empty in cloud agent |
-| Popup opened | Not run locally (no local backend) |
-| Payment succeeded | Not run this session |
+| Keys in `backend/.env` | Production uses Vercel Paystack keys |
+| Popup opened | Blocked pre-fix: Paystack "Invalid Email Address" for `.test` emails |
+| Payment succeeded | Pending re-test after email mapping deploy |
 | Verify endpoint | Available on production API (`POST /payments/:id/verify`) |
 | Transaction / listing status after pay | — |
 

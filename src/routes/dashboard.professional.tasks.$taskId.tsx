@@ -48,11 +48,14 @@ function TaskDetailPage() {
   }, [task, verificationSteps]);
 
   const feedback = useMemo(() => {
+    if (revisionStep?.revisionNote?.trim()) return [revisionStep.revisionNote.trim()];
     const raw = task?.reviewFeedback;
     if (Array.isArray(raw)) return raw.filter((s): s is string => typeof s === "string");
     if (typeof raw === "string" && raw.trim()) return [raw];
     return [];
-  }, [task]);
+  }, [task, revisionStep]);
+
+  const revisionStatusLabel = revisionStep?.status ?? task?.revisionStatus ?? "none";
 
   if (isLoading) return <p className="mt-6 text-sm text-muted-foreground">Loading task…</p>;
   if (isError || !task) {
@@ -175,7 +178,7 @@ function TaskDetailPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p>
-              <strong>Revision status:</strong> {task.revisionStatus ?? "none"}
+              <strong>Revision status:</strong> {revisionStatusLabel}
             </p>
             {feedback.length === 0 ? (
               <p className="text-muted-foreground">No reviewer feedback yet.</p>

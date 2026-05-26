@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +78,7 @@ function ListingDetail() {
   const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
   const createTransaction = useCreateTransactionMutation();
-  const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
+  const verificationSectionId = "listing-verification-milestones";
 
   const canFetchExtras = isReady && isAuthenticated && !!listingId;
   const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(
@@ -100,10 +100,7 @@ function ListingDetail() {
   }, [verSteps]);
 
   const openVerificationStatus = () => {
-    setIsRoutingToVerification(true);
-    void navigate({ to: "/dashboard/buyer/listings" }).finally(() => {
-      setIsRoutingToVerification(false);
-    });
+    document.getElementById(verificationSectionId)?.scrollIntoView({ behavior: "smooth" });
   };
 
   const startTransaction = async () => {
@@ -326,14 +323,9 @@ function ListingDetail() {
                   {createTransaction.isPending ? "Starting…" : "Start transaction"}
                 </Button>
               ) : (
-                <Button
-                  className="mt-5 w-full"
-                  size="lg"
-                  onClick={openVerificationStatus}
-                  disabled={isRoutingToVerification}
-                >
+                <Button className="mt-5 w-full" size="lg" onClick={openVerificationStatus}>
                   <PlayCircle className="mr-2 h-4 w-4" />
-                  {isRoutingToVerification ? "Opening verification…" : "View verification status"}
+                  View verification status
                 </Button>
               )}
               <Button
@@ -355,7 +347,10 @@ function ListingDetail() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+            <div
+              id={verificationSectionId}
+              className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]"
+            >
               <h3 className="font-semibold">Verification milestones</h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 Progress from the verification API.
