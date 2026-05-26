@@ -139,8 +139,7 @@ function StaffWorkflow() {
     patchStepMutation.mutate(
       { stepId, listingId: selectedListingId, body: { status } },
       {
-        onSuccess: () =>
-          toast.success(status === "COMPLETED" ? "Step approved." : "Step blocked."),
+        onSuccess: () => toast.success(status === "COMPLETED" ? "Step approved." : "Step blocked."),
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
       },
     );

@@ -76,13 +76,7 @@ function ListingDetail() {
   const { listingId } = Route.useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
-  const {
-    data: listing,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useListingQuery(listingId);
+  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
   const createTransaction = useCreateTransactionMutation();
   const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
 
