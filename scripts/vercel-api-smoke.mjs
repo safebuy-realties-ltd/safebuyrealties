@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Smoke-test deployed API (Vercel). No Docker required.
+ * Smoke-test API (local backend by default).
  *
- *   SBR_API_BASE=https://safebuyrealties-app.vercel.app/api/v1 node scripts/vercel-api-smoke.mjs
- *   SBR_EMAIL=staff@safebuyrealties.test SBR_PASSWORD=password123 node scripts/vercel-api-smoke.mjs
+ *   npm run smoke:api
+ *   SBR_API_BASE=https://safebuyrealties.vercel.app/api/v1 npm run smoke:api
+ *   SBR_EMAIL=staff@safebuyrealties.test SBR_PASSWORD=password123 npm run smoke:api
  */
-const base = (process.env.SBR_API_BASE ?? "https://safebuyrealties-app.vercel.app/api/v1").replace(
+const base = (process.env.SBR_API_BASE ?? "http://localhost:3001/api/v1").replace(
   /\/$/,
   "",
 );
