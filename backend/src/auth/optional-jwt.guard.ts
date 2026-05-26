@@ -10,8 +10,12 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest<{ headers: { authorization?: string } }>();
-    if (!req.headers.authorization) return true;
+    const req = context.switchToHttp().getRequest<{
+      headers: { authorization?: string };
+      cookies?: Record<string, string>;
+    }>();
+    const hasSession = !!req.headers.authorization || !!req.cookies?.sbr_session;
+    if (!hasSession) return true;
     try {
       return (await super.canActivate(context)) as boolean;
     } catch {
