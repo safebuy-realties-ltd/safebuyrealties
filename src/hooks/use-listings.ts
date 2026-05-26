@@ -85,6 +85,10 @@ export function useCreateListingMutation() {
       location: string;
       price: number;
       currency?: string;
+      beds?: number;
+      baths?: number;
+      landAreaSqm?: number;
+      buildType?: string;
     }) =>
       apiRequest<ListingDto>("/listings", {
         method: "POST",

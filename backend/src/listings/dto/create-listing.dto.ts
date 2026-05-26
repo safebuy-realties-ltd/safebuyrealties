@@ -1,4 +1,13 @@
-import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min, MinLength } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  MinLength,
+} from "class-validator";
 import { ListingStatus } from "@prisma/client";
 
 export class CreateListingDto {
@@ -30,4 +39,23 @@ export class CreateListingDto {
   @IsOptional()
   @IsEnum(ListingStatus)
   status?: ListingStatus;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  beds?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  baths?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  landAreaSqm?: number;
+
+  @IsOptional()
+  @IsString()
+  buildType?: string;
 }

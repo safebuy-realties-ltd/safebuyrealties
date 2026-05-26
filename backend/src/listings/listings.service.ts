@@ -146,6 +146,10 @@ export class ListingsService {
         price: dto.price,
         currency: dto.currency ?? "NGN",
         status,
+        ...(dto.beds !== undefined ? { beds: dto.beds } : {}),
+        ...(dto.baths !== undefined ? { baths: dto.baths } : {}),
+        ...(dto.landAreaSqm !== undefined ? { landAreaSqm: dto.landAreaSqm } : {}),
+        ...(dto.buildType !== undefined ? { buildType: dto.buildType } : {}),
       },
     });
     if (status === ListingStatus.PENDING_REVIEW) {
@@ -232,6 +236,10 @@ export class ListingsService {
         ...(dto.currency !== undefined ? { currency: dto.currency } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.rejectionReason !== undefined ? { rejectionReason: dto.rejectionReason } : {}),
+        ...(dto.beds !== undefined ? { beds: dto.beds } : {}),
+        ...(dto.baths !== undefined ? { baths: dto.baths } : {}),
+        ...(dto.landAreaSqm !== undefined ? { landAreaSqm: dto.landAreaSqm } : {}),
+        ...(dto.buildType !== undefined ? { buildType: dto.buildType } : {}),
         ...(nextStatus === ListingStatus.VERIFIED && !listing.verifiedAt
           ? { verifiedAt: new Date() }
           : {}),
