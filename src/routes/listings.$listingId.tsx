@@ -3,16 +3,7 @@ import { useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  ShieldCheck,
-  MapPin,
-  BedDouble,
-  Bath,
-  Maximize,
-  FileText,
-  CheckCircle2,
-  PlayCircle,
-} from "lucide-react";
+import { ShieldCheck, MapPin, FileText, CheckCircle2, PlayCircle } from "lucide-react";
 import { VerificationTracker, type VerificationStep } from "@/components/VerificationTracker";
 import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
@@ -22,6 +13,7 @@ import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import type { ListingDto } from "@/hooks/use-listings";
+import { formatListingSpecSummary } from "@/lib/listing-spec";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
@@ -50,11 +42,6 @@ function formatMoney(amount: string, currency: string) {
   } catch {
     return `${currency} ${amount}`;
   }
-}
-
-function specValue(value: number | string | null | undefined, suffix = ""): string {
-  if (value == null || value === "") return "—";
-  return `${value}${suffix}`;
 }
 
 function formatSize(bytes: number) {
@@ -275,23 +262,9 @@ function ListingDetail() {
               )}
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-6 border-y border-border/60 py-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <BedDouble className="h-4 w-4" /> {specValue(resolvedListing.beds)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Bath className="h-4 w-4" /> {specValue(resolvedListing.baths)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Maximize className="h-4 w-4" />{" "}
-                {resolvedListing.landAreaSqm != null
-                  ? specValue(resolvedListing.landAreaSqm, " m²")
-                  : "—"}
-              </span>
-              {resolvedListing.buildType && (
-                <span className="text-foreground">{resolvedListing.buildType}</span>
-              )}
-            </div>
+            <p className="mt-6 border-y border-border/60 py-4 text-sm text-muted-foreground">
+              {formatListingSpecSummary(resolvedListing)}
+            </p>
 
             <section className="mt-8">
               <h2 className="text-lg font-semibold">About this property</h2>

@@ -21,11 +21,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-26
 - **Tool:** Cursor (Cloud Agent)
-- **Last completed:** Step 2 — Audit logging (`cursor/audit-logging-e68d`, PR #33); object storage already on `main` (PR #27/#32)
-- **Done this session (audit):** `AuditLog` model + migration `20260526120000_audit_log`; global `AuditModule` / `AuditService` (never-throw `log()`); `AuditAction` constants; listing status transitions write `LISTING_STATUS_CHANGED` / `LISTING_REJECTED` with before/after JSON
-- **Tests:** `backend/src/audit/audit.service.spec.ts`; extended `listings.service.spec.ts` (status audit)
-- **Gate A:** `npm run validate:tsc`, `npm test` (3 FE), `cd backend && npm test` (15 BE) — pass
-- **API/local:** `PATCH /listings/:id` as staff → row in `audit_logs` (local Docker + psql); `npm run smoke:api` on production health/login OK
+- **Last completed:** Step 2 — Property spec fields — frontend (`cursor/step2-spec-fields-fe-e4ea`)
+- **Done this session:** `src/lib/listing-spec.ts` (create payload + detail summary); seller form + listing detail wired; BE create/update persist spec fields; optional JWT guard honors `sbr_session` cookie on `GET /listings/:id`
+- **Tests:** `src/lib/listing-spec.test.ts` (6); `listings.service.spec.ts` create-with-specs (16 BE total)
+- **Gate A:** `npm run validate:tsc`, `npm test` (9 FE), `cd backend && npm test` — pass
+- **L5 (local E2E):** seller login → create beds=4 baths=3 → `/listings/{id}` shows `4 beds · 3 baths · 450 m² · Detached` (listing `273ef239-e5c3-4343-b311-dde75f9ce026`); confirm on Vercel preview after deploy
 - **Next:** Step 2 — Platform configuration
 - **Blockers:** None
 
@@ -98,12 +98,12 @@ These are building blocks that other features depend on. Build them in order.
   - Controller: `GET /platform-config` (any authenticated user), `PATCH /platform-config` (ADMIN only)
   - Validation: `curl -X GET http://localhost:3001/api/v1/platform-config -H "Cookie: <auth-cookie>"` returns `{ vatRate: "0.075", maxUploadMb: 15, ... }`
 
-- [ ] **Property spec fields — frontend**
-  - Update `ListingDto` type in `src/hooks/use-listings.ts` to include optional: `beds?: number | null`, `baths?: number | null`, `landAreaSqm?: number | null`, `buildType?: string | null`
-  - Update listing detail page to display these values (already shows "—" fallback — now show the actual value when present)
-  - Update seller create listing form (`src/routes/dashboard.seller.listings.tsx`) to include optional input fields for beds, baths, landAreaSqm, buildType
-  - Include these in the POST body when present
-  - Validation: create a new listing as a seller with beds=4, baths=3. View the listing detail page — the spec row must show "4 beds · 3 baths"
+- [x] **Property spec fields — frontend** (PR `cursor/step2-spec-fields-fe-e4ea`)
+  - `ListingDto` optional spec fields in `src/hooks/use-listings.ts`; `src/lib/listing-spec.ts` for create payload + detail summary (`4 beds · 3 baths`)
+  - Seller create form (`dashboard.seller.listings.tsx`) POSTs specs when present; detail page (`listings.$listingId.tsx`) shows formatted spec row
+  - BE: create/update persist spec fields; optional JWT guard cookie fix for seller draft detail
+  - Tests: `src/lib/listing-spec.test.ts`; `listings.service.spec.ts` create-with-specs
+  - Validated: Gate A + local L5 E2E (seller create + detail spec row); Vercel preview after merge
 
 ---
 

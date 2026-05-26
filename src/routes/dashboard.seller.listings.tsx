@@ -6,6 +6,11 @@ import { useAuth } from "@/lib/auth";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { apiRequest } from "@/lib/api";
 import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
+import {
+  buildCreateListingPayload,
+  type CreateListingFormValues,
+  type CreateListingPayload,
+} from "@/lib/listing-spec";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,18 +24,6 @@ export const Route = createFileRoute("/dashboard/seller/listings")({
   ),
 });
 
-type CreateListingInput = {
-  title: string;
-  description: string;
-  location: string;
-  price: number;
-  currency: string;
-  beds?: number;
-  baths?: number;
-  landAreaSqm?: number;
-  buildType?: string;
-};
-
 function SellerListingsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -38,7 +31,7 @@ function SellerListingsPage() {
   const { data, isLoading } = useListingsQuery({ ownedOnly: true });
 
   const createListing = useMutation({
-    mutationFn: (payload: CreateListingInput) =>
+    mutationFn: (payload: CreateListingPayload) =>
       apiRequest("/listings", {
         method: "POST",
         body: JSON.stringify(payload),
@@ -101,9 +94,9 @@ function CreateListingForm({
 }: {
   isSubmitting: boolean;
   error: string | null;
-  onSubmit: (values: CreateListingInput) => void;
+  onSubmit: (values: CreateListingPayload) => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<CreateListingFormValues>({
     title: "",
     description: "",
     location: "",
@@ -120,22 +113,7 @@ function CreateListingForm({
       className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]"
       onSubmit={(e) => {
         e.preventDefault();
-        const payload: CreateListingInput = {
-          title: form.title.trim(),
-          description: form.description.trim(),
-          location: form.location.trim(),
-          price: Number(form.price),
-          currency: form.currency.trim() || "NGN",
-        };
-        const beds = Number(form.beds);
-        if (form.beds.trim() && Number.isFinite(beds)) payload.beds = beds;
-        const baths = Number(form.baths);
-        if (form.baths.trim() && Number.isFinite(baths)) payload.baths = baths;
-        const landAreaSqm = Number(form.landAreaSqm);
-        if (form.landAreaSqm.trim() && Number.isFinite(landAreaSqm))
-          payload.landAreaSqm = landAreaSqm;
-        if (form.buildType.trim()) payload.buildType = form.buildType.trim();
-        onSubmit(payload);
+        onSubmit(buildCreateListingPayload(form));
       }}
     >
       <h2 className="text-lg font-semibold">Create listing</h2>
