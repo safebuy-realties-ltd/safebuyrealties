@@ -9,9 +9,9 @@ This is the single source of truth for development progress.
 
 Any AI tool working on this project reads this file first, finds the first `[ ]` or `[~]`, and continues from there. See `AGENT_PROMPT.md` for the full working protocol.
 
-**Validation (Vercel-first, no Docker):** Use `docs/VERCEL_VALIDATION.md`. Replace checklist `localhost:3001` curl examples with `https://safebuyrealties-app.vercel.app/api/v1` (or the current preview URL). Browser checks run on the deployed app after push.
+**Validation (local-first):** Run backend + frontend locally against the **shared cloud Postgres** — see `docs/LOCAL_DEVELOPMENT.md`. API base: `http://localhost:3001/api/v1`; app: `http://localhost:8080`. Optional post-merge checks: `docs/VERCEL_VALIDATION.md`.
 
-**How we build:** TDD + PR + CI — see `docs/DEVELOPMENT_GUIDE.md`. Full-stack items need API **and** UI verification on preview before `[x]`.
+**How we build:** TDD + PR + CI — see `docs/DEVELOPMENT_GUIDE.md`. Full-stack items need API **and** UI verification on **local** stack before `[x]`.
 
 ---
 
@@ -28,7 +28,8 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 - **L4 API:** Local API smoke after applying migrations/seed: admin login → `GET /platform-config` returned `vatRate: "0.075"`, `maxUploadMb: 15`; `PATCH /platform-config` set `maxUploadMb: 16`; immediate second GET returned `maxUploadMb: 16`; restored `maxUploadMb: 15`
 - **Preview/CI:** PR #35 CI required + backend check passed; Vercel previews deployed (`safebuyrealties` and `safebuyrealties-app`). Direct preview curl was blocked by Vercel Deployment Protection in this VM (no Vercel CLI/MCP auth or bypass token available).
 - **Next:** Step 3 — Listing status vocabulary — database
-- **Blockers:** None for implementation; preview API curl needs Vercel auth/bypass token when Deployment Protection is enabled
+- **Blockers:** None
+- **Dev workflow:** Local validation only (`docs/LOCAL_DEVELOPMENT.md`); no Docker; shared cloud `DATABASE_URL` in `backend/.env`
 
 ---
 

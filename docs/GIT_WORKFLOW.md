@@ -58,5 +58,6 @@ Configure branch protection in GitHub (one-time, repo admin). This repo cannot s
 - `docs/BRANCH_PROTECTION.md` — require PR + green CI on `main`
 - `docs/DEVELOPMENT_GUIDE.md` — TDD, validation layers, step roadmap
 - `docs/AGENT_PROMPT.md` — agent loop
-- `docs/VERCEL_VALIDATION.md` — deploy testing
+- `docs/LOCAL_DEVELOPMENT.md` — local dev & primary E2E validation
+- `docs/VERCEL_VALIDATION.md` — optional deploy / production smoke
 - `docs/VALIDATION_REPORT.md` — last known E2E status

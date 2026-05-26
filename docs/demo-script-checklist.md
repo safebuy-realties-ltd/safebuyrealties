@@ -1,12 +1,13 @@
 # Demo Script Checklist
 
-**Base URL (production):** https://safebuyrealties-app.vercel.app  
-**API (direct):** https://safebuyrealties.vercel.app/api/v1  
-**Preview:** use the frontend preview URL from the Vercel dashboard for your branch.
+**Base URL (local — primary):** http://localhost:8080  
+**API (local):** http://localhost:3001/api/v1  
 
-**Logins (seed):** `password123` — `staff@`, `seller@`, `buyer@`, `lawyer@` `@safebuyrealties.test`
+Start stack: `cd backend && npm run start:dev` and `npm run dev` (see `docs/LOCAL_DEVELOPMENT.md`).
 
-See `docs/VERCEL_VALIDATION.md` for curl smoke and migration workflow without Docker.
+**Optional production:** https://safebuyrealties-app.vercel.app — `docs/VERCEL_VALIDATION.md`
+
+**Logins (seed):** `password123` — `staff@`, `seller@`, `buyer@`, `lawyer@`, `admin@` `@safebuyrealties.test`
 
 Validated walkthrough paths (append to base URL):
 
@@ -15,11 +16,12 @@ Validated walkthrough paths (append to base URL):
 - Dashboard overview: `/dashboard/seller`
 - Create listing draft CTA: `/dashboard/seller`
 - Upload documents + submit verification: `/dashboard/seller/documents`
+- Create listing with beds/baths → public detail shows spec summary
 
 ## Buyer
 
 - Listings browser: `/dashboard/buyer/listings`
-- API-backed listing detail: `/listings/:listingId` (example from browser row)
+- API-backed listing detail: `/listings/:listingId`
 - Start transaction CTA: `/listings/:listingId` then `/dashboard/buyer/transactions`
 
 ## Staff
@@ -30,3 +32,7 @@ Validated walkthrough paths (append to base URL):
 ## Professional
 
 - Synced assigned tasks + status updates: `/dashboard/professional/tasks`
+
+## Admin / platform
+
+- `GET /api/v1/platform-config` (authenticated) — VAT and upload limits

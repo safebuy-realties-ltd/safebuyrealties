@@ -13,7 +13,7 @@ Read `docs/DEVELOPMENT_GUIDE.md` for TDD, PR/CI, and full-stack validation layer
 1. Read `docs/BUILD_CHECKLIST.md` — first `[ ]` or `[~]`
 2. Create a feature branch from `main` (never commit on `main`)
 3. **TDD:** write failing tests first, then implement (backend + frontend as needed)
-4. Validate: `npm run validate:tsc`, `npm test`, API smoke, Vercel preview UI when applicable (see Development Guide)
+4. Validate: `npm run validate:tsc`, `npm test`, local API smoke + browser on localhost (see `docs/LOCAL_DEVELOPMENT.md`)
 5. Push branch, open PR, ensure **CI is green** before marking done
 6. After merge: mark item `[x]`, update Last Session Notes
 7. Repeat until context limit; hand off per Handoff Protocol
@@ -24,22 +24,23 @@ Every item must be validated before being marked done. Do not skip validation to
 
 **For every backend change:**
 - Run `cd backend && npx tsc --noEmit` — must produce zero errors
-- Test each new endpoint with curl against **deployed** API (see `docs/VERCEL_VALIDATION.md`). Default base: `https://safebuyrealties-app.vercel.app/api/v1` or preview URL from the latest Vercel deploy. Document the curl command and response in the checklist or service file.
-- If a new Prisma model was added: add a migration (`npx prisma migrate dev --name <feature> --create-only` in `backend/`, or migrate via `vercel env pull` + remote DB). Migrations apply on **Vercel backend deploy** (`migrate deploy` in `vercel-build`). Confirm success in the deployment build log — Docker is not required.
+- Start local API: `cd backend && npm run start:dev` (requires `backend/.env` with cloud `DATABASE_URL`).
+- Test each new endpoint with curl against **local** API: `http://localhost:3001/api/v1` (see `docs/LOCAL_DEVELOPMENT.md`). Document curl + response in the checklist or PR.
+- If a new Prisma model was added: `npx prisma migrate dev --name <feature> --create-only`, then `npx prisma migrate deploy` against the shared cloud DB. Never `migrate reset`.
 
 **For every frontend change:**
 - Run `npx tsc --noEmit` from the repo root — must produce zero errors
-- If a new route was added: verify on **Vercel preview or production** (`https://safebuyrealties-app.vercel.app` or branch preview) — no console errors on load
-- If an existing broken page was fixed: confirm on the deployed app (browser MCP or manual)
+- If a new route was added: verify on **http://localhost:8080** with local backend running — no console errors on load
+- If an existing broken page was fixed: confirm in the local app (browser MCP or manual)
 
 **For a complete feature (backend + frontend):**
 - Both type checks pass (Gate A)
-- Push branch; wait for Vercel preview deploy(s) for frontend and backend if either changed (Gate C)
-- Run `node scripts/vercel-api-smoke.mjs` with `SBR_API_BASE` set to the preview API if needed
-- Walk through the feature on the **deployed** app — log in as the right role (seed users in `VERCEL_VALIDATION.md`), perform the action, confirm the result
+- Run `npm run dev` (FE) and `cd backend && npm run start:dev` (BE) for Gate C
+- Run `npm run smoke:api` (defaults to `http://localhost:3001/api/v1`)
+- Walk through the feature on **http://localhost:8080** — seed users in `docs/LOCAL_DEVELOPMENT.md`
 - Describe exactly what you verified, which URL, and what you saw
 
-**Local `npm run dev` / Docker are optional**, not the default validation path. See `docs/VERCEL_VALIDATION.md`.
+Optional after merge: Vercel deploy smoke — `docs/VERCEL_VALIDATION.md`.
 
 **If validation fails:**
 - Fix the issue before moving on
@@ -94,10 +95,10 @@ Do not re-implement work already present; validate first, then mark `[x]`.
 
 - **Gate A (every item):** `tsc` FE + BE; optional `node scripts/vercel-api-smoke.mjs` after deploy
 - **Gate B (every push):** GitHub Actions CI
-- **Gate C (end of Steps 2, 5, 7, 10):** Vercel preview/production + `docs/demo-script-checklist.md` + `docs/VERCEL_VALIDATION.md`
-- **Gate D (all `[x]`):** full buyer / seller / staff / pro journeys on production URLs
+- **Gate C (end of Steps 2, 5, 7, 10):** Local stack + `docs/demo-script-checklist.md` (base URL `http://localhost:8080`)
+- **Gate D (all `[x]`):** full buyer / seller / staff / pro journeys on local (optional production pass)
 
-**Validation reference:** `docs/VERCEL_VALIDATION.md` (URLs, migrations without Docker, curl, seed logins).
+**Validation reference:** `docs/LOCAL_DEVELOPMENT.md` (primary), `docs/VERCEL_VALIDATION.md` (optional deploy).
 
 ## Parallel sessions
 
