@@ -21,15 +21,12 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-26
 - **Tool:** Cursor (Cloud Agent)
-- **Last completed:** Step 2 — Platform configuration (`cursor/step2-platform-config-e4ea`, PR #35)
-- **Done this session:** `PlatformConfig` Prisma singleton + migration `20260526143000_platform_config`; `backend/src/platform-config/` service/controller/module; authenticated `GET /platform-config`; ADMIN-only `PATCH /platform-config`; registered in `AppModule`
-- **Tests:** `platform-config.service.spec.ts` + `platform-config.controller.spec.ts` (7 platform-config tests; 23 BE total)
-- **Gate A:** `npm run validate:tsc`, `cd backend && npm test`, `cd backend && DATABASE_URL=postgresql://user:pass@localhost:5432/safebuyrealties DATABASE_POSTGRES_URL=postgresql://user:pass@localhost:5432/safebuyrealties npx prisma validate` — pass
-- **L4 API:** Local API smoke after applying migrations/seed: admin login → `GET /platform-config` returned `vatRate: "0.075"`, `maxUploadMb: 15`; `PATCH /platform-config` set `maxUploadMb: 16`; immediate second GET returned `maxUploadMb: 16`; restored `maxUploadMb: 15`
-- **Preview/CI:** PR #35 CI required + backend check passed; Vercel previews deployed (`safebuyrealties` and `safebuyrealties-app`). Direct preview curl was blocked by Vercel Deployment Protection in this VM (no Vercel CLI/MCP auth or bypass token available).
-- **Next:** Step 3 — Listing status vocabulary — database
-- **Blockers:** None
-- **Dev workflow:** Local validation only (`docs/LOCAL_DEVELOPMENT.md`); no Docker; shared cloud `DATABASE_URL` in `backend/.env`
+- **Last completed:** Stabilization sprint PR #49 merged (`cursor/stabilization-e4ea-b52e`)
+- **Done this session:** P0/P1 fixes — nested dashboards, uploads, verification API, staff pipeline, task PATCH, listing links; CI prettier fix; preview E2E pass
+- **Follow-up (branch `cursor/stabilization-followup-b52e`):** QA-011–014 P2 fixes; Paystack `.test` email mapping; LIVE listing beds/baths in seed + upsert
+- **Tests:** `npm run validate:tsc`, `npm test` (9 FE), `cd backend && npm test` (48 BE), `npm run smoke:api` — pass
+- **Next:** Merge follow-up PR; re-test Paystack popup on production; optional seed upsert on cloud DB for listing specs
+- **Blockers:** `DATABASE_URL` not in cloud agent env for local `:8080` stack
 
 ---
 

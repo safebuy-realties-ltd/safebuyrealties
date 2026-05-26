@@ -99,6 +99,16 @@ export class PaymentsService {
     };
   }
 
+  /** Paystack rejects `.test` seed emails — use a valid-format address for initialize only. */
+  private paystackCustomerEmail(email: string, userId: string): string {
+    const trimmed = email.trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) && !trimmed.endsWith(".test")) {
+      return trimmed;
+    }
+    const local = trimmed.split("@")[0]?.replace(/[^a-zA-Z0-9._+-]/g, "") || "buyer";
+    return `${local}+${userId.slice(0, 8)}@example.com`;
+  }
+
   async initiate(dto: InitiatePaymentDto, actor: JwtPayload) {
     if (actor.role !== UserRole.BUYER && !this.isStaff(actor.role)) {
       throw new ForbiddenException("Only buyers can initiate payments");
@@ -184,7 +194,7 @@ export class PaymentsService {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: payer.email,
+        email: this.paystackCustomerEmail(payer.email, payer.id),
         amount: amountMinor,
         currency,
         callback_url: dto.callbackUrl,

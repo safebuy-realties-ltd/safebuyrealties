@@ -39,6 +39,26 @@ async function wipe() {
   await prisma.user.deleteMany();
 }
 
+async function ensureLiveListingSpecs() {
+  const specs: Record<string, { beds: number; baths: number; landAreaSqm: string }> = {
+    "LIVE Acacia Hills Estate": { beds: 4, baths: 3, landAreaSqm: "320" },
+    "LIVE Riverside Townhouse": { beds: 3, baths: 2, landAreaSqm: "210" },
+    "LIVE Garden Court Residence": { beds: 5, baths: 4, landAreaSqm: "480" },
+    "LIVE Maple Heights Apartment": { beds: 2, baths: 2, landAreaSqm: "120" },
+    "LIVE Cedar Park Villa": { beds: 6, baths: 5, landAreaSqm: "520" },
+  };
+  for (const [title, spec] of Object.entries(specs)) {
+    await prisma.listing.updateMany({
+      where: { title, status: ListingStatus.LIVE, beds: null },
+      data: {
+        beds: spec.beds,
+        baths: spec.baths,
+        landAreaSqm: new Prisma.Decimal(spec.landAreaSqm),
+      },
+    });
+  }
+}
+
 async function ensureVerifiedProfessionalProfiles(staffId: string) {
   const profiles = [
     { email: "lawyer@safebuyrealties.test", regulatoryBody: "NBA", licenseNumber: "NBA/TEST/001" },
@@ -238,6 +258,7 @@ async function main() {
     price: string,
     location: string,
     desc: string,
+    specs?: { beds?: number; baths?: number; landAreaSqm?: string },
   ) => ({
     title,
     sellerId,
@@ -246,6 +267,9 @@ async function main() {
     currency: "NGN",
     location,
     description: desc,
+    beds: specs?.beds ?? null,
+    baths: specs?.baths ?? null,
+    landAreaSqm: specs?.landAreaSqm != null ? new Prisma.Decimal(specs.landAreaSqm) : null,
   });
 
   const listingsData = [
@@ -328,6 +352,7 @@ async function main() {
       "125000000",
       "Lagos",
       "Seed flagship LIVE property for buyers.",
+      { beds: 4, baths: 3, landAreaSqm: "320" },
     ),
     mk(
       "LIVE Riverside Townhouse",
@@ -336,6 +361,7 @@ async function main() {
       "98000000",
       "Port Harcourt",
       "Waterfront townhouse.",
+      { beds: 3, baths: 2, landAreaSqm: "210" },
     ),
     mk(
       "LIVE Garden Court Residence",
@@ -344,6 +370,7 @@ async function main() {
       "210000000",
       "Lekki",
       "Gated community family home.",
+      { beds: 5, baths: 4, landAreaSqm: "480" },
     ),
     mk(
       "LIVE Maple Heights Apartment",
@@ -352,6 +379,7 @@ async function main() {
       "67000000",
       "Abuja",
       "High-rise apartment.",
+      { beds: 2, baths: 2, landAreaSqm: "120" },
     ),
     mk(
       "LIVE Cedar Park Villa",
@@ -360,6 +388,7 @@ async function main() {
       "310000000",
       "Ikoyi",
       "Premium villa with pool.",
+      { beds: 6, baths: 5, landAreaSqm: "520" },
     ),
     mk(
       "LIVE Sunset Bay Condo",
@@ -586,6 +615,7 @@ async function main() {
   });
 
   await ensureVerifiedProfessionalProfiles(staff.id);
+  await ensureLiveListingSpecs();
 
   console.log("Seed OK — demo database reset.");
   console.log("Login (all roles): password123");
