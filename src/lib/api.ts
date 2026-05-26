@@ -1,5 +1,5 @@
-/** Same-origin in production (Vercel /api/v1 rewrite); direct to Nest in local dev. */
-const DEFAULT_API = import.meta.env.PROD ? "/api/v1" : "http://localhost:3001/api/v1";
+/** Same-origin in production (Vercel /api/v1 rewrite); Vite proxy in local dev. */
+const DEFAULT_API = "/api/v1";
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? DEFAULT_API;
 
