@@ -55,6 +55,8 @@ enum VerificationStepStatus {
   IN_PROGRESS
   COMPLETED
   BLOCKED
+  ACCEPTED
+  REVISION_REQUESTED
 }
 
 enum TaskStatus {
@@ -167,6 +169,7 @@ model VerificationStep {
   assignedProfessionalId String?
   assignedProfessional   User?                    @relation("StepAssignee", fields: [assignedProfessionalId], references: [id])
   notes                  String?
+  revisionNote           String?
   completedAt            DateTime?
   order                  Int
   riskFlags              Json                     @default("[]")

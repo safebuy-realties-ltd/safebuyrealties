@@ -31,6 +31,7 @@ export class VerificationService {
     status: VerificationStepStatus;
     assignedProfessionalId: string | null;
     notes: string | null;
+    revisionNote: string | null;
     completedAt: Date | null;
     order: number;
     riskFlags: unknown;
@@ -44,6 +45,7 @@ export class VerificationService {
       status: s.status,
       assignedProfessionalId: s.assignedProfessionalId,
       notes: s.notes,
+      revisionNote: s.revisionNote,
       completedAt: s.completedAt?.toISOString() ?? null,
       order: s.order,
       riskFlags: flags,
@@ -142,6 +144,37 @@ export class VerificationService {
     const updated = await this.prisma.verificationStep.update({
       where: { id: stepId },
       data,
+    });
+    return this.serializeStep(updated);
+  }
+
+  async acceptStep(stepId: string, actor: JwtPayload) {
+    if (!this.isStaff(actor.role)) throw new ForbiddenException();
+    const step = await this.prisma.verificationStep.findUnique({ where: { id: stepId } });
+    if (!step) throw new NotFoundException("Step not found");
+    const updated = await this.prisma.verificationStep.update({
+      where: { id: stepId },
+      data: {
+        status: VerificationStepStatus.ACCEPTED,
+        completedAt: new Date(),
+        revisionNote: null,
+      },
+    });
+    return this.serializeStep(updated);
+  }
+
+  async requestRevision(stepId: string, note: string, actor: JwtPayload) {
+    if (!this.isStaff(actor.role)) throw new ForbiddenException();
+    const trimmed = note?.trim();
+    if (!trimmed) throw new BadRequestException("note is required");
+    const step = await this.prisma.verificationStep.findUnique({ where: { id: stepId } });
+    if (!step) throw new NotFoundException("Step not found");
+    const updated = await this.prisma.verificationStep.update({
+      where: { id: stepId },
+      data: {
+        status: VerificationStepStatus.REVISION_REQUESTED,
+        revisionNote: trimmed,
+      },
     });
     return this.serializeStep(updated);
   }

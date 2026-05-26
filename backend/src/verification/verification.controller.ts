@@ -5,6 +5,7 @@ import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { AssignVerificationDto } from "./dto/assign-verification.dto";
 import { PatchVerificationStepDto } from "./dto/patch-verification-step.dto";
+import { RequestRevisionDto } from "./dto/request-revision.dto";
 
 @Controller("verification")
 @UseGuards(JwtAuthGuard)
@@ -28,5 +29,19 @@ export class VerificationController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.verification.patchStep(stepId, dto, user);
+  }
+
+  @Patch("steps/:stepId/accept")
+  acceptStep(@Param("stepId") stepId: string, @CurrentUser() user: JwtPayload) {
+    return this.verification.acceptStep(stepId, user);
+  }
+
+  @Patch("steps/:stepId/request-revision")
+  requestRevision(
+    @Param("stepId") stepId: string,
+    @Body() dto: RequestRevisionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.verification.requestRevision(stepId, dto.note, user);
   }
 }
