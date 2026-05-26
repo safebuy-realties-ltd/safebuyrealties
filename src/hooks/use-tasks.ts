@@ -4,10 +4,6 @@ import { useAuth } from "@/lib/auth";
 
 export type TaskDto = {
   id: string;
-  reviewFeedback?: string[] | string | null;
-  revisionStatus?: string | null;
-  requiresDocumentEvidence?: boolean;
-  completionNotes?: string | null;
   listingId: string;
   assigneeId: string;
   createdById: string;
