@@ -13,6 +13,8 @@ import {
   VerificationStepStatus,
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import { AuditAction } from "../audit/audit-actions.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
@@ -31,7 +33,10 @@ const VERIFICATION_TEMPLATE: { type: VerificationStepType; order: number }[] = [
 
 @Injectable()
 export class ListingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   private serializeListing(
     l: {
@@ -238,6 +243,27 @@ export class ListingsService {
       nextStatus === ListingStatus.PENDING_REVIEW
     ) {
       await this.ensureVerificationSteps(id);
+    }
+
+    if (dto.status !== undefined && prevStatus !== nextStatus) {
+      const action =
+        nextStatus === ListingStatus.REJECTED
+          ? AuditAction.LISTING_REJECTED
+          : AuditAction.LISTING_STATUS_CHANGED;
+      void this.audit.log({
+        actorId: actor.sub,
+        action,
+        entity: "Listing",
+        entityId: id,
+        before: {
+          status: prevStatus,
+          rejectionReason: listing.rejectionReason,
+        },
+        after: {
+          status: nextStatus,
+          rejectionReason: updated.rejectionReason,
+        },
+      });
     }
 
     const out = await this.prisma.listing.findUniqueOrThrow({

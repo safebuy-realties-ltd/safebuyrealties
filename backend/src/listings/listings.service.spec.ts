@@ -1,6 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ListingMediaType, ListingStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import { AuditAction } from "../audit/audit-actions.constants";
 import { ListingsService } from "./listings.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { UserRole } from "@prisma/client";
@@ -50,20 +52,36 @@ const baseListing = {
   ],
 };
 
+const staffActor: JwtPayload = {
+  sub: "staff-1",
+  email: "staff@safebuyrealties.test",
+  role: UserRole.STAFF,
+  professionalType: null,
+};
+
 describe("ListingsService", () => {
   let service: ListingsService;
+  let audit: { log: jest.Mock };
   let prisma: {
     listing: {
       findUnique: jest.Mock;
       findUniqueOrThrow: jest.Mock;
+      update: jest.Mock;
     };
+    verificationStep: { count: jest.Mock; createMany: jest.Mock };
   };
 
   beforeEach(async () => {
+    audit = { log: jest.fn().mockResolvedValue(undefined) };
     prisma = {
       listing: {
         findUnique: jest.fn(),
         findUniqueOrThrow: jest.fn(),
+        update: jest.fn(),
+      },
+      verificationStep: {
+        count: jest.fn().mockResolvedValue(1),
+        createMany: jest.fn(),
       },
     };
 
@@ -71,6 +89,7 @@ describe("ListingsService", () => {
       providers: [
         ListingsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: audit },
       ],
     }).compile();
 
@@ -133,6 +152,91 @@ describe("ListingsService", () => {
           createdAt: "2026-01-15T11:01:00.000Z",
         },
       ]);
+    });
+  });
+
+  describe("audit logging on status transitions", () => {
+    it("records LISTING_STATUS_CHANGED when staff updates status", async () => {
+      const listingRow = {
+        ...baseListing,
+        status: ListingStatus.PENDING_REVIEW,
+        rejectionReason: null,
+      };
+      prisma.listing.findUnique.mockResolvedValue(listingRow);
+      prisma.listing.update.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.ASSIGNED,
+      });
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.ASSIGNED,
+      });
+
+      await service.update("listing-1", { status: ListingStatus.ASSIGNED }, staffActor);
+
+      expect(audit.log).toHaveBeenCalledWith({
+        actorId: "staff-1",
+        action: AuditAction.LISTING_STATUS_CHANGED,
+        entity: "Listing",
+        entityId: "listing-1",
+        before: {
+          status: ListingStatus.PENDING_REVIEW,
+          rejectionReason: null,
+        },
+        after: {
+          status: ListingStatus.ASSIGNED,
+          rejectionReason: null,
+        },
+      });
+    });
+
+    it("records LISTING_REJECTED when status becomes REJECTED", async () => {
+      const listingRow = {
+        ...baseListing,
+        status: ListingStatus.IN_VERIFICATION,
+        rejectionReason: null,
+      };
+      prisma.listing.findUnique.mockResolvedValue(listingRow);
+      prisma.listing.update.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.REJECTED,
+        rejectionReason: "Incomplete documents",
+      });
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.REJECTED,
+        rejectionReason: "Incomplete documents",
+      });
+
+      await service.update(
+        "listing-1",
+        { status: ListingStatus.REJECTED, rejectionReason: "Incomplete documents" },
+        staffActor,
+      );
+
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: AuditAction.LISTING_REJECTED,
+          before: {
+            status: ListingStatus.IN_VERIFICATION,
+            rejectionReason: null,
+          },
+          after: {
+            status: ListingStatus.REJECTED,
+            rejectionReason: "Incomplete documents",
+          },
+        }),
+      );
+    });
+
+    it("does not audit when status is unchanged", async () => {
+      prisma.listing.findUnique.mockResolvedValue(baseListing);
+      prisma.listing.update.mockResolvedValue(baseListing);
+      prisma.listing.findUniqueOrThrow.mockResolvedValue(baseListing);
+
+      await service.update("listing-1", { title: "Renamed" }, staffActor);
+
+      expect(audit.log).not.toHaveBeenCalled();
     });
   });
 });
