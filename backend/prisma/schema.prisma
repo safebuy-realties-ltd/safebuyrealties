@@ -238,3 +238,13 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model PlatformConfig {
+  id                 String   @id @default("singleton")
+  vatRate            Decimal  @default(0.075) @db.Decimal(5, 4)
+  maxUploadMb        Int      @default(15)
+  paystackEnabled    Boolean  @default(true)
+  flutterwaveEnabled Boolean  @default(false)
+  maintenanceMode    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}

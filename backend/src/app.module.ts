@@ -11,6 +11,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { TransactionsModule } from "./transactions/transactions.module";
 import { HealthModule } from "./health/health.module";
 import { AuditModule } from "./audit/audit.module";
+import { PlatformConfigModule } from "./platform-config/platform-config.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuditModule } from "./audit/audit.module";
     TasksModule,
     PaymentsModule,
     TransactionsModule,
+    PlatformConfigModule,
     HealthModule,
   ],
 })
