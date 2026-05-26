@@ -9,6 +9,7 @@ export type VerificationStepDto = {
   status: string;
   assignedProfessionalId: string | null;
   notes: string | null;
+  revisionNote: string | null;
   completedAt: string | null;
   order: number;
   riskFlags: string[];
@@ -61,6 +62,35 @@ export function usePatchVerificationStepMutation() {
       apiRequest<VerificationStepDto>(`/verification/steps/${args.stepId}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
+      }),
+    onSuccess: (_env, vars) => {
+      void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}
+
+export function useAcceptStepMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { stepId: string; listingId: string }) =>
+      apiRequest<VerificationStepDto>(`/verification/steps/${args.stepId}/accept`, {
+        method: "PATCH",
+      }),
+    onSuccess: (_env, vars) => {
+      void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+    },
+  });
+}
+
+export function useRequestRevisionMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { stepId: string; listingId: string; note: string }) =>
+      apiRequest<VerificationStepDto>(`/verification/steps/${args.stepId}/request-revision`, {
+        method: "PATCH",
+        body: JSON.stringify({ note: args.note }),
       }),
     onSuccess: (_env, vars) => {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 import { useMyTaskByIdQuery, usePatchTaskMutation } from "@/hooks/use-tasks";
 import { useUploadDocumentMutation } from "@/hooks/use-documents";
+import { useVerificationListingQuery } from "@/hooks/use-verification";
 import { RISK_FLAGS } from "@/lib/risk-flags";
 
 export const Route = createFileRoute("/dashboard/professional/tasks/$taskId")({
@@ -35,6 +36,20 @@ function TaskDetailPage() {
 
   const patchMutation = usePatchTaskMutation();
   const uploadMutation = useUploadDocumentMutation();
+
+  const { data: verificationSteps } = useVerificationListingQuery(
+    task?.listingId ?? "",
+    !!task?.listingId,
+  );
+
+  const revisionStep = useMemo(() => {
+    if (!task || !verificationSteps) return null;
+    return (
+      verificationSteps.find(
+        (s) => s.type === task.type && s.status === "REVISION_REQUESTED" && !!s.revisionNote,
+      ) ?? null
+    );
+  }, [task, verificationSteps]);
 
   const feedback = useMemo(() => {
     const raw = task?.reviewFeedback;
@@ -119,6 +134,19 @@ function TaskDetailPage() {
           Back to task list
         </Link>
       </div>
+
+      {revisionStep && (
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-amber-400 bg-amber-50 p-4 text-amber-900"
+        >
+          <p className="text-sm font-semibold">Revision requested</p>
+          <p className="mt-1 text-sm">{revisionStep.revisionNote}</p>
+          <p className="mt-2 text-xs text-amber-800">
+            Address the feedback above, update your report, and resubmit below.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

@@ -15,11 +15,14 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useStaffQueueQuery, type StaffQueueFilter } from "@/hooks/use-staff-queue";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useAssignVerificationMutation,
   useVerificationListingQuery,
   usePatchVerificationStepMutation,
   useVerificationActivityQuery,
+  useAcceptStepMutation,
+  useRequestRevisionMutation,
 } from "@/hooks/use-verification";
 import { useProfessionalsQuery } from "@/hooks/use-users";
 import { ApiError } from "@/lib/api";
@@ -85,7 +88,11 @@ function StaffWorkflow() {
   const assignMutation = useAssignVerificationMutation();
   const createTaskMutation = useCreateTaskMutation();
   const patchStepMutation = usePatchVerificationStepMutation();
+  const acceptStepMutation = useAcceptStepMutation();
+  const requestRevisionMutation = useRequestRevisionMutation();
   const [professionalByStep, setProfessionalByStep] = useState<Record<string, string>>({});
+  const [revisionOpenFor, setRevisionOpenFor] = useState<string | null>(null);
+  const [revisionNoteByStep, setRevisionNoteByStep] = useState<Record<string, string>>({});
   const {
     data: activity = [],
     isLoading: activityLoading,
@@ -139,6 +146,37 @@ function StaffWorkflow() {
         onSuccess: () =>
           toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
+      },
+    );
+  };
+
+  const acceptStep = (stepId: string) => {
+    if (!selectedListingId) return;
+    acceptStepMutation.mutate(
+      { stepId, listingId: selectedListingId },
+      {
+        onSuccess: () => toast.success("Report accepted."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Accept failed."),
+      },
+    );
+  };
+
+  const submitRevision = (stepId: string) => {
+    if (!selectedListingId) return;
+    const note = (revisionNoteByStep[stepId] ?? "").trim();
+    if (!note) {
+      toast.error("Add a revision note before submitting.");
+      return;
+    }
+    requestRevisionMutation.mutate(
+      { stepId, listingId: selectedListingId, note },
+      {
+        onSuccess: () => {
+          toast.success("Revision requested.");
+          setRevisionOpenFor(null);
+          setRevisionNoteByStep((prev) => ({ ...prev, [stepId]: "" }));
+        },
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Request failed."),
       },
     );
   };
@@ -318,6 +356,69 @@ function StaffWorkflow() {
                       Reject
                     </Button>
                   </div>
+                  {s.status === "COMPLETED" && (
+                    <div className="mt-3 border-t border-border/60 pt-3">
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">
+                        Report review
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          className="h-9"
+                          disabled={acceptStepMutation.isPending}
+                          onClick={() => acceptStep(s.id)}
+                        >
+                          Accept report
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9"
+                          onClick={() => setRevisionOpenFor((cur) => (cur === s.id ? null : s.id))}
+                        >
+                          Request revision
+                        </Button>
+                      </div>
+                      {revisionOpenFor === s.id && (
+                        <div className="mt-2 space-y-2">
+                          <Textarea
+                            value={revisionNoteByStep[s.id] ?? ""}
+                            onChange={(e) =>
+                              setRevisionNoteByStep((prev) => ({
+                                ...prev,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="Explain what the professional needs to revise…"
+                            className="min-h-[80px]"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-9"
+                              disabled={requestRevisionMutation.isPending}
+                              onClick={() => submitRevision(s.id)}
+                            >
+                              Send revision request
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-9"
+                              onClick={() => setRevisionOpenFor(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {s.status === "REVISION_REQUESTED" && s.revisionNote && (
+                    <div className="mt-3 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                      <span className="font-semibold">Revision requested:</span> {s.revisionNote}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
