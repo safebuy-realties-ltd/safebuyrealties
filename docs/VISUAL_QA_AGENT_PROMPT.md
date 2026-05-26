@@ -1,79 +1,71 @@
-# Visual QA + fix agent — master prompt
+# Stabilization sprint — QA + fix agent (master prompt)
 
-Copy everything below the line into a **new Cursor agent session** on this repo. The agent must **run locally**, **record every defect**, and **fix bugs** (starting with the known nested-dashboard issue).
+Copy everything below into a **new agent session**. This is **not** a shallow click-through — it is a **product stabilization sprint**: find every broken or partial flow, **fix it**, then prove E2E on localhost before any new PRD/checklist work.
 
 ---
 
 ## Mission
 
-Perform **exhaustive visual and functional QA** of SafeBuyRealties on the **local stack**, then **fix** all confirmed bugs. Cross-check behavior against:
+**Make the current platform actually work** for all five roles on the code already merged to `main` (Steps 1–5 partial). The user reports: nested dashboards, listings broken, verification broken, status changes broken, uploads broken, payments untested — **“everything is partially built.”**
 
-- `docs/BUILD_CHECKLIST.md` (intended features)
-- `docs/demo-script-checklist.md` (role journeys)
-- `docs/analysis/02_MASTER_PRD.md` (product intent — read relevant sections only)
+Your job:
 
-Deliverable: **`docs/QA_FINDINGS.md`** (living log) + **PR(s)** with fixes on branch `cursor/visual-qa-fixes-e4ea`.
+1. **Discover** — exhaustive local QA + code audit; log in `docs/QA_FINDINGS.md`
+2. **Fix** — P0/P1 first; minimal correct diffs; TDD where cheap
+3. **Prove** — re-test every flow in the matrix; Paystack live once
+4. **Ship** — PR `cursor/stabilization-e4ea` → `main`; update checklist notes only for items you truly fixed E2E
+
+**Do not** start Step 6+ (PoA, escrow, wizard) until stabilization PR merges.
 
 ---
 
-## Environment setup (do this first)
+## Read first
+
+1. `docs/QA_FINDINGS.md` — **pre-seeded backlog** (start here, add rows)
+2. `docs/LOCAL_DEVELOPMENT.md` — local stack, cloud DB, no Docker
+3. `docs/AGENT_PROMPT.md` + `docs/BUILD_CHECKLIST.md` — intended behavior
+4. `docs/demo-script-checklist.md` — role journeys
+5. `docs/analysis/02_MASTER_PRD.md` — cross-check critical journeys (sections on verification, listings, payments)
+
+---
+
+## Environment
 
 ```bash
 git checkout main && git pull origin main
-git checkout -b cursor/visual-qa-fixes-e4ea
+git checkout -b cursor/stabilization-e4ea
 ```
 
-### Backend `backend/.env` (never commit)
+`backend/.env` (gitignored — never commit):
 
-Copy from `backend/.env.example` and set:
-
-```env
-DATABASE_URL="<cloud postgres url from team>"
-DATABASE_POSTGRES_URL="<same as DATABASE_URL>"
-SBR_CONFIRM_CLOUD_DATABASE_URL=true
-JWT_SECRET="local-dev-jwt-min-32-characters-long"
-PORT=3001
-FRONTEND_URL="http://localhost:8080,http://localhost:5173"
-STORAGE_DRIVER=local
-STORAGE_LOCAL_PATH=./uploads
-
-# Paystack TEST keys (user-provided — do NOT commit to git)
-PAYSTACK_TEST_SECRET_KEY="<paste sk_test_...>"
-PAYSTACK_TEST_PUBLIC_KEY="<paste pk_test_...>"
-PAYSTACK_SECRET_KEY=""
-```
+- `DATABASE_URL` + `DATABASE_POSTGRES_URL` (cloud Postgres)
+- `SBR_CONFIRM_CLOUD_DATABASE_URL=true`
+- `JWT_SECRET` (32+ chars)
+- `FRONTEND_URL=http://localhost:8080,...`
+- Paystack test keys (user provides):
+  - `PAYSTACK_TEST_SECRET_KEY=sk_test_...`
+  - `PAYSTACK_TEST_PUBLIC_KEY=pk_test_...`
+  - `PAYSTACK_SECRET_KEY=` (empty)
 
 ```bash
 cd backend && npx prisma generate && npx prisma migrate deploy
-cd backend && npm run start:dev   # terminal 1 — :3001
-npm run dev                       # terminal 2 — :8080
+cd backend && npm run start:dev   # :3001
+npm run dev                       # :8080
 ```
 
-Gate A before UI work:
+Gate A: `npm run validate:tsc && npm test && cd backend && npm test && npm run smoke:api`
 
-```bash
-npm run validate:tsc && npm test && cd backend && npm test && npm run smoke:api
-```
-
-Use **browser MCP / computerUse** for all L5 checks on `http://localhost:8080`.
+Use **browser / computerUse** on `http://localhost:8080`. Open DevTools Console + Network for every flow.
 
 ---
 
-## Known defect (fix first — P0)
+## Phase 0 — Fix known P0/P1 (do before exploratory QA)
 
-**Symptom:** After login (e.g. seller), the main content area shows **a second full dashboard** — duplicate sidebar, duplicate top bar (search, bell, avatar).
+Pre-identified in `docs/QA_FINDINGS.md`:
 
-**Root cause:** Parent layout routes already wrap children in `DashboardLayout` + `<Outlet />`:
+### QA-001 — Nested dashboard (P0)
 
-- `src/routes/dashboard.seller.tsx`
-- `src/routes/dashboard.buyer.tsx`
-- `src/routes/dashboard.staff.tsx`
-- `src/routes/dashboard.professional.tsx`
-- `src/routes/dashboard.admin.tsx`
-
-Several **child** routes incorrectly wrap **again** in `<DashboardLayout role="...">`. Index routes (`dashboard.*.index.tsx`) are correct (content only). Child routes must **only** render page content (use `PageHeader`, etc.), **not** another `DashboardLayout`.
-
-**Files to audit and fix (remove inner `DashboardLayout`, keep page component):**
+Remove inner `<DashboardLayout>` from child routes; parents already provide layout + `<Outlet />`:
 
 - `dashboard.seller.listings.tsx`, `dashboard.seller.documents.tsx`
 - `dashboard.buyer.listings.tsx`, `dashboard.buyer.transactions.tsx`, `dashboard.buyer.services.tsx`
@@ -81,211 +73,155 @@ Several **child** routes incorrectly wrap **again** in `<DashboardLayout role=".
 - `dashboard.professional.tasks.tsx`, `dashboard.professional.tasks.$taskId.tsx`, `dashboard.professional.credentials.tsx`
 - `dashboard.admin.users.tsx`, `dashboard.admin.listings.tsx`
 
-**Validation:** Seller → My Listings → **one** sidebar only. Repeat for buyer, staff, pro, admin child routes.
+Pattern: export page component directly (like `dashboard.seller.index.tsx`).
+
+### QA-004/005 — Uploads visible (P1)
+
+- Serve `uploads` from Nest (`main.ts` static middleware or dedicated controller)
+- Proxy `/uploads` in `vite.config.ts` → backend in dev
+- Fix buyer document DTO / listing hero URL when `storageKey` missing
+
+### QA-006 — Staff PENDING_REVIEW → ASSIGNED (P1)
+
+`dashboard.staff.submissions.tsx`: allow approve from `PENDING_REVIEW` to `ASSIGNED` (align with `listings.service` transitions).
+
+### QA-007 — Verification activity API (P1)
+
+Implement `GET /verification/listing/:listingId/activity` **or** remove FE hook usage.
+
+### QA-008 — Step reject status (P1)
+
+Align FE `REJECTED` with backend `BLOCKED` (or add enum value + migration).
+
+### QA-009 — Pro assignment on seed (P1)
+
+Seed verified `ProfessionalProfile` for `lawyer@` **or** document staff must verify credentials first.
+
+### QA-010 — Task report PATCH (P1)
+
+Extend `PatchTaskDto` + `tasks.service` to accept report fields FE sends **or** trim FE payload to match DTO.
+
+### QA-002/003 — Listing navigation (P1)
+
+- Seller listings: link rows to `/listings/$id`
+- Listing detail: fix SSR/auth for seller drafts (cookie in loader or client-only fetch)
+
+After Phase 0, re-run smoke + quick role sanity before Phase 1.
 
 ---
 
-## QA findings log
+## Phase 1 — Deep visual QA (every role, every control)
 
-Create/update **`docs/QA_FINDINGS.md`** with this structure for **every** issue:
+Log **every** defect in `docs/QA_FINDINGS.md` (ID, severity, repro, expected, actual, status).
 
-```markdown
-## QA run — YYYY-MM-DD — branch cursor/visual-qa-fixes-e4ea
+**Rules:**
 
-### Summary
-- Environment: local :8080 / :3001, cloud DB
-- Roles tested: seller, buyer, staff, pro, admin
+- Click **every** nav item, button, tab, filter, dialog
+- If a button does nothing → bug (unless documented stub: “Make an offer”, “Schedule visit”)
+- If API 4xx/5xx in Network → bug
+- If console error → bug
+- Compare to PRD/checklist intent → log “gap” separately from “bug”
 
-### Issues
-
-| ID | Severity | Role | Route | Steps | Expected | Actual | Status | PR/commit |
-|----|----------|------|-------|-------|----------|--------|--------|-----------|
-| QA-001 | P0 | seller | /dashboard/seller/listings | ... | single layout | nested dashboard | fixed | abc123 |
-
-### Paystack test run
-- Keys: test mode
-- Transaction ID:
-- Payment ID:
-- Result:
-
-### Checklist / PRD gaps (not bugs — product debt)
-- ...
-```
-
-Update the table as you go. Mark **fixed** only after re-test on localhost.
-
----
-
-## Parallel workstreams (optional sub-agents)
-
-If using multiple agents, **only one** edits `DashboardLayout` / route layout files at a time. Suggested split:
-
-| Agent | Scope | Focus |
-|-------|--------|--------|
-| **A** | Layout fix + seller | P0 nesting, seller flows, documents, specs |
-| **B** | Staff + professional | submissions, workflow, revision, credentials, tasks |
-| **C** | Buyer + Paystack | listings, transactions, services, live checkout |
-| **D** | Admin + integration | users, listings, settings vs API; cross-role E2E |
-
-Merge to one branch; single `docs/QA_FINDINGS.md`.
-
----
-
-## Test accounts
-
-Password for all: **`password123`**
+### Accounts (`password123`)
 
 | Role | Email |
 |------|-------|
 | Seller | seller@safebuyrealties.test |
 | Buyer | buyer@safebuyrealties.test |
 | Staff | staff@safebuyrealties.test |
-| Professional | lawyer@safebuyrealties.test |
+| Pro | lawyer@safebuyrealties.test |
 | Admin | admin@safebuyrealties.test |
 
----
+### Route matrix (complete)
 
-## Exhaustive QA checklist — every role
+**Public:** `/`, `/login`, `/register`, `/listings/$id`
 
-For **each route**, verify: page loads, **no console errors**, **single dashboard chrome**, every **button/link** either works or is documented as intentional stub.
+**Seller:** `/dashboard/seller`, `/seller/listings`, `/seller/documents`
 
-### Public
+**Buyer:** `/dashboard/buyer`, `/buyer/listings`, `/buyer/transactions`, `/buyer/services`
 
-| Route | Actions to click/test |
-|-------|------------------------|
-| `/` | Nav links, CTAs, login/register |
-| `/login` | Submit valid/invalid; redirect by role |
-| `/register` | Buyer/seller registration if enabled |
-| `/listings/$id` | Start transaction, disabled CTAs, verification tracker, gallery/docs |
+**Staff:** `/dashboard/staff`, `/staff/submissions`, `/staff/workflow`, `/staff/credentials`
 
-### Seller — `/dashboard/seller/*`
+**Pro:** `/dashboard/professional`, `/professional/tasks`, `/professional/tasks/$id`, `/professional/credentials`
 
-| Route | Click everything |
-|-------|------------------|
-| `/dashboard/seller` | Stat cards, quick actions, listing links, create CTA |
-| `/dashboard/seller/listings` | Create form (all fields including specs), submit, listing rows |
-| `/dashboard/seller/documents` | Listing selector, upload, submit for review |
+**Admin:** `/dashboard/admin`, `/admin/users`, `/admin/listings`, `/admin/settings`
 
-### Buyer — `/dashboard/buyer/*`
+### Cross-role E2E (required after fixes)
 
-| Route | Click everything |
-|-------|------------------|
-| `/dashboard/buyer` | Overview cards, links to listings/transactions |
-| `/dashboard/buyer/listings` | Filters, search, listing cards, open detail |
-| `/dashboard/buyer/transactions` | **Pay deposit** → Paystack popup → complete test payment → verify |
-| `/dashboard/buyer/services` | Each bundle card, à la carte checkboxes, totals/VAT |
-
-### Staff — `/dashboard/staff/*`
-
-| Route | Click everything |
-|-------|------------------|
-| `/dashboard/staff` | Overview |
-| `/dashboard/staff/submissions` | Approve/reject per listing |
-| `/dashboard/staff/workflow` | Assign pro, patch step, risk badges, accept, request revision |
-| `/dashboard/staff/credentials` | Approve/reject professional |
-
-### Professional — `/dashboard/professional/*`
-
-| Route | Click everything |
-|-------|------------------|
-| `/dashboard/professional` | KPI cards |
-| `/dashboard/professional/tasks` | Filters, open task |
-| `/dashboard/professional/tasks/$taskId` | Risk flags, notes, submit, resubmit after revision |
-| `/dashboard/professional/credentials` | Save profile |
-
-### Admin — `/dashboard/admin/*`
-
-| Route | Click everything |
-|-------|------------------|
-| `/dashboard/admin` | Overview |
-| `/dashboard/admin/users` | List, actions |
-| `/dashboard/admin/listings` | Status filters |
-| `/dashboard/admin/settings` | Note if still placeholder — file gap vs `GET /platform-config` API |
+1. Seller: create listing (specs) → upload title_deed + survey_plan → submit **PENDING_REVIEW**
+2. Staff: submissions → **ASSIGNED** → workflow assign verified pro → step progress → accept report
+3. Pro: credentials verified → task → risk flags → submit report → handle revision if requested
+4. Staff: advance listing to **LIVE**
+5. Buyer: see listing → start transaction → **Paystack test payment** → status updates
+6. Admin: override status if needed; platform-config via API (wire UI if time)
 
 ---
 
-## Paystack live test (required)
+## Phase 2 — Paystack live test (required)
 
-**Preconditions**
+1. Buyer → LIVE listing → Start transaction
+2. `/dashboard/buyer/transactions` → Pay deposit
+3. Expect Paystack **inline popup** (not “demo / no key” toast)
+4. Paystack test card → success → `POST /payments/:id/verify` → transaction status + payment SUCCEEDED
+5. Record IDs in `QA_FINDINGS.md`
 
-- `PAYSTACK_TEST_SECRET_KEY` set in `backend/.env` (backend reads test key when production key empty)
-- `platform-config` has `paystackEnabled: true` (default)
-- Backend restarted after env change
-
-**Flow**
-
-1. Login as **buyer**
-2. Open a **LIVE** listing → **Start transaction**
-3. `/dashboard/buyer/transactions` → find transaction → click **Pay** / deposit button
-4. Expect: Paystack **inline popup** (not mock toast)
-5. Use Paystack **test card** (see Paystack docs — e.g. success card `4084084084084081`, CVV/expiry per their test table)
-6. On success: toast “Payment confirmed”; transaction status updates; payment row `SUCCEEDED`
-7. Call or wait for `POST /payments/:id/verify` — confirm in Network tab
-8. Record payment ID, reference, listing/transaction status in `QA_FINDINGS.md`
-
-**If popup does not open:** check Network `POST /payments/initiate` response for `accessCode`; check console; confirm `accessCode` passed to `openPaystackCheckout` in `dashboard.buyer.transactions.tsx`.
-
-**If mock path runs instead:** backend returned `authorizationUrl` with `mock=1` — secret key not loaded; fix env and restart API.
+If mock path runs: restart backend; confirm `PAYSTACK_TEST_SECRET_KEY` loaded.
 
 ---
 
-## Cross-role integration flows
+## Phase 3 — Hardening
 
-Execute end-to-end and record in QA_FINDINGS:
+- Add regression tests for fixed bugs (layout smoke optional; API contract tests for task patch, listing transitions)
+- Run full Gate A
+- Update `docs/BUILD_CHECKLIST.md` Last Session Notes + mark `[x]` only for items verified E2E post-fix
+- Optional: refresh `docs/VALIDATION_REPORT.md` snapshot
 
-1. **Seller lists → staff approves → goes LIVE → buyer sees listing**
-2. **Buyer starts transaction → Paystack pay → status changes** (DD_PURCHASED / UNDER_OFFER if implemented)
-3. **Staff assigns pro → pro submits report with risk flags → staff revision → pro resubmit → accept**
-4. **Pro submits credentials → staff verifies → pro sees Verified**
-5. **Buyer services page** — bundle selection totals correct (15 services, VAT 7.5%)
+---
+
+## Parallel sub-agents (optional)
+
+| Agent | Owns | Must not touch |
+|-------|------|----------------|
+| **A** | QA-001 layout + seller flows | BE verification |
+| **B** | Uploads QA-004/005 + documents | layout files |
+| **C** | Staff/pro verification QA-006–011 | payments |
+| **D** | Buyer + Paystack QA-016 | staff files |
+
+Merge into one branch; single `QA_FINDINGS.md`; one coordinator runs E2E matrix last.
 
 ---
 
 ## Fix policy
 
-1. **P0/P1:** Fix in this session (layout nesting, crashes, payment blocked)
-2. **P2:** Fix if small; else log with clear repro
-3. **Product gaps** (wizard missing, admin settings stub, notification bell inert): log under “Checklist / PRD gaps”, do not mark as QA failures unless copy promises feature
+| Severity | Action |
+|----------|--------|
+| **P0** | Fix in sprint PR |
+| **P1** | Fix in sprint PR |
+| **P2** | Fix if ≤2h else log with clear repro |
+| **Product debt** (wizard, notifications) | Log only; do not block merge |
 
-**Per fix:** regression test on localhost; add Vitest/Jest if trivial to prevent recurrence.
-
-**Do not:** commit `.env`, commit Paystack keys, run `prisma migrate reset` on cloud DB.
+**Never:** commit `.env`, Paystack keys, `prisma migrate reset` on shared DB.
 
 ---
 
-## Git / PR
+## PR requirements
 
-```bash
-git push -u origin cursor/visual-qa-fixes-e4ea
-```
-
-PR title: `fix(qa): dashboard layout nesting + visual QA findings`
-
-PR body must include:
-
-- Link to `docs/QA_FINDINGS.md`
-- Summary of fixes vs deferred items
-- Paystack test evidence (screenshot or reference + status transition)
-- Commands run: `validate:tsc`, `test`, smoke, manual routes
+- Branch: `cursor/stabilization-e4ea`
+- Title: `fix: stabilization sprint — dashboards, verification, uploads, listings, payments`
+- Body: link `docs/QA_FINDINGS.md`, list fixes by QA-ID, Paystack evidence, test commands
+- CI green before merge
 
 ---
 
 ## Definition of done
 
-- [ ] P0 nested dashboard fixed on all affected child routes
-- [ ] `docs/QA_FINDINGS.md` complete with all routes exercised
-- [ ] Paystack test payment succeeded once on localhost (or documented blocker)
-- [ ] CI green (`validate:tsc`, FE/BE tests)
-- [ ] PR opened against `main`
+- [ ] All P0/P1 in `QA_FINDINGS.md` fixed or explicitly waived with user sign-off
+- [ ] Cross-role E2E matrix passes on localhost
+- [ ] Paystack test payment succeeded once
+- [ ] No nested dashboard on any child route
+- [ ] `npm run validate:tsc` + FE/BE tests pass
+- [ ] PR open against `main`
 
----
+**Success = user can demo seller → staff → pro → buyer (with payment) without “this is broken” surprises.**
 
-## Read order
-
-1. This file
-2. `docs/LOCAL_DEVELOPMENT.md`
-3. `docs/AGENT_PROMPT.md`
-4. `docs/BUILD_CHECKLIST.md` (Steps 1–5 for expected behavior)
-5. Relevant route files under `src/routes/`
-
-Begin with **P0 layout fix**, then **Paystack test**, then full role matrix above.
+Begin with **Phase 0** using the pre-seeded table in `docs/QA_FINDINGS.md`.
