@@ -36,6 +36,21 @@ export function usePaymentQuery(id: string | null) {
   });
 }
 
+export function useVerifyPaymentMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (paymentId: string) =>
+      apiRequest<PaymentDto>(`/payments/${paymentId}/verify`, { method: "POST" }).then(
+        (e) => e.data,
+      ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["transactions"] });
+      void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["payments"] });
+    },
+  });
+}
+
 export function useInitiatePaymentMutation() {
   const qc = useQueryClient();
   return useMutation({

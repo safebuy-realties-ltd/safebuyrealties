@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
@@ -46,6 +47,24 @@ export class PaymentsService {
     const primary = this.config.get<string>("PAYSTACK_SECRET_KEY")?.trim();
     if (primary) return primary;
     return this.config.get<string>("PAYSTACK_TEST_SECRET_KEY")?.trim() || undefined;
+  }
+
+  /**
+   * Calls the Paystack API and parses the JSON body, translating transport-level failures
+   * (provider unreachable, non-JSON gateway responses) into a clean 503 rather than a raw 500.
+   */
+  private async paystackJson<T>(url: string, init?: RequestInit): Promise<{ res: Response; json: T }> {
+    let res: Response;
+    try {
+      res = await fetch(url, init);
+    } catch {
+      throw new ServiceUnavailableException("Could not reach the payment provider. Please try again.");
+    }
+    try {
+      return { res, json: (await res.json()) as T };
+    } catch {
+      throw new ServiceUnavailableException("The payment provider returned an unexpected response.");
+    }
   }
 
   private serializePayment(p: {
@@ -154,7 +173,11 @@ export class PaymentsService {
       };
     }
 
-    const res = await fetch("https://api.paystack.co/transaction/initialize", {
+    const { res, json } = await this.paystackJson<{
+      status: boolean;
+      message: string;
+      data?: { authorization_url: string; access_code: string; reference: string };
+    }>("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${secret}`,
@@ -168,11 +191,6 @@ export class PaymentsService {
         metadata: { paymentId: payment.id },
       }),
     });
-    const json = (await res.json()) as {
-      status: boolean;
-      message: string;
-      data?: { authorization_url: string; access_code: string; reference: string };
-    };
     if (!res.ok || !json.status || !json.data?.reference) {
       await this.prisma.payment.update({
         where: { id: payment.id },
@@ -276,6 +294,54 @@ export class PaymentsService {
       throw new ForbiddenException();
     }
     return this.serializePayment(p);
+  }
+
+  /**
+   * Confirms a payment by calling Paystack's verify endpoint. Used by the inline (popup)
+   * checkout flow on success, since Paystack webhooks cannot reach localhost during dev.
+   * Idempotent: re-verifying a succeeded payment is a no-op.
+   */
+  async verifyTransaction(paymentId: string, actor: JwtPayload) {
+    const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment) throw new NotFoundException("Payment not found");
+    if (payment.payerId !== actor.sub && !this.isStaff(actor.role)) {
+      throw new ForbiddenException();
+    }
+    if (payment.status === PaymentStatus.SUCCEEDED) {
+      return this.serializePayment(payment);
+    }
+
+    const secret = this.paystackSecret();
+    // Mock mode (no Paystack key): initiate() already auto-applied success.
+    if (!secret) {
+      return this.serializePayment(payment);
+    }
+    if (!payment.providerReference) {
+      throw new BadRequestException("Payment has no provider reference to verify");
+    }
+
+    const { res, json } = await this.paystackJson<{
+      status: boolean;
+      message: string;
+      data?: { status?: string };
+    }>(`https://api.paystack.co/transaction/verify/${encodeURIComponent(payment.providerReference)}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+    if (!res.ok || !json.status) {
+      throw new BadRequestException(json.message || "Paystack verify failed");
+    }
+
+    if (json.data?.status === "success") {
+      await this.applyPaymentChargeSuccess(payment.id);
+    } else if (json.data?.status === "failed") {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.FAILED },
+      });
+    }
+
+    const updated = await this.prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    return this.serializePayment(updated);
   }
 
   verifyPaystackSignature(rawBody: Buffer, signature: string | undefined): boolean {

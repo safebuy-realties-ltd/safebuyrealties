@@ -5,7 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, ArrowRight } from "lucide-react";
 import { useMyTransactionsQuery, type TransactionDto } from "@/hooks/use-transactions";
-import { useInitiatePaymentMutation, usePaymentQuery, type PaymentDto } from "@/hooks/use-payments";
+import {
+  useInitiatePaymentMutation,
+  useVerifyPaymentMutation,
+  usePaymentQuery,
+  type PaymentDto,
+} from "@/hooks/use-payments";
+import { openPaystackCheckout } from "@/lib/paystack";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
@@ -192,6 +198,7 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
   const steps = payment ? timelineForPaymentStatus(payment.status) : timelineForStatus(tx.status);
   const amount = formatMoney(tx.listing.price, tx.listing.currency);
   const payMutation = useInitiatePaymentMutation();
+  const verifyMutation = useVerifyPaymentMutation();
   const deposit = depositAmountForListing(tx.listing.price);
   const canPay = tx.status !== "COMPLETED";
 
@@ -213,11 +220,24 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
               JSON.stringify({ paymentId: res.paymentId, reference: res.reference }),
             );
           }
-          if (res.authorizationUrl.includes("mock=1")) {
+          // Mock mode (no Paystack key): backend already auto-applied success.
+          if (res.authorizationUrl.includes("mock=1") || !res.accessCode) {
             toast.success("Payment completed (demo / no Paystack key). Transaction updated.");
             return;
           }
-          window.location.href = res.authorizationUrl;
+          // Real Paystack: open the inline popup, then verify server-side on success.
+          void openPaystackCheckout({
+            accessCode: res.accessCode,
+            onSuccess: () => {
+              verifyMutation.mutate(res.paymentId, {
+                onSuccess: () => toast.success("Payment confirmed. Transaction updated."),
+                onError: () =>
+                  toast.message("Payment received — confirming shortly. Refresh if needed."),
+              });
+            },
+            onCancel: () => toast.message("Payment window closed."),
+            onError: (err) => toast.error(err.message || "Payment failed."),
+          });
         },
         onError: (e) => {
           toast.error(e instanceof ApiError ? e.message : "Payment could not start.");

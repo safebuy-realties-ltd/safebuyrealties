@@ -15,6 +15,11 @@ export class PaymentsController {
     return this.payments.initiate(dto, user);
   }
 
+  @Post(":id/verify")
+  verify(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.payments.verifyTransaction(id, user);
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
     return this.payments.findOne(id, user);
