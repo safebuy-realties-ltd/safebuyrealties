@@ -10,6 +10,7 @@ export class UpdatePlatformConfigDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(100)
   maxUploadMb?: number;
 
   @IsOptional()

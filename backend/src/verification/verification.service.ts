@@ -11,17 +11,56 @@ import {
   ListingStatus,
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import { AuditAction } from "../audit/audit-actions.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { AssignVerificationDto } from "./dto/assign-verification.dto";
 import { PatchVerificationStepDto } from "./dto/patch-verification-step.dto";
 import { VERIFICATION_STEP_LABELS } from "./verification.constants";
+import { RISK_FLAG_CODES } from "./risk-flags.constants";
+
+export type VerificationStepResponse = {
+  id: string;
+  listingId: string;
+  type: VerificationStepType;
+  label: string;
+  status: VerificationStepStatus;
+  assignedProfessionalId?: string | null;
+  notes?: string | null;
+  revisionNote?: string | null;
+  completedAt: string | null;
+  order: number;
+  riskFlags?: string[];
+};
 
 @Injectable()
 export class VerificationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
+  }
+
+  private async assertProfessionalVerified(professionalId: string): Promise<void> {
+    const profile = await this.prisma.professionalProfile.findUnique({
+      where: { userId: professionalId },
+    });
+    if (!profile || profile.verifiedStatus !== "VERIFIED") {
+      throw new BadRequestException(
+        "Professional credentials must be verified before assignment",
+      );
+    }
+  }
+
+  private validateRiskFlags(flags: string[]): void {
+    const allowed = new Set<string>(RISK_FLAG_CODES);
+    const invalid = flags.filter((f) => !allowed.has(f));
+    if (invalid.length > 0) {
+      throw new BadRequestException(`Invalid risk flag(s): ${invalid.join(", ")}`);
+    }
   }
 
   private serializeStep(s: {
@@ -35,7 +74,7 @@ export class VerificationService {
     completedAt: Date | null;
     order: number;
     riskFlags: unknown;
-  }) {
+  }): VerificationStepResponse {
     const flags = Array.isArray(s.riskFlags) ? (s.riskFlags as string[]) : [];
     return {
       id: s.id,
@@ -50,6 +89,36 @@ export class VerificationService {
       order: s.order,
       riskFlags: flags,
     };
+  }
+
+  /** Public milestone view for buyers — no internal notes or assignee IDs. */
+  private serializeStepForBuyer(s: {
+    id: string;
+    listingId: string;
+    type: VerificationStepType;
+    status: VerificationStepStatus;
+    completedAt: Date | null;
+    order: number;
+  }): VerificationStepResponse {
+    return {
+      id: s.id,
+      listingId: s.listingId,
+      type: s.type,
+      label: VERIFICATION_STEP_LABELS[s.type],
+      status: s.status,
+      completedAt: s.completedAt?.toISOString() ?? null,
+      order: s.order,
+    };
+  }
+
+  private serializeStepForActor(
+    s: Parameters<VerificationService["serializeStep"]>[0],
+    actor: JwtPayload,
+  ): VerificationStepResponse {
+    if (actor.role === UserRole.BUYER) {
+      return this.serializeStepForBuyer(s);
+    }
+    return this.serializeStep(s);
   }
 
   async assign(dto: AssignVerificationDto, actor: JwtPayload) {
@@ -83,6 +152,8 @@ export class VerificationService {
     if (!pro || pro.role !== UserRole.PROFESSIONAL) {
       throw new BadRequestException("professionalId must be a professional user");
     }
+    await this.assertProfessionalVerified(dto.professionalId);
+
     const step = await this.prisma.verificationStep.findFirst({
       where: { listingId: dto.listingId, type: dto.stepType },
     });
@@ -118,7 +189,7 @@ export class VerificationService {
       where: { listingId },
       orderBy: { order: "asc" },
     });
-    return steps.map((s) => this.serializeStep(s));
+    return steps.map((s) => this.serializeStepForActor(s, actor));
   }
 
   async patchStep(stepId: string, dto: PatchVerificationStepDto, actor: JwtPayload) {
@@ -134,7 +205,10 @@ export class VerificationService {
     } = {};
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.notes !== undefined) data.notes = dto.notes;
-    if (dto.riskFlags !== undefined) data.riskFlags = dto.riskFlags;
+    if (dto.riskFlags !== undefined) {
+      this.validateRiskFlags(dto.riskFlags);
+      data.riskFlags = dto.riskFlags;
+    }
     if (dto.status === VerificationStepStatus.COMPLETED) {
       data.completedAt = new Date();
     }
@@ -145,13 +219,16 @@ export class VerificationService {
       where: { id: stepId },
       data,
     });
-    return this.serializeStep(updated);
+    return this.serializeStepForActor(updated, actor);
   }
 
   async acceptStep(stepId: string, actor: JwtPayload) {
     if (!this.isStaff(actor.role)) throw new ForbiddenException();
     const step = await this.prisma.verificationStep.findUnique({ where: { id: stepId } });
     if (!step) throw new NotFoundException("Step not found");
+    if (step.status !== VerificationStepStatus.COMPLETED) {
+      throw new BadRequestException("Only completed steps can be accepted");
+    }
     const updated = await this.prisma.verificationStep.update({
       where: { id: stepId },
       data: {
@@ -159,6 +236,14 @@ export class VerificationService {
         completedAt: new Date(),
         revisionNote: null,
       },
+    });
+    void this.audit.log({
+      actorId: actor.sub,
+      action: AuditAction.VERIFICATION_STEP_ACCEPTED,
+      entity: "VerificationStep",
+      entityId: stepId,
+      before: { status: step.status },
+      after: { status: VerificationStepStatus.ACCEPTED },
     });
     return this.serializeStep(updated);
   }
@@ -169,12 +254,23 @@ export class VerificationService {
     if (!trimmed) throw new BadRequestException("note is required");
     const step = await this.prisma.verificationStep.findUnique({ where: { id: stepId } });
     if (!step) throw new NotFoundException("Step not found");
+    if (step.status !== VerificationStepStatus.COMPLETED) {
+      throw new BadRequestException("Revision can only be requested for completed steps");
+    }
     const updated = await this.prisma.verificationStep.update({
       where: { id: stepId },
       data: {
         status: VerificationStepStatus.REVISION_REQUESTED,
         revisionNote: trimmed,
       },
+    });
+    void this.audit.log({
+      actorId: actor.sub,
+      action: AuditAction.VERIFICATION_REVISION_REQUESTED,
+      entity: "VerificationStep",
+      entityId: stepId,
+      before: { status: step.status, revisionNote: step.revisionNote },
+      after: { status: VerificationStepStatus.REVISION_REQUESTED, revisionNote: trimmed },
     });
     return this.serializeStep(updated);
   }

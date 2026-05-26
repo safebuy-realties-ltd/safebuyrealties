@@ -25,7 +25,7 @@ export class DocumentsController {
   @UseInterceptors(
     FileInterceptor("file", {
       storage: memoryStorage(),
-      limits: { fileSize: 15 * 1024 * 1024 },
+      limits: { fileSize: 100 * 1024 * 1024 },
     }),
   )
   upload(

@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   Min,
   MinLength,
 } from "class-validator";
@@ -57,5 +58,6 @@ export class CreateListingDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   buildType?: string;
 }

@@ -32,6 +32,7 @@ Required keys in `backend/.env`:
 
 - `DATABASE_URL` — cloud Postgres (`?sslmode=require`)
 - `DATABASE_POSTGRES_URL` — same value as `DATABASE_URL`
+- `SBR_CONFIRM_CLOUD_DATABASE_URL=true` — **required** when `DATABASE_URL` is not localhost (opts in to shared cloud Postgres)
 - `JWT_SECRET` — min 32 characters
 - `PORT=3001`
 - `FRONTEND_URL=http://localhost:8080,http://localhost:5173` (+ production URLs if needed)
@@ -69,6 +70,8 @@ npm run start:dev
 ```bash
 npm run dev
 ```
+
+Vite binds to `127.0.0.1` by default. For Cloud/port-forwarded VMs, set `VITE_DEV_HOST=0.0.0.0` before `npm run dev`.
 
 Open http://localhost:8080 and log in with seed users (`password123`):
 

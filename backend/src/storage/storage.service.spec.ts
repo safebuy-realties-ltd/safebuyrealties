@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { Test, TestingModule } from "@nestjs/testing";
+import { BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { StorageService } from "./storage.service";
 
@@ -54,6 +55,12 @@ describe("StorageService (local driver)", () => {
   it("getSignedUrl respects custom expiresInSeconds (local ignores it)", async () => {
     const url = await service.getSignedUrl("a.png", 3600);
     expect(url).toBe("/uploads/a.png");
+  });
+
+  it("rejects storage keys containing path traversal segments", async () => {
+    await expect(
+      service.upload(Buffer.from("x"), "listings/../escape.txt", "text/plain"),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it("delete removes the stored file", async () => {

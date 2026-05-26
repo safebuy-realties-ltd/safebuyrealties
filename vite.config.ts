@@ -16,7 +16,7 @@ export default defineConfig({
   plugins: deployToVercel ? [nitro({ preset: "vercel" })] : [],
   vite: {
     server: {
-      host: "0.0.0.0",
+      host: process.env.VITE_DEV_HOST ?? "127.0.0.1",
       proxy: {
         "/api/v1": {
           target: "http://localhost:3001",
