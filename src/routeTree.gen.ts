@@ -31,6 +31,7 @@ import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard
 import { Route as DashboardProfessionalTasksRouteImport } from './routes/dashboard.professional.tasks'
 import { Route as DashboardProfessionalCredentialsRouteImport } from './routes/dashboard.professional.credentials'
 import { Route as DashboardBuyerTransactionsRouteImport } from './routes/dashboard.buyer.transactions'
+import { Route as DashboardBuyerServicesRouteImport } from './routes/dashboard.buyer.services'
 import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.buyer.listings'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminSettingsRouteImport } from './routes/dashboard.admin.settings'
@@ -154,6 +155,11 @@ const DashboardBuyerTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => DashboardBuyerRoute,
   } as any)
+const DashboardBuyerServicesRoute = DashboardBuyerServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
 const DashboardBuyerListingsRoute = DashboardBuyerListingsRouteImport.update({
   id: '/listings',
   path: '/listings',
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
     | '/dashboard/professional/tasks'
@@ -517,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBuyerTransactionsRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
+    '/dashboard/buyer/services': {
+      id: '/dashboard/buyer/services'
+      path: '/services'
+      fullPath: '/dashboard/buyer/services'
+      preLoaderRoute: typeof DashboardBuyerServicesRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
     '/dashboard/buyer/listings': {
       id: '/dashboard/buyer/listings'
       path: '/listings'
@@ -575,12 +594,14 @@ const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
 
 interface DashboardBuyerRouteChildren {
   DashboardBuyerListingsRoute: typeof DashboardBuyerListingsRoute
+  DashboardBuyerServicesRoute: typeof DashboardBuyerServicesRoute
   DashboardBuyerTransactionsRoute: typeof DashboardBuyerTransactionsRoute
   DashboardBuyerIndexRoute: typeof DashboardBuyerIndexRoute
 }
 
 const DashboardBuyerRouteChildren: DashboardBuyerRouteChildren = {
   DashboardBuyerListingsRoute: DashboardBuyerListingsRoute,
+  DashboardBuyerServicesRoute: DashboardBuyerServicesRoute,
   DashboardBuyerTransactionsRoute: DashboardBuyerTransactionsRoute,
   DashboardBuyerIndexRoute: DashboardBuyerIndexRoute,
 }
