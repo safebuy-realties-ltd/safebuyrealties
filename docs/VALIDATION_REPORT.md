@@ -1,4 +1,6 @@
-# Production validation report
+# Validation report (snapshot)
+
+> **Current workflow:** validate on **local** stack — see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md). This file is a historical production snapshot (2026-05-25); re-run checks on localhost after major changes.
 
 **Date:** 2026-05-25  
 **Target:** https://safebuyrealties-app.vercel.app (app) + API via `/api/v1` rewrite  
