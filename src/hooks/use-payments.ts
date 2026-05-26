@@ -19,6 +19,7 @@ export type PaymentDto = {
   provider: string;
   providerReference: string | null;
   status: "PENDING" | "PROCESSING" | "SUCCEEDED" | "FAILED";
+  intent: "DD_SERVICE" | "PROPERTY_PURCHASE";
   metadata: unknown;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +45,8 @@ export function useInitiatePaymentMutation() {
       listingId?: string;
       transactionId?: string;
       callbackUrl: string;
+      intent?: "DD_SERVICE" | "PROPERTY_PURCHASE";
+      ddOrderId?: string;
     }) =>
       apiRequest<InitiatePaymentResult>("/payments/initiate", {
         method: "POST",

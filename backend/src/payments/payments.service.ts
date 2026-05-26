@@ -5,9 +5,17 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { UserRole, PaymentStatus, ListingStatus, TransactionStatus, Prisma } from "@prisma/client";
+import {
+  UserRole,
+  PaymentStatus,
+  ListingStatus,
+  TransactionStatus,
+  PaymentIntent,
+  Prisma,
+} from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 
@@ -16,7 +24,18 @@ export class PaymentsService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private audit: AuditService,
   ) {}
+
+  /** Records an intended notification as an audit entry (no notification module yet — Step 8). */
+  private async notify(recipientRole: string, event: string, entityId: string) {
+    await this.audit.log({
+      action: "NOTIFY",
+      entity: "Notification",
+      entityId,
+      after: { recipientRole, event },
+    });
+  }
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
@@ -39,6 +58,7 @@ export class PaymentsService {
     provider: string;
     providerReference: string | null;
     status: PaymentStatus;
+    intent: PaymentIntent;
     metadata: Prisma.JsonValue;
     createdAt: Date;
     updatedAt: Date;
@@ -53,6 +73,7 @@ export class PaymentsService {
       provider: p.provider,
       providerReference: p.providerReference,
       status: p.status,
+      intent: p.intent,
       metadata: p.metadata,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
@@ -85,6 +106,7 @@ export class PaymentsService {
     }
 
     const currency = dto.currency ?? "NGN";
+    const intent = dto.intent ?? PaymentIntent.DD_SERVICE;
     const payment = await this.prisma.payment.create({
       data: {
         payerId: actor.sub,
@@ -93,8 +115,12 @@ export class PaymentsService {
         listingId: dto.listingId ?? null,
         transactionId: dto.transactionId ?? null,
         status: PaymentStatus.PENDING,
+        intent,
         provider: "paystack",
-        metadata: { callbackUrl: dto.callbackUrl } as object,
+        metadata: {
+          callbackUrl: dto.callbackUrl,
+          ...(dto.ddOrderId ? { ddOrderId: dto.ddOrderId } : {}),
+        } as object,
       },
     });
 
@@ -175,25 +201,72 @@ export class PaymentsService {
     };
   }
 
-  /** Marks payment succeeded and completes linked transaction (same as Paystack charge.success). */
+  /**
+   * Marks the payment succeeded and applies intent-specific side effects (same path as
+   * Paystack charge.success and mock-mode auto-success).
+   */
   private async applyPaymentChargeSuccess(paymentId: string) {
     const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!p) return;
+
     await this.prisma.$transaction(async (tx) => {
       await tx.payment.update({
         where: { id: p.id },
         data: { status: PaymentStatus.SUCCEEDED },
       });
-      if (p.transactionId) {
-        await tx.transaction.updateMany({
-          where: {
-            id: p.transactionId,
-            status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
-          },
-          data: { status: TransactionStatus.COMPLETED },
-        });
+
+      if (p.intent === PaymentIntent.DD_SERVICE) {
+        if (p.transactionId) {
+          await tx.transaction.updateMany({
+            where: {
+              id: p.transactionId,
+              status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
+            },
+            data: { status: TransactionStatus.DD_PURCHASED },
+          });
+
+          // Resolve the listing tied to the transaction (preferred) or the payment itself.
+          const txRow = await tx.transaction.findUnique({
+            where: { id: p.transactionId },
+            select: { listingId: true },
+          });
+          const listingId = txRow?.listingId ?? p.listingId ?? null;
+          if (listingId) {
+            await tx.listing.updateMany({
+              where: { id: listingId, status: ListingStatus.LIVE },
+              data: { status: ListingStatus.UNDER_OFFER },
+            });
+          }
+
+          await tx.dueDiligenceOrder.updateMany({
+            where: { transactionId: p.transactionId },
+            data: { status: "PAID" },
+          });
+        }
+      } else if (p.intent === PaymentIntent.PROPERTY_PURCHASE) {
+        if (p.transactionId) {
+          await tx.transaction.updateMany({
+            where: {
+              id: p.transactionId,
+              status: {
+                notIn: [
+                  TransactionStatus.COMPLETED,
+                  TransactionStatus.PURCHASE_IN_ESCROW,
+                ],
+              },
+            },
+            data: { status: TransactionStatus.PURCHASE_IN_ESCROW },
+          });
+        }
       }
     });
+
+    // Notification stubs (recorded via AuditService) — outside the DB transaction.
+    if (p.transactionId && p.intent === PaymentIntent.DD_SERVICE) {
+      await this.notify("BUYER", "DD_STARTED", p.transactionId);
+      await this.notify("SELLER", "PROPERTY_RESERVED", p.transactionId);
+      await this.notify("STAFF", "BEGIN_VERIFICATION", p.transactionId);
+    }
   }
 
   async findOne(id: string, actor: JwtPayload) {

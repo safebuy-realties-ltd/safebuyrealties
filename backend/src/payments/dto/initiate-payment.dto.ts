@@ -1,4 +1,5 @@
-import { IsNumber, IsOptional, IsString, Min, MinLength } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength } from "class-validator";
+import { PaymentIntent } from "@prisma/client";
 
 export class InitiatePaymentDto {
   @IsNumber()
@@ -21,4 +22,12 @@ export class InitiatePaymentDto {
   @IsString()
   @MinLength(8)
   callbackUrl!: string;
+
+  @IsOptional()
+  @IsEnum(PaymentIntent)
+  intent?: PaymentIntent;
+
+  @IsOptional()
+  @IsString()
+  ddOrderId?: string;
 }
