@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsOptional, IsString, MaxLength } from "class-validator";
 
 export class VerifyCredentialDto {
   @IsBoolean()
@@ -6,5 +6,6 @@ export class VerifyCredentialDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   rejectionNote?: string;
 }

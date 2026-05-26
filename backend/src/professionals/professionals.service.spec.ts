@@ -1,6 +1,7 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
 import { ProfessionalsService } from "./professionals.service";
 
 const baseProfile = {
@@ -40,7 +41,11 @@ describe("ProfessionalsService", () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProfessionalsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        ProfessionalsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: { log: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get(ProfessionalsService);
@@ -138,6 +143,14 @@ describe("ProfessionalsService", () => {
     await expect(service.verify("missing", { approve: true }, "staff-1")).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it("verify requires rejectionNote when rejecting", async () => {
+    prisma.professionalProfile.findUnique.mockResolvedValue({ ...baseProfile });
+    await expect(service.verify("profile-1", { approve: false }, "staff-1")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(prisma.professionalProfile.update).not.toHaveBeenCalled();
   });
 
   it("listPending filters by PENDING status and includes user details", async () => {

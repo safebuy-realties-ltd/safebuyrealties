@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
 } from "class-validator";
@@ -59,5 +60,6 @@ export class UpdateListingDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   buildType?: string;
 }

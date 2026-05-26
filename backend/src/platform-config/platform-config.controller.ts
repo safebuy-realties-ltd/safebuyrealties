@@ -14,8 +14,9 @@ export class PlatformConfigController {
   constructor(private platformConfig: PlatformConfigService) {}
 
   @Get()
-  get() {
-    return this.platformConfig.get();
+  async get(@CurrentUser() user: JwtPayload) {
+    const config = await this.platformConfig.get();
+    return this.platformConfig.getForRole(user.role, config);
   }
 
   @Patch()

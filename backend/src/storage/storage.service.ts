@@ -73,7 +73,11 @@ export class StorageService {
   }
 
   private normalizeKey(key: string): string {
-    return key.replace(/\\/g, "/").replace(/^\/+/, "");
+    const normalized = key.replace(/\\/g, "/").replace(/^\/+/, "");
+    if (normalized.includes("..")) {
+      throw new BadRequestException("Invalid storage key");
+    }
+    return normalized;
   }
 
   private async uploadLocal(buffer: Buffer, key: string): Promise<void> {

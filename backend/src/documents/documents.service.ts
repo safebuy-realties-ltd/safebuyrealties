@@ -7,20 +7,48 @@ import {
 import { UserRole, ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import * as path from "path";
-
-const MAX_BYTES = 15 * 1024 * 1024;
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private prisma: PrismaService,
     private storage: StorageService,
+    private platformConfig: PlatformConfigService,
   ) {}
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
+  }
+
+  private toDocumentDto(
+    doc: {
+      id: string;
+      listingId: string;
+      category: string;
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+      storageKey: string;
+      createdAt: Date;
+    },
+    actor: JwtPayload,
+  ) {
+    const base = {
+      id: doc.id,
+      listingId: doc.listingId,
+      category: doc.category,
+      fileName: doc.fileName,
+      mimeType: doc.mimeType,
+      sizeBytes: doc.sizeBytes,
+      createdAt: doc.createdAt.toISOString(),
+    };
+    if (actor.role === UserRole.BUYER) {
+      return base;
+    }
+    return { ...base, storageKey: doc.storageKey };
   }
 
   async getListingOrThrow(listingId: string, actor: JwtPayload) {
@@ -48,7 +76,12 @@ export class DocumentsService {
   ) {
     await this.getListingOrThrow(listingId, actor);
     if (!file?.size) throw new BadRequestException("File is required");
-    if (file.size > MAX_BYTES) throw new ForbiddenException("File too large (max 15MB)");
+
+    const maxBytes = await this.platformConfig.getMaxUploadBytes();
+    if (file.size > maxBytes) {
+      const maxMb = Math.round(maxBytes / (1024 * 1024));
+      throw new ForbiddenException(`File too large (max ${maxMb}MB)`);
+    }
 
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = await this.storage.upload(
@@ -68,16 +101,7 @@ export class DocumentsService {
         storageKey,
       },
     });
-    return {
-      id: doc.id,
-      listingId: doc.listingId,
-      category: doc.category,
-      fileName: doc.fileName,
-      mimeType: doc.mimeType,
-      sizeBytes: doc.sizeBytes,
-      storageKey: doc.storageKey,
-      createdAt: doc.createdAt.toISOString(),
-    };
+    return this.toDocumentDto(doc, actor);
   }
 
   async listByListing(listingId: string, actor: JwtPayload) {
@@ -86,15 +110,6 @@ export class DocumentsService {
       where: { listingId },
       orderBy: { createdAt: "desc" },
     });
-    return docs.map((d) => ({
-      id: d.id,
-      listingId: d.listingId,
-      category: d.category,
-      fileName: d.fileName,
-      mimeType: d.mimeType,
-      sizeBytes: d.sizeBytes,
-      storageKey: d.storageKey,
-      createdAt: d.createdAt.toISOString(),
-    }));
+    return docs.map((d) => this.toDocumentDto(d, actor));
   }
 }

@@ -9,7 +9,9 @@ import {
   VerificationStepStatus,
   VerificationStepType,
 } from "@prisma/client";
+import { ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
 import { VerificationService } from "./verification.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 
@@ -29,6 +31,12 @@ const pro: JwtPayload = {
   sub: "pro-1",
   email: "pro@example.com",
   role: UserRole.PROFESSIONAL,
+  professionalType: null,
+};
+const buyer: JwtPayload = {
+  sub: "buyer-1",
+  email: "buyer@example.com",
+  role: UserRole.BUYER,
   professionalType: null,
 };
 
@@ -66,7 +74,11 @@ describe("VerificationService accept / request-revision", () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [VerificationService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        VerificationService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: { log: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get(VerificationService);
@@ -108,6 +120,15 @@ describe("VerificationService accept / request-revision", () => {
       prisma.verificationStep.findUnique.mockResolvedValueOnce(null);
       await expect(service.acceptStep("missing", staff)).rejects.toBeInstanceOf(NotFoundException);
     });
+
+    it("rejects accept when step is not COMPLETED", async () => {
+      prisma.verificationStep.findUnique.mockResolvedValueOnce({
+        ...baseStep,
+        status: VerificationStepStatus.PENDING,
+      });
+      await expect(service.acceptStep("step-1", staff)).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.verificationStep.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("requestRevision", () => {
@@ -145,5 +166,59 @@ describe("VerificationService accept / request-revision", () => {
         NotFoundException,
       );
     });
+
+    it("rejects revision when step is not COMPLETED", async () => {
+      prisma.verificationStep.findUnique.mockResolvedValueOnce({
+        ...baseStep,
+        status: VerificationStepStatus.IN_PROGRESS,
+      });
+      await expect(service.requestRevision("step-1", "note", staff)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.verificationStep.update).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("VerificationService getForListing buyer view", () => {
+  let service: VerificationService;
+
+  beforeEach(async () => {
+    const prisma = {
+      listing: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: "listing-1",
+          sellerId: "seller-1",
+          status: ListingStatus.LIVE,
+        }),
+      },
+      verificationStep: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            ...baseStep,
+            notes: "internal pro note",
+            revisionNote: "staff revision feedback",
+          },
+        ]),
+      },
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        VerificationService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: { log: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get(VerificationService);
+  });
+
+  it("omits internal fields for buyers", async () => {
+    const steps = await service.getForListing("listing-1", buyer);
+    expect(steps[0]).not.toHaveProperty("revisionNote");
+    expect(steps[0]).not.toHaveProperty("notes");
+    expect(steps[0]).not.toHaveProperty("assignedProfessionalId");
+    expect(steps[0]).not.toHaveProperty("riskFlags");
   });
 });

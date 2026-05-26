@@ -1,6 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { Prisma } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
 import { PlatformConfigService } from "./platform-config.service";
 
 const baseConfig = {
@@ -30,7 +32,11 @@ describe("PlatformConfigService", () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PlatformConfigService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        PlatformConfigService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: AuditService, useValue: { log: jest.fn() } },
+      ],
     }).compile();
 
     service = module.get(PlatformConfigService);
@@ -117,5 +123,19 @@ describe("PlatformConfigService", () => {
   it("returns numeric helpers for downstream calculations", async () => {
     expect(await service.getVatRate()).toBe(0.075);
     expect(await service.getMaxUploadBytes()).toBe(15 * 1024 * 1024);
+  });
+
+  it("getForRole returns full config for staff and admin", async () => {
+    const full = await service.get();
+    expect(service.getForRole(UserRole.ADMIN, full)).toEqual(full);
+    expect(service.getForRole(UserRole.STAFF, full)).toEqual(full);
+  });
+
+  it("getForRole returns public subset for buyers", async () => {
+    const full = await service.get();
+    expect(service.getForRole(UserRole.BUYER, full)).toEqual({
+      vatRate: "0.075",
+      maxUploadMb: 15,
+    });
   });
 });

@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ListingStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { DocumentsService } from "./documents.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 
@@ -15,6 +16,7 @@ const seller: JwtPayload = {
 describe("DocumentsService", () => {
   let service: DocumentsService;
   let storage: { upload: jest.Mock };
+  let platformConfig: { getMaxUploadBytes: jest.Mock };
   let prisma: {
     listing: { findUnique: jest.Mock };
     document: { create: jest.Mock; findMany: jest.Mock };
@@ -22,6 +24,9 @@ describe("DocumentsService", () => {
 
   beforeEach(async () => {
     storage = { upload: jest.fn().mockResolvedValue("listings/L1/1_deed.pdf") };
+    platformConfig = {
+      getMaxUploadBytes: jest.fn().mockResolvedValue(15 * 1024 * 1024),
+    };
     prisma = {
       listing: {
         findUnique: jest.fn().mockResolvedValue({
@@ -50,6 +55,7 @@ describe("DocumentsService", () => {
         DocumentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: StorageService, useValue: storage },
+        { provide: PlatformConfigService, useValue: platformConfig },
       ],
     }).compile();
 
@@ -64,8 +70,9 @@ describe("DocumentsService", () => {
       buffer: Buffer.from("data"),
     } as Express.Multer.File;
 
-    await service.createFromUpload("L1", "title", file, seller);
+    const result = await service.createFromUpload("L1", "title", file, seller);
 
+    expect(result).toHaveProperty("storageKey", "listings/L1/1_deed.pdf");
     expect(storage.upload).toHaveBeenCalledTimes(1);
     const [buffer, key, mimeType] = storage.upload.mock.calls[0];
     expect(buffer).toEqual(Buffer.from("data"));

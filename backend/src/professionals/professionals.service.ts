@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { ProfessionalProfile, ProfessionalType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import { AuditAction } from "../audit/audit-actions.constants";
 import { UpdateMyProfileDto } from "./dto/update-my-profile.dto";
 import { VerifyCredentialDto } from "./dto/verify-credential.dto";
 
@@ -38,7 +40,10 @@ export type PendingCredentialResponse = ProfessionalProfileResponse & {
 
 @Injectable()
 export class ProfessionalsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   async getMyProfile(userId: string): Promise<ProfessionalProfileResponse | null> {
     const profile = await this.prisma.professionalProfile.findUnique({ where: { userId } });
@@ -109,13 +114,33 @@ export class ProfessionalsService {
     const existing = await this.prisma.professionalProfile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException("Professional profile not found");
 
+    if (!dto.approve) {
+      const note = dto.rejectionNote?.trim();
+      if (!note) {
+        throw new BadRequestException("rejectionNote is required when rejecting a credential");
+      }
+    }
+
     const profile = await this.prisma.professionalProfile.update({
       where: { id },
       data: {
         verifiedStatus: dto.approve ? "VERIFIED" : "REJECTED",
         verifiedById: actorId,
         verifiedAt: new Date(),
-        rejectionNote: dto.approve ? null : (dto.rejectionNote ?? null),
+        rejectionNote: dto.approve ? null : (dto.rejectionNote?.trim() ?? null),
+      },
+    });
+    void this.audit.log({
+      actorId,
+      action: dto.approve
+        ? AuditAction.PROFESSIONAL_CREDENTIAL_VERIFIED
+        : AuditAction.PROFESSIONAL_CREDENTIAL_REJECTED,
+      entity: "ProfessionalProfile",
+      entityId: id,
+      before: { verifiedStatus: existing.verifiedStatus },
+      after: {
+        verifiedStatus: profile.verifiedStatus,
+        rejectionNote: profile.rejectionNote,
       },
     });
     return this.serialize(profile);

@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
+import { AuditAction } from "../audit/audit-actions.constants";
 import { UpdatePlatformConfigDto } from "./dto/update-platform-config.dto";
 
 const SINGLETON_ID = "singleton";
@@ -26,11 +28,20 @@ export type PlatformConfigResponse = {
   updatedAt: string;
 };
 
+/** Fields safe for any authenticated role (buyers, sellers, pros). */
+export type PlatformConfigPublicResponse = {
+  vatRate: string;
+  maxUploadMb: number;
+};
+
 @Injectable()
 export class PlatformConfigService {
   private cached: { value: PlatformConfigResponse; expiresAt: number } | null = null;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   async get(): Promise<PlatformConfigResponse> {
     const now = Date.now();
@@ -48,8 +59,18 @@ export class PlatformConfigService {
     return value;
   }
 
+  getForRole(role: UserRole, config: PlatformConfigResponse): PlatformConfigResponse | PlatformConfigPublicResponse {
+    if (role === UserRole.ADMIN || role === UserRole.STAFF) {
+      return config;
+    }
+    return {
+      vatRate: config.vatRate,
+      maxUploadMb: config.maxUploadMb,
+    };
+  }
+
   async update(dto: UpdatePlatformConfigDto, actorId: string): Promise<PlatformConfigResponse> {
-    void actorId;
+    const before = await this.get();
     const data = {
       ...(dto.vatRate !== undefined ? { vatRate: dto.vatRate } : {}),
       ...(dto.maxUploadMb !== undefined ? { maxUploadMb: dto.maxUploadMb } : {}),
@@ -66,7 +87,28 @@ export class PlatformConfigService {
       update: data,
     });
     this.cached = null;
-    return this.serialize(config);
+    const after = this.serialize(config);
+    void this.audit.log({
+      actorId,
+      action: AuditAction.PLATFORM_CONFIG_UPDATED,
+      entity: "PlatformConfig",
+      entityId: SINGLETON_ID,
+      before: {
+        vatRate: before.vatRate,
+        maxUploadMb: before.maxUploadMb,
+        paystackEnabled: before.paystackEnabled,
+        flutterwaveEnabled: before.flutterwaveEnabled,
+        maintenanceMode: before.maintenanceMode,
+      },
+      after: {
+        vatRate: after.vatRate,
+        maxUploadMb: after.maxUploadMb,
+        paystackEnabled: after.paystackEnabled,
+        flutterwaveEnabled: after.flutterwaveEnabled,
+        maintenanceMode: after.maintenanceMode,
+      },
+    });
+    return after;
   }
 
   async getVatRate(): Promise<number> {
