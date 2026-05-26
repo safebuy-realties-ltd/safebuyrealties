@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +11,7 @@ import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/staff/submissions")({
-  component: () => (
-    <DashboardLayout role="staff">
-      <StaffSubmissions />
-    </DashboardLayout>
-  ),
+  component: StaffSubmissions,
 });
 
 function StaffSubmissions() {
@@ -41,11 +37,13 @@ function StaffSubmissions() {
 
   const approve = (listingId: string, status: string) => {
     const nextStatus =
-      status === "ASSIGNED"
-        ? "IN_VERIFICATION"
-        : status === "IN_VERIFICATION"
-          ? "VERIFIED"
-          : "LIVE";
+      status === "PENDING_REVIEW"
+        ? "ASSIGNED"
+        : status === "ASSIGNED"
+          ? "IN_VERIFICATION"
+          : status === "IN_VERIFICATION"
+            ? "VERIFIED"
+            : "LIVE";
     updateListing.mutate(
       { id: listingId, body: { status: nextStatus } },
       {
@@ -146,7 +144,9 @@ function StaffSubmissions() {
                       Assign in workflow
                     </Link>
                   </Button>
-                  {["ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(l.status) && (
+                  {["PENDING_REVIEW", "ASSIGNED", "IN_VERIFICATION", "VERIFIED"].includes(
+                    l.status,
+                  ) && (
                     <Button
                       size="sm"
                       disabled={updateListing.isPending}

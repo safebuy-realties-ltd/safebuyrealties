@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,11 +16,7 @@ import { useVerificationListingQuery } from "@/hooks/use-verification";
 import { RISK_FLAGS } from "@/lib/risk-flags";
 
 export const Route = createFileRoute("/dashboard/professional/tasks/$taskId")({
-  component: () => (
-    <DashboardLayout role="professional">
-      <TaskDetailPage />
-    </DashboardLayout>
-  ),
+  component: TaskDetailPage,
 });
 
 function TaskDetailPage() {

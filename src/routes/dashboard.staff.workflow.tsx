@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,7 @@ export const Route = createFileRoute("/dashboard/staff/workflow")({
   validateSearch: (search: Record<string, unknown>): { listing?: string } => ({
     listing: typeof search.listing === "string" ? search.listing : undefined,
   }),
-  component: () => (
-    <DashboardLayout role="staff">
-      <StaffWorkflow />
-    </DashboardLayout>
-  ),
+  component: StaffWorkflow,
 });
 
 function StaffWorkflow() {
@@ -138,13 +134,13 @@ function StaffWorkflow() {
     );
   };
 
-  const transitionStep = (stepId: string, status: "COMPLETED" | "REJECTED") => {
+  const transitionStep = (stepId: string, status: "COMPLETED" | "BLOCKED") => {
     if (!selectedListingId) return;
     patchStepMutation.mutate(
       { stepId, listingId: selectedListingId, body: { status } },
       {
         onSuccess: () =>
-          toast.success(status === "COMPLETED" ? "Step approved." : "Step rejected."),
+          toast.success(status === "COMPLETED" ? "Step approved." : "Step blocked."),
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
       },
     );
@@ -351,7 +347,7 @@ function StaffWorkflow() {
                       variant="destructive"
                       className="h-9"
                       disabled={patchStepMutation.isPending}
-                      onClick={() => transitionStep(s.id, "REJECTED")}
+                      onClick={() => transitionStep(s.id, "BLOCKED")}
                     >
                       Reject
                     </Button>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +18,7 @@ import { useAdminUsersQuery, usePatchUserMutation } from "@/hooks/use-admin-user
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
-  component: () => (
-    <DashboardLayout role="admin">
-      <AdminUsers />
-    </DashboardLayout>
-  ),
+  component: AdminUsers,
 });
 
 type RoleUi = "buyer" | "seller" | "professional" | "staff" | "admin";

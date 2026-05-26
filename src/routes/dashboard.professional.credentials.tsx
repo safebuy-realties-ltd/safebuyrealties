@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +10,7 @@ import { useMyProfileQuery, useUpdateMyProfileMutation } from "@/hooks/use-profe
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/professional/credentials")({
-  component: () => (
-    <DashboardLayout role="professional">
-      <ProCredentials />
-    </DashboardLayout>
-  ),
+  component: ProCredentials,
 });
 
 function statusBadge(status: string) {

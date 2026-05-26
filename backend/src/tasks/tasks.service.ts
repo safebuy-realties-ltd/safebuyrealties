@@ -111,12 +111,19 @@ export class TasksService {
     if (task.assigneeId !== actor.sub && !this.isStaff(actor.role)) {
       throw new ForbiddenException();
     }
+    const reportDescription =
+      dto.completionNotes !== undefined
+        ? dto.completionNotes
+        : dto.description !== undefined
+          ? dto.description
+          : undefined;
+
     const updated = await this.prisma.task.update({
       where: { id },
       data: {
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.title !== undefined ? { title: dto.title } : {}),
-        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(reportDescription !== undefined ? { description: reportDescription } : {}),
         ...(dto.dueAt !== undefined
           ? { dueAt: dto.dueAt === null ? null : new Date(dto.dueAt) }
           : {}),

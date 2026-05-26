@@ -35,7 +35,41 @@ async function wipe() {
   await prisma.verificationStep.deleteMany();
   await prisma.document.deleteMany();
   await prisma.listing.deleteMany();
+  await prisma.professionalProfile.deleteMany();
   await prisma.user.deleteMany();
+}
+
+async function ensureVerifiedProfessionalProfiles(staffId: string) {
+  const profiles = [
+    { email: "lawyer@safebuyrealties.test", regulatoryBody: "NBA", licenseNumber: "NBA/TEST/001" },
+    {
+      email: "surveyor@safebuyrealties.test",
+      regulatoryBody: "SURCON",
+      licenseNumber: "SURCON/TEST/001",
+    },
+  ] as const;
+
+  for (const profile of profiles) {
+    const user = await prisma.user.findUnique({ where: { email: profile.email } });
+    if (!user) continue;
+    await prisma.professionalProfile.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        regulatoryBody: profile.regulatoryBody,
+        licenseNumber: profile.licenseNumber,
+        verifiedStatus: "VERIFIED",
+        verifiedById: staffId,
+        verifiedAt: new Date(),
+      },
+      update: {
+        verifiedStatus: "VERIFIED",
+        verifiedById: staffId,
+        verifiedAt: new Date(),
+        rejectionNote: null,
+      },
+    });
+  }
 }
 
 async function upsertUser(args: {
@@ -174,6 +208,27 @@ async function main() {
     role: UserRole.PROFESSIONAL,
     professionalType: ProfessionalType.VALUER,
     passwordHash,
+  });
+
+  await prisma.professionalProfile.createMany({
+    data: [
+      {
+        userId: lawyer.id,
+        regulatoryBody: "NBA",
+        licenseNumber: "NBA/TEST/001",
+        verifiedStatus: "VERIFIED",
+        verifiedById: staff.id,
+        verifiedAt: new Date(),
+      },
+      {
+        userId: surveyor.id,
+        regulatoryBody: "SURCON",
+        licenseNumber: "SURCON/TEST/001",
+        verifiedStatus: "VERIFIED",
+        verifiedById: staff.id,
+        verifiedAt: new Date(),
+      },
+    ],
   });
 
   const mk = (
@@ -529,6 +584,8 @@ async function main() {
       metadata: {},
     },
   });
+
+  await ensureVerifiedProfessionalProfiles(staff.id);
 
   console.log("Seed OK — demo database reset.");
   console.log("Login (all roles): password123");

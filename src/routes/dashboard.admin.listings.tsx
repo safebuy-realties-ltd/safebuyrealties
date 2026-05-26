@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,11 +12,7 @@ import { ApiError } from "@/lib/api";
 import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
 
 export const Route = createFileRoute("/dashboard/admin/listings")({
-  component: () => (
-    <DashboardLayout role="admin">
-      <AdminListings />
-    </DashboardLayout>
-  ),
+  component: AdminListings,
 });
 
 function formatMoney(amount: string, currency: string) {

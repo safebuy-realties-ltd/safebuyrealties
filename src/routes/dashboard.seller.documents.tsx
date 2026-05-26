@@ -8,7 +8,7 @@ import {
   type DragEvent,
   type ChangeEvent,
 } from "react";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,11 +40,7 @@ import { ApiError } from "@/lib/api";
 import { statusLabel } from "@/lib/listing-status";
 
 export const Route = createFileRoute("/dashboard/seller/documents")({
-  component: () => (
-    <DashboardLayout role="seller">
-      <SellerDocuments />
-    </DashboardLayout>
-  ),
+  component: SellerDocuments,
 });
 
 type DocType =

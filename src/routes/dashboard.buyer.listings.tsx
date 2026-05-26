@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,7 @@ import { useListingsQuery } from "@/hooks/use-listings";
 import { statusBadgeClass, statusIsPublic, statusLabel } from "@/lib/listing-status";
 
 export const Route = createFileRoute("/dashboard/buyer/listings")({
-  component: () => (
-    <DashboardLayout role="buyer">
-      <BrowseListings />
-    </DashboardLayout>
-  ),
+  component: BrowseListings,
 });
 
 type Row = {

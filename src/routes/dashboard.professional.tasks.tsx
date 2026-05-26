@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard, type TaskStatus } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +16,7 @@ import { useListingsQuery } from "@/hooks/use-listings";
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/professional/tasks")({
-  component: () => (
-    <DashboardLayout role="professional">
-      <ProTasks />
-    </DashboardLayout>
-  ),
+  component: ProTasks,
 });
 
 const filters: { id: TaskStatus | "all"; label: string }[] = [

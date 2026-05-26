@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useState } from "react";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,11 +19,7 @@ import {
 import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/staff/credentials")({
-  component: () => (
-    <DashboardLayout role="staff">
-      <StaffCredentials />
-    </DashboardLayout>
-  ),
+  component: StaffCredentials,
 });
 
 function StaffCredentials() {
