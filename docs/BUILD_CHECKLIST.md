@@ -21,13 +21,14 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-05-26
 - **Tool:** Cursor (Cloud Agent)
-- **Last completed:** Step 2 — Property spec fields — frontend (`cursor/step2-spec-fields-fe-e4ea`)
-- **Done this session:** `src/lib/listing-spec.ts` (create payload + detail summary); seller form + listing detail wired; BE create/update persist spec fields; optional JWT guard honors `sbr_session` cookie on `GET /listings/:id`
-- **Tests:** `src/lib/listing-spec.test.ts` (6); `listings.service.spec.ts` create-with-specs (16 BE total)
-- **Gate A:** `npm run validate:tsc`, `npm test` (9 FE), `cd backend && npm test` — pass
-- **L5 (local E2E):** seller login → create beds=4 baths=3 → `/listings/{id}` shows `4 beds · 3 baths · 450 m² · Detached` (listing `273ef239-e5c3-4343-b311-dde75f9ce026`); confirm on Vercel preview after deploy
-- **Next:** Step 2 — Platform configuration
-- **Blockers:** None
+- **Last completed:** Step 2 — Platform configuration (`cursor/step2-platform-config-e4ea`, PR #35)
+- **Done this session:** `PlatformConfig` Prisma singleton + migration `20260526143000_platform_config`; `backend/src/platform-config/` service/controller/module; authenticated `GET /platform-config`; ADMIN-only `PATCH /platform-config`; registered in `AppModule`
+- **Tests:** `platform-config.service.spec.ts` + `platform-config.controller.spec.ts` (7 platform-config tests; 23 BE total)
+- **Gate A:** `npm run validate:tsc`, `cd backend && npm test`, `cd backend && DATABASE_URL=postgresql://user:pass@localhost:5432/safebuyrealties DATABASE_POSTGRES_URL=postgresql://user:pass@localhost:5432/safebuyrealties npx prisma validate` — pass
+- **L4 API:** Local API smoke after applying migrations/seed: admin login → `GET /platform-config` returned `vatRate: "0.075"`, `maxUploadMb: 15`; `PATCH /platform-config` set `maxUploadMb: 16`; immediate second GET returned `maxUploadMb: 16`; restored `maxUploadMb: 15`
+- **Preview/CI:** PR #35 CI required + backend check passed; Vercel previews deployed (`safebuyrealties` and `safebuyrealties-app`). Direct preview curl was blocked by Vercel Deployment Protection in this VM (no Vercel CLI/MCP auth or bypass token available).
+- **Next:** Step 3 — Listing status vocabulary — database
+- **Blockers:** None for implementation; preview API curl needs Vercel auth/bypass token when Deployment Protection is enabled
 
 ---
 
@@ -90,13 +91,13 @@ These are building blocks that other features depend on. Build them in order.
   - Tests: `audit.service.spec.ts`, `listings.service.spec.ts` (status transition audit)
   - Validated: local `PATCH /api/v1/listings/:id` (staff) → `audit_logs` row with correct JSON; Gate A + `npm run smoke:api`
 
-- [ ] **Platform configuration**
+- [x] **Platform configuration**
   - Add `PlatformConfig` singleton model to Prisma schema: `id String @id @default("singleton")`, `vatRate Decimal @default(0.075) @db.Decimal(5,4)`, `maxUploadMb Int @default(15)`, `paystackEnabled Boolean @default(true)`, `flutterwaveEnabled Boolean @default(false)`, `maintenanceMode Boolean @default(false)`, `updatedAt DateTime @updatedAt`
   - Run migration
   - Create `backend/src/platform-config/` module with service and controller
   - Service: `get()` upserts singleton on first call then caches for 60s; `update(dto, actorId)` invalidates cache; `getVatRate(): number`; `getMaxUploadBytes(): number`
   - Controller: `GET /platform-config` (any authenticated user), `PATCH /platform-config` (ADMIN only)
-  - Validation: `curl -X GET http://localhost:3001/api/v1/platform-config -H "Cookie: <auth-cookie>"` returns `{ vatRate: "0.075", maxUploadMb: 15, ... }`
+  - Validation: `curl -X GET $SBR_API_BASE/platform-config -H "Cookie: <auth-cookie>"` returns `{ vatRate: "0.075", maxUploadMb: 15, ... }`; local smoke passed on `http://localhost:3001/api/v1`; branch preview deployed but direct curl needs Vercel Deployment Protection bypass/auth
 
 - [x] **Property spec fields — frontend** (PR `cursor/step2-spec-fields-fe-e4ea`)
   - `ListingDto` optional spec fields in `src/hooks/use-listings.ts`; `src/lib/listing-spec.ts` for create payload + detail summary (`4 beds · 3 baths`)
