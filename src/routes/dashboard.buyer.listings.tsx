@@ -58,6 +58,9 @@ function listingToRow(l: {
   location: string;
   price: string;
   status: string;
+  beds?: number | null;
+  baths?: number | null;
+  landAreaSqm?: number | null;
 }): Row {
   const priceValue = Number(l.price) || 0;
   return {
@@ -66,9 +69,9 @@ function listingToRow(l: {
     location: l.location,
     price: formatNgn(l.price),
     priceValue,
-    beds: 0,
-    baths: 0,
-    area: "—",
+    beds: l.beds ?? 0,
+    baths: l.baths ?? 0,
+    area: l.landAreaSqm ? `${l.landAreaSqm} m²` : "—",
     status: l.status,
   };
 }

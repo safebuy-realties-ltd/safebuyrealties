@@ -4,6 +4,7 @@ import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/Da
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { riskFlagLabel } from "@/lib/risk-flags";
 import {
   Select,
   SelectContent,
@@ -256,6 +257,16 @@ function StaffWorkflow() {
                       </span>
                     )}
                   </div>
+                  {s.riskFlags && s.riskFlags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-medium text-muted-foreground">Risk flags:</span>
+                      {s.riskFlags.map((code) => (
+                        <Badge key={code} variant="outline" className="text-xs">
+                          {riskFlagLabel(code)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-2 flex flex-wrap items-end gap-2">
                     <div className="min-w-[200px] flex-1">
                       <p className="mb-1 text-xs text-muted-foreground">Assign professional</p>

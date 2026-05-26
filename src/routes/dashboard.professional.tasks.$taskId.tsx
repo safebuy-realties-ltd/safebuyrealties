@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
 import { useMyTaskByIdQuery, usePatchTaskMutation } from "@/hooks/use-tasks";
 import { useUploadDocumentMutation } from "@/hooks/use-documents";
+import { RISK_FLAGS } from "@/lib/risk-flags";
 
 export const Route = createFileRoute("/dashboard/professional/tasks/$taskId")({
   component: () => (
@@ -30,6 +31,7 @@ function TaskDetailPage() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("IN_PROGRESS");
   const [file, setFile] = useState<File | null>(null);
+  const [selectedRiskFlags, setSelectedRiskFlags] = useState<string[]>([]);
 
   const patchMutation = usePatchTaskMutation();
   const uploadMutation = useUploadDocumentMutation();
@@ -64,6 +66,7 @@ function TaskDetailPage() {
             report: {
               submittedAt: new Date().toISOString(),
               summary: notes,
+              riskFlags: selectedRiskFlags,
             },
           },
         },
@@ -97,6 +100,12 @@ function TaskDetailPage() {
     }
 
     doPatch();
+  };
+
+  const toggleRiskFlag = (code: string) => {
+    setSelectedRiskFlags((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
   };
 
   return (
@@ -218,6 +227,43 @@ function TaskDetailPage() {
                 type="file"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Risk flags</Label>
+              <p className="text-xs text-muted-foreground">
+                Select all risk conditions that apply to this property.
+              </p>
+              <div className="space-y-3 rounded-md border border-border p-3">
+                {RISK_FLAGS.map((flag) => (
+                  <div key={flag.code} className="flex items-start gap-3">
+                    <Checkbox
+                      id={`risk-flag-${flag.code}`}
+                      checked={selectedRiskFlags.includes(flag.code)}
+                      onCheckedChange={() => toggleRiskFlag(flag.code)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex flex-col">
+                      <label
+                        htmlFor={`risk-flag-${flag.code}`}
+                        className="cursor-pointer text-sm font-medium leading-none"
+                      >
+                        {flag.label}
+                      </label>
+                      <p className="mt-1 text-xs text-muted-foreground">{flag.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {selectedRiskFlags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {selectedRiskFlags.map((code) => (
+                    <Badge key={code} variant="outline" className="text-xs">
+                      {RISK_FLAGS.find((f) => f.code === code)?.label ?? code}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Button onClick={submit} disabled={patchMutation.isPending || uploadMutation.isPending}>
