@@ -20,16 +20,15 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-26
-- **Tool:** Cursor (Cloud Agent)
-- **Last completed:** Step 2 — Platform configuration (`cursor/step2-platform-config-e4ea`, PR #35)
-- **Done this session:** `PlatformConfig` Prisma singleton + migration `20260526143000_platform_config`; `backend/src/platform-config/` service/controller/module; authenticated `GET /platform-config`; ADMIN-only `PATCH /platform-config`; registered in `AppModule`
-- **Tests:** `platform-config.service.spec.ts` + `platform-config.controller.spec.ts` (7 platform-config tests; 23 BE total)
-- **Gate A:** `npm run validate:tsc`, `cd backend && npm test`, `cd backend && DATABASE_URL=postgresql://user:pass@localhost:5432/safebuyrealties DATABASE_POSTGRES_URL=postgresql://user:pass@localhost:5432/safebuyrealties npx prisma validate` — pass
-- **L4 API:** Local API smoke after applying migrations/seed: admin login → `GET /platform-config` returned `vatRate: "0.075"`, `maxUploadMb: 15`; `PATCH /platform-config` set `maxUploadMb: 16`; immediate second GET returned `maxUploadMb: 16`; restored `maxUploadMb: 15`
-- **Preview/CI:** PR #35 CI required + backend check passed; Vercel previews deployed (`safebuyrealties` and `safebuyrealties-app`). Direct preview curl was blocked by Vercel Deployment Protection in this VM (no Vercel CLI/MCP auth or bypass token available).
-- **Next:** Step 3 — Listing status vocabulary — database
+- **Tool:** Claude Code (Cloud Agent)
+- **Last completed:** Steps 3–5 + Paystack inline checkout integration (PRs #36-#47)
+- **Done this session:** Step 3 (listing status vocab, professional credentials, risk flags, report revision loop); Step 4 (service catalog DB + API + ServiceSelector UI); Step 5 (payment intents, DD orders, status vocabulary + Paystack `@paystack/inline-js` inline popup integration)
+- **Key additions:** `PaymentIntent` enum, `DueDiligenceOrder` model, `POST /due-diligence-orders`, `POST /payments/:id/verify`, `openPaystackCheckout()` helper, `useVerifyPaymentMutation()`, mock-mode auto-success when no secret key set
+- **Tests:** 46 BE tests pass; frontend tsc clean
+- **Gate A:** All CI checks green on every merged PR
+- **Next:** Step 6 — Power of Attorney
 - **Blockers:** None
-- **Dev workflow:** Local validation only (`docs/LOCAL_DEVELOPMENT.md`); no Docker; shared cloud `DATABASE_URL` in `backend/.env`
+- **Dev workflow:** Local validation only (`docs/LOCAL_DEVELOPMENT.md`); no Docker; shared cloud `DATABASE_URL` in `backend/.env`; Paystack test keys go in gitignored `backend/.env` only (never committed)
 
 ---
 
@@ -111,92 +110,46 @@ These are building blocks that other features depend on. Build them in order.
 
 ## Step 3 — Verification Pipeline Completion
 
-- [ ] **Listing status vocabulary — database**
-  - Add `UNDER_OFFER` and `SOLD` to the `ListingStatus` enum in `backend/prisma/schema.prisma`
-  - Run migration
-  - Validation: migration succeeds, existing listings are unaffected
+- [x] **Listing status vocabulary — database** (PR #36)
+  - Added `UNDER_OFFER` and `SOLD` to `ListingStatus` enum; migration `20260526155145_add_under_offer_sold_statuses`
 
-- [ ] **Listing status vocabulary — frontend label mapping**
-  - Create `src/lib/listing-status.ts` with three exported functions:
-    - `statusLabel(status: string): string` — maps backend values to user-facing labels: `PENDING_REVIEW → "Pending Review"`, `ASSIGNED → "In Verification"`, `IN_VERIFICATION → "In Verification"`, `VERIFIED → "Verified"`, `LIVE → "Live"`, `UNDER_OFFER → "Under Offer"`, `SOLD → "Sold"`, `REJECTED → "Rejected"`, `DRAFT → "Draft"`, `ARCHIVED → "Archived"`
-    - `statusBadgeClass(status: string): string` — returns Tailwind classes: green for LIVE/VERIFIED, amber for IN_VERIFICATION/ASSIGNED, red for REJECTED, blue for UNDER_OFFER, gray for DRAFT/ARCHIVED
-    - `statusIsPublic(status: string): boolean` — true only for LIVE
-  - Replace all inline status label/class logic in: `src/components/ListingCard.tsx`, `src/routes/dashboard.seller.tsx`, `src/routes/dashboard.admin.listings.tsx`, `src/routes/dashboard.buyer.listings.tsx`
-  - Validation: seller dashboard shows "Pending Review" instead of "PENDING_REVIEW". Listing cards show correct badge colours.
+- [x] **Listing status vocabulary — frontend label mapping** (PR #36)
+  - `src/lib/listing-status.ts` with `statusLabel`, `statusBadgeClass`, `statusIsPublic`; replaced inline logic in ListingCard + 4 dashboards
 
-- [ ] **Professional credential profile**
-  - Add `ProfessionalProfile` model to Prisma schema: `id`, `userId String @unique`, `user User @relation(...)`, `regulatoryBody String` (NBA, SURCON, NIESV, NIQS, etc.), `licenseNumber String`, `licenseExpiry DateTime?`, `verifiedStatus String @default("PENDING")` (PENDING, VERIFIED, REJECTED), `verifiedById String?`, `verifiedAt DateTime?`, `rejectionNote String?`
-  - Run migration
-  - Backend: `GET /professionals/me/profile`, `PUT /professionals/me/profile`, `PATCH /professionals/:id/verify` (STAFF/ADMIN only)
-  - Frontend: add a "My Credentials" section to the professional dashboard where they can view and update their profile and see their verification status
-  - Frontend: add a credential review section to the staff dashboard listing professionals pending verification with approve/reject actions
-  - Validation: register as a professional, fill in credentials, log in as staff, approve the credential — professional dashboard shows "Verified" credential status
+- [x] **Professional credential profile** (PR #38)
+  - `ProfessionalProfile` model + migration; `GET/PUT /professionals/me/profile`; `PATCH /professionals/:id/verify`; "My Credentials" on pro dashboard; credential review on staff dashboard
 
-- [ ] **Risk flag taxonomy and picker UI**
-  - Create `src/lib/risk-flags.ts` exporting `RISK_FLAGS` array with objects `{ code: string, label: string, description: string }` for: `BOUNDARY_DISPUTE`, `GOVT_ACQUISITION`, `FLOOD_ZONE`, `OMO_ONILE_ACTIVITY`, `TITLE_ENCUMBRANCE`, `LITIGATION_PENDING`, `SURVEY_DISCREPANCY`, `INCOMPLETE_DOCUMENTS`
-  - In professional task detail page: replace any hardcoded risk flag input with a multi-select checkbox picker using these constants
-  - In staff workflow page: show flagged risks as labelled badges (not raw strings) when viewing a submitted step
-  - Validation: as a professional, submit a report with two risk flags selected. As staff, view the step — both flags appear as readable labels.
+- [x] **Risk flag taxonomy and picker UI** (PR #39)
+  - `src/lib/risk-flags.ts` with 8 flags; checkbox picker in task detail; badge rendering in staff workflow
 
-- [ ] **Report acceptance and revision loop**
-  - Backend: add `ACCEPTED` and `REVISION_REQUESTED` to verification step status enum (alongside existing statuses)
-  - Add `revisionNote String?` field to `VerificationStep` model; run migration
-  - Add endpoints: `PATCH /verification/steps/:stepId/accept` (STAFF only), `PATCH /verification/steps/:stepId/request-revision` (STAFF only, body: `{ note: string }`)
-  - Frontend: in staff workflow, when viewing a SUBMITTED step, show "Accept" and "Request Revision" buttons. Revision button opens a textarea for the note.
-  - Frontend: in professional task detail, when status is REVISION_REQUESTED, show the revision note prominently and allow resubmission
-  - Validation: professional submits a report → staff requests revision with note → professional sees the note and resubmits → staff accepts → step shows ACCEPTED status
+- [x] **Report acceptance and revision loop** (PR #40)
+  - `ACCEPTED`/`REVISION_REQUESTED` status enum + `revisionNote`; accept/request-revision endpoints; Accept/Request Revision buttons in staff workflow; revision note + resubmit in task detail
 
 ---
 
 ## Step 4 — Service Catalog
 
-- [ ] **Service catalog — database and seed**
-  - Add models to Prisma schema: `ServiceCatalogItem` (`id`, `code String @unique`, `name`, `description`, `basePrice Decimal @db.Decimal(18,2)`, `active Boolean @default(true)`, `sortOrder Int @default(0)`), `ServiceBundle` (`id`, `code String @unique`, `name`, `description`, `basePrice Decimal @db.Decimal(18,2)`, `active Boolean @default(true)`), `BundleItem` (`bundleId`, `itemId`, `@@id([bundleId, itemId])`)
-  - Run migration
-  - Create `backend/src/service-catalog/service-catalog.service.ts` with `onModuleInit()` that seeds default data if catalog is empty. Seed all 15 services (codes listed in the Master Plan) with base price 150000. Seed 3 bundles: STANDARD (2950000, services 1-5), PREMIUM (4200000, services 1-10), ELITE (5850000, all 15).
-  - Validation: after server start, `SELECT COUNT(*) FROM service_catalog_items` returns 15, `SELECT COUNT(*) FROM service_bundles` returns 3
+- [x] **Service catalog — database and seed** (PR #44)
+  - `ServiceCatalogItem`, `ServiceBundle`, `BundleItem` models; migration `20260526171137_add_service_catalog`; `onModuleInit` seeds 15 items + 3 bundles
 
-- [ ] **Service catalog — API endpoints**
-  - `GET /service-catalog/items` — public, returns all active items sorted by sortOrder
-  - `GET /service-catalog/bundles` — public, returns bundles with their included items
-  - `POST /service-catalog/calculate` — authenticated, body: `{ itemIds?: string[], bundleId?: string }`, returns `{ subtotal: number, vat: number, total: number }` using the platform VAT rate from PlatformConfigService
-  - `PATCH /service-catalog/items/:id` — ADMIN only, update name/description/price/active
-  - Validation: `curl http://localhost:3001/api/v1/service-catalog/bundles` returns 3 bundles each with an `items` array. Calculate endpoint returns correct total with 7.5% VAT applied.
+- [x] **Service catalog — API endpoints** (PR #44)
+  - `GET /service-catalog/items`, `GET /service-catalog/bundles`, `POST /service-catalog/calculate` (VAT via PlatformConfigService), `PATCH /service-catalog/items/:id` (ADMIN)
 
-- [ ] **Service catalog — frontend selection UI**
-  - Create `src/components/ServiceSelector.tsx` — a component that fetches bundles and items, presents three bundle cards (with names, included services listed, and price), and an "à-la-carte" section below where individual services can be checked/unchecked
-  - Shows a live running total at the bottom: Services subtotal, VAT (7.5%), Total — all in ₦ formatted with commas
-  - When a bundle is selected, the individual services within it are pre-checked (but still visible)
-  - Exposes `onSelectionChange({ itemIds: string[], bundleId?: string, total: number })` callback prop
-  - This component will be embedded in the DD Purchase Wizard in Step 10 — build it as a standalone reusable component for now
-  - Validation: render the component on a test route or in Storybook, confirm bundles load, selecting Elite shows all 15 services checked and the correct total
+- [x] **Service catalog — frontend selection UI** (PR #45)
+  - `src/components/ServiceSelector.tsx` — 3 bundle cards + à-la-carte checkboxes; live total with VAT; `onSelectionChange` prop; "Services" nav link added for buyer
 
 ---
 
 ## Step 5 — Payment Architecture
 
-- [ ] **Two payment intent types — database**
-  - Add `PaymentIntent` enum to Prisma schema: `DD_SERVICE`, `PROPERTY_PURCHASE`
-  - Add `intent PaymentIntent @default(DD_SERVICE)` to `Payment` model
-  - Add `DueDiligenceOrder` model: `id`, `transactionId String @unique`, `buyerId String`, `bundleId String?`, `itemIds Json @default("[]")`, `subtotal Decimal @db.Decimal(18,2)`, `vatAmount Decimal @db.Decimal(18,2)`, `total Decimal @db.Decimal(18,2)`, `status String @default("PENDING")` (PENDING, PAID, IN_PROGRESS, COMPLETE), `createdAt`, `updatedAt`
-  - Update `Transaction` model status values: add `DD_PURCHASED`, `DD_IN_PROGRESS`, `DD_COMPLETE`, `PURCHASE_PENDING`, `PURCHASE_IN_ESCROW` to the enum (keep existing values)
-  - Run migration — default all existing Payment records to `DD_SERVICE` intent (safe: all current payments are DD-style)
-  - Validation: migration succeeds, existing records intact, `cd backend && npx tsc --noEmit` passes
+- [x] **Two payment intent types — database** (PR #46)
+  - `PaymentIntent` enum (DD_SERVICE, PROPERTY_PURCHASE); `Payment.intent`; `DueDiligenceOrder` model; extended `TransactionStatus`; migration `20260526174322_add_payment_intents_and_dd_orders`
 
-- [ ] **Two payment intent types — backend service**
-  - Update `PaymentsService.initiate()` to accept `intent: PaymentIntent` and optional `ddOrderId: string`
-  - When `intent = DD_SERVICE` and a `DueDiligenceOrder` exists for the transaction, link the payment to it
-  - Update the Paystack webhook handler: when a `DD_SERVICE` payment succeeds, transition `transaction.status → DD_PURCHASED` and `listing.status → UNDER_OFFER`; trigger notifications for buyer (DD started), seller (property reserved), and staff (begin verification work)
-  - When `intent = PROPERTY_PURCHASE` payment succeeds: transition `transaction.status → PURCHASE_IN_ESCROW` (escrow model comes in Step 7 — for now, just record the status transition)
-  - Add endpoint: `POST /due-diligence-orders` — authenticated buyer, body: `{ transactionId, itemIds?, bundleId? }`, creates a `DueDiligenceOrder` and returns it with calculated totals
-  - Validation: using mock mode, initiate a DD payment, confirm webhook transitions transaction to `DD_PURCHASED` and listing to `UNDER_OFFER` — check both in the database
+- [x] **Two payment intent types — backend service** (PR #46 + #47)
+  - `initiate()` accepts `intent`/`ddOrderId`; `applyPaymentChargeSuccess()` branches on intent; `POST /due-diligence-orders`; `POST /payments/:id/verify`; `paystackJson<T>()` helper with clean 503 on failures; Paystack `@paystack/inline-js` popup via `resumeTransaction(accessCode)`
 
-- [ ] **Two payment intent types — frontend**
-  - Update `src/hooks/use-payments.ts` to include `intent` field in the initiate payment mutation payload
-  - Update `src/hooks/use-transactions.ts` to include the new status values in any type definitions
-  - On the buyer transaction detail page: display the payment intent label clearly — "Due Diligence Payment" or "Property Purchase Payment" — instead of a generic "Payment" label
-  - Show the extended transaction status with a human-readable label matching the vocabulary in the Master Plan
-  - Validation: start a transaction as a buyer, confirm the transaction detail page shows "Due Diligence Payment" and the correct status label
+- [x] **Two payment intent types — frontend** (PR #46 + #47)
+  - `intent`/`ddOrderId` in initiate payload; `useVerifyPaymentMutation()`; `openPaystackCheckout()` lazy-import helper; payment intent label + all extended status labels on buyer transactions page; mock-mode auto-success toast; visual validation confirmed via Playwright (mock mode)
 
 ---
 
