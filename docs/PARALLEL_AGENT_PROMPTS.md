@@ -54,6 +54,17 @@ Serialize schema between W2-A and W2-B if both touch verification enums.
 
 ---
 
+## Wave 4 (2026-05-26)
+
+| Track | Branch | Checklist item |
+| ----- | ------ | -------------- |
+| **W4-A** | `cursor/step6-poa` | Step 6 — PoA schema, PDF backend, execution screen |
+| **W4-B** | `cursor/step10-wizard` | Step 10 — DD Purchase Wizard |
+| **W4-C** | `cursor/checklist-dd-hook-c421` | Checklist sync Steps 3–5 + `use-due-diligence-order` hook |
+| **W4-D** | `cursor/qa-p2` | QA P2 follow-up / visual regression |
+
+---
+
 ## Shared preamble (paste at top of every agent prompt)
 
 ```markdown
