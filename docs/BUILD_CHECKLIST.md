@@ -19,12 +19,10 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 > *(Each session updates this section before stopping)*
 
-- **Date:** 2026-05-25
+- **Date:** 2026-05-26
 - **Tool:** Cursor (Composer)
-- **In progress:** Step 2 item 2 — Object storage service (`feat/step2-object-storage`)
-- **Done this session:** `StorageService` (local + S3), documents upload wired; Jest tests (storage + documents)
-- **Gate A:** `npm test` (9), `npm run validate:tsc` — pass locally
-- **Next:** PR → preview — seller document upload on Vercel (local driver uses `STORAGE_LOCAL_PATH` / ephemeral FS on serverless; note for validation)
+- **Last completed:** Step 2 — Object storage service (PR #27 merged; checklist marked `[x]` after production API validation)
+- **Next:** Step 2 — Audit logging (Prisma `AuditLog` model + `AuditService`)
 - **Blockers:** None
 
 ---
@@ -73,14 +71,13 @@ These are building blocks that other features depend on. Build them in order.
   - Tests: `backend/src/listings/listings.service.spec.ts`
   - Validated: production deploy migrate OK (`dpl_5MCjDEtMJThyHSHQ4nEpTeeHYRuq`)
 
-- [~] **Object storage service**
-  - Create `backend/src/storage/storage.service.ts` and `backend/src/storage/storage.module.ts`
-  - The service reads `STORAGE_DRIVER` env var (`local` or `s3`). Default to `local` for dev.
-  - Local driver: reads/writes files to `STORAGE_LOCAL_PATH` (default `./uploads`). `getSignedUrl()` returns `/uploads/{key}`
-  - S3 driver: uses `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner`. Reads `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`, `AWS_S3_ENDPOINT`
-  - Methods: `upload(buffer, key, mimeType): Promise<string>`, `getSignedUrl(key, expiresInSeconds?): Promise<string>`, `delete(key): Promise<void>`
-  - Update `backend/src/documents/documents.service.ts` to use `StorageService.upload()` instead of `fs.writeFileSync`
-  - Validation: upload a document through the seller dashboard, confirm the file is created in `./uploads/`, confirm the document appears in the listing documents list
+- [x] **Object storage service** (PR #27, #28; checklist closure PR)
+  - `backend/src/storage/storage.service.ts`, `storage.module.ts` — `STORAGE_DRIVER` (`local` default, `s3`); local uses `STORAGE_LOCAL_PATH` / `UPLOAD_DIR` (Vercel: `/tmp/safebuyrealties-uploads` when relative)
+  - S3: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`; env `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`, `AWS_S3_ENDPOINT`
+  - Methods: `upload`, `getSignedUrl` (local → `/uploads/{key}`), `delete`
+  - `DocumentsService.createFromUpload` uses `StorageService.upload` (no `fs.writeFileSync`)
+  - Tests: `backend/src/storage/storage.service.spec.ts`, `backend/src/documents/documents.service.spec.ts`
+  - Validated: `npm run validate:tsc`, `npm test` (3 FE), `cd backend && npm test` (10 BE), `npm run smoke:api`; production `POST /documents/upload` as seller → `storageKey` under `listings/{id}/…`, `GET /documents/listing/{id}` lists new doc (`2026-05-26`)
 
 - [ ] **Audit logging**
   - Add `AuditLog` model to Prisma schema: `id`, `actorId String?`, `action String`, `entity String`, `entityId String`, `before Json?`, `after Json?`, `ipAddress String?`, `createdAt DateTime @default(now())`; add indexes on `[entity, entityId]`, `[actorId]`, `[createdAt]`
