@@ -12,7 +12,6 @@ import { useCreateTransactionMutation } from "@/hooks/use-transactions";
 import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
-import type { ListingDto } from "@/hooks/use-listings";
 import { formatListingSpecSummary } from "@/lib/listing-spec";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
@@ -23,10 +22,6 @@ function uploadAssetUrl(storageKey: string): string {
 }
 
 export const Route = createFileRoute("/listings/$listingId")({
-  loader: async ({ params }) => {
-    const listing = await apiRequest<ListingDto>(`/listings/${params.listingId}`);
-    return listing.data;
-  },
   component: ListingDetail,
 });
 
@@ -79,16 +74,9 @@ function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] 
 
 function ListingDetail() {
   const { listingId } = Route.useParams();
-  const loaderListing = Route.useLoaderData();
   const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
-  const {
-    data: listing,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useListingQuery(listingId, loaderListing);
+  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
   const createTransaction = useCreateTransactionMutation();
   const [isRoutingToVerification, setIsRoutingToVerification] = useState(false);
 
@@ -103,7 +91,7 @@ function ListingDetail() {
   } = useVerificationListingQuery(listingId, canFetchExtras);
 
   const isBuyer = isAuthenticated && user?.role === "buyer";
-  const resolvedListing = listing ?? loaderListing;
+  const resolvedListing = listing;
   const canStartTransaction = isBuyer && resolvedListing?.status === "LIVE";
 
   const trackerSteps = useMemo((): VerificationStep[] | null => {

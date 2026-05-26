@@ -45,7 +45,11 @@ export class DocumentsService {
       sizeBytes: doc.sizeBytes,
       createdAt: doc.createdAt.toISOString(),
     };
-    if (actor.role === UserRole.BUYER) {
+    if (
+      actor.role === UserRole.BUYER &&
+      doc.category !== "listing_hero" &&
+      doc.category !== "listing_gallery"
+    ) {
       return base;
     }
     return { ...base, storageKey: doc.storageKey };

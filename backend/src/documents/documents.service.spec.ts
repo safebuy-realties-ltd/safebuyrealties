@@ -84,4 +84,44 @@ describe("DocumentsService", () => {
       }),
     );
   });
+
+  it("includes storageKey for listing media categories when actor is buyer", async () => {
+    const buyer: JwtPayload = {
+      sub: "buyer-1",
+      email: "buyer@safebuyrealties.test",
+      role: UserRole.BUYER,
+      professionalType: null,
+    };
+    prisma.listing.findUnique.mockResolvedValue({
+      id: "L1",
+      sellerId: "seller-1",
+      status: ListingStatus.LIVE,
+    });
+    prisma.document.findMany.mockResolvedValue([
+      {
+        id: "doc-hero",
+        listingId: "L1",
+        category: "listing_hero",
+        fileName: "hero.jpg",
+        mimeType: "image/jpeg",
+        sizeBytes: 100,
+        storageKey: "listings/L1/hero.jpg",
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      },
+      {
+        id: "doc-title",
+        listingId: "L1",
+        category: "title_deed",
+        fileName: "deed.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 4,
+        storageKey: "listings/L1/deed.pdf",
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      },
+    ]);
+
+    const docs = await service.listByListing("L1", buyer);
+    expect(docs[0]).toHaveProperty("storageKey", "listings/L1/hero.jpg");
+    expect(docs[1]).not.toHaveProperty("storageKey");
+  });
 });

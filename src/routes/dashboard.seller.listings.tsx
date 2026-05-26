@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DashboardLayout, PageHeader } from "@/components/dashboard/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/DashboardLayout";
 import { useAuth } from "@/lib/auth";
 import { useListingsQuery } from "@/hooks/use-listings";
 import { apiRequest } from "@/lib/api";
@@ -17,11 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/dashboard/seller/listings")({
-  component: () => (
-    <DashboardLayout role="seller">
-      <SellerListingsPage />
-    </DashboardLayout>
-  ),
+  component: SellerListingsPage,
 });
 
 function SellerListingsPage() {
@@ -68,9 +64,11 @@ function SellerListingsPage() {
 
         <div className="space-y-3">
           {listings.map((listing) => (
-            <div
+            <Link
               key={listing.id}
-              className="flex items-center justify-between rounded-md border border-border/60 px-4 py-3"
+              to="/listings/$listingId"
+              params={{ listingId: listing.id }}
+              className="flex items-center justify-between rounded-md border border-border/60 px-4 py-3 transition-colors hover:bg-secondary/40"
             >
               <div>
                 <p className="font-medium">{listing.title}</p>
@@ -79,7 +77,7 @@ function SellerListingsPage() {
               <Badge variant="outline" className={statusBadgeClass(listing.status)}>
                 {statusLabel(listing.status)}
               </Badge>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

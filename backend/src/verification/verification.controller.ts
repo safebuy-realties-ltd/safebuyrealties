@@ -22,6 +22,11 @@ export class VerificationController {
     return this.verification.getForListing(listingId, user);
   }
 
+  @Get("listing/:listingId/activity")
+  getActivityForListing(@Param("listingId") listingId: string, @CurrentUser() user: JwtPayload) {
+    return this.verification.getActivityForListing(listingId, user);
+  }
+
   @Patch("steps/:stepId")
   patchStep(
     @Param("stepId") stepId: string,

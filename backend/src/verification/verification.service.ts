@@ -172,6 +172,18 @@ export class VerificationService {
   }
 
   async getForListing(listingId: string, actor: JwtPayload) {
+    await this.assertListingVerificationAccess(listingId, actor);
+    const steps = await this.prisma.verificationStep.findMany({
+      where: { listingId },
+      orderBy: { order: "asc" },
+    });
+    return steps.map((s) => this.serializeStepForActor(s, actor));
+  }
+
+  private async assertListingVerificationAccess(
+    listingId: string,
+    actor: JwtPayload,
+  ): Promise<void> {
     const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
     if (!listing) throw new NotFoundException("Listing not found");
     let allowed = this.isStaff(actor.role) || listing.sellerId === actor.sub;
@@ -185,11 +197,36 @@ export class VerificationService {
       allowed = true;
     }
     if (!allowed) throw new ForbiddenException();
+  }
+
+  async getActivityForListing(listingId: string, actor: JwtPayload) {
+    await this.assertListingVerificationAccess(listingId, actor);
     const steps = await this.prisma.verificationStep.findMany({
       where: { listingId },
-      orderBy: { order: "asc" },
+      select: { id: true },
     });
-    return steps.map((s) => this.serializeStepForActor(s, actor));
+    const stepIds = steps.map((s) => s.id);
+    const logs = await this.prisma.auditLog.findMany({
+      where: {
+        OR: [
+          { entity: "Listing", entityId: listingId },
+          ...(stepIds.length > 0
+            ? [{ entity: "VerificationStep", entityId: { in: stepIds } }]
+            : []),
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    return logs.map((log) => ({
+      id: log.id,
+      listingId,
+      stepId: log.entity === "VerificationStep" ? log.entityId : null,
+      action: log.action,
+      actorId: log.actorId,
+      meta: (log.after as Record<string, unknown> | null) ?? null,
+      createdAt: log.createdAt.toISOString(),
+    }));
   }
 
   async patchStep(stepId: string, dto: PatchVerificationStepDto, actor: JwtPayload) {

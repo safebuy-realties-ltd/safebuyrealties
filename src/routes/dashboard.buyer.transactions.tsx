@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
-import { DashboardLayout, PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Clock, ArrowRight } from "lucide-react";
@@ -20,11 +20,7 @@ export const Route = createFileRoute("/dashboard/buyer/transactions")({
   validateSearch: (search: Record<string, unknown>): { mock?: boolean } => ({
     mock: search.mock === "1" || search.mock === true ? true : undefined,
   }),
-  component: () => (
-    <DashboardLayout role="buyer">
-      <Transactions />
-    </DashboardLayout>
-  ),
+  component: Transactions,
 });
 
 function formatMoney(amount: string, currency: string) {
