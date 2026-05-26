@@ -20,9 +20,13 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-26
-- **Tool:** Cursor (Composer)
-- **Last completed:** Step 2 — Object storage service (PR #27 merged; checklist marked `[x]` after production API validation)
-- **Next:** Step 2 — Audit logging (Prisma `AuditLog` model + `AuditService`)
+- **Tool:** Cursor (Cloud Agent)
+- **Last completed:** Step 2 — Audit logging (`cursor/audit-logging-e68d`, PR #33); object storage already on `main` (PR #27/#32)
+- **Done this session (audit):** `AuditLog` model + migration `20260526120000_audit_log`; global `AuditModule` / `AuditService` (never-throw `log()`); `AuditAction` constants; listing status transitions write `LISTING_STATUS_CHANGED` / `LISTING_REJECTED` with before/after JSON
+- **Tests:** `backend/src/audit/audit.service.spec.ts`; extended `listings.service.spec.ts` (status audit)
+- **Gate A:** `npm run validate:tsc`, `npm test` (3 FE), `cd backend && npm test` (15 BE) — pass
+- **API/local:** `PATCH /listings/:id` as staff → row in `audit_logs` (local Docker + psql); `npm run smoke:api` on production health/login OK
+- **Next:** Step 2 — Platform configuration
 - **Blockers:** None
 
 ---
@@ -79,14 +83,12 @@ These are building blocks that other features depend on. Build them in order.
   - Tests: `backend/src/storage/storage.service.spec.ts`, `backend/src/documents/documents.service.spec.ts`
   - Validated: `npm run validate:tsc`, `npm test` (3 FE), `cd backend && npm test` (10 BE), `npm run smoke:api`; production `POST /documents/upload` as seller → `storageKey` under `listings/{id}/…`, `GET /documents/listing/{id}` lists new doc (`2026-05-26`)
 
-- [ ] **Audit logging**
-  - Add `AuditLog` model to Prisma schema: `id`, `actorId String?`, `action String`, `entity String`, `entityId String`, `before Json?`, `after Json?`, `ipAddress String?`, `createdAt DateTime @default(now())`; add indexes on `[entity, entityId]`, `[actorId]`, `[createdAt]`
-  - Run migration
-  - Create `backend/src/audit/audit.service.ts` (Injectable, `log()` method that never throws — wraps in try/catch)
-  - Create `backend/src/audit/audit-actions.constants.ts` with string constants for all action types: `LISTING_CREATED`, `LISTING_STATUS_CHANGED`, `LISTING_REJECTED`, `VERIFICATION_STEP_ASSIGNED`, `VERIFICATION_STEP_COMPLETED`, `TASK_CREATED`, `TASK_STATUS_CHANGED`, `PAYMENT_INITIATED`, `PAYMENT_SUCCEEDED`, `USER_ROLE_CHANGED`
-  - Create `backend/src/audit/audit.module.ts` marked `@Global()` and exporting `AuditService`
-  - Inject `AuditService` into `listings.service.ts` and call `log()` after status transitions
-  - Validation: change a listing status via admin panel, confirm a row appears in the `audit_logs` table with correct `before` and `after` values
+- [x] **Audit logging** (PR `cursor/audit-logging-e68d`)
+  - `AuditLog` model + migration `20260526120000_audit_log`; indexes on `[entity, entityId]`, `[actorId]`, `[createdAt]`
+  - `backend/src/audit/` — `AuditService.log()` (try/catch, never throws), `audit-actions.constants.ts`, `@Global()` `AuditModule`
+  - `ListingsService.update()` logs `LISTING_STATUS_CHANGED` or `LISTING_REJECTED` with before/after status payloads
+  - Tests: `audit.service.spec.ts`, `listings.service.spec.ts` (status transition audit)
+  - Validated: local `PATCH /api/v1/listings/:id` (staff) → `audit_logs` row with correct JSON; Gate A + `npm run smoke:api`
 
 - [ ] **Platform configuration**
   - Add `PlatformConfig` singleton model to Prisma schema: `id String @id @default("singleton")`, `vatRate Decimal @default(0.075) @db.Decimal(5,4)`, `maxUploadMb Int @default(15)`, `paystackEnabled Boolean @default(true)`, `flutterwaveEnabled Boolean @default(false)`, `maintenanceMode Boolean @default(false)`, `updatedAt DateTime @updatedAt`
