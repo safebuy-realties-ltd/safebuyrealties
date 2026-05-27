@@ -13,6 +13,11 @@ import {
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  NotificationEntityType,
+  NotificationType,
+} from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import {
   DEFAULT_RELEASE_CONDITIONS,
@@ -39,6 +44,7 @@ export class EscrowService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private isStaff(role: UserRole) {
@@ -284,8 +290,7 @@ export class EscrowService {
       entityId: row.id,
       after: { transactionId, payoutId: payout.id },
     });
-    await this.notify("BUYER", "ESCROW_RELEASED", transactionId);
-    await this.notify("SELLER", "ESCROW_RELEASED", transactionId);
+    this.notifyEscrowParties(row, NotificationType.ESCROW_RELEASED);
 
     return { escrow: this.serializeEscrow(row, []), payout };
   }
@@ -328,7 +333,7 @@ export class EscrowService {
       entityId: row.id,
       after: { transactionId, note: note ?? null },
     });
-    await this.notify("BUYER", "ESCROW_REFUNDED", transactionId);
+    this.notifyEscrowParties(row, NotificationType.ESCROW_REFUNDED);
 
     return this.serializeEscrow(row, await this.checkConditions(transactionId));
   }
@@ -390,12 +395,53 @@ export class EscrowService {
     return this.serializePayout(payout);
   }
 
-  private async notify(recipientRole: string, event: string, entityId: string) {
-    await this.audit.log({
-      action: "NOTIFY",
-      entity: "Notification",
+  private notifyEscrowParties(
+    row: EscrowRow,
+    type:
+      | typeof NotificationType.ESCROW_RELEASED
+      | typeof NotificationType.ESCROW_REFUNDED,
+  ) {
+    const listingTitle = row.transaction.listing.title;
+    const buyerId = row.transaction.buyer.id;
+    const sellerId = row.transaction.listing.sellerId;
+    const entityId = row.transactionId;
+    const entityType = NotificationEntityType.Transaction;
+
+    if (type === NotificationType.ESCROW_RELEASED) {
+      void this.notifications.create({
+        userId: buyerId,
+        type: NotificationType.ESCROW_RELEASED,
+        title: "Escrow released",
+        body: `Funds held in escrow for "${listingTitle}" have been released to complete your purchase.`,
+        entityId,
+        entityType,
+      });
+      void this.notifications.create({
+        userId: sellerId,
+        type: NotificationType.ESCROW_RELEASED,
+        title: "Escrow released",
+        body: `Escrow funds for "${listingTitle}" have been released. Your payout is being processed.`,
+        entityId,
+        entityType,
+      });
+      return;
+    }
+
+    void this.notifications.create({
+      userId: buyerId,
+      type: NotificationType.ESCROW_REFUNDED,
+      title: "Escrow refunded",
+      body: `Your escrow funds for "${listingTitle}" have been refunded.`,
       entityId,
-      after: { recipientRole, event },
+      entityType,
+    });
+    void this.notifications.create({
+      userId: sellerId,
+      type: NotificationType.ESCROW_REFUNDED,
+      title: "Escrow refunded",
+      body: `The escrow hold for "${listingTitle}" was refunded to the buyer.`,
+      entityId,
+      entityType,
     });
   }
 }

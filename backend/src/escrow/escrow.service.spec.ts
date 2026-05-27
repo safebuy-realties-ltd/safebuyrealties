@@ -5,6 +5,8 @@ import { ListingStatus, TransactionStatus, Prisma } from "@prisma/client";
 import { EscrowService } from "./escrow.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/notification-types.constants";
 import { ESCROW_STATUS, PAYOUT_STATUS, PLATFORM_FEE_RATE } from "./escrow.constants";
 
 const transactionId = "tx-1";
@@ -41,8 +43,10 @@ function makeEscrow(overrides: Record<string, unknown> = {}) {
 describe("EscrowService", () => {
   let service: EscrowService;
   let prisma: Record<string, unknown>;
+  let notifications: { create: jest.Mock };
 
   beforeEach(async () => {
+    notifications = { create: jest.fn() };
     prisma = {
       transaction: { findUnique: jest.fn(), update: jest.fn() },
       escrow: { upsert: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
@@ -56,6 +60,7 @@ describe("EscrowService", () => {
         EscrowService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
+        { provide: NotificationsService, useValue: notifications },
         { provide: ConfigService, useValue: { get: () => undefined } },
       ],
     }).compile();
@@ -108,6 +113,19 @@ describe("EscrowService", () => {
 
     const result = await service.release(transactionId, "staff-1");
     expect(result.payout.platformFee).toBe(String(1_000_000 * PLATFORM_FEE_RATE));
+    expect(notifications.create).toHaveBeenCalledTimes(2);
+    expect(notifications.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "buyer-1",
+        type: NotificationType.ESCROW_RELEASED,
+      }),
+    );
+    expect(notifications.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: sellerId,
+        type: NotificationType.ESCROW_RELEASED,
+      }),
+    );
   });
 
   it("release rejects when conditions unmet", async () => {
