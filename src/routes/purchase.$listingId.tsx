@@ -37,14 +37,13 @@ import {
   type ServiceSelection,
   type WizardStep,
 } from "@/lib/purchase-wizard";
+import { PoAExecutionScreen } from "@/components/PoAExecutionScreen";
 import { useCreateTransactionMutation, useMyTransactionsQuery } from "@/hooks/use-transactions";
 import { useCreateDueDiligenceOrderMutation } from "@/hooks/use-due-diligence-order";
 import { useInitiatePaymentMutation, useVerifyPaymentMutation } from "@/hooks/use-payments";
 import { useServiceBundlesQuery, useServiceItemsQuery } from "@/hooks/use-service-catalog";
 import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
-
-// import { PoAExecutionScreen } from "@/components/PoAExecutionScreen"; // Step 6 — embed in next release
 
 const PLACEHOLDER_IMG =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
@@ -146,6 +145,20 @@ function PurchaseWizardPage() {
     patchWizard({ step: "SUCCESS" });
   }, [listingId, patchWizard]);
 
+  const handlePoaReady = useCallback(
+    (txId: string) => {
+      patchWizard({ transactionId: txId });
+    },
+    [patchWizard],
+  );
+
+  const handlePoaExecuted = useCallback(
+    (poa: { poaId: string; poaDocumentHash: string }) => {
+      patchWizard({ poaId: poa.poaId, poaDocumentHash: poa.poaDocumentHash });
+    },
+    [patchWizard],
+  );
+
   if (!isReady || !hydrated) {
     return (
       <div className="min-h-screen bg-background">
@@ -186,13 +199,18 @@ function PurchaseWizardPage() {
   }
 
   if (listing.status !== "LIVE") {
+    const underOffer = listing.status === "UNDER_OFFER";
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
         <main className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <h1 className="text-xl font-semibold">Due diligence unavailable</h1>
+          <h1 className="text-xl font-semibold">
+            {underOffer ? "Property under offer" : "Due diligence unavailable"}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Due diligence can only be started on live, verified listings.
+            {underOffer
+              ? "This property is currently under offer and cannot be reserved by another buyer."
+              : "Due diligence can only be started on live, verified listings."}
           </p>
           <Button asChild className="mt-6">
             <Link to="/listings/$listingId" params={{ listingId }}>
@@ -269,12 +287,25 @@ function PurchaseWizardPage() {
         )}
 
         {wizard.step === "POA_EXECUTION" && (
-          <PoaPlaceholderStep
+          <PoaExecutionStep
+            listingId={listingId}
+            listingTitle={listing.title}
+            listingAddress={listing.location}
+            buyerName={wizard.buyerInfo?.legalName}
+            transactionId={wizard.transactionId}
+            poaId={wizard.poaId}
+            poaDocumentHash={wizard.poaDocumentHash}
+            myTransactions={myTransactions}
             onBack={goBack}
-            onSkip={() => {
-              patchWizard({ poaSkipped: true });
-              goNext();
+            onReady={(transactionId) => patchWizard({ transactionId })}
+            onComplete={(poa) => {
+              patchWizard({
+                poaId: poa.poaId,
+                poaDocumentHash: poa.poaDocumentHash,
+                step: "SERVICE_SELECTION",
+              });
             }}
+            refetchTransactions={refetchTransactions}
           />
         )}
 
@@ -473,27 +504,187 @@ function BuyerInfoStep({
   );
 }
 
-function PoaPlaceholderStep({ onBack, onSkip }: { onBack: () => void; onSkip: () => void }) {
-  return (
-    <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-      <h2 className="text-xl font-semibold">Power of Attorney</h2>
-      <div className="mt-6 rounded-xl border border-dashed border-border bg-muted/40 p-8 text-center">
-        <p className="text-base font-medium text-foreground">
-          Power of Attorney — complete in next release
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          PoA execution will be embedded here via{" "}
-          <code className="text-xs">PoAExecutionScreen</code>. For this release you can continue
-          without executing PoA.
-        </p>
-      </div>
-      <div className="mt-8 flex gap-3">
-        <Button variant="outline" onClick={onBack}>
+type TxRow = { id: string; listingId: string; status: string };
+
+function findOpenTransaction(list: TxRow[] | undefined, listingId: string) {
+  return list?.find(
+    (t) =>
+      t.listingId === listingId &&
+      (t.status === "INITIATED" || t.status === "IN_PROGRESS"),
+  );
+}
+
+async function resolveTransactionIdForListing(
+  listingId: string,
+  transactionId: string | undefined,
+  myTransactions: TxRow[] | undefined,
+  createTransaction: ReturnType<typeof useCreateTransactionMutation>,
+  refetchTransactions: () => Promise<{ data?: TxRow[] }>,
+): Promise<string> {
+  if (transactionId) return transactionId;
+  const open = findOpenTransaction(myTransactions, listingId);
+  if (open) return open.id;
+
+  try {
+    const tx = await createTransaction.mutateAsync(listingId);
+    return tx.id;
+  } catch (e) {
+    if (e instanceof ApiError && e.code === "CONFLICT") {
+      const refreshed = await refetchTransactions();
+      const existing = findOpenTransaction(refreshed.data ?? myTransactions, listingId);
+      if (existing) return existing.id;
+    }
+    throw e;
+  }
+}
+
+function PoaExecutionStep({
+  listingId,
+  listingTitle,
+  listingAddress,
+  buyerName,
+  transactionId,
+  poaId,
+  poaDocumentHash,
+  myTransactions,
+  onBack,
+  onReady,
+  onComplete,
+  refetchTransactions,
+}: {
+  listingId: string;
+  listingTitle: string;
+  listingAddress: string;
+  buyerName?: string;
+  transactionId?: string;
+  poaId?: string;
+  poaDocumentHash?: string;
+  myTransactions?: TxRow[];
+  onBack: () => void;
+  onReady: (transactionId: string) => void;
+  onComplete: (poa: { poaId: string; poaDocumentHash: string }) => void;
+  refetchTransactions: () => Promise<{ data?: TxRow[] }>;
+}) {
+  const createTransaction = useCreateTransactionMutation();
+  const [resolvedTxId, setResolvedTxId] = useState<string | null>(transactionId ?? null);
+  const [resolving, setResolving] = useState(!transactionId);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (transactionId) {
+      setResolvedTxId(transactionId);
+      setResolving(false);
+      return;
+    }
+
+    let cancelled = false;
+    setResolving(true);
+    setResolveError(null);
+
+    void (async () => {
+      try {
+        const txId = await resolveTransactionIdForListing(
+          listingId,
+          transactionId,
+          myTransactions,
+          createTransaction,
+          refetchTransactions,
+        );
+        if (cancelled) return;
+        setResolvedTxId(txId);
+        onReady(txId);
+      } catch (e) {
+        if (cancelled) return;
+        setResolveError(e instanceof ApiError ? e.message : "Could not start transaction.");
+      } finally {
+        if (!cancelled) setResolving(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [listingId, transactionId, myTransactions, createTransaction, refetchTransactions, onReady]);
+
+  if (resolving) {
+    return (
+      <section className="rounded-2xl border border-border/60 bg-card p-8 text-center shadow-[var(--shadow-card)]">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">Preparing your transaction…</p>
+      </section>
+    );
+  }
+
+  if (resolveError || !resolvedTxId) {
+    return (
+      <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+        <h2 className="text-xl font-semibold">Power of Attorney</h2>
+        <p className="mt-4 text-sm text-destructive">{resolveError ?? "Transaction unavailable."}</p>
+        <Button className="mt-6" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button className="flex-1" onClick={onSkip}>
-          Continue without PoA (dev)
-          <ArrowRight className="ml-2 h-4 w-4" />
+      </section>
+    );
+  }
+
+  if (poaId) {
+    return (
+      <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <CheckCircle2 className="h-12 w-12 text-emerald-600" aria-hidden />
+          <h2 className="text-xl font-semibold">Power of Attorney on file</h2>
+          <p className="text-sm text-muted-foreground">
+            You have already executed a Power of Attorney for this transaction. Continue to select
+            due diligence services.
+          </p>
+        </div>
+        {poaDocumentHash && (
+          <div className="mt-6 rounded-lg border bg-muted/40 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Document hash (SHA-256)
+            </p>
+            <p className="mt-2 break-all font-mono text-sm">{poaDocumentHash}</p>
+          </div>
+        )}
+        <div className="mt-8 flex gap-3">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={() =>
+              onComplete({ poaId, poaDocumentHash: poaDocumentHash ?? "" })
+            }
+          >
+            Continue to services
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
+      <div className="border-b border-border/60 px-6 py-4">
+        <h2 className="text-xl font-semibold">Power of Attorney</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Authorise SafeBuyRealties to conduct verification on your behalf before selecting services.
+        </p>
+      </div>
+      <PoAExecutionScreen
+        transactionId={resolvedTxId}
+        buyerName={buyerName}
+        listingTitle={listingTitle}
+        listingAddress={listingAddress}
+        className="px-6 pb-6 pt-2"
+        onSuccess={(poa) =>
+          onComplete({ poaId: poa.id, poaDocumentHash: poa.documentHash })
+        }
+      />
+      <div className="border-t border-border/60 px-6 py-4">
+        <Button variant="outline" onClick={onBack}>
+          Back
         </Button>
       </div>
     </section>
@@ -534,8 +725,6 @@ function ServiceSelectionStep({
     </section>
   );
 }
-
-type TxRow = { id: string; listingId: string; status: string };
 
 function OrderSummaryStep({
   listingId,
@@ -619,9 +808,12 @@ function OrderSummaryStep({
       return tx.id;
     } catch (e) {
       if (e instanceof ApiError && e.code === "CONFLICT") {
-        const refreshed = await refetchTransactions();
-        const existing = findOpenTx(refreshed.data ?? myTransactions);
-        if (existing) return existing.id;
+        if (e.message.includes("already have an open transaction")) {
+          const refreshed = await refetchTransactions();
+          const existing = findOpenTx(refreshed.data ?? myTransactions);
+          if (existing) return existing.id;
+        }
+        toast.error(e.message);
       }
       throw e;
     }
