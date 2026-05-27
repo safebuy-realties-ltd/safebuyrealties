@@ -1,4 +1,14 @@
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from "class-validator";
 import { Type } from "class-transformer";
 import { ListingStatus } from "@prisma/client";
 
@@ -23,4 +33,32 @@ export class ListListingsQueryDto {
   @IsOptional()
   @IsUUID()
   sellerId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  location?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  buildType?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minBeds?: number;
 }
