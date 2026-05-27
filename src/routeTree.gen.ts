@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
 import { Route as ListingsListingIdRouteImport } from './routes/listings.$listingId'
 import { Route as DashboardStaffRouteImport } from './routes/dashboard.staff'
 import { Route as DashboardSellerRouteImport } from './routes/dashboard.seller'
@@ -51,6 +52,11 @@ const LoginRoute = LoginRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PurchaseListingIdRoute = PurchaseListingIdRouteImport.update({
+  id: '/purchase/$listingId',
+  path: '/purchase/$listingId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListingsListingIdRoute = ListingsListingIdRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/seller': typeof DashboardSellerRouteWithChildren
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/dashboard/seller': typeof DashboardSellerRouteWithChildren
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller'
     | '/dashboard/staff'
     | '/listings/$listingId'
+    | '/purchase/$listingId'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/listings/$listingId'
+    | '/purchase/$listingId'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller'
     | '/dashboard/staff'
     | '/listings/$listingId'
+    | '/purchase/$listingId'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   DashboardSellerRoute: typeof DashboardSellerRouteWithChildren
   DashboardStaffRoute: typeof DashboardStaffRouteWithChildren
   ListingsListingIdRoute: typeof ListingsListingIdRoute
+  PurchaseListingIdRoute: typeof PurchaseListingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -394,6 +407,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchase/$listingId': {
+      id: '/purchase/$listingId'
+      path: '/purchase/$listingId'
+      fullPath: '/purchase/$listingId'
+      preLoaderRoute: typeof PurchaseListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/listings/$listingId': {
@@ -686,6 +706,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardSellerRoute: DashboardSellerRouteWithChildren,
   DashboardStaffRoute: DashboardStaffRouteWithChildren,
   ListingsListingIdRoute: ListingsListingIdRoute,
+  PurchaseListingIdRoute: PurchaseListingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

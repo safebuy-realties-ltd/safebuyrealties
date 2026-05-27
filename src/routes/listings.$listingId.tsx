@@ -1,15 +1,13 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, MapPin, FileText, CheckCircle2, PlayCircle } from "lucide-react";
 import { VerificationTracker, type VerificationStep } from "@/components/VerificationTracker";
-import { toast } from "sonner";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
-import { useCreateTransactionMutation } from "@/hooks/use-transactions";
-import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api";
+import { API_BASE_URL, ApiError } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import { formatListingSpecSummary } from "@/lib/listing-spec";
@@ -74,10 +72,8 @@ function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] 
 
 function ListingDetail() {
   const { listingId } = Route.useParams();
-  const navigate = useNavigate();
   const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
-  const createTransaction = useCreateTransactionMutation();
   const verificationSectionId = "listing-verification-milestones";
 
   const canFetchExtras = isReady && isAuthenticated && !!listingId;
@@ -101,36 +97,6 @@ function ListingDetail() {
 
   const openVerificationStatus = () => {
     document.getElementById(verificationSectionId)?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const startTransaction = async () => {
-    if (!resolvedListing) return;
-    try {
-      await createTransaction.mutateAsync(resolvedListing.id);
-      toast.success("Transaction started", {
-        description: "Continue from your buyer dashboard to complete payment when ready.",
-      });
-      navigate({ to: "/dashboard/buyer/transactions" });
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Could not start transaction");
-    }
-  };
-
-  const handleMakeOffer = async () => {
-    if (!isAuthenticated) {
-      void navigate({ to: "/login" });
-      return;
-    }
-    if (!isBuyer || !listing || listing.status !== "LIVE") {
-      toast.error("Only buyers can make offers on live listings.");
-      return;
-    }
-    try {
-      await createTransaction.mutateAsync(listing.id);
-      navigate({ to: "/dashboard/buyer/transactions" });
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Could not create offer.");
-    }
   };
 
   if (isLoading) {
@@ -313,14 +279,11 @@ function ListingDetail() {
               </p>
               <p className="mt-2 text-3xl font-semibold text-primary">{priceLabel}</p>
               {canStartTransaction ? (
-                <Button
-                  className="mt-5 w-full"
-                  size="lg"
-                  onClick={() => void startTransaction()}
-                  disabled={createTransaction.isPending}
-                >
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  {createTransaction.isPending ? "Starting…" : "Start transaction"}
+                <Button className="mt-5 w-full" size="lg" asChild>
+                  <Link to="/purchase/$listingId" params={{ listingId }}>
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Start due diligence
+                  </Link>
                 </Button>
               ) : (
                 <Button className="mt-5 w-full" size="lg" onClick={openVerificationStatus}>
@@ -328,18 +291,7 @@ function ListingDetail() {
                   View verification status
                 </Button>
               )}
-              <Button
-                variant="outline"
-                className="mt-2 w-full"
-                type="button"
-                onClick={() => void handleMakeOffer()}
-                disabled={
-                  createTransaction.isPending || !isBuyer || resolvedListing?.status !== "LIVE"
-                }
-              >
-                Make an offer
-              </Button>
-              <Button variant="ghost" className="mt-1 w-full" type="button" disabled>
+              <Button variant="ghost" className="mt-2 w-full" type="button" disabled>
                 Schedule visit
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
