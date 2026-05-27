@@ -27,6 +27,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Overview", to: "/dashboard/buyer", icon: LayoutDashboard },
     { label: "Browse Listings", to: "/dashboard/buyer/listings", icon: Building2 },
     { label: "Transactions", to: "/dashboard/buyer/transactions", icon: FileText },
+    { label: "Verify Identity", to: "/dashboard/buyer/kyc", icon: BadgeCheck },
     { label: "Services", to: "/dashboard/buyer/services", icon: ShoppingCart },
   ],
   seller: [
@@ -44,6 +45,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Overview", to: "/dashboard/staff", icon: LayoutDashboard },
     { label: "Submissions", to: "/dashboard/staff/submissions", icon: ClipboardList },
     { label: "Credentials", to: "/dashboard/staff/credentials", icon: BadgeCheck },
+    { label: "KYC Reviews", to: "/dashboard/staff/kyc", icon: Users },
     { label: "Workflow", to: "/dashboard/staff/workflow", icon: FileText },
   ],
   admin: [

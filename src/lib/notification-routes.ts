@@ -39,6 +39,14 @@ export function notificationEntityTarget(
         return { to: "/dashboard/staff/workflow" };
       }
       return null;
+    case "KycRecord":
+      if (role === "buyer") {
+        return { to: "/dashboard/buyer/kyc" };
+      }
+      if (role === "staff" || role === "admin") {
+        return { to: "/dashboard/staff/kyc" };
+      }
+      return null;
     default:
       return null;
   }

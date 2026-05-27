@@ -20,11 +20,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-27
-- **Tool:** Cursor (Cloud Agent) — wave 2 sync
-- **Last completed:** Steps 6 (PoA), 7 (escrow/payouts/anti-double-sell), 8 (notifications), 10 (DD purchase wizard)
-- **Done this session:** Wave 2 merged to main — PRs #51, #54, #55, #56, #57, #58
+- **Tool:** Cursor (Cloud Agent) — wave 3
+- **Last completed:** Steps 6–10 core + Step 9 KYC + Step 11 advanced search (PRs #59–#62 pending KYC #60)
+- **Done this session:** Wave 2 (#51–#58) + wave 3 docs/search/escrow-notify; KYC on branch
 - **Tests:** `npm run validate:tsc`, `npm test`, `cd backend && npm test`
-- **Next:** Step 9 KYC, Step 11 remaining screens
+- **Next:** Step 11 remaining (saved properties, inspections, analytics)
 - **Blockers:** none
 
 ---

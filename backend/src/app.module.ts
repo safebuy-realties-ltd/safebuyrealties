@@ -20,6 +20,7 @@ import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
 import { PoaModule } from "./poa/poa.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { EscrowModule } from "./escrow/escrow.module";
+import { KycModule } from "./kyc/kyc.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { EscrowModule } from "./escrow/escrow.module";
     DueDiligenceModule,
     PoaModule,
     EscrowModule,
+    KycModule,
     HealthModule,
   ],
   providers: [

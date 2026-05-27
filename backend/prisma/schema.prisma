@@ -115,6 +115,7 @@ model User {
   professionalProfile ProfessionalProfile?
   powerOfAttorneys   PowerOfAttorney[]   @relation("BuyerPoA")
   notifications      Notification[]
+  kycRecord          KycRecord?
 }
 
 model Listing {
@@ -418,4 +419,20 @@ model Payout {
   @@index([transactionId])
   @@index([sellerId])
   @@map("payouts")
+}
+
+model KycRecord {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       String    @default("NOT_SUBMITTED")
+  documentKeys Json      @default("[]")
+  reviewerId   String?
+  reviewNote   String?
+  submittedAt  DateTime?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("kyc_records")
 }
