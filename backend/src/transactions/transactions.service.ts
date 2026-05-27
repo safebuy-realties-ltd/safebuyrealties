@@ -44,6 +44,11 @@ export class TransactionsService {
     }
     const listing = await this.prisma.listing.findUnique({ where: { id: dto.listingId } });
     if (!listing) throw new NotFoundException("Listing not found");
+    if (listing.status === ListingStatus.UNDER_OFFER) {
+      throw new ConflictException(
+        "This property is currently under offer and cannot be reserved by another buyer",
+      );
+    }
     if (listing.status !== ListingStatus.LIVE) {
       throw new BadRequestException("Transactions can only be started on live listings");
     }

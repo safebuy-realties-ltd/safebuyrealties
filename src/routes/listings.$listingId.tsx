@@ -11,6 +11,7 @@ import { API_BASE_URL, ApiError } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import { formatListingSpecSummary } from "@/lib/listing-spec";
+import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
@@ -88,7 +89,9 @@ function ListingDetail() {
 
   const isBuyer = isAuthenticated && user?.role === "buyer";
   const resolvedListing = listing;
-  const canStartTransaction = isBuyer && resolvedListing?.status === "LIVE";
+  const isLive = resolvedListing?.status === "LIVE";
+  const isUnderOffer = resolvedListing?.status === "UNDER_OFFER";
+  const canStartTransaction = isBuyer && isLive;
 
   const trackerSteps = useMemo((): VerificationStep[] | null => {
     if (!verSteps?.length) return null;
@@ -150,7 +153,7 @@ function ListingDetail() {
   }
 
   const priceLabel = formatMoney(resolvedListing.price, resolvedListing.currency);
-  const verified = resolvedListing.status === "LIVE";
+  const verified = isLive;
   const heroDoc = documents?.find((d) => d.category === "listing_hero");
   const heroSrc = heroDoc ? uploadAssetUrl(heroDoc.storageKey) : PLACEHOLDER_IMG;
   const galleryPhotos = (documents ?? []).filter((d) => d.category === "listing_gallery");
@@ -209,6 +212,11 @@ function ListingDetail() {
               {verified && (
                 <Badge className="gap-1 border-primary/20 bg-primary-soft text-primary">
                   <ShieldCheck className="h-3.5 w-3.5" /> Live listing
+                </Badge>
+              )}
+              {isUnderOffer && (
+                <Badge variant="outline" className={statusBadgeClass("UNDER_OFFER")}>
+                  {statusLabel("UNDER_OFFER")}
                 </Badge>
               )}
             </div>
@@ -285,6 +293,16 @@ function ListingDetail() {
                     Start due diligence
                   </Link>
                 </Button>
+              ) : isBuyer && isUnderOffer ? (
+                <>
+                  <Button className="mt-5 w-full" size="lg" type="button" disabled>
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Start due diligence
+                  </Button>
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    This property is currently under offer and cannot be reserved by another buyer.
+                  </p>
+                </>
               ) : (
                 <Button className="mt-5 w-full" size="lg" onClick={openVerificationStatus}>
                   <PlayCircle className="mr-2 h-4 w-4" />
