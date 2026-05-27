@@ -48,14 +48,11 @@ function TaskDetailPage() {
   }, [task, verificationSteps]);
 
   const feedback = useMemo(() => {
-    if (revisionStep?.revisionNote?.trim()) return [revisionStep.revisionNote.trim()];
-    const raw = task?.reviewFeedback;
-    if (Array.isArray(raw)) return raw.filter((s): s is string => typeof s === "string");
-    if (typeof raw === "string" && raw.trim()) return [raw];
-    return [];
-  }, [task, revisionStep]);
+    const note = revisionStep?.revisionNote?.trim();
+    return note ? [note] : [];
+  }, [revisionStep]);
 
-  const revisionStatusLabel = revisionStep?.status ?? task?.revisionStatus ?? "none";
+  const revisionStatusLabel = revisionStep?.status ?? "none";
 
   if (isLoading) return <p className="mt-6 text-sm text-muted-foreground">Loading task…</p>;
   if (isError || !task) {
@@ -65,8 +62,6 @@ function TaskDetailPage() {
       </p>
     );
   }
-
-  const requiresEvidence = Boolean(task.requiresDocumentEvidence);
 
   const submit = () => {
     const doPatch = () =>
@@ -90,7 +85,7 @@ function TaskDetailPage() {
         },
       );
 
-    if (requiresEvidence && file) {
+    if (file) {
       uploadMutation.mutate(
         {
           listingId: task.listingId,
@@ -105,11 +100,6 @@ function TaskDetailPage() {
           onError: (e) => toast.error(e instanceof ApiError ? e.message : "Upload failed."),
         },
       );
-      return;
-    }
-
-    if (requiresEvidence && !file) {
-      toast.error("This task requires evidence. Upload a document before submitting.");
       return;
     }
 
@@ -168,7 +158,6 @@ function TaskDetailPage() {
             <p>
               <strong>Description:</strong> {task.description ?? "—"}
             </p>
-            {requiresEvidence && <Badge variant="outline">Document evidence required</Badge>}
           </CardContent>
         </Card>
 

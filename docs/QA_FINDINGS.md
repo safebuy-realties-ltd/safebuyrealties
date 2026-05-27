@@ -32,10 +32,10 @@ The product had **broad FE/BE contract drift**: UI was built ahead of APIs, layo
 | QA-008 | P1 | Verification | Staff workflow step Reject | 400 on patch | FE sends status `REJECTED`; enum has `BLOCKED` | **fixed** |
 | QA-009 | P1 | Verification | Staff assign pro | Assign fails on fresh seed | `assertProfessionalVerified` but seed has no verified profiles | **fixed** (seed + `ensureVerifiedProfessionalProfiles` upsert) |
 | QA-010 | P1 | Tasks | `PATCH /tasks/:id` from pro task UI | Report submit fails | FE sends `completionNotes`, `checklist`, `report` — not in `PatchTaskDto` | **fixed** |
-| QA-011 | P2 | Tasks | Pro task detail UI | Evidence/revision UI never populated | FE types fields backend does not return | open |
-| QA-012 | P2 | Buyer | `/dashboard/buyer` cards | beds/baths show 0 | `toListingCard` hardcodes zeros | open |
-| QA-013 | P2 | Listings | Listing detail CTA | “Verification status” wrong destination | Navigates to buyer listings, not per-listing | open |
-| QA-014 | P2 | Admin | `/dashboard/admin/settings` | Placeholder while API exists | UI not wired to platform-config | open |
+| QA-011 | P2 | Tasks | Pro task detail UI | Evidence/revision UI never populated | FE types fields backend does not return | **fixed** |
+| QA-012 | P2 | Buyer | `/dashboard/buyer` cards | beds/baths show 0 | `toListingCard` hardcodes zeros | **fixed** |
+| QA-013 | P2 | Listings | Listing detail CTA | “Verification status” wrong destination | Navigates to buyer listings, not per-listing | **fixed** |
+| QA-014 | P2 | Admin | `/dashboard/admin/settings` | Placeholder while API exists | UI not wired to platform-config | **fixed** |
 | QA-015 | P2 | Seed | Documents | Seeded docs don't display | `storageKey: seed/...` with no files on disk | open |
 | QA-016 | P1 | Payments | Buyer transactions + Paystack | Not validated E2E | Needs test keys in `backend/.env` + live popup test | **partial** — production has Paystack; local popup blocked without DATABASE_URL |
 | QA-017 | P2 | Product | `/purchase/:id` | DD wizard missing | Step 10 not built — **defer**, not stabilization | deferred |
