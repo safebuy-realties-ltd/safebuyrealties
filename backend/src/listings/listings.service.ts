@@ -120,6 +120,91 @@ export class ListingsService {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
   }
 
+  private buildSearchWhere(query: ListListingsQueryDto): Prisma.ListingWhereInput {
+    const conditions: Prisma.ListingWhereInput[] = [];
+
+    const location = query.location?.trim();
+    if (location) {
+      conditions.push({
+        location: { contains: location, mode: "insensitive" },
+      });
+    }
+
+    if (query.minPrice != null) {
+      conditions.push({ price: { gte: query.minPrice } });
+    }
+
+    if (query.maxPrice != null) {
+      conditions.push({ price: { lte: query.maxPrice } });
+    }
+
+    const buildType = query.buildType?.trim();
+    if (buildType) {
+      conditions.push({
+        buildType: { equals: buildType, mode: "insensitive" },
+      });
+    }
+
+    if (query.minBeds != null) {
+      conditions.push({ beds: { gte: query.minBeds } });
+    }
+
+    if (conditions.length === 0) return {};
+    if (conditions.length === 1) return conditions[0];
+    return { AND: conditions };
+  }
+
+  private buildRoleWhere(
+    query: ListListingsQueryDto,
+    actor: JwtPayload | null,
+  ): Prisma.ListingWhereInput {
+    if (!actor) {
+      return { status: ListingStatus.LIVE };
+    }
+
+    if (actor.role === UserRole.SELLER) {
+      const where: Prisma.ListingWhereInput = { sellerId: actor.sub };
+      if (query.status) where.status = query.status;
+      return where;
+    }
+
+    if (this.isStaff(actor.role)) {
+      const where: Prisma.ListingWhereInput = {};
+      if (query.status) where.status = query.status;
+      if (query.sellerId) where.sellerId = query.sellerId;
+      return where;
+    }
+
+    if (actor.role === UserRole.PROFESSIONAL) {
+      return {
+        AND: [
+          {
+            OR: [
+              { verificationSteps: { some: { assignedProfessionalId: actor.sub } } },
+              { tasks: { some: { assigneeId: actor.sub } } },
+            ],
+          },
+          ...(query.status ? [{ status: query.status }] : []),
+        ],
+      };
+    }
+
+    if (actor.role === UserRole.BUYER) {
+      return { status: query.status ?? ListingStatus.LIVE };
+    }
+
+    return {
+      OR: [{ status: ListingStatus.LIVE }, { sellerId: actor.sub }],
+    };
+  }
+
+  private mergeWhere(...parts: Prisma.ListingWhereInput[]): Prisma.ListingWhereInput {
+    const active = parts.filter((part) => Object.keys(part).length > 0);
+    if (active.length === 0) return {};
+    if (active.length === 1) return active[0];
+    return { AND: active };
+  }
+
   async create(dto: CreateListingDto, actor: JwtPayload) {
     if (
       actor.role !== UserRole.SELLER &&
@@ -172,31 +257,10 @@ export class ListingsService {
   async findAll(query: ListListingsQueryDto, actor: JwtPayload | null) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
-    const where: Prisma.ListingWhereInput = {};
-
-    if (!actor) {
-      where.status = ListingStatus.LIVE;
-    } else if (actor.role === UserRole.SELLER) {
-      where.sellerId = actor.sub;
-      if (query.status) where.status = query.status;
-    } else if (this.isStaff(actor.role)) {
-      if (query.status) where.status = query.status;
-      if (query.sellerId) where.sellerId = query.sellerId;
-    } else if (actor.role === UserRole.PROFESSIONAL) {
-      where.AND = [
-        {
-          OR: [
-            { verificationSteps: { some: { assignedProfessionalId: actor.sub } } },
-            { tasks: { some: { assigneeId: actor.sub } } },
-          ],
-        },
-        ...(query.status ? [{ status: query.status }] : []),
-      ];
-    } else if (actor.role === UserRole.BUYER) {
-      where.status = ListingStatus.LIVE;
-    } else {
-      where.OR = [{ status: ListingStatus.LIVE }, { sellerId: actor.sub }];
-    }
+    const where = this.mergeWhere(
+      this.buildRoleWhere(query, actor),
+      this.buildSearchWhere(query),
+    );
 
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.listing.count({ where }),

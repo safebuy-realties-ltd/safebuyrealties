@@ -60,12 +60,22 @@ const staffActor: JwtPayload = {
   professionalType: null,
 };
 
+const buyerActor: JwtPayload = {
+  sub: "buyer-1",
+  email: "buyer@safebuyrealties.test",
+  role: UserRole.BUYER,
+  professionalType: null,
+};
+
 describe("ListingsService", () => {
   let service: ListingsService;
   let audit: { log: jest.Mock };
   let notifications: { create: jest.Mock; createForStaff: jest.Mock };
   let prisma: {
+    $transaction: jest.Mock;
     listing: {
+      count: jest.Mock;
+      findMany: jest.Mock;
       findUnique: jest.Mock;
       findUniqueOrThrow: jest.Mock;
       update: jest.Mock;
@@ -81,7 +91,10 @@ describe("ListingsService", () => {
       createForStaff: jest.fn().mockResolvedValue(undefined),
     };
     prisma = {
+      $transaction: jest.fn(),
       listing: {
+        count: jest.fn(),
+        findMany: jest.fn(),
         findUnique: jest.fn(),
         findUniqueOrThrow: jest.fn(),
         update: jest.fn(),
@@ -92,6 +105,9 @@ describe("ListingsService", () => {
         createMany: jest.fn(),
       },
     };
+    prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
+    prisma.listing.count.mockResolvedValue(0);
+    prisma.listing.findMany.mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -289,6 +305,87 @@ describe("ListingsService", () => {
       await service.update("listing-1", { title: "Renamed" }, staffActor);
 
       expect(audit.log).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("findAll search filters", () => {
+    it("applies minBeds and location filters for buyers", async () => {
+      await service.findAll(
+        { minBeds: 3, location: "Lagos" },
+        buyerActor,
+      );
+
+      expect(prisma.listing.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              { status: ListingStatus.LIVE },
+              {
+                AND: [
+                  { location: { contains: "Lagos", mode: "insensitive" } },
+                  { beds: { gte: 3 } },
+                ],
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it("applies price range and buildType filters", async () => {
+      await service.findAll(
+        {
+          minPrice: 10_000_000,
+          maxPrice: 50_000_000,
+          buildType: "detached",
+        },
+        buyerActor,
+      );
+
+      expect(prisma.listing.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [
+              { status: ListingStatus.LIVE },
+              {
+                AND: [
+                  { price: { gte: 10_000_000 } },
+                  { price: { lte: 50_000_000 } },
+                  { buildType: { equals: "detached", mode: "insensitive" } },
+                ],
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it("honours explicit status for staff alongside search filters", async () => {
+      await service.findAll(
+        {
+          status: ListingStatus.VERIFIED,
+          minBeds: 2,
+        },
+        staffActor,
+      );
+
+      expect(prisma.listing.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            AND: [{ status: ListingStatus.VERIFIED }, { beds: { gte: 2 } }],
+          },
+        }),
+      );
+    });
+
+    it("defaults buyers to LIVE listings when status is omitted", async () => {
+      await service.findAll({}, buyerActor);
+
+      expect(prisma.listing.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: ListingStatus.LIVE },
+        }),
+      );
     });
   });
 });

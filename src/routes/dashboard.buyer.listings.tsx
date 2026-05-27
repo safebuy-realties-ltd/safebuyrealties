@@ -12,13 +12,36 @@ import {
   ShieldCheck,
   ShieldAlert,
   Clock,
+  X,
 } from "lucide-react";
-import { useListingsQuery } from "@/hooks/use-listings";
+import { useListingsQuery, type ListingsQueryOptions } from "@/hooks/use-listings";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { statusBadgeClass, statusIsPublic, statusLabel } from "@/lib/listing-status";
+import { formatBuildType } from "@/lib/listing-spec";
 
 export const Route = createFileRoute("/dashboard/buyer/listings")({
   component: BrowseListings,
 });
+
+type ListingFilters = {
+  location: string;
+  minPrice: string;
+  maxPrice: string;
+  buildType: string;
+  minBeds: string;
+  status: string;
+};
+
+const EMPTY_FILTERS: ListingFilters = {
+  location: "",
+  minPrice: "",
+  maxPrice: "",
+  buildType: "",
+  minBeds: "",
+  status: "",
+};
+
+const STATUS_OPTIONS = ["LIVE", "UNDER_OFFER", "SOLD"] as const;
 
 type Row = {
   id: string;
@@ -72,35 +95,59 @@ function listingToRow(l: {
   };
 }
 
+function parseOptionalNumber(raw: string): number | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function parseOptionalInt(raw: string): number | undefined {
+  const n = parseOptionalNumber(raw);
+  if (n == null) return undefined;
+  return Number.isInteger(n) ? n : Math.trunc(n);
+}
+
+function filtersToQuery(filters: ListingFilters): ListingsQueryOptions {
+  const query: ListingsQueryOptions = {};
+  const location = filters.location.trim();
+  if (location) query.location = location;
+
+  const minPrice = parseOptionalNumber(filters.minPrice);
+  if (minPrice != null) query.minPrice = minPrice;
+
+  const maxPrice = parseOptionalNumber(filters.maxPrice);
+  if (maxPrice != null) query.maxPrice = maxPrice;
+
+  const buildType = filters.buildType.trim();
+  if (buildType) query.buildType = buildType;
+
+  const minBeds = parseOptionalInt(filters.minBeds);
+  if (minBeds != null) query.minBeds = minBeds;
+
+  if (filters.status) query.status = filters.status;
+
+  return query;
+}
+
 type SortKey = "title" | "location" | "priceValue" | "beds" | "status";
 type SortDir = "asc" | "desc";
 
 function BrowseListings() {
-  const { data, isLoading, isError, error, refetch } = useListingsQuery();
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | "all">("all");
-  const [beds, setBeds] = useState<string>("any");
+  const [filters, setFilters] = useState<ListingFilters>(EMPTY_FILTERS);
+  const debouncedFilters = useDebouncedValue(filters, 300);
+  const queryOptions = useMemo(() => filtersToQuery(debouncedFilters), [debouncedFilters]);
+  const { data, isLoading, isFetching, isError, error, refetch } = useListingsQuery(queryOptions);
   const [sortKey, setSortKey] = useState<SortKey>("priceValue");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const baseRows = useMemo(
-    () => (data?.listings ?? []).filter((l) => statusIsPublic(l.status)).map(listingToRow),
+    () => (data?.listings ?? []).map(listingToRow),
     [data?.listings],
   );
 
-  const statusOptions = useMemo(() => {
-    const set = new Set(baseRows.map((r) => r.status));
-    return Array.from(set).sort();
-  }, [baseRows]);
-
   const rows = useMemo(() => {
-    const filtered = baseRows.filter((r) => {
-      if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      if (beds !== "any" && r.beds < Number(beds)) return false;
-      if (q && !`${r.title} ${r.location}`.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
-    });
-    const sorted = [...filtered].sort((a, b) => {
+    const sorted = [...baseRows].sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
       if (typeof av === "number" && typeof bv === "number")
@@ -110,7 +157,40 @@ function BrowseListings() {
         : String(bv).localeCompare(String(av));
     });
     return sorted;
-  }, [baseRows, q, statusFilter, beds, sortKey, sortDir]);
+  }, [baseRows, sortKey, sortDir]);
+
+  const activeChips = useMemo(() => {
+    const chips: { key: keyof ListingFilters; label: string }[] = [];
+    const location = filters.location.trim();
+    if (location) chips.push({ key: "location", label: `Location: ${location}` });
+
+    const minPrice = parseOptionalNumber(filters.minPrice);
+    if (minPrice != null) chips.push({ key: "minPrice", label: `Min price: ${formatNgn(String(minPrice))}` });
+
+    const maxPrice = parseOptionalNumber(filters.maxPrice);
+    if (maxPrice != null) chips.push({ key: "maxPrice", label: `Max price: ${formatNgn(String(maxPrice))}` });
+
+    const buildType = filters.buildType.trim();
+    if (buildType) {
+      chips.push({
+        key: "buildType",
+        label: `Build type: ${formatBuildType(buildType) ?? buildType}`,
+      });
+    }
+
+    const minBeds = parseOptionalInt(filters.minBeds);
+    if (minBeds != null) chips.push({ key: "minBeds", label: `${minBeds}+ beds` });
+
+    if (filters.status) chips.push({ key: "status", label: `Status: ${statusLabel(filters.status)}` });
+
+    return chips;
+  }, [filters]);
+
+  const clearFilter = (key: keyof ListingFilters) => {
+    setFilters((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  const resetFilters = () => setFilters(EMPTY_FILTERS);
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -159,49 +239,92 @@ function BrowseListings() {
       )}
 
       <div className="rounded-xl border border-border/60 bg-card p-4 shadow-[var(--shadow-card)]">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-1">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="relative sm:col-span-2 lg:col-span-2">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search title or location…"
+              value={filters.location}
+              onChange={(e) => setFilters((prev) => ({ ...prev, location: e.target.value }))}
+              placeholder="Location…"
               className="h-10 pl-9"
             />
           </div>
+          <Input
+            type="number"
+            min="0"
+            value={filters.minPrice}
+            onChange={(e) => setFilters((prev) => ({ ...prev, minPrice: e.target.value }))}
+            placeholder="Min price (NGN)"
+            className="h-10"
+          />
+          <Input
+            type="number"
+            min="0"
+            value={filters.maxPrice}
+            onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value }))}
+            placeholder="Max price (NGN)"
+            className="h-10"
+          />
+          <Input
+            value={filters.buildType}
+            onChange={(e) => setFilters((prev) => ({ ...prev, buildType: e.target.value }))}
+            placeholder="Build type"
+            className="h-10"
+          />
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={filters.minBeds}
+            onChange={(e) => setFilters((prev) => ({ ...prev, minBeds: e.target.value }))}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
           >
-            <option value="all">All statuses</option>
-            {statusOptions.map((s) => (
+            <option value="">Any beds</option>
+            <option value="2">2+ beds</option>
+            <option value="3">3+ beds</option>
+            <option value="4">4+ beds</option>
+            <option value="5">5+ beds</option>
+          </select>
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">Live listings</option>
+            {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {statusLabel(s)}
               </option>
             ))}
           </select>
-          <select
-            value={beds}
-            onChange={(e) => setBeds(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="any">Any beds</option>
-            <option value="2">2+ beds</option>
-            <option value="3">3+ beds</option>
-            <option value="4">4+ beds</option>
-          </select>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setQ("");
-              setStatusFilter("all");
-              setBeds("any");
-            }}
-          >
-            Reset
-          </Button>
         </div>
+
+        {(activeChips.length > 0 || isFetching) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {activeChips.map((chip) => (
+              <Badge
+                key={chip.key}
+                variant="secondary"
+                className="gap-1 pr-1 font-normal"
+              >
+                {chip.label}
+                <button
+                  type="button"
+                  aria-label={`Remove ${chip.label}`}
+                  onClick={() => clearFilter(chip.key)}
+                  className="rounded-sm p-0.5 hover:bg-background/80"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+            {activeChips.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                Clear all
+              </Button>
+            )}
+            {isFetching && !isLoading && (
+              <span className="text-xs text-muted-foreground">Updating…</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)]">
@@ -272,8 +395,8 @@ function BrowseListings() {
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Showing {rows.length} of {baseRows.length} listings
-        {data?.meta?.total != null ? ` (${data.meta.total} on server)` : null}
+        Showing {rows.length} listing{rows.length === 1 ? "" : "s"}
+        {data?.meta?.total != null ? ` (${data.meta.total} matching on server)` : null}
       </p>
     </>
   );

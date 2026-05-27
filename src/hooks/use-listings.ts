@@ -28,6 +28,11 @@ export type ListingsQueryOptions = {
   ownedOnly?: boolean;
   page?: number;
   pageSize?: number;
+  location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  buildType?: string;
+  minBeds?: number;
 };
 
 function listingsQueryString(options?: ListingsQueryOptions) {
@@ -38,6 +43,11 @@ function listingsQueryString(options?: ListingsQueryOptions) {
   qs.set("pageSize", String(pageSize));
   if (options?.status) qs.set("status", options.status);
   if (options?.sellerId) qs.set("sellerId", options.sellerId);
+  if (options?.location) qs.set("location", options.location);
+  if (options?.minPrice != null) qs.set("minPrice", String(options.minPrice));
+  if (options?.maxPrice != null) qs.set("maxPrice", String(options.maxPrice));
+  if (options?.buildType) qs.set("buildType", options.buildType);
+  if (options?.minBeds != null) qs.set("minBeds", String(options.minBeds));
   const s = qs.toString();
   return s ? `?${s}` : "";
 }
@@ -54,6 +64,11 @@ export function useListingsQuery(options?: ListingsQueryOptions) {
       sellerId ?? null,
       options?.page ?? 1,
       options?.pageSize ?? 20,
+      options?.location ?? null,
+      options?.minPrice ?? null,
+      options?.maxPrice ?? null,
+      options?.buildType ?? null,
+      options?.minBeds ?? null,
     ],
     queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
     enabled: isReady && !!user,
