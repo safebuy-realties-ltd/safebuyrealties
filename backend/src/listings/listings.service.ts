@@ -367,6 +367,10 @@ export class ListingsService {
           entityType: NotificationEntityType.Listing,
         });
       }
+
+      if (nextStatus === ListingStatus.LIVE || nextStatus === ListingStatus.UNDER_OFFER) {
+        void this.notifySavedBuyersOnStatusChange(id, updated.title, nextStatus);
+      }
     }
 
     const out = await this.prisma.listing.findUniqueOrThrow({
@@ -388,6 +392,132 @@ export class ListingsService {
       include: this.listingInclude,
     });
     return this.serializeListing(updated, updated.seller);
+  }
+
+  async saveListing(listingId: string, actor: JwtPayload) {
+    if (actor.role !== UserRole.BUYER) throw new ForbiddenException();
+    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing) throw new NotFoundException("Listing not found");
+    if (listing.status !== ListingStatus.LIVE && listing.status !== ListingStatus.UNDER_OFFER) {
+      throw new BadRequestException("Only live or under-offer listings can be saved");
+    }
+
+    await this.prisma.savedProperty.upsert({
+      where: { buyerId_listingId: { buyerId: actor.sub, listingId } },
+      create: { buyerId: actor.sub, listingId },
+      update: {},
+    });
+
+    return { saved: true, listingId };
+  }
+
+  async unsaveListing(listingId: string, actor: JwtPayload) {
+    if (actor.role !== UserRole.BUYER) throw new ForbiddenException();
+    await this.prisma.savedProperty.deleteMany({
+      where: { buyerId: actor.sub, listingId },
+    });
+    return { saved: false, listingId };
+  }
+
+  async findSaved(actor: JwtPayload, page = 1, pageSize = 20) {
+    if (actor.role !== UserRole.BUYER) throw new ForbiddenException();
+    const take = Math.min(Math.max(pageSize, 1), 100);
+    const skip = (Math.max(page, 1) - 1) * take;
+
+    const [rows, total] = await Promise.all([
+      this.prisma.savedProperty.findMany({
+        where: { buyerId: actor.sub },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+        include: {
+          listing: { include: this.listingInclude },
+        },
+      }),
+      this.prisma.savedProperty.count({ where: { buyerId: actor.sub } }),
+    ]);
+
+    const listings = rows.map((r) => this.serializeListing(r.listing, r.listing.seller));
+    const savedIds = rows.map((r) => r.listingId);
+
+    return {
+      listings,
+      savedIds,
+      meta: { page, pageSize: take, total },
+    };
+  }
+
+  async isListingSaved(listingId: string, buyerId: string): Promise<boolean> {
+    const row = await this.prisma.savedProperty.findUnique({
+      where: { buyerId_listingId: { buyerId, listingId } },
+    });
+    return !!row;
+  }
+
+  async getListingAnalytics(listingId: string, actor: JwtPayload) {
+    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing) throw new NotFoundException("Listing not found");
+    if (listing.sellerId !== actor.sub && !this.isStaff(actor.role)) {
+      throw new ForbiddenException();
+    }
+
+    const txIds = await this.prisma.transaction.findMany({
+      where: { listingId },
+      select: { id: true },
+    });
+    const transactionIds = txIds.map((t) => t.id);
+
+    const [saves, transactionCount, ddPurchases] = await Promise.all([
+      this.prisma.savedProperty.count({ where: { listingId } }),
+      this.prisma.transaction.count({ where: { listingId } }),
+      transactionIds.length === 0
+        ? Promise.resolve(0)
+        : this.prisma.dueDiligenceOrder.count({
+            where: {
+              transactionId: { in: transactionIds },
+              status: { in: ["PAID", "IN_PROGRESS", "COMPLETE"] },
+            },
+          }),
+    ]);
+
+    return {
+      views: 0,
+      saves,
+      transactionCount,
+      ddPurchases,
+    };
+  }
+
+  private async notifySavedBuyersOnStatusChange(
+    listingId: string,
+    title: string,
+    status: ListingStatus,
+  ) {
+    const savers = await this.prisma.savedProperty.findMany({
+      where: { listingId },
+      select: { buyerId: true },
+    });
+
+    const type =
+      status === ListingStatus.LIVE
+        ? NotificationType.SAVED_LISTING_LIVE
+        : NotificationType.SAVED_LISTING_UNDER_OFFER;
+
+    const body =
+      status === ListingStatus.LIVE
+        ? `"${title}" is now live on the marketplace.`
+        : `"${title}" is now under offer.`;
+
+    for (const { buyerId } of savers) {
+      void this.notifications.create({
+        userId: buyerId,
+        type,
+        title: status === ListingStatus.LIVE ? "Saved listing is live" : "Saved listing under offer",
+        body,
+        entityId: listingId,
+        entityType: NotificationEntityType.Listing,
+      });
+    }
   }
 
   private async canAccessListing(

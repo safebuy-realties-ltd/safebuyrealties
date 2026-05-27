@@ -12,6 +12,8 @@ import {
   LogOut,
   ShoppingCart,
   Landmark,
+  Heart,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -26,6 +28,7 @@ export const navByRole: Record<Role, NavItem[]> = {
   buyer: [
     { label: "Overview", to: "/dashboard/buyer", icon: LayoutDashboard },
     { label: "Browse Listings", to: "/dashboard/buyer/listings", icon: Building2 },
+    { label: "Saved Properties", to: "/dashboard/buyer/saved", icon: Heart },
     { label: "Transactions", to: "/dashboard/buyer/transactions", icon: FileText },
     { label: "Verify Identity", to: "/dashboard/buyer/kyc", icon: BadgeCheck },
     { label: "Services", to: "/dashboard/buyer/services", icon: ShoppingCart },
@@ -47,6 +50,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Credentials", to: "/dashboard/staff/credentials", icon: BadgeCheck },
     { label: "KYC Reviews", to: "/dashboard/staff/kyc", icon: Users },
     { label: "Workflow", to: "/dashboard/staff/workflow", icon: FileText },
+    { label: "Inspections", to: "/dashboard/staff/inspections", icon: Calendar },
   ],
   admin: [
     { label: "Overview", to: "/dashboard/admin", icon: LayoutDashboard },

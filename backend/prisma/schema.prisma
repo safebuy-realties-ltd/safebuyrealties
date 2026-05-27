@@ -116,6 +116,9 @@ model User {
   powerOfAttorneys   PowerOfAttorney[]   @relation("BuyerPoA")
   notifications      Notification[]
   kycRecord          KycRecord?
+  savedProperties    SavedProperty[]     @relation("BuyerSaved")
+  inspectionRequests InspectionSlot[]    @relation("InspectionRequester")
+  inspectionAssigned InspectionSlot[]    @relation("InspectionProfessional")
 }
 
 model Listing {
@@ -143,6 +146,8 @@ model Listing {
   payments         Payment[]
   transactions     Transaction[]
   powerOfAttorneys PowerOfAttorney[]
+  savedBy          SavedProperty[]
+  inspectionSlots  InspectionSlot[]
 
   @@index([sellerId, status])
 }
@@ -435,4 +440,37 @@ model KycRecord {
   updatedAt    DateTime  @updatedAt
 
   @@map("kyc_records")
+}
+
+model SavedProperty {
+  id        String   @id @default(uuid())
+  buyerId   String
+  buyer     User     @relation("BuyerSaved", fields: [buyerId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([buyerId, listingId])
+  @@index([buyerId])
+  @@map("saved_properties")
+}
+
+model InspectionSlot {
+  id             String   @id @default(uuid())
+  listingId      String
+  listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  professionalId String?
+  professional   User?    @relation("InspectionProfessional", fields: [professionalId], references: [id])
+  requestedById  String
+  requestedBy    User     @relation("InspectionRequester", fields: [requestedById], references: [id])
+  scheduledAt    DateTime
+  status         String   @default("REQUESTED")
+  outcome        String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([listingId])
+  @@index([requestedById])
+  @@map("inspection_slots")
 }

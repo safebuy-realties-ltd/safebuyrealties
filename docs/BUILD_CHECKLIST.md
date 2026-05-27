@@ -20,12 +20,12 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-27
-- **Tool:** Cursor (Cloud Agent) — wave 3
-- **Last completed:** Steps 6–10 core + Step 9 KYC + Step 11 advanced search (PRs #59–#62 pending KYC #60)
-- **Done this session:** Wave 2 (#51–#58) + wave 3 docs/search/escrow-notify; KYC on branch
-- **Tests:** `npm run validate:tsc`, `npm test`, `cd backend && npm test`
-- **Next:** Step 11 remaining (saved properties, inspections, analytics)
-- **Blockers:** none
+- **Tool:** Cursor (Cloud Agent) — wave 4
+- **Last completed:** Step 11 complete (saved properties, inspections, seller/admin analytics)
+- **Done this session:** SavedProperty + InspectionSlot; save/inspection/analytics APIs; buyer saved tab, staff inspection queue; validated tsc + 87 BE / 19 FE tests
+- **Tests:** `npm run validate:tsc`, `npm test` (19), `cd backend && npm test` (87)
+- **Next:** Completion gate — full E2E buyer/seller/staff journeys; `docs/POST_BUILD_ISSUES.md` if needed
+- **Blockers:** run `npx prisma migrate deploy` on cloud DB for migration `20260527140000_saved_and_inspections`
 
 ---
 
@@ -368,25 +368,25 @@ This is the main buyer journey. It is the most important screen in the product.
   - Active filters shown as removable chips
   - Validation: filter by minBeds=3, confirm only listings with beds >= 3 are returned
 
-- [ ] **Saved / liked properties**
+- [x] **Saved / liked properties**
   - Add `SavedProperty` model: `id`, `buyerId String`, `listingId String`, `createdAt`, `@@unique([buyerId, listingId])`; run migration
   - Backend: `POST /listings/:id/save`, `DELETE /listings/:id/save`, `GET /listings/saved` (buyer's saved list)
   - Frontend: heart icon on every listing card, filled when saved. Toggle saves/unsaves. Buyer dashboard has a "Saved Properties" tab.
   - Notify buyer when a saved property's status changes (e.g., goes LIVE, goes UNDER_OFFER)
   - Validation: save a listing, it appears in "Saved Properties" tab. Change listing to UNDER_OFFER as admin — buyer receives notification.
 
-- [ ] **Inspection scheduling**
+- [x] **Inspection scheduling**
   - Add `InspectionSlot` model: `id`, `listingId`, `professionalId`, `requestedById`, `scheduledAt DateTime`, `status String @default("REQUESTED")` (REQUESTED, CONFIRMED, COMPLETED, CANCELLED), `outcome String?`, `notes String?`; run migration
   - Backend: `POST /listings/:id/inspection-requests`, `GET /listings/:id/inspection-requests`, `PATCH /inspection-slots/:id` (status update, outcome logging)
   - Frontend: "Schedule Inspection" button on the listing detail page (currently a disabled stub) — opens a date/time picker, submits request. Shows scheduled inspections and their status on the buyer's transaction page.
   - Validation: request an inspection as a buyer, confirm as staff, log an outcome — all status transitions visible in the UI
 
-- [ ] **Analytics — seller performance**
+- [x] **Analytics — seller performance**
   - Backend: `GET /listings/:id/analytics` returning `{ views: number, saves: number, transactionCount: number, ddPurchases: number }` — these can be approximate counts from existing data, no real view tracking needed yet
   - Frontend: add a performance summary section to each seller listing in their dashboard — views, saves, enquiries
   - Validation: listing shows analytics numbers (even if all zero — the section renders without crashing)
 
-- [ ] **Analytics — admin overview**
+- [x] **Analytics — admin overview**
   - Backend: `GET /admin/analytics` returning `{ totalListings, liveListings, totalTransactions, totalDdRevenue, pendingKyc, pendingVerifications }`
   - Frontend: update admin dashboard home page to show these numbers as stat cards (layout already exists via DashboardLayout StatCard component)
   - Validation: admin dashboard shows stat cards with real numbers from the database

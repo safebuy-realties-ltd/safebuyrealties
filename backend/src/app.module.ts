@@ -21,6 +21,8 @@ import { PoaModule } from "./poa/poa.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { EscrowModule } from "./escrow/escrow.module";
 import { KycModule } from "./kyc/kyc.module";
+import { AdminModule } from "./admin/admin.module";
+import { InspectionsModule } from "./inspections/inspections.module";
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { KycModule } from "./kyc/kyc.module";
     PoaModule,
     EscrowModule,
     KycModule,
+    AdminModule,
+    InspectionsModule,
     HealthModule,
   ],
   providers: [

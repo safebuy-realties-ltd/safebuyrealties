@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,9 @@ import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import { formatListingSpecSummary } from "@/lib/listing-spec";
 import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
+import { ListingSaveButton } from "@/components/ListingSaveButton";
+import { ScheduleInspectionDialog } from "@/components/ScheduleInspectionDialog";
+import { useListingInspectionsQuery } from "@/hooks/use-inspections";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
@@ -92,6 +95,10 @@ function ListingDetail() {
   const isLive = resolvedListing?.status === "LIVE";
   const isUnderOffer = resolvedListing?.status === "UNDER_OFFER";
   const canStartTransaction = isBuyer && isLive;
+  const [inspectionOpen, setInspectionOpen] = useState(false);
+  const { data: inspections } = useListingInspectionsQuery(
+    isBuyer && canFetchExtras ? listingId : null,
+  );
 
   const trackerSteps = useMemo((): VerificationStep[] | null => {
     if (!verSteps?.length) return null;
@@ -309,9 +316,37 @@ function ListingDetail() {
                   View verification status
                 </Button>
               )}
-              <Button variant="ghost" className="mt-2 w-full" type="button" disabled>
-                Schedule visit
-              </Button>
+              {isBuyer && isLive ? (
+                <Button
+                  variant="outline"
+                  className="mt-2 w-full"
+                  type="button"
+                  onClick={() => setInspectionOpen(true)}
+                >
+                  Schedule inspection
+                </Button>
+              ) : (
+                <Button variant="ghost" className="mt-2 w-full" type="button" disabled>
+                  Schedule visit
+                </Button>
+              )}
+              {isBuyer && (isLive || isUnderOffer) && (
+                <div className="mt-3 flex justify-center">
+                  <ListingSaveButton listingId={listingId} />
+                </div>
+              )}
+              {isBuyer && inspections && inspections.length > 0 && (
+                <div className="mt-4 rounded-lg border border-border/60 p-3 text-left">
+                  <p className="text-xs font-medium text-muted-foreground">Your inspections</p>
+                  <ul className="mt-2 space-y-1 text-xs">
+                    {inspections.map((s) => (
+                      <li key={s.id}>
+                        {new Date(s.scheduledAt).toLocaleString()} — {s.status}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 Independent verification by SafeBuyRealties experts.
               </p>
@@ -357,6 +392,13 @@ function ListingDetail() {
           </aside>
         </div>
       </main>
+      {isBuyer && (
+        <ScheduleInspectionDialog
+          listingId={listingId}
+          open={inspectionOpen}
+          onOpenChange={setInspectionOpen}
+        />
+      )}
     </div>
   );
 }
