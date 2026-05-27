@@ -113,6 +113,7 @@ model User {
   payments           Payment[]           @relation("PayerPayments")
   transactions       Transaction[]       @relation("BuyerTransactions")
   professionalProfile ProfessionalProfile?
+  powerOfAttorneys   PowerOfAttorney[]   @relation("BuyerPoA")
 }
 
 model Listing {
@@ -139,6 +140,7 @@ model Listing {
   tasks            Task[]
   payments         Payment[]
   transactions     Transaction[]
+  powerOfAttorneys PowerOfAttorney[]
 
   @@index([sellerId, status])
 }
@@ -218,6 +220,7 @@ model Transaction {
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   payments  Payment[]
+  powerOfAttorney PowerOfAttorney?
 }
 
 model Payment {
@@ -335,3 +338,27 @@ model DueDiligenceOrder {
 
   @@map("due_diligence_orders")
 }
+
+model PowerOfAttorney {
+  id               String      @id @default(uuid())
+  transactionId    String      @unique
+  transaction      Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  buyerId          String
+  buyer            User        @relation("BuyerPoA", fields: [buyerId], references: [id])
+  listingId        String
+  listing          Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  pdfStorageKey    String
+  documentHash     String      @unique
+  qrCodeStorageKey String
+  signatureMethod  String
+  signatureName    String
+  consentFlags     Json
+  ipAddress        String?
+  userAgent        String?
+  executedAt       DateTime    @default(now())
+
+  @@index([documentHash])
+  @@index([buyerId])
+  @@map("power_of_attorney")
+}
+

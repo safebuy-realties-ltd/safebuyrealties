@@ -17,6 +17,7 @@ import { PlatformConfigModule } from "./platform-config/platform-config.module";
 import { ProfessionalsModule } from "./professionals/professionals.module";
 import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
 import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
+import { PoaModule } from "./poa/poa.module";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
     ProfessionalsModule,
     ServiceCatalogModule,
     DueDiligenceModule,
+    PoaModule,
     HealthModule,
   ],
   providers: [
