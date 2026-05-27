@@ -39,10 +39,16 @@ describe("purchase-wizard session storage", () => {
     expect(loadWizardState(listingId)).toEqual(state);
   });
 
-  it("clears stored state", () => {
-    saveWizardState(listingId, defaultWizardState());
-    clearWizardState(listingId);
-    expect(loadWizardState(listingId)).toBeNull();
+  it("persists PoA execution metadata in wizard state", () => {
+    const state = {
+      ...defaultWizardState(),
+      step: "POA_EXECUTION" as const,
+      transactionId: "tx-1",
+      poaId: "poa-1",
+      poaDocumentHash: "a".repeat(64),
+    };
+    saveWizardState(listingId, state);
+    expect(loadWizardState(listingId)).toEqual(state);
   });
 
   it("returns null for invalid stored JSON", () => {

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -297,14 +297,9 @@ function PurchaseWizardPage() {
             poaDocumentHash={wizard.poaDocumentHash}
             myTransactions={myTransactions}
             onBack={goBack}
-            onReady={(transactionId) => patchWizard({ transactionId })}
-            onComplete={(poa) => {
-              patchWizard({
-                poaId: poa.poaId,
-                poaDocumentHash: poa.poaDocumentHash,
-                step: "SERVICE_SELECTION",
-              });
-            }}
+            onReady={handlePoaReady}
+            onExecuted={handlePoaExecuted}
+            onContinue={() => goToStep("SERVICE_SELECTION")}
             refetchTransactions={refetchTransactions}
           />
         )}
@@ -549,7 +544,8 @@ function PoaExecutionStep({
   myTransactions,
   onBack,
   onReady,
-  onComplete,
+  onExecuted,
+  onContinue,
   refetchTransactions,
 }: {
   listingId: string;
@@ -562,13 +558,18 @@ function PoaExecutionStep({
   myTransactions?: TxRow[];
   onBack: () => void;
   onReady: (transactionId: string) => void;
-  onComplete: (poa: { poaId: string; poaDocumentHash: string }) => void;
+  onExecuted: (poa: { poaId: string; poaDocumentHash: string }) => void;
+  onContinue: () => void;
   refetchTransactions: () => Promise<{ data?: TxRow[] }>;
 }) {
   const createTransaction = useCreateTransactionMutation();
   const [resolvedTxId, setResolvedTxId] = useState<string | null>(transactionId ?? null);
   const [resolving, setResolving] = useState(!transactionId);
   const [resolveError, setResolveError] = useState<string | null>(null);
+  const myTransactionsRef = useRef(myTransactions);
+  myTransactionsRef.current = myTransactions;
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
 
   useEffect(() => {
     if (transactionId) {
@@ -586,13 +587,13 @@ function PoaExecutionStep({
         const txId = await resolveTransactionIdForListing(
           listingId,
           transactionId,
-          myTransactions,
+          myTransactionsRef.current,
           createTransaction,
           refetchTransactions,
         );
         if (cancelled) return;
         setResolvedTxId(txId);
-        onReady(txId);
+        onReadyRef.current(txId);
       } catch (e) {
         if (cancelled) return;
         setResolveError(e instanceof ApiError ? e.message : "Could not start transaction.");
@@ -604,7 +605,7 @@ function PoaExecutionStep({
     return () => {
       cancelled = true;
     };
-  }, [listingId, transactionId, myTransactions, createTransaction, refetchTransactions, onReady]);
+  }, [listingId, transactionId, createTransaction, refetchTransactions]);
 
   if (resolving) {
     return (
@@ -650,12 +651,7 @@ function PoaExecutionStep({
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button
-            className="flex-1"
-            onClick={() =>
-              onComplete({ poaId, poaDocumentHash: poaDocumentHash ?? "" })
-            }
-          >
+          <Button className="flex-1" onClick={onContinue}>
             Continue to services
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -679,7 +675,7 @@ function PoaExecutionStep({
         listingAddress={listingAddress}
         className="px-6 pb-6 pt-2"
         onSuccess={(poa) =>
-          onComplete({ poaId: poa.id, poaDocumentHash: poa.documentHash })
+          onExecuted({ poaId: poa.id, poaDocumentHash: poa.documentHash })
         }
       />
       <div className="border-t border-border/60 px-6 py-4">
@@ -791,33 +787,14 @@ function OrderSummaryStep({
     );
   }
 
-  const findOpenTx = (list?: TxRow[]) =>
-    list?.find(
-      (t) =>
-        t.listingId === listingId &&
-        (t.status === "INITIATED" || t.status === "IN_PROGRESS"),
+  const resolveTransactionId = async (): Promise<string> =>
+    resolveTransactionIdForListing(
+      listingId,
+      transactionId,
+      myTransactions,
+      createTransaction,
+      refetchTransactions,
     );
-
-  const resolveTransactionId = async (): Promise<string> => {
-    if (transactionId) return transactionId;
-    const open = findOpenTx(myTransactions);
-    if (open) return open.id;
-
-    try {
-      const tx = await createTransaction.mutateAsync(listingId);
-      return tx.id;
-    } catch (e) {
-      if (e instanceof ApiError && e.code === "CONFLICT") {
-        if (e.message.includes("already have an open transaction")) {
-          const refreshed = await refetchTransactions();
-          const existing = findOpenTx(refreshed.data ?? myTransactions);
-          if (existing) return existing.id;
-        }
-        toast.error(e.message);
-      }
-      throw e;
-    }
-  };
 
   const confirmOrder = async () => {
     setSubmitting(true);

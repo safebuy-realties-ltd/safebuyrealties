@@ -29,8 +29,8 @@ export type ServiceSelection = {
 export type PurchaseWizardState = {
   step: WizardStep;
   buyerInfo?: BuyerInfo;
-  poaSkipped?: boolean;
   poaId?: string;
+  poaDocumentHash?: string;
   serviceSelection?: ServiceSelection;
   transactionId?: string;
   ddOrderId?: string;
