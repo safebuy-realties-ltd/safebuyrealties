@@ -16,7 +16,11 @@ import {
 } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
-import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  NotificationEntityType,
+  NotificationType,
+} from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 
@@ -25,16 +29,42 @@ export class PaymentsService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
-    private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
-  /** Records an intended notification as an audit entry (no notification module yet — Step 8). */
-  private async notify(recipientRole: string, event: string, entityId: string) {
-    await this.audit.log({
-      action: "NOTIFY",
-      entity: "Notification",
-      entityId,
-      after: { recipientRole, event },
+  private async notifyDdPaymentSucceeded(transactionId: string) {
+    const tx = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        listing: { select: { id: true, title: true, sellerId: true } },
+        buyer: { select: { id: true } },
+      },
+    });
+    if (!tx) return;
+
+    const listingTitle = tx.listing.title;
+    void this.notifications.create({
+      userId: tx.buyerId,
+      type: NotificationType.DD_PAYMENT_SUCCEEDED,
+      title: "Due diligence payment received",
+      body: `Your due diligence payment for "${listingTitle}" was successful. Verification work will begin shortly.`,
+      entityId: transactionId,
+      entityType: NotificationEntityType.Transaction,
+    });
+    void this.notifications.create({
+      userId: tx.listing.sellerId,
+      type: NotificationType.DD_PAYMENT_SUCCEEDED,
+      title: "Property reserved",
+      body: `"${listingTitle}" is now under offer while due diligence is in progress.`,
+      entityId: tx.listing.id,
+      entityType: NotificationEntityType.Listing,
+    });
+    void this.notifications.createForStaff({
+      type: NotificationType.DD_PAYMENT_SUCCEEDED,
+      title: "Due diligence payment received",
+      body: `A buyer paid for due diligence on "${listingTitle}". Begin verification work.`,
+      entityId: transactionId,
+      entityType: NotificationEntityType.Transaction,
     });
   }
 
@@ -289,11 +319,9 @@ export class PaymentsService {
       }
     });
 
-    // Notification stubs (recorded via AuditService) — outside the DB transaction.
+    // Fire-and-forget notifications — outside the DB transaction.
     if (p.transactionId && p.intent === PaymentIntent.DD_SERVICE) {
-      await this.notify("BUYER", "DD_STARTED", p.transactionId);
-      await this.notify("SELLER", "PROPERTY_RESERVED", p.transactionId);
-      await this.notify("STAFF", "BEGIN_VERIFICATION", p.transactionId);
+      void this.notifyDdPaymentSucceeded(p.transactionId);
     }
   }
 

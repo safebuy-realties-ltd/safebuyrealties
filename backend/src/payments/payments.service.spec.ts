@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UserRole, PaymentStatus, ListingStatus, TransactionStatus } from "@prisma/client";
 import { PaymentsService } from "./payments.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { ConfigService } from "@nestjs/config";
 
 const buyerActor = {
@@ -60,7 +60,7 @@ describe("PaymentsService paystack email", () => {
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
-        { provide: AuditService, useValue: { log: jest.fn() } },
+        { provide: NotificationsService, useValue: { create: jest.fn(), createForStaff: jest.fn() } },
         {
           provide: ConfigService,
           useValue: {

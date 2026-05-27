@@ -15,6 +15,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { AuditAction } from "../audit/audit-actions.constants";
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  NotificationEntityType,
+  NotificationType,
+} from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
@@ -36,6 +41,7 @@ export class ListingsService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   private serializeListing(
@@ -154,6 +160,7 @@ export class ListingsService {
     });
     if (status === ListingStatus.PENDING_REVIEW) {
       await this.ensureVerificationSteps(listing.id);
+      void this.notifyListingSubmitted(listing.id, listing.title);
     }
     const withSeller = await this.prisma.listing.findUniqueOrThrow({
       where: { id: listing.id },
@@ -251,6 +258,7 @@ export class ListingsService {
       nextStatus === ListingStatus.PENDING_REVIEW
     ) {
       await this.ensureVerificationSteps(id);
+      void this.notifyListingSubmitted(id, updated.title);
     }
 
     if (dto.status !== undefined && prevStatus !== nextStatus) {
@@ -272,6 +280,29 @@ export class ListingsService {
           rejectionReason: updated.rejectionReason,
         },
       });
+
+      if (nextStatus === ListingStatus.VERIFIED) {
+        void this.notifications.create({
+          userId: listing.sellerId,
+          type: NotificationType.LISTING_VERIFIED,
+          title: "Listing verified",
+          body: `"${updated.title}" has been verified and can proceed toward going live.`,
+          entityId: id,
+          entityType: NotificationEntityType.Listing,
+        });
+      } else if (nextStatus === ListingStatus.REJECTED) {
+        const reason = updated.rejectionReason?.trim();
+        void this.notifications.create({
+          userId: listing.sellerId,
+          type: NotificationType.LISTING_REJECTED,
+          title: "Listing rejected",
+          body: reason
+            ? `"${updated.title}" was rejected: ${reason}`
+            : `"${updated.title}" was rejected. Review the listing and resubmit when ready.`,
+          entityId: id,
+          entityType: NotificationEntityType.Listing,
+        });
+      }
     }
 
     const out = await this.prisma.listing.findUniqueOrThrow({
@@ -344,6 +375,16 @@ export class ListingsService {
     if (!this.sellerAllowedStatus(to, from)) {
       throw new BadRequestException(`Cannot change status from ${from} to ${to}`);
     }
+  }
+
+  private async notifyListingSubmitted(listingId: string, title: string) {
+    await this.notifications.createForStaff({
+      type: NotificationType.LISTING_SUBMITTED,
+      title: "New listing submission",
+      body: `"${title}" was submitted and is ready for review.`,
+      entityId: listingId,
+      entityType: NotificationEntityType.Listing,
+    });
   }
 
   private async ensureVerificationSteps(listingId: string) {

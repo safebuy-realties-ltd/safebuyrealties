@@ -6,6 +6,11 @@ import {
 } from "@nestjs/common";
 import { UserRole, TaskStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  NotificationEntityType,
+  NotificationType,
+} from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { PatchTaskDto } from "./dto/patch-task.dto";
@@ -13,7 +18,10 @@ import { ListTasksMeQueryDto } from "./dto/list-tasks.query";
 
 @Injectable()
 export class TasksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   private isStaff(role: UserRole) {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
@@ -65,6 +73,14 @@ export class TasksService {
         description: dto.description,
         dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
       },
+    });
+    void this.notifications.create({
+      userId: dto.assigneeId,
+      type: NotificationType.TASK_ASSIGNED,
+      title: "New task assigned",
+      body: dto.title,
+      entityId: task.id,
+      entityType: NotificationEntityType.Task,
     });
     return this.serializeTask(task);
   }
@@ -129,6 +145,15 @@ export class TasksService {
           : {}),
       },
     });
+    if (dto.status === TaskStatus.COMPLETED && task.status !== TaskStatus.COMPLETED) {
+      void this.notifications.createForStaff({
+        type: NotificationType.REPORT_SUBMITTED,
+        title: "Task report submitted",
+        body: `"${updated.title}" was marked complete and is ready for review.`,
+        entityId: updated.listingId,
+        entityType: NotificationEntityType.Listing,
+      });
+    }
     return this.serializeTask(updated);
   }
 }

@@ -12,6 +12,7 @@ import {
 import { ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { VerificationService } from "./verification.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 
@@ -60,6 +61,9 @@ describe("VerificationService accept / request-revision", () => {
       findUnique: jest.Mock;
       update: jest.Mock;
     };
+    task: {
+      findFirst: jest.Mock;
+    };
   };
 
   beforeEach(async () => {
@@ -71,6 +75,9 @@ describe("VerificationService accept / request-revision", () => {
           Promise.resolve({ ...baseStep, ...data }),
         ),
       },
+      task: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -78,6 +85,10 @@ describe("VerificationService accept / request-revision", () => {
         VerificationService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
+        {
+          provide: NotificationsService,
+          useValue: { create: jest.fn(), createForStaff: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -208,6 +219,10 @@ describe("VerificationService getForListing buyer view", () => {
         VerificationService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
+        {
+          provide: NotificationsService,
+          useValue: { create: jest.fn(), createForStaff: jest.fn() },
+        },
       ],
     }).compile();
 

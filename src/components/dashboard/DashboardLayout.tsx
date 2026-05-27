@@ -8,7 +8,6 @@ import {
   Users,
   Settings,
   BadgeCheck,
-  Bell,
   Search,
   LogOut,
   ShoppingCart,
@@ -18,6 +17,7 @@ import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth, dashboardPathForRole, type Role } from "@/lib/auth";
+import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 export type NavItem = { label: string; to: string; icon: LucideIcon };
 
@@ -167,10 +167,7 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-primary" />
-            </button>
+            <NotificationBell />
             <button
               onClick={handleLogout}
               className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
