@@ -18,6 +18,9 @@ import { JwtPayload } from "../auth/jwt.strategy";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
 import { ListListingsQueryDto } from "./dto/list-listings.query";
+import { RolesGuard } from "../common/guards/roles.guard";
+import { Roles } from "../common/decorators/roles.decorator";
+import { UserRole } from "@prisma/client";
 
 @Controller("listings")
 export class ListingsController {
@@ -33,6 +36,41 @@ export class ListingsController {
   @UseGuards(OptionalJwtAuthGuard)
   findAll(@Query() query: ListListingsQueryDto, @CurrentUserOptional() user: JwtPayload | null) {
     return this.listings.findAll(query, user);
+  }
+
+  @Get("saved")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUYER)
+  findSaved(
+    @CurrentUser() user: JwtPayload,
+    @Query("page") page?: string,
+    @Query("pageSize") pageSize?: string,
+  ) {
+    return this.listings.findSaved(
+      user,
+      page ? Number(page) : 1,
+      pageSize ? Number(pageSize) : 20,
+    );
+  }
+
+  @Get(":id/analytics")
+  @UseGuards(JwtAuthGuard)
+  getAnalytics(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.listings.getListingAnalytics(id, user);
+  }
+
+  @Post(":id/save")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUYER)
+  save(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.listings.saveListing(id, user);
+  }
+
+  @Delete(":id/save")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.BUYER)
+  unsave(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.listings.unsaveListing(id, user);
   }
 
   @Get(":id")

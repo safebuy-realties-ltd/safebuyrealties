@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAdminUsersQuery } from "@/hooks/use-admin-users";
-import { useListingsQuery } from "@/hooks/use-listings";
+import { useAdminAnalyticsQuery } from "@/hooks/use-admin-analytics";
 
 export const Route = createFileRoute("/dashboard/admin/")({
   component: AdminOverview,
@@ -28,19 +28,22 @@ function AdminOverview() {
     isError: usersErr,
   } = useAdminUsersQuery({ page: 1, pageSize: 8 });
   const {
-    data: listingsData,
-    isLoading: loadListings,
-    isError: listingsErr,
-  } = useListingsQuery({ pageSize: 100 });
+    data: analytics,
+    isLoading: loadAnalytics,
+    isError: analyticsErr,
+  } = useAdminAnalyticsQuery();
   const users = useMemo(() => usersData?.users ?? [], [usersData?.users]);
   const totalUsers = usersData?.meta?.total ?? 0;
-  const listings = useMemo(() => listingsData?.listings ?? [], [listingsData?.listings]);
-  const totalListings = listingsData?.meta?.total ?? listings.length;
 
-  const pendingReviews = useMemo(
-    () => listings.filter((l) => l.status === "PENDING_REVIEW").length,
-    [listings],
-  );
+  const formatRevenue = (raw: string | undefined) => {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return raw ?? "—";
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 0,
+    }).format(n);
+  };
 
   return (
     <>
@@ -58,7 +61,7 @@ function AdminOverview() {
           </div>
         }
       />
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Users (total)"
           value={loadUsers ? "…" : String(totalUsers)}
@@ -66,16 +69,33 @@ function AdminOverview() {
         />
         <StatCard
           label="Listings (total)"
-          value={loadListings ? "…" : String(totalListings)}
-          hint="In database"
+          value={loadAnalytics ? "…" : String(analytics?.totalListings ?? "—")}
+          hint={`${analytics?.liveListings ?? "—"} live`}
         />
-        <StatCard label="Pending review" value={loadListings ? "…" : String(pendingReviews)} />
         <StatCard
-          label="API"
-          value={usersErr || listingsErr ? "Error" : "OK"}
-          hint="Latest fetch"
+          label="Transactions"
+          value={loadAnalytics ? "…" : String(analytics?.totalTransactions ?? "—")}
+          hint="All time"
+        />
+        <StatCard
+          label="DD revenue"
+          value={loadAnalytics ? "…" : formatRevenue(analytics?.totalDdRevenue)}
+          hint="Paid DD orders"
+        />
+        <StatCard
+          label="Pending KYC"
+          value={loadAnalytics ? "…" : String(analytics?.pendingKyc ?? "—")}
+          hint="Awaiting review"
+        />
+        <StatCard
+          label="Pending verifications"
+          value={loadAnalytics ? "…" : String(analytics?.pendingVerifications ?? "—")}
+          hint="In pipeline"
         />
       </div>
+      {analyticsErr && (
+        <p className="mt-2 text-sm text-destructive">Could not load platform analytics.</p>
+      )}
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">

@@ -16,6 +16,7 @@ import { openPaystackCheckout } from "@/lib/paystack";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
+import { useMyInspectionsQuery } from "@/hooks/use-inspections";
 
 export const Route = createFileRoute("/dashboard/buyer/transactions")({
   validateSearch: (search: Record<string, unknown>): { mock?: boolean } => ({
@@ -127,6 +128,7 @@ function Transactions() {
   const { mock } = Route.useSearch();
   const qc = useQueryClient();
   const { data: items, isLoading, isError, error, refetch } = useMyTransactionsQuery();
+  const { data: inspections, isLoading: inspectionsLoading } = useMyInspectionsQuery();
 
   useEffect(() => {
     if (mock) {
@@ -162,6 +164,36 @@ function Transactions() {
         <StatCard label="Total" value={String(stats.total)} hint="All time" />
         <StatCard label="Active" value={String(stats.active)} hint="Not completed" />
         <StatCard label="Completed" value={String(stats.completed)} />
+      </div>
+
+      <div className="mt-8 rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
+        <h2 className="text-lg font-semibold">Scheduled inspections</h2>
+        {inspectionsLoading && (
+          <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
+        )}
+        {!inspectionsLoading && (!inspections || inspections.length === 0) && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            No inspection requests yet. Schedule one from a live listing detail page.
+          </p>
+        )}
+        {inspections && inspections.length > 0 && (
+          <ul className="mt-4 space-y-3">
+            {inspections.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 px-3 py-2 text-sm"
+              >
+                <div>
+                  <p className="font-medium">{s.listingTitle ?? "Listing"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {s.listingLocation} · {new Date(s.scheduledAt).toLocaleString()}
+                  </p>
+                </div>
+                <Badge variant="outline">{s.status}</Badge>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-8 space-y-6">

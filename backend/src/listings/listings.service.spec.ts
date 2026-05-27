@@ -82,6 +82,9 @@ describe("ListingsService", () => {
       create: jest.Mock;
     };
     verificationStep: { count: jest.Mock; createMany: jest.Mock };
+    savedProperty: { count: jest.Mock; upsert: jest.Mock; findMany: jest.Mock };
+    dueDiligenceOrder: { count: jest.Mock };
+    transaction: { count: jest.Mock; findMany: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -103,6 +106,16 @@ describe("ListingsService", () => {
       verificationStep: {
         count: jest.fn().mockResolvedValue(1),
         createMany: jest.fn(),
+      },
+      savedProperty: {
+        count: jest.fn().mockResolvedValue(0),
+        upsert: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      dueDiligenceOrder: { count: jest.fn().mockResolvedValue(0) },
+      transaction: {
+        count: jest.fn().mockResolvedValue(0),
+        findMany: jest.fn().mockResolvedValue([{ id: "tx-1" }]),
       },
     };
     prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
@@ -386,6 +399,27 @@ describe("ListingsService", () => {
           where: { status: ListingStatus.LIVE },
         }),
       );
+    });
+  });
+
+  describe("getListingAnalytics", () => {
+    it("returns save and transaction counts for seller", async () => {
+      prisma.listing.findUnique.mockResolvedValue({
+        id: "listing-1",
+        sellerId: sellerActor.sub,
+      });
+      prisma.savedProperty.count.mockResolvedValue(3);
+      prisma.transaction.count.mockResolvedValue(2);
+      prisma.dueDiligenceOrder.count.mockResolvedValue(1);
+
+      const result = await service.getListingAnalytics("listing-1", sellerActor);
+
+      expect(result).toEqual({
+        views: 0,
+        saves: 3,
+        transactionCount: 2,
+        ddPurchases: 1,
+      });
     });
   });
 });

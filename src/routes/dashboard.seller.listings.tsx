@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { useListingAnalyticsQuery } from "@/hooks/use-listing-analytics";
 
 export const Route = createFileRoute("/dashboard/seller/listings")({
   component: SellerListingsPage,
@@ -64,24 +65,60 @@ function SellerListingsPage() {
 
         <div className="space-y-3">
           {listings.map((listing) => (
-            <Link
-              key={listing.id}
-              to="/listings/$listingId"
-              params={{ listingId: listing.id }}
-              className="flex items-center justify-between rounded-md border border-border/60 px-4 py-3 transition-colors hover:bg-secondary/40"
-            >
-              <div>
-                <p className="font-medium">{listing.title}</p>
-                <p className="text-sm text-muted-foreground">{listing.location}</p>
-              </div>
-              <Badge variant="outline" className={statusBadgeClass(listing.status)}>
-                {statusLabel(listing.status)}
-              </Badge>
-            </Link>
+            <SellerListingRow key={listing.id} listing={listing} />
           ))}
         </div>
       </div>
     </>
+  );
+}
+
+function SellerListingRow({
+  listing,
+}: {
+  listing: {
+    id: string;
+    title: string;
+    location: string;
+    status: string;
+  };
+}) {
+  const { data: analytics, isLoading } = useListingAnalyticsQuery(listing.id);
+
+  return (
+    <div className="rounded-md border border-border/60 px-4 py-3">
+      <Link
+        to="/listings/$listingId"
+        params={{ listingId: listing.id }}
+        className="flex items-center justify-between transition-colors hover:opacity-90"
+      >
+        <div>
+          <p className="font-medium">{listing.title}</p>
+          <p className="text-sm text-muted-foreground">{listing.location}</p>
+        </div>
+        <Badge variant="outline" className={statusBadgeClass(listing.status)}>
+          {statusLabel(listing.status)}
+        </Badge>
+      </Link>
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/40 pt-3 text-xs sm:grid-cols-4">
+        <div>
+          <p className="text-muted-foreground">Views</p>
+          <p className="font-medium">{isLoading ? "…" : (analytics?.views ?? 0)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Saves</p>
+          <p className="font-medium">{isLoading ? "…" : (analytics?.saves ?? 0)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Transactions</p>
+          <p className="font-medium">{isLoading ? "…" : (analytics?.transactionCount ?? 0)}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">DD purchases</p>
+          <p className="font-medium">{isLoading ? "…" : (analytics?.ddPurchases ?? 0)}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 

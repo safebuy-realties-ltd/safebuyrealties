@@ -27,6 +27,7 @@ import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admi
 import { Route as DashboardStaffWorkflowRouteImport } from './routes/dashboard.staff.workflow'
 import { Route as DashboardStaffSubmissionsRouteImport } from './routes/dashboard.staff.submissions'
 import { Route as DashboardStaffKycRouteImport } from './routes/dashboard.staff.kyc'
+import { Route as DashboardStaffInspectionsRouteImport } from './routes/dashboard.staff.inspections'
 import { Route as DashboardStaffCredentialsRouteImport } from './routes/dashboard.staff.credentials'
 import { Route as DashboardSellerListingsRouteImport } from './routes/dashboard.seller.listings'
 import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard.seller.documents'
@@ -34,6 +35,7 @@ import { Route as DashboardProfessionalTasksRouteImport } from './routes/dashboa
 import { Route as DashboardProfessionalCredentialsRouteImport } from './routes/dashboard.professional.credentials'
 import { Route as DashboardBuyerTransactionsRouteImport } from './routes/dashboard.buyer.transactions'
 import { Route as DashboardBuyerServicesRouteImport } from './routes/dashboard.buyer.services'
+import { Route as DashboardBuyerSavedRouteImport } from './routes/dashboard.buyer.saved'
 import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.buyer.listings'
 import { Route as DashboardBuyerKycRouteImport } from './routes/dashboard.buyer.kyc'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
@@ -134,6 +136,12 @@ const DashboardStaffKycRoute = DashboardStaffKycRouteImport.update({
   path: '/kyc',
   getParentRoute: () => DashboardStaffRoute,
 } as any)
+const DashboardStaffInspectionsRoute =
+  DashboardStaffInspectionsRouteImport.update({
+    id: '/inspections',
+    path: '/inspections',
+    getParentRoute: () => DashboardStaffRoute,
+  } as any)
 const DashboardStaffCredentialsRoute =
   DashboardStaffCredentialsRouteImport.update({
     id: '/credentials',
@@ -172,6 +180,11 @@ const DashboardBuyerTransactionsRoute =
 const DashboardBuyerServicesRoute = DashboardBuyerServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerSavedRoute = DashboardBuyerSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
   getParentRoute: () => DashboardBuyerRoute,
 } as any)
 const DashboardBuyerListingsRoute = DashboardBuyerListingsRouteImport.update({
@@ -228,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
@@ -235,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
@@ -257,6 +272,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
@@ -264,6 +280,7 @@ export interface FileRoutesByTo {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
@@ -292,6 +309,7 @@ export interface FileRoutesById {
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
@@ -299,6 +317,7 @@ export interface FileRoutesById {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
   '/dashboard/staff/workflow': typeof DashboardStaffWorkflowRoute
@@ -328,6 +347,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/saved'
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
@@ -335,6 +355,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
@@ -357,6 +378,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/saved'
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
@@ -364,6 +386,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
@@ -391,6 +414,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/users'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
+    | '/dashboard/buyer/saved'
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
@@ -398,6 +422,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
     | '/dashboard/staff/workflow'
@@ -550,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStaffKycRouteImport
       parentRoute: typeof DashboardStaffRoute
     }
+    '/dashboard/staff/inspections': {
+      id: '/dashboard/staff/inspections'
+      path: '/inspections'
+      fullPath: '/dashboard/staff/inspections'
+      preLoaderRoute: typeof DashboardStaffInspectionsRouteImport
+      parentRoute: typeof DashboardStaffRoute
+    }
     '/dashboard/staff/credentials': {
       id: '/dashboard/staff/credentials'
       path: '/credentials'
@@ -597,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/dashboard/buyer/services'
       preLoaderRoute: typeof DashboardBuyerServicesRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/saved': {
+      id: '/dashboard/buyer/saved'
+      path: '/saved'
+      fullPath: '/dashboard/buyer/saved'
+      preLoaderRoute: typeof DashboardBuyerSavedRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
     '/dashboard/buyer/listings': {
@@ -674,6 +713,7 @@ const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
 interface DashboardBuyerRouteChildren {
   DashboardBuyerKycRoute: typeof DashboardBuyerKycRoute
   DashboardBuyerListingsRoute: typeof DashboardBuyerListingsRoute
+  DashboardBuyerSavedRoute: typeof DashboardBuyerSavedRoute
   DashboardBuyerServicesRoute: typeof DashboardBuyerServicesRoute
   DashboardBuyerTransactionsRoute: typeof DashboardBuyerTransactionsRoute
   DashboardBuyerIndexRoute: typeof DashboardBuyerIndexRoute
@@ -682,6 +722,7 @@ interface DashboardBuyerRouteChildren {
 const DashboardBuyerRouteChildren: DashboardBuyerRouteChildren = {
   DashboardBuyerKycRoute: DashboardBuyerKycRoute,
   DashboardBuyerListingsRoute: DashboardBuyerListingsRoute,
+  DashboardBuyerSavedRoute: DashboardBuyerSavedRoute,
   DashboardBuyerServicesRoute: DashboardBuyerServicesRoute,
   DashboardBuyerTransactionsRoute: DashboardBuyerTransactionsRoute,
   DashboardBuyerIndexRoute: DashboardBuyerIndexRoute,
@@ -741,6 +782,7 @@ const DashboardSellerRouteWithChildren = DashboardSellerRoute._addFileChildren(
 
 interface DashboardStaffRouteChildren {
   DashboardStaffCredentialsRoute: typeof DashboardStaffCredentialsRoute
+  DashboardStaffInspectionsRoute: typeof DashboardStaffInspectionsRoute
   DashboardStaffKycRoute: typeof DashboardStaffKycRoute
   DashboardStaffSubmissionsRoute: typeof DashboardStaffSubmissionsRoute
   DashboardStaffWorkflowRoute: typeof DashboardStaffWorkflowRoute
@@ -749,6 +791,7 @@ interface DashboardStaffRouteChildren {
 
 const DashboardStaffRouteChildren: DashboardStaffRouteChildren = {
   DashboardStaffCredentialsRoute: DashboardStaffCredentialsRoute,
+  DashboardStaffInspectionsRoute: DashboardStaffInspectionsRoute,
   DashboardStaffKycRoute: DashboardStaffKycRoute,
   DashboardStaffSubmissionsRoute: DashboardStaffSubmissionsRoute,
   DashboardStaffWorkflowRoute: DashboardStaffWorkflowRoute,
@@ -774,13 +817,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
