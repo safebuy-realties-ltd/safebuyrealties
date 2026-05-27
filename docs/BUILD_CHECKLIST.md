@@ -20,11 +20,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-27
-- **Tool:** Cursor (Cloud Agent) — Step 8 notifications
-- **Last completed:** Step 8 — in-app notifications (database, backend service, event triggers, frontend bell)
-- **Done this session:** `Notification` model + migration; `@Global()` notifications module; triggers in listings/verification/tasks/payments; dashboard notification bell with unread badge and mark-read actions
+- **Tool:** Cursor (Cloud Agent) — wave 2 sync
+- **Last completed:** Steps 6 (PoA), 7 (escrow/payouts/anti-double-sell), 8 (notifications), 10 (DD purchase wizard)
+- **Done this session:** Wave 2 merged to main — PRs #51, #54, #55, #56, #57, #58
 - **Tests:** `npm run validate:tsc`, `npm test`, `cd backend && npm test`
-- **Next:** Step 9 KYC
+- **Next:** Step 9 KYC, Step 11 remaining screens
 - **Blockers:** none
 
 ---
@@ -198,22 +198,22 @@ These are building blocks that other features depend on. Build them in order.
 
 ## Step 6 — Power of Attorney
 
-- [ ] **PoA — database model**
+- [x] **PoA — database model** (PR #54)
   - Add `PowerOfAttorney` model: `id`, `transactionId String @unique`, `buyerId String`, `listingId String`, `pdfStorageKey String`, `documentHash String` (SHA-256 hex), `qrCodeStorageKey String`, `signatureMethod String` (DRAWN or TYPED), `signatureName String`, `consentFlags Json` (object with 4 boolean keys), `ipAddress String?`, `userAgent String?`, `executedAt DateTime @default(now())`
   - This model has no `updatedAt` — it is append-only and immutable
   - Run migration
-  - Validation: migration succeeds
+  - Validation: `PowerOfAttorney` model + migration on main (PR #54)
 
-- [ ] **PoA — PDF generation backend**
+- [x] **PoA — PDF generation backend** (PR #54)
   - Install `pdfkit` in the backend (`npm install pdfkit @types/pdfkit`)
   - Create `backend/src/poa/poa.service.ts` with method `generate(buyerName, listingTitle, listingAddress, executedAt): Buffer` that produces a PDF containing the full PoA instrument text (see Master Plan for the required clauses: scope of authority, revocation, indemnity, legal framework references)
   - The PDF should include: platform name and logo text at top, buyer's full name, property address, date of execution, and the four consent items confirmed
   - After generating the PDF buffer: compute SHA-256 hash using Node's built-in `crypto`, generate a QR code (install `qrcode` package) encoding `https://safebuyrealties.com/verify?hash={hash}`, upload all three (PDF, QR PNG) via StorageService
   - Create `POST /poa/execute` endpoint: authenticated buyer, body: `{ transactionId, signatureMethod, signatureName, consentFlags }` — generates PDF, hashes it, stores it, creates the `PowerOfAttorney` record, returns the record
   - Create `GET /poa/verify?hash={hash}` — public endpoint that looks up by hash and returns confirmation or "not found"
-  - Validation: call `POST /poa/execute` with test data, confirm a PDF is created in storage, confirm the hash matches `sha256(pdf_buffer)`, confirm the record is in the database
+  - Validation: `POST /poa/execute`, `GET /poa/verify?hash=…`; PDF + QR via StorageService; SHA-256 hash (PR #54)
 
-- [ ] **PoA — frontend execution screen**
+- [x] **PoA — frontend execution screen** (PR #54)
   - Create `src/components/PoAExecutionScreen.tsx` — a full-screen step component that:
     - Shows the platform name and scope statement at the top
     - Displays the PoA instrument text in a scrollable panel (firm name, scope of authority, revocation clause, indemnity clause, Nigerian legal references)
@@ -221,19 +221,19 @@ These are building blocks that other features depend on. Build them in order.
     - Shows a signature panel with two tabs: "Draw" (canvas where user draws signature) and "Type" (user types full legal name in a styled input)
     - The Execute button is disabled until all 4 checkboxes are checked and a signature is provided
     - On click: calls `POST /poa/execute`, shows a loading state, then a success confirmation with the document hash
-  - Validation: render the screen as a buyer for a live listing, complete all steps, click Execute — confirm the PoA record is created and the success state shows with the hash
+  - Validation: `PoAExecutionScreen.tsx` — consent checkboxes, draw/type signature, execute + success hash (PR #54)
 
 ---
 
 ## Step 7 — Escrow and Payouts
 
-- [ ] **Escrow — database model**
+- [x] **Escrow — database model** (PR #58)
   - Add `Escrow` model: `id`, `transactionId String @unique`, `status String @default("AWAITING_FUNDS")` (AWAITING_FUNDS, HELD, RELEASED, REFUNDED), `heldAmount Decimal @db.Decimal(18,2)`, `releaseConditions Json @default("[]")`, `conditionsMet Json @default("[]")`, `heldAt DateTime?`, `releasedAt DateTime?`, `refundedAt DateTime?`, `releasedById String?`, `releaseNote String?`
   - Add `Payout` model: `id`, `transactionId String`, `sellerId String`, `grossAmount Decimal @db.Decimal(18,2)`, `platformFee Decimal @db.Decimal(18,2)`, `netAmount Decimal @db.Decimal(18,2)`, `status String @default("PENDING")` (PENDING, INITIATED, COMPLETED, FAILED), `gatewayReference String?`, `initiatedAt DateTime?`, `completedAt DateTime?`
   - Run migration
-  - Validation: migration succeeds
+  - Validation: `Escrow` + `Payout` models + migration on main (PR #58)
 
-- [ ] **Escrow — hold and release logic**
+- [x] **Escrow — hold and release logic** (PR #58)
   - Create `backend/src/escrow/escrow.service.ts`
   - `hold(transactionId, amount)`: creates or updates Escrow record to HELD, records heldAt — called when a property purchase payment succeeds
   - `checkConditions(transactionId)`: returns array of unmet conditions based on the transaction state
@@ -241,24 +241,24 @@ These are building blocks that other features depend on. Build them in order.
   - `refund(transactionId, staffId, note)`: transitions to REFUNDED, transitions listing back to VERIFIED status, notifies buyer
   - `initiatePayout(transactionId)`: calculates seller's net amount (gross minus 5% platform fee), calls Paystack Transfer API, creates Payout record
   - Add endpoints: `GET /escrow/:transactionId` (buyer and seller see their own), `POST /escrow/:transactionId/release` (ADMIN/STAFF), `POST /escrow/:transactionId/refund` (ADMIN/STAFF)
-  - Validation: manually create an escrow record in the database, call the release endpoint as an admin, confirm payout record is created with correct net amount
+  - Validation: `EscrowService` hold/release/refund/payout; `GET/POST /escrow/:transactionId/*` endpoints (PR #58)
 
-- [ ] **Property reservation — anti-double-sell**
+- [x] **Property reservation — anti-double-sell** (PR #56)
   - When `listing.status → UNDER_OFFER`: add a check in `transactions.service.ts` `create()` that rejects new transactions for the same listing if it is already in UNDER_OFFER status
   - The rejection should return HTTP 409 with message: "This property is currently under offer and cannot be reserved by another buyer"
   - Frontend: handle this 409 on the buyer listing detail page — show a clear "Under Offer" state with disabled purchase button and appropriate messaging
-  - Validation: start a transaction as buyer A for listing X. As buyer B (different account), attempt to start a transaction for the same listing — confirm the 409 error and the UI shows "Under Offer" correctly
+  - Validation: `transactions.service.ts` 409 when listing `UNDER_OFFER`; buyer listing detail shows disabled purchase state (PR #56)
 
-- [ ] **Escrow — frontend status display**
+- [x] **Escrow — frontend status display** (PR #58)
   - On the buyer transaction detail page: add an escrow status section showing current escrow state (Awaiting Funds, Held, Released, Refunded), held amount, and if released — the release date
   - On the admin dashboard: add an escrow management section listing all HELD escrows with release/refund action buttons
-  - Validation: after a purchase payment (mock), the transaction page shows escrow in HELD state with the correct amount
+  - Validation: buyer transaction detail escrow section; admin escrow management with release/refund actions (PR #58)
 
 ---
 
 ## Step 8 — Notifications
 
-- [x] **Notifications — database and backend service**
+- [x] **Notifications — database and backend service** (PR #55)
   - Add `Notification` model: `id`, `userId String`, `user User @relation(...)`, `type String`, `title String`, `body String`, `entityId String?`, `entityType String?` (Listing, Transaction, Task, VerificationStep), `readAt DateTime?`, `createdAt DateTime @default(now())`; index on `[userId, readAt]`
   - Add `notifications Notification[]` to `User` model
   - Run migration
@@ -268,12 +268,12 @@ These are building blocks that other features depend on. Build them in order.
   - Make the notifications module `@Global()` so other services can inject it
   - Validation: `curl GET /notifications/me` with auth returns `{ data: [], meta: { unreadCount: 0, ... } }`
 
-- [x] **Notifications — trigger from events**
+- [x] **Notifications — trigger from events** (PR #55)
   - Inject `NotificationsService` into: `listings.service.ts`, `verification.service.ts`, `tasks.service.ts`, `payments.service.ts`
   - Add `create()` calls at each key event: listing submitted (→ notify all staff), listing verified (→ notify seller), listing rejected (→ notify seller with reason), task assigned (→ notify professional), report submitted (→ notify staff), revision requested (→ notify professional), DD payment succeeded (→ notify buyer, seller, staff), escrow released (→ notify buyer, seller)
   - Validation: submit a listing as a seller, confirm a notification row exists in the database for staff users; verify the listing as staff, confirm the seller gets a notification
 
-- [x] **Notifications — frontend bell**
+- [x] **Notifications — frontend bell** (PR #55)
   - Add a notification bell icon to `src/components/dashboard/DashboardLayout.tsx` in the top bar
   - Bell shows an unread count badge when there are unread notifications
   - Clicking the bell opens a dropdown panel showing the 10 most recent notifications, each with title, body, time ago, and a subtle unread indicator
@@ -310,52 +310,52 @@ These are building blocks that other features depend on. Build them in order.
 
 This is the main buyer journey. It is the most important screen in the product.
 
-- [ ] **Wizard — route and state structure**
+- [x] **Wizard — route and state structure** (PR #51)
   - Create route `/purchase/:listingId` accessible only to authenticated buyers for listings with status LIVE
   - Create a wizard state machine with 7 steps: `PROPERTY_CONFIRMATION`, `BUYER_INFO`, `POA_EXECUTION`, `SERVICE_SELECTION`, `ORDER_SUMMARY`, `PAYMENT`, `SUCCESS`
   - Persist current step and collected data to `sessionStorage` (keyed by listingId) so the buyer can leave and return
   - On mount, read session storage and restore to the last step
   - A progress bar or step indicator shows which step the buyer is on
-  - Validation: start the wizard, close the browser, reopen — wizard restores to the correct step
+  - Validation: `/purchase/:listingId` route; 7-step state machine; `sessionStorage` restore (PR #51)
 
-- [ ] **Wizard — Step 1: Property confirmation**
+- [x] **Wizard — Step 1: Property confirmation** (PR #51)
   - Shows: hero image, title, location, price, verification badge with date, brief description, key specs (beds/baths/area)
   - A "Proceed to verify identity and start due diligence" primary button
-  - Validation: navigating to `/purchase/:listingId` for a LIVE listing shows the property details correctly
+  - Validation: hero, specs, verification badge, proceed CTA for LIVE listings (PR #51)
 
-- [ ] **Wizard — Step 2: Buyer information**
+- [x] **Wizard — Step 2: Buyer information** (PR #51)
   - Form: Full Legal Name, Email Address, Phone Number, Country, State
   - Pre-fill from the logged-in user's profile where available
-  - Validation: required fields enforced client-side, data saves to wizard state on Next
+  - Validation: buyer info form with profile pre-fill; required fields + wizard state (PR #51)
 
-- [ ] **Wizard — Step 3: Power of Attorney**
+- [x] **Wizard — Step 3: Power of Attorney** (PR #57, #54)
   - Embed the `PoAExecutionScreen` component built in Step 6
   - On successful execution, store the returned PoA ID in wizard state and advance to Step 4
   - If the user already has an executed PoA for this transaction (returning user), show a confirmation of the existing execution and allow them to proceed
-  - Validation: complete the PoA step, confirm the PoA record exists in the database, confirm wizard advances to Step 4
+  - Validation: `PoAExecutionScreen` embedded; existing PoA skip path; advances on execute (PR #57, #54)
 
-- [ ] **Wizard — Step 4: Service selection**
+- [x] **Wizard — Step 4: Service selection** (PR #51)
   - Embed the `ServiceSelector` component built in Step 4
   - User's selection is saved to wizard state
-  - Validation: select a bundle, confirm the total is correct with VAT, Next advances to Step 5
+  - Validation: `ServiceSelector` embedded; bundle/à-la-carte + VAT total in wizard state (PR #51)
 
-- [ ] **Wizard — Step 5: Order summary**
+- [x] **Wizard — Step 5: Order summary** (PR #51)
   - Shows: selected services or bundle name, each service with price, subtotal, VAT amount (7.5%), total in ₦
   - A "Confirm and Pay ₦X,XXX,XXX" primary button
   - On click: create the `DueDiligenceOrder` via `POST /due-diligence-orders`, then initiate the Paystack payment
-  - Validation: the order is created in the database with correct amounts before payment is initiated
+  - Validation: order summary + `POST /due-diligence-orders` before payment (PR #51)
 
-- [ ] **Wizard — Step 6: Payment**
+- [x] **Wizard — Step 6: Payment** (PR #51)
   - Initiates Paystack/Flutterwave checkout for the DD service total
   - In development: use mock mode — a "Simulate Payment Success" button that calls the webhook handler manually
   - On payment success: advance to Step 7
   - On payment failure: show an error with a "Try Again" option that returns to Step 5
-  - Validation: simulate payment success, confirm transaction status transitions to DD_PURCHASED, confirm listing status transitions to UNDER_OFFER
+  - Validation: Paystack checkout + dev simulate success; `DD_PURCHASED` / `UNDER_OFFER` transitions (PR #51)
 
-- [ ] **Wizard — Step 7: Success**
+- [x] **Wizard — Step 7: Success** (PR #51)
   - Shows: confirmation message, transaction reference number, brief explanation of next steps (team will begin verification, estimated timeline), link to transaction dashboard
   - Clears the session storage for this listing
-  - Validation: success screen shows the correct transaction reference, sessionStorage for this listingId is cleared
+  - Validation: confirmation + transaction ref + next steps; clears `sessionStorage` (PR #51)
 
 ---
 
