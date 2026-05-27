@@ -13,6 +13,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { AuditAction } from "../audit/audit-actions.constants";
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  NotificationEntityType,
+  NotificationType,
+} from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { AssignVerificationDto } from "./dto/assign-verification.dto";
 import { PatchVerificationStepDto } from "./dto/patch-verification-step.dto";
@@ -38,6 +43,7 @@ export class VerificationService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   private isStaff(role: UserRole) {
@@ -256,6 +262,15 @@ export class VerificationService {
       where: { id: stepId },
       data,
     });
+    if (dto.status === VerificationStepStatus.COMPLETED) {
+      void this.notifications.createForStaff({
+        type: NotificationType.REPORT_SUBMITTED,
+        title: "Verification report submitted",
+        body: `${VERIFICATION_STEP_LABELS[step.type]} was completed and is ready for review.`,
+        entityId: step.listingId,
+        entityType: NotificationEntityType.Listing,
+      });
+    }
     return this.serializeStepForActor(updated, actor);
   }
 
@@ -309,6 +324,26 @@ export class VerificationService {
       before: { status: step.status, revisionNote: step.revisionNote },
       after: { status: VerificationStepStatus.REVISION_REQUESTED, revisionNote: trimmed },
     });
+    if (step.assignedProfessionalId) {
+      const relatedTask = await this.prisma.task.findFirst({
+        where: {
+          listingId: step.listingId,
+          assigneeId: step.assignedProfessionalId,
+          type: step.type,
+        },
+        select: { id: true },
+      });
+      void this.notifications.create({
+        userId: step.assignedProfessionalId,
+        type: NotificationType.REVISION_REQUESTED,
+        title: "Revision requested",
+        body: trimmed,
+        entityId: relatedTask?.id ?? step.listingId,
+        entityType: relatedTask
+          ? NotificationEntityType.Task
+          : NotificationEntityType.Listing,
+      });
+    }
     return this.serializeStep(updated);
   }
 }

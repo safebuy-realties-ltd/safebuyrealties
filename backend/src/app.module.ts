@@ -18,12 +18,14 @@ import { ProfessionalsModule } from "./professionals/professionals.module";
 import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
 import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
 import { PoaModule } from "./poa/poa.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuditModule,
+    NotificationsModule,
     AuthModule,
     UsersModule,
     ListingsModule,

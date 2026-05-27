@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ListingMediaType, ListingStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { AuditAction } from "../audit/audit-actions.constants";
 import { ListingsService } from "./listings.service";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -62,6 +63,7 @@ const staffActor: JwtPayload = {
 describe("ListingsService", () => {
   let service: ListingsService;
   let audit: { log: jest.Mock };
+  let notifications: { create: jest.Mock; createForStaff: jest.Mock };
   let prisma: {
     listing: {
       findUnique: jest.Mock;
@@ -74,6 +76,10 @@ describe("ListingsService", () => {
 
   beforeEach(async () => {
     audit = { log: jest.fn().mockResolvedValue(undefined) };
+    notifications = {
+      create: jest.fn().mockResolvedValue(undefined),
+      createForStaff: jest.fn().mockResolvedValue(undefined),
+    };
     prisma = {
       listing: {
         findUnique: jest.fn(),
@@ -92,6 +98,7 @@ describe("ListingsService", () => {
         ListingsService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: audit },
+        { provide: NotificationsService, useValue: notifications },
       ],
     }).compile();
 

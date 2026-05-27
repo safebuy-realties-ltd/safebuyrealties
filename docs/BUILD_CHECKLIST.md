@@ -19,13 +19,13 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 > *(Each session updates this section before stopping)*
 
-- **Date:** 2026-05-26
-- **Tool:** Cursor (Cloud Agent) — parallel agent wave
-- **Last completed:** Steps 3–5 checklist sync; `useCreateDdOrderMutation` hook for DD wizard
-- **Done this session:** Marked Step 3 (all 4), Step 4 (all 3), Step 5 (all 3) `[x]` after code verification on `main`
-- **Tests:** `npm run validate:tsc` (after hook add)
-- **Next:** Step 6 PoA (schema + PDF backend + execution screen); Step 10 DD Purchase Wizard
-- **Blockers:** `DATABASE_URL` not in cloud agent env for local `:8080` stack
+- **Date:** 2026-05-27
+- **Tool:** Cursor (Cloud Agent) — Step 8 notifications
+- **Last completed:** Step 8 — in-app notifications (database, backend service, event triggers, frontend bell)
+- **Done this session:** `Notification` model + migration; `@Global()` notifications module; triggers in listings/verification/tasks/payments; dashboard notification bell with unread badge and mark-read actions
+- **Tests:** `npm run validate:tsc`, `npm test`, `cd backend && npm test`
+- **Next:** Step 9 KYC
+- **Blockers:** none
 
 ---
 
@@ -258,7 +258,7 @@ These are building blocks that other features depend on. Build them in order.
 
 ## Step 8 — Notifications
 
-- [ ] **Notifications — database and backend service**
+- [x] **Notifications — database and backend service**
   - Add `Notification` model: `id`, `userId String`, `user User @relation(...)`, `type String`, `title String`, `body String`, `entityId String?`, `entityType String?` (Listing, Transaction, Task, VerificationStep), `readAt DateTime?`, `createdAt DateTime @default(now())`; index on `[userId, readAt]`
   - Add `notifications Notification[]` to `User` model
   - Run migration
@@ -268,12 +268,12 @@ These are building blocks that other features depend on. Build them in order.
   - Make the notifications module `@Global()` so other services can inject it
   - Validation: `curl GET /notifications/me` with auth returns `{ data: [], meta: { unreadCount: 0, ... } }`
 
-- [ ] **Notifications — trigger from events**
+- [x] **Notifications — trigger from events**
   - Inject `NotificationsService` into: `listings.service.ts`, `verification.service.ts`, `tasks.service.ts`, `payments.service.ts`
   - Add `create()` calls at each key event: listing submitted (→ notify all staff), listing verified (→ notify seller), listing rejected (→ notify seller with reason), task assigned (→ notify professional), report submitted (→ notify staff), revision requested (→ notify professional), DD payment succeeded (→ notify buyer, seller, staff), escrow released (→ notify buyer, seller)
   - Validation: submit a listing as a seller, confirm a notification row exists in the database for staff users; verify the listing as staff, confirm the seller gets a notification
 
-- [ ] **Notifications — frontend bell**
+- [x] **Notifications — frontend bell**
   - Add a notification bell icon to `src/components/dashboard/DashboardLayout.tsx` in the top bar
   - Bell shows an unread count badge when there are unread notifications
   - Clicking the bell opens a dropdown panel showing the 10 most recent notifications, each with title, body, time ago, and a subtle unread indicator
