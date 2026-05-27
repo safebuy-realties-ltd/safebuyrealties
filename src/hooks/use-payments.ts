@@ -47,6 +47,7 @@ export function useVerifyPaymentMutation() {
       void qc.invalidateQueries({ queryKey: ["transactions"] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
       void qc.invalidateQueries({ queryKey: ["payments"] });
+      void qc.invalidateQueries({ queryKey: ["escrow"] });
     },
   });
 }
@@ -70,6 +71,7 @@ export function useInitiatePaymentMutation() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["transactions"] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["escrow"] });
     },
   });
 }

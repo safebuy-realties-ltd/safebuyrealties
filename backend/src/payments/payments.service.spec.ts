@@ -3,6 +3,7 @@ import { UserRole, PaymentStatus, ListingStatus, TransactionStatus } from "@pris
 import { PaymentsService } from "./payments.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { EscrowService } from "../escrow/escrow.service";
 import { ConfigService } from "@nestjs/config";
 
 const buyerActor = {
@@ -61,6 +62,7 @@ describe("PaymentsService paystack email", () => {
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationsService, useValue: { create: jest.fn(), createForStaff: jest.fn() } },
+        { provide: EscrowService, useValue: { hold: jest.fn() } },
         {
           provide: ConfigService,
           useValue: {

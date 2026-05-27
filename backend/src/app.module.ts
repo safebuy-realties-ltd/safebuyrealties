@@ -19,6 +19,7 @@ import { ServiceCatalogModule } from "./service-catalog/service-catalog.module";
 import { DueDiligenceModule } from "./due-diligence/due-diligence.module";
 import { PoaModule } from "./poa/poa.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { EscrowModule } from "./escrow/escrow.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
     ServiceCatalogModule,
     DueDiligenceModule,
     PoaModule,
+    EscrowModule,
     HealthModule,
   ],
   providers: [

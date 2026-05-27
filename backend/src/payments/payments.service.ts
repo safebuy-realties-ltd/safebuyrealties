@@ -21,6 +21,7 @@ import {
   NotificationEntityType,
   NotificationType,
 } from "../notifications/notification-types.constants";
+import { EscrowService } from "../escrow/escrow.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 
@@ -30,6 +31,7 @@ export class PaymentsService {
     private prisma: PrismaService,
     private config: ConfigService,
     private notifications: NotificationsService,
+    private escrow: EscrowService,
   ) {}
 
   private async notifyDdPaymentSucceeded(transactionId: string) {
@@ -322,6 +324,9 @@ export class PaymentsService {
     // Fire-and-forget notifications — outside the DB transaction.
     if (p.transactionId && p.intent === PaymentIntent.DD_SERVICE) {
       void this.notifyDdPaymentSucceeded(p.transactionId);
+    }
+    if (p.transactionId && p.intent === PaymentIntent.PROPERTY_PURCHASE) {
+      await this.escrow.hold(p.transactionId, p.amount);
     }
   }
 
