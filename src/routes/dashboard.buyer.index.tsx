@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { statusIsPublic } from "@/lib/listing-status";
+import { kycStatusBadgeClass, kycStatusLabel, kycStatusMessage } from "@/lib/kyc-status";
 import { useListingsQuery, type ListingDto } from "@/hooks/use-listings";
 import { useMyTransactionsQuery } from "@/hooks/use-transactions";
+import { useMyKycQuery } from "@/hooks/use-kyc";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80";
 
@@ -55,6 +57,8 @@ function BuyerOverview() {
   const { data: listingsData, isLoading: loadListings } = useListingsQuery();
   const listings = useMemo(() => listingsData?.listings ?? [], [listingsData?.listings]);
   const { data: txs, isLoading: loadTxs } = useMyTransactionsQuery();
+  const { data: kyc, isLoading: loadKyc } = useMyKycQuery();
+  const kycStatus = kyc?.status ?? "NOT_SUBMITTED";
 
   const previewListings = useMemo(
     () =>
@@ -94,6 +98,33 @@ function BuyerOverview() {
         />
         <StatCard label="Active transactions" value={loadTxs ? "…" : String(stats.activeTx)} />
         <StatCard label="Completed" value={loadTxs ? "…" : String(stats.doneTx)} />
+      </div>
+
+      <div className="mt-6 rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Identity verification</h2>
+            {loadKyc ? (
+              <p className="mt-2 text-sm text-muted-foreground">Loading status…</p>
+            ) : (
+              <>
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="outline" className={kycStatusBadgeClass(kycStatus)}>
+                    {kycStatusLabel(kycStatus)}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {kycStatusMessage(kycStatus, kyc?.reviewNote)}
+                </p>
+              </>
+            )}
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/dashboard/buyer/kyc">
+              {kycStatus === "VERIFIED" ? "View details" : "Verify identity"}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-10">

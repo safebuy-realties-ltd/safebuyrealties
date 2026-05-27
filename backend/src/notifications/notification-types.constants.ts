@@ -8,6 +8,8 @@ export const NotificationType = {
   DD_PAYMENT_SUCCEEDED: "DD_PAYMENT_SUCCEEDED",
   ESCROW_RELEASED: "ESCROW_RELEASED",
   ESCROW_REFUNDED: "ESCROW_REFUNDED",
+  KYC_VERIFIED: "KYC_VERIFIED",
+  KYC_REJECTED: "KYC_REJECTED",
 } as const;
 
 export type NotificationTypeValue = (typeof NotificationType)[keyof typeof NotificationType];
@@ -17,6 +19,7 @@ export const NotificationEntityType = {
   Transaction: "Transaction",
   Task: "Task",
   VerificationStep: "VerificationStep",
+  KycRecord: "KycRecord",
 } as const;
 
 export type NotificationEntityTypeValue =

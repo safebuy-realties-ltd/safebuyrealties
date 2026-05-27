@@ -20,11 +20,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-05-27
-- **Tool:** Cursor (Cloud Agent) — wave 2 sync
-- **Last completed:** Steps 6 (PoA), 7 (escrow/payouts/anti-double-sell), 8 (notifications), 10 (DD purchase wizard)
-- **Done this session:** Wave 2 merged to main — PRs #51, #54, #55, #56, #57, #58
+- **Tool:** Cursor (Cloud Agent) — wave 3
+- **Last completed:** Steps 6–10 core + Step 9 KYC + Step 11 advanced search (PRs #59–#62 pending KYC #60)
+- **Done this session:** Wave 2 (#51–#58) + wave 3 docs/search/escrow-notify; KYC on branch
 - **Tests:** `npm run validate:tsc`, `npm test`, `cd backend && npm test`
-- **Next:** Step 9 KYC, Step 11 remaining screens
+- **Next:** Step 11 remaining (saved properties, inspections, analytics)
 - **Blockers:** none
 
 ---
@@ -286,19 +286,19 @@ These are building blocks that other features depend on. Build them in order.
 
 ## Step 9 — KYC
 
-- [ ] **KYC — database model and backend**
+- [x] **KYC — database model and backend** (PR #60)
   - Add `KycRecord` model: `id`, `userId String @unique`, `user User @relation(...)`, `status String @default("NOT_SUBMITTED")` (NOT_SUBMITTED, SUBMITTED, VERIFIED, REJECTED), `documentKeys Json @default("[]")` (array of storage keys), `reviewerId String?`, `reviewNote String?`, `submittedAt DateTime?`, `reviewedAt DateTime?`
   - Run migration
   - Endpoints: `GET /kyc/me` (user's own KYC status), `POST /kyc/submit` (buyer submits documents — uploads via existing document endpoint then calls this to mark as submitted), `GET /kyc/queue` (STAFF only — all SUBMITTED records), `PATCH /kyc/:userId/verify` (STAFF only), `PATCH /kyc/:userId/reject` (STAFF only, body: `{ note: string }`)
   - Validation: submit KYC as a buyer (with a test document), check the staff queue — record appears. Staff verifies — user's KYC status updates to VERIFIED.
 
-- [ ] **KYC — frontend user profile**
+- [x] **KYC — frontend user profile** (PR #60)
   - Add a "Verify Your Identity" section to the buyer profile or dashboard
   - Shows current KYC status with appropriate copy: NOT_SUBMITTED ("Please verify your identity to complete property purchases"), SUBMITTED ("Your documents are under review — we'll notify you when complete"), VERIFIED ("Identity Verified ✓"), REJECTED (shows rejection note and option to resubmit)
   - If NOT_SUBMITTED or REJECTED: show a document upload section for government ID and a selfie/utility bill
   - Validation: as a buyer, upload KYC documents — status changes to SUBMITTED and the prompt changes to the review-in-progress message
 
-- [ ] **KYC — staff review queue frontend**
+- [x] **KYC — staff review queue frontend** (PR #60)
   - Add a "KYC Reviews" tab to the staff dashboard
   - Shows a table of users with SUBMITTED KYC records: name, email, submission date, documents link
   - Verify and Reject buttons with the reject action requiring a typed reason
@@ -361,7 +361,7 @@ This is the main buyer journey. It is the most important screen in the product.
 
 ## Step 11 — Remaining Screens
 
-- [ ] **Advanced search with server-side filters**
+- [x] **Advanced search with server-side filters** (PR #62)
   - Backend: update `GET /listings` to accept query params: `location`, `minPrice`, `maxPrice`, `buildType`, `minBeds`, `status` — apply as Prisma `where` conditions
   - Frontend: add a filter bar above the listings grid on the buyer listings page with inputs for each filter
   - Filters apply on change with debouncing (300ms)
