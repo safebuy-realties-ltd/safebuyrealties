@@ -222,6 +222,8 @@ model Transaction {
   updatedAt DateTime            @updatedAt
   payments  Payment[]
   powerOfAttorney PowerOfAttorney?
+  escrow    Escrow?
+  payouts   Payout[]
 }
 
 model Payment {
@@ -379,3 +381,41 @@ model Notification {
   @@map("notifications")
 }
 
+model Escrow {
+  id                String      @id @default(uuid())
+  transactionId     String      @unique
+  transaction       Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  status            String      @default("AWAITING_FUNDS")
+  heldAmount        Decimal     @db.Decimal(18, 2)
+  releaseConditions Json        @default("[]")
+  conditionsMet     Json        @default("[]")
+  heldAt            DateTime?
+  releasedAt        DateTime?
+  refundedAt        DateTime?
+  releasedById      String?
+  releaseNote       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("escrows")
+}
+
+model Payout {
+  id               String      @id @default(uuid())
+  transactionId    String
+  transaction      Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  sellerId         String
+  grossAmount      Decimal     @db.Decimal(18, 2)
+  platformFee      Decimal     @db.Decimal(18, 2)
+  netAmount        Decimal     @db.Decimal(18, 2)
+  status           String      @default("PENDING")
+  gatewayReference String?
+  initiatedAt      DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([transactionId])
+  @@index([sellerId])
+  @@map("payouts")
+}

@@ -11,6 +11,7 @@ import {
   usePaymentQuery,
   type PaymentDto,
 } from "@/hooks/use-payments";
+import { useEscrowQuery, escrowStatusLabel } from "@/hooks/use-escrow";
 import { openPaystackCheckout } from "@/lib/paystack";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -191,22 +192,25 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
   const storedPayment = getStoredPayment(tx.id);
   const paymentId = storedPayment?.paymentId ?? null;
   const { data: payment } = usePaymentQuery(paymentId);
+  const pp=["DD_COMPLETE","PURCHASE_PENDING","PURCHASE_IN_ESCROW","COMPLETED"].includes(tx.status);
+  const { data: escrow } = useEscrowQuery(tx.id, pp||tx.status==="PURCHASE_IN_ESCROW"||payment?.intent==="PROPERTY_PURCHASE");
   const steps = payment ? timelineForPaymentStatus(payment.status) : timelineForStatus(tx.status);
   const amount = formatMoney(tx.listing.price, tx.listing.currency);
   const payMutation = useInitiatePaymentMutation();
   const verifyMutation = useVerifyPaymentMutation();
   const deposit = depositAmountForListing(tx.listing.price);
-  const canPay = tx.status !== "COMPLETED";
+  const payAmount=pp?Number(tx.listing.price):deposit; const canPay=tx.status!=="COMPLETED"&&tx.status!=="PURCHASE_IN_ESCROW";
 
   const pay = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const callbackUrl = `${origin}/dashboard/buyer/transactions?mock=1`;
     payMutation.mutate(
       {
-        amount: deposit,
+        amount: payAmount,
         currency: tx.listing.currency || "NGN",
         transactionId: tx.id,
         callbackUrl,
+        intent: pp ? "PROPERTY_PURCHASE" : "DD_SERVICE",
       },
       {
         onSuccess: (res) => {
@@ -265,7 +269,7 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
             <Button size="sm" onClick={() => pay()} disabled={payMutation.isPending}>
               {payMutation.isPending
                 ? "Processing…"
-                : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
+                : pp ? `Purchase ${formatMoney(String(payAmount), tx.listing.currency)}` : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
@@ -317,6 +321,7 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
             Payment reference: <span className="font-mono">{storedPayment.reference}</span>
           </p>
         )}
+        {escrow&&<div className="mt-6 rounded-lg border p-4"><h4 className="text-sm font-semibold">Escrow</h4><p className="text-sm">{escrowStatusLabel(escrow.status)} · {formatMoney(escrow.heldAmount,tx.listing.currency)}</p>{escrow.releasedAt&&<p className="text-xs text-muted-foreground">Released {new Date(escrow.releasedAt).toLocaleString()}</p>}</div>}
       </div>
     </article>
   );

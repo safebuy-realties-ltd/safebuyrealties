@@ -37,6 +37,7 @@ import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.b
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminSettingsRouteImport } from './routes/dashboard.admin.settings'
 import { Route as DashboardAdminListingsRouteImport } from './routes/dashboard.admin.listings'
+import { Route as DashboardAdminEscrowsRouteImport } from './routes/dashboard.admin.escrows'
 import { Route as DashboardProfessionalTasksTaskIdRouteImport } from './routes/dashboard.professional.tasks.$taskId'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -186,6 +187,11 @@ const DashboardAdminListingsRoute = DashboardAdminListingsRouteImport.update({
   path: '/listings',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminEscrowsRoute = DashboardAdminEscrowsRouteImport.update({
+  id: '/escrows',
+  path: '/escrows',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const DashboardProfessionalTasksTaskIdRoute =
   DashboardProfessionalTasksTaskIdRouteImport.update({
     id: '/$taskId',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/dashboard/staff'
     | '/listings/$listingId'
     | '/purchase/$listingId'
+    | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/listings/$listingId'
     | '/purchase/$listingId'
+    | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/dashboard/staff'
     | '/listings/$listingId'
     | '/purchase/$listingId'
+    | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -584,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminListingsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/escrows': {
+      id: '/dashboard/admin/escrows'
+      path: '/escrows'
+      fullPath: '/dashboard/admin/escrows'
+      preLoaderRoute: typeof DashboardAdminEscrowsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/professional/tasks/$taskId': {
       id: '/dashboard/professional/tasks/$taskId'
       path: '/$taskId'
@@ -595,6 +614,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardAdminRouteChildren {
+  DashboardAdminEscrowsRoute: typeof DashboardAdminEscrowsRoute
   DashboardAdminListingsRoute: typeof DashboardAdminListingsRoute
   DashboardAdminSettingsRoute: typeof DashboardAdminSettingsRoute
   DashboardAdminUsersRoute: typeof DashboardAdminUsersRoute
@@ -602,6 +622,7 @@ interface DashboardAdminRouteChildren {
 }
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminEscrowsRoute: DashboardAdminEscrowsRoute,
   DashboardAdminListingsRoute: DashboardAdminListingsRoute,
   DashboardAdminSettingsRoute: DashboardAdminSettingsRoute,
   DashboardAdminUsersRoute: DashboardAdminUsersRoute,
