@@ -63,9 +63,10 @@ export class TransactionsService {
         buyerId: actor.sub,
         status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
       },
+      include: { listing: true },
     });
     if (open) {
-      throw new ConflictException("You already have an open transaction for this listing");
+      return this.serialize(open);
     }
 
     const tx = await this.prisma.transaction.create({
