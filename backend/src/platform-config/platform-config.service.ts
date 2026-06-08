@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { AuditAction } from "../audit/audit-actions.constants";
 import { UpdatePlatformConfigDto } from "./dto/update-platform-config.dto";
+import { isInternalRole } from "../common/user-roles";
 
 const SINGLETON_ID = "singleton";
 const CACHE_TTL_MS = 60_000;
@@ -64,7 +65,7 @@ export class PlatformConfigService {
   }
 
   getForRole(role: UserRole, config: PlatformConfigResponse): PlatformConfigResponse | PlatformConfigPublicResponse {
-    if (role === UserRole.ADMIN || role === UserRole.STAFF) {
+    if (isInternalRole(role)) {
       return config;
     }
     return {

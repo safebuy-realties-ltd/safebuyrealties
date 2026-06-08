@@ -14,6 +14,7 @@ import {
   Prisma,
 } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { isInternalRole } from "../common/user-roles";
 import { PaystackService } from "./paystack.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import {
@@ -70,7 +71,7 @@ export class PaymentsService {
   }
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   getPaymentConfig() {

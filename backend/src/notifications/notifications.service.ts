@@ -77,7 +77,7 @@ export class NotificationsService {
   async createForStaff(input: Omit<CreateNotificationInput, "userId">): Promise<void> {
     try {
       const staff = await this.prisma.user.findMany({
-        where: { role: { in: [UserRole.STAFF, UserRole.ADMIN] } },
+        where: { role: { in: [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN] } },
         select: { id: true },
       });
       await Promise.all(staff.map((user) => this.create({ ...input, userId: user.id })));

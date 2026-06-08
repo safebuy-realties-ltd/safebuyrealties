@@ -7,6 +7,7 @@ import {
 import { ListingStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import { CreateInspectionRequestDto } from "./dto/create-inspection-request.dto";
 import { PatchInspectionSlotDto } from "./dto/patch-inspection-slot.dto";
 
@@ -46,7 +47,7 @@ export class InspectionsService {
     const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
     if (!listing) throw new NotFoundException("Listing not found");
 
-    const isStaff = actor.role === UserRole.STAFF || actor.role === UserRole.ADMIN;
+    const isStaff = isInternalRole(actor.role);
     const isSeller = listing.sellerId === actor.sub;
     const isBuyer = actor.role === UserRole.BUYER;
 
@@ -68,8 +69,7 @@ export class InspectionsService {
     const slot = await this.prisma.inspectionSlot.findUnique({ where: { id } });
     if (!slot) throw new NotFoundException("Inspection slot not found");
 
-    const isStaff = actor.role === UserRole.STAFF || actor.role === UserRole.ADMIN;
-    if (!isStaff) {
+    if (!isInternalRole(actor.role)) {
       throw new ForbiddenException("Only staff can update inspection slots");
     }
 
@@ -94,7 +94,7 @@ export class InspectionsService {
   }
 
   async listQueue(actor: JwtPayload) {
-    if (actor.role !== UserRole.STAFF && actor.role !== UserRole.ADMIN) {
+    if (!isInternalRole(actor.role)) {
       throw new ForbiddenException();
     }
     const slots = await this.prisma.inspectionSlot.findMany({

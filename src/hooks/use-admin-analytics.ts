@@ -9,11 +9,15 @@ export type AdminAnalyticsDto = {
   totalDdRevenue: string;
   pendingKyc: number;
   pendingVerifications: number;
+  usersByRole?: Record<string, number>;
+  listingsByStatus?: Record<string, number>;
+  recentTransactionsCount?: number;
 };
 
 export function useAdminAnalyticsQuery() {
   const { user, isReady } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "staff";
+  const isAdmin =
+    user?.role === "admin" || user?.role === "staff" || user?.role === "super_admin";
   return useQuery({
     queryKey: ["admin", "analytics"],
     queryFn: () => apiRequest<AdminAnalyticsDto>("/admin/analytics").then((e) => e.data),

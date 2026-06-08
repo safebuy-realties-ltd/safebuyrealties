@@ -12,6 +12,7 @@ import {
   NotificationType,
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { PatchTaskDto } from "./dto/patch-task.dto";
 import { ListTasksMeQueryDto } from "./dto/list-tasks.query";
@@ -24,7 +25,7 @@ export class TasksService {
   ) {}
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private serializeTask(t: {

@@ -12,7 +12,11 @@ import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { JwtPayload } from "./jwt.strategy";
 
-const SELF_REGISTER_ROLES: UserRole[] = [UserRole.BUYER, UserRole.SELLER];
+const SELF_REGISTER_ROLES: UserRole[] = [
+  UserRole.BUYER,
+  UserRole.SELLER,
+  UserRole.PROFESSIONAL,
+];
 
 @Injectable()
 export class AuthService {
@@ -29,6 +33,7 @@ export class AuthService {
     role: UserRole;
     professionalType: ProfessionalType | null;
     phone: string | null;
+    isActive: boolean;
     createdAt: Date;
   }) {
     return {
@@ -40,6 +45,7 @@ export class AuthService {
       role: user.role.toLowerCase(),
       professionalType: user.professionalType,
       phone: user.phone,
+      isActive: user.isActive,
       createdAt: user.createdAt.toISOString(),
     };
   }
@@ -47,8 +53,11 @@ export class AuthService {
   async register(dto: RegisterDto) {
     if (!SELF_REGISTER_ROLES.includes(dto.role)) {
       throw new BadRequestException(
-        "Only buyer and seller accounts can self-register. Contact support for other roles.",
+        "Only buyer, seller, and professional accounts can self-register. Contact support for other roles.",
       );
+    }
+    if (dto.role === UserRole.PROFESSIONAL && !dto.professionalType) {
+      throw new BadRequestException("professionalType is required for professional registration");
     }
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException("Email already registered");
@@ -60,8 +69,21 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         role: dto.role,
+        ...(dto.professionalType ? { professionalType: dto.professionalType } : {}),
       },
     });
+
+    if (dto.role === UserRole.PROFESSIONAL) {
+      await this.prisma.professionalProfile.create({
+        data: {
+          userId: user.id,
+          regulatoryBody: "",
+          licenseNumber: "",
+          verifiedStatus: "PENDING",
+        },
+      });
+    }
+
     const accessToken = await this.signToken(user);
     return {
       data: {
@@ -74,6 +96,7 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException("Invalid email or password");
+    if (!user.isActive) throw new UnauthorizedException("Account is deactivated");
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException("Invalid email or password");
     const accessToken = await this.signToken(user);

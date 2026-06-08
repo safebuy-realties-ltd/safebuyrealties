@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEnum, IsOptional, IsString, MinLength } from "class-validator";
 import { UserRole, ProfessionalType } from "@prisma/client";
 
 export class UpdateUserDto {
@@ -24,4 +24,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(ProfessionalType)
   professionalType?: ProfessionalType | null;
+
+  /** Staff+ only; cannot deactivate self or super admins (unless actor is super admin). */
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

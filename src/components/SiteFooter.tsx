@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 
 export function SiteFooter() {
@@ -11,9 +12,19 @@ export function SiteFooter() {
               Verified real estate. Secured transactions.
             </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} SafeBuyRealties. All rights reserved.
-          </p>
+          <div className="flex flex-col items-start gap-3 md:items-end">
+            <nav className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <Link to="/login" className="hover:text-foreground">
+                Staff sign in
+              </Link>
+              <Link to="/login" className="hover:text-foreground">
+                Admin sign in
+              </Link>
+            </nav>
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} SafeBuyRealties. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -52,6 +52,31 @@ function listingsQueryString(options?: ListingsQueryOptions) {
   return s ? `?${s}` : "";
 }
 
+export function usePublicListingsQuery(options?: ListingsQueryOptions) {
+  const { isReady } = useAuth();
+  const q = listingsQueryString(options);
+  return useQuery({
+    queryKey: [
+      "listings",
+      "public",
+      options?.status ?? null,
+      options?.page ?? 1,
+      options?.pageSize ?? 20,
+      options?.location ?? null,
+      options?.minPrice ?? null,
+      options?.maxPrice ?? null,
+      options?.buildType ?? null,
+      options?.minBeds ?? null,
+    ],
+    queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
+    enabled: isReady,
+    select: (envelope) => ({
+      listings: envelope.data,
+      meta: envelope.meta as { page: number; pageSize: number; total: number } | undefined,
+    }),
+  });
+}
+
 export function useListingsQuery(options?: ListingsQueryOptions) {
   const { user, isReady } = useAuth();
   const sellerId = options?.ownedOnly ? user?.id : options?.sellerId;

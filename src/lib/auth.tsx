@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { apiRequest } from "@/lib/api";
 
-export type Role = "buyer" | "seller" | "professional" | "staff" | "admin";
+export type Role = "buyer" | "seller" | "professional" | "staff" | "admin" | "super_admin";
 
 export type AuthUser = {
   id: string;
@@ -11,7 +11,54 @@ export type AuthUser = {
   professionalType?: string | null;
 };
 
-type SelfRegisterRole = "buyer" | "seller";
+type SelfRegisterRole = "buyer" | "seller" | "professional";
+
+export type ProfessionalTypeOption =
+  | "LAWYER"
+  | "SURVEYOR"
+  | "VALUER"
+  | "ARCHITECT"
+  | "ENGINEER"
+  | "BUILDER"
+  | "QUANTITY_SURVEYOR";
+
+/** Allow only same-origin relative paths (no protocol-relative or external URLs). */
+export function isSafeInternalRedirect(path: string | undefined): path is string {
+  if (!path || typeof path !== "string") return false;
+  if (!path.startsWith("/")) return false;
+  if (path.startsWith("//")) return false;
+  if (path.includes("://")) return false;
+  return true;
+}
+
+export function postAuthPath(redirect: string | undefined, fallback: string): string {
+  return isSafeInternalRedirect(redirect) ? redirect : fallback;
+}
+
+type RouterNavigate = (opts: {
+  to: string;
+  params?: Record<string, string>;
+  search?: Record<string, string>;
+}) => void;
+
+/** Client-side navigation after auth — avoids full-page `href` loads that can leave localhost. */
+export function navigateAfterAuth(navigate: RouterNavigate, path: string) {
+  const [pathname, query = ""] = path.split("?");
+  if (pathname.startsWith("/purchase/")) {
+    const listingId = pathname.slice("/purchase/".length);
+    navigate({ to: "/purchase/$listingId", params: { listingId } });
+    return;
+  }
+  if (pathname.startsWith("/listings/")) {
+    const listingId = pathname.slice("/listings/".length);
+    navigate({ to: "/listings/$listingId", params: { listingId } });
+    return;
+  }
+  const search = query
+    ? (Object.fromEntries(new URLSearchParams(query)) as Record<string, string>)
+    : undefined;
+  navigate({ to: pathname, ...(search ? { search } : {}) });
+}
 
 type ApiUser = {
   id: string;
@@ -42,6 +89,7 @@ type AuthState = {
     email: string;
     password: string;
     role: SelfRegisterRole;
+    professionalType?: ProfessionalTypeOption;
   }) => Promise<AuthUser>;
   logout: () => Promise<void>;
 };
@@ -104,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: string;
       password: string;
       role: SelfRegisterRole;
+      professionalType?: ProfessionalTypeOption;
     }) => {
       const envelope = await apiRequest<{ user: ApiUser }>("/auth/register", {
         method: "POST",
@@ -113,6 +162,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firstName: data.firstName,
           lastName: data.lastName,
           role: data.role.toUpperCase(),
+          ...(data.role === "professional" && data.professionalType
+            ? { professionalType: data.professionalType }
+            : {}),
         }),
       });
       const next = mapApiUser(envelope.data.user);
@@ -154,5 +206,13 @@ export function useAuth() {
 }
 
 export function dashboardPathForRole(role: Role): string {
+  if (role === "super_admin") return "/dashboard/super-admin";
   return `/dashboard/${role}`;
+}
+
+/** Whether the signed-in user may use a dashboard layout role (e.g. super_admin on admin routes). */
+export function canAccessDashboardRole(userRole: Role, layoutRole: Role): boolean {
+  if (userRole === layoutRole) return true;
+  if (userRole === "super_admin" && (layoutRole === "admin" || layoutRole === "staff")) return true;
+  return false;
 }

@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
+import {
+  ListingsByStatusChart,
+  QueueDepthChart,
+  RevenuePlaceholderChart,
+} from "@/components/dashboard/AdminAnalyticsCharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -96,6 +101,15 @@ function AdminOverview() {
       {analyticsErr && (
         <p className="mt-2 text-sm text-destructive">Could not load platform analytics.</p>
       )}
+
+      <div className="mt-10">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Ops overview</h2>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <ListingsByStatusChart analytics={analytics} />
+          <RevenuePlaceholderChart analytics={analytics} />
+          <QueueDepthChart analytics={analytics} />
+        </div>
+      </div>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">

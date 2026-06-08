@@ -4,16 +4,24 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, dashboardPathForRole } from "@/lib/auth";
+import { useAuth, dashboardPathForRole, navigateAfterAuth, postAuthPath } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
+type LoginSearch = {
+  redirect?: string;
+};
+
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const { login, isReady } = useAuth();
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +37,8 @@ function LoginPage() {
     setError("");
     try {
       const user = await login(email, password);
-      navigate({ to: dashboardPathForRole(user.role) });
+      const target = postAuthPath(redirect, dashboardPathForRole(user.role));
+      navigateAfterAuth(navigate, target);
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -42,6 +51,8 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
+  const registerSearch = redirect ? { redirect } : undefined;
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -89,7 +100,11 @@ function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             New here?{" "}
-            <Link to="/register" className="font-medium text-primary hover:underline">
+            <Link
+              to="/register"
+              search={registerSearch}
+              className="font-medium text-primary hover:underline"
+            >
               Create an account
             </Link>
           </p>

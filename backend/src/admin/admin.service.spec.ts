@@ -13,10 +13,11 @@ const adminActor = {
 describe("AdminService", () => {
   let service: AdminService;
   const prisma = {
-    listing: { count: jest.fn() },
+    listing: { count: jest.fn(), groupBy: jest.fn() },
     transaction: { count: jest.fn() },
     dueDiligenceOrder: { aggregate: jest.fn() },
     kycRecord: { count: jest.fn() },
+    user: { groupBy: jest.fn() },
   };
 
   beforeEach(async () => {
@@ -25,7 +26,9 @@ describe("AdminService", () => {
       .mockResolvedValueOnce(10)
       .mockResolvedValueOnce(4)
       .mockResolvedValueOnce(2);
-    prisma.transaction.count.mockResolvedValue(7);
+    prisma.transaction.count.mockResolvedValueOnce(7).mockResolvedValueOnce(3);
+    prisma.user.groupBy.mockResolvedValue([{ role: UserRole.ADMIN, _count: { _all: 1 } }]);
+    prisma.listing.groupBy.mockResolvedValue([{ status: "LIVE", _count: { _all: 4 } }]);
     prisma.dueDiligenceOrder.aggregate.mockResolvedValue({
       _sum: { total: "1500000" },
     });
@@ -45,5 +48,8 @@ describe("AdminService", () => {
     expect(result.totalTransactions).toBe(7);
     expect(result.pendingVerifications).toBe(2);
     expect(result.pendingKyc).toBe(1);
+    expect(result.recentTransactionsCount).toBe(3);
+    expect(result.usersByRole).toEqual({ admin: 1 });
+    expect(result.listingsByStatus).toEqual({ live: 4 });
   });
 });

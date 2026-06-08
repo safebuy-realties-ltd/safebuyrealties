@@ -1,4 +1,5 @@
 Role,Professional Type,First Name,Last Name,Email,Password,App URL,Dashboard Path,Notes
+SUPER_ADMIN,,Sam,Superadmin,superadmin@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/super-admin,Platform owner — creates admins and full command center
 ADMIN,,Ada,Admin,admin@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
 ADMIN,,Alex,Adeyemi,admin2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
 ADMIN,,Amina,Hassan,admin3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions

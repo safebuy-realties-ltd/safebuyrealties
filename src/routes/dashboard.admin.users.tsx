@@ -3,8 +3,18 @@ import { useMemo, useState } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -12,16 +22,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useAdminUsersQuery, usePatchUserMutation } from "@/hooks/use-admin-users";
+import {
+  useAdminUsersQuery,
+  useCreateUserMutation,
+  usePatchUserMutation,
+} from "@/hooks/use-admin-users";
 import { ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import {
+  assignableRoles,
+  canAssignRole,
+  PROFESSIONAL_TYPES,
+  type ManageableRole,
+  type ProfessionalType,
+} from "@/lib/role-hierarchy";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
   component: AdminUsers,
 });
-
-type RoleUi = "buyer" | "seller" | "professional" | "staff" | "admin";
 
 const PAGE_SIZE = 8;
 
@@ -35,14 +55,170 @@ function initialsOf(n: string) {
     .toUpperCase();
 }
 
-function toApiRole(r: RoleUi): string {
+function toApiRole(r: ManageableRole): string {
   return r.toUpperCase();
 }
 
+function splitName(name: string): { firstName: string; lastName: string } {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
+function roleLabel(role: ManageableRole): string {
+  return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function CreateUserDialog() {
+  const { user } = useAuth();
+  const createUser = useCreateUserMutation();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<ManageableRole>("buyer");
+  const [professionalType, setProfessionalType] = useState<ProfessionalType>("LAWYER");
+
+  const allowedRoles = useMemo(() => assignableRoles(user?.role), [user?.role]);
+
+  const reset = () => {
+    setEmail("");
+    setName("");
+    setPassword("");
+    setRole("buyer");
+    setProfessionalType("LAWYER");
+  };
+
+  const handleCreate = () => {
+    const { firstName, lastName } = splitName(name);
+    if (!email.trim() || !firstName || !password.trim()) {
+      toast.error("Email, name, and password are required.");
+      return;
+    }
+    if (!canAssignRole(user?.role, role)) {
+      toast.error("You cannot assign that role.");
+      return;
+    }
+    const body = {
+      email: email.trim(),
+      password,
+      firstName,
+      lastName,
+      role: toApiRole(role),
+      ...(role === "professional" ? { professionalType } : {}),
+    };
+    createUser.mutate(body, {
+      onSuccess: () => {
+        toast.success("User created.");
+        reset();
+        setOpen(false);
+      },
+      onError: (e) => toast.error(e instanceof ApiError ? e.message : "Create failed."),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <UserPlus className="mr-2 h-4 w-4" />
+          Create user
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create user</DialogTitle>
+          <DialogDescription>
+            Provision a new account with an initial role. Password must meet server policy.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-2">
+            <Label htmlFor="create-email">Email</Label>
+            <Input
+              id="create-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@example.com"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="create-name">Full name</Label>
+            <Input
+              id="create-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jane Doe"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="create-password">Password</Label>
+            <Input
+              id="create-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Role</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as ManageableRole)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {allowedRoles.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {roleLabel(r)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {role === "professional" && (
+            <div className="grid gap-2">
+              <Label>Professional type</Label>
+              <Select
+                value={professionalType}
+                onValueChange={(v) => setProfessionalType(v as ProfessionalType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFESSIONAL_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t.replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreate} disabled={createUser.isPending}>
+            {createUser.isPending ? "Creating…" : "Create"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AdminUsers() {
+  const { user: actor } = useAuth();
   const [q, setQ] = useState("");
-  const [roleFilter, setRoleFilter] = useState<RoleUi | "all">("all");
+  const [roleFilter, setRoleFilter] = useState<ManageableRole | "all">("all");
   const [page, setPage] = useState(1);
+  const assignable = useMemo(() => assignableRoles(actor?.role), [actor?.role]);
+
   const { data, isLoading, isError, error, refetch } = useAdminUsersQuery({
     role: roleFilter === "all" ? undefined : toApiRole(roleFilter),
     page,
@@ -60,7 +236,25 @@ function AdminUsers() {
 
   const patch = usePatchUserMutation();
 
-  const updateRole = (id: string, role: RoleUi) => {
+  const toggleActive = (id: string, isActive: boolean) => {
+    if (actor?.id === id) {
+      toast.error("You cannot change your own account status.");
+      return;
+    }
+    patch.mutate(
+      { id, body: { isActive } },
+      {
+        onSuccess: () => toast.success(isActive ? "User activated." : "User deactivated."),
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Update failed."),
+      },
+    );
+  };
+
+  const updateRole = (id: string, role: ManageableRole) => {
+    if (!canAssignRole(actor?.role, role)) {
+      toast.error("You cannot assign that role.");
+      return;
+    }
     const body: { role: string; professionalType?: string } = { role: toApiRole(role) };
     if (role === "professional") body.professionalType = "LAWYER";
     patch.mutate(
@@ -72,9 +266,15 @@ function AdminUsers() {
     );
   };
 
+  const filterRoles: (ManageableRole | "all")[] = ["all", ...assignable];
+
   return (
     <>
-      <PageHeader title="User management" description="Search and update roles (API-backed)." />
+      <PageHeader
+        title="User management"
+        description="Search, create, and update roles (API-backed)."
+        actions={<CreateUserDialog />}
+      />
 
       {isError && (
         <p className="mb-4 text-sm text-destructive">
@@ -92,7 +292,7 @@ function AdminUsers() {
           hint="This page"
         />
         <StatCard label="Total (server)" value={isLoading ? "…" : String(total)} />
-        <StatCard label="Filter" value={roleFilter === "all" ? "All roles" : roleFilter} />
+        <StatCard label="Filter" value={roleFilter === "all" ? "All roles" : roleLabel(roleFilter)} />
         <StatCard label="Search" value={q ? "On" : "Off"} />
       </div>
 
@@ -112,20 +312,19 @@ function AdminUsers() {
         <Select
           value={roleFilter}
           onValueChange={(v) => {
-            setRoleFilter(v as RoleUi | "all");
+            setRoleFilter(v as ManageableRole | "all");
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-10 w-[160px]">
+          <SelectTrigger className="h-10 w-[180px]">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
-            <SelectItem value="buyer">Buyer</SelectItem>
-            <SelectItem value="seller">Seller</SelectItem>
-            <SelectItem value="professional">Professional</SelectItem>
-            <SelectItem value="staff">Staff</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
+            {filterRoles.map((r) => (
+              <SelectItem key={r} value={r}>
+                {r === "all" ? "All roles" : roleLabel(r)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -147,48 +346,71 @@ function AdminUsers() {
             </li>
           )}
           {!isLoading &&
-            filteredLocal.map((u) => (
-              <li
-                key={u.id}
-                className="grid grid-cols-1 gap-3 px-5 py-4 text-sm md:grid-cols-12 md:items-center md:gap-4"
-              >
-                <div className="col-span-4 flex min-w-0 items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary-soft text-xs text-primary">
-                      {initialsOf(u.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{u.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+            filteredLocal.map((u) => {
+              const userRole = u.role as ManageableRole;
+              const canEdit = canAssignRole(actor?.role, userRole) || assignable.includes(userRole);
+              return (
+                <li
+                  key={u.id}
+                  className="grid grid-cols-1 gap-3 px-5 py-4 text-sm md:grid-cols-12 md:items-center md:gap-4"
+                >
+                  <div className="col-span-4 flex min-w-0 items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-primary-soft text-xs text-primary">
+                        {initialsOf(u.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{u.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="col-span-3">
-                  <Badge variant="outline">{u.role}</Badge>
-                </div>
-                <div className="col-span-3 text-muted-foreground">
-                  {new Date(u.createdAt).toLocaleDateString()}
-                </div>
-                <div className="col-span-2 flex justify-end">
-                  <Select
-                    value={u.role as RoleUi}
-                    onValueChange={(v) => updateRole(u.id, v as RoleUi)}
-                    disabled={patch.isPending}
-                  >
-                    <SelectTrigger className="h-8 w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="buyer">Buyer</SelectItem>
-                      <SelectItem value="seller">Seller</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="staff">Staff</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </li>
-            ))}
+                  <div className="col-span-3 flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{u.role}</Badge>
+                    {u.isActive === false && (
+                      <Badge variant="destructive" className="text-[10px]">
+                        Inactive
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="col-span-3 text-muted-foreground">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="col-span-2 flex flex-wrap justify-end gap-2">
+                    {canEdit ? (
+                      <Select
+                        value={userRole}
+                        onValueChange={(v) => updateRole(u.id, v as ManageableRole)}
+                        disabled={patch.isPending}
+                      >
+                        <SelectTrigger className="h-8 w-[160px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignable.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {roleLabel(r)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Restricted</span>
+                    )}
+                    {actor?.id !== u.id && userRole !== "super_admin" && canEdit && (
+                      <Button
+                        size="sm"
+                        variant={u.isActive === false ? "default" : "outline"}
+                        disabled={patch.isPending}
+                        onClick={() => toggleActive(u.id, u.isActive === false)}
+                      >
+                        {u.isActive === false ? "Activate" : "Deactivate"}
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
         </ul>
         <div className="flex items-center justify-between border-t border-border/60 px-5 py-3 text-xs text-muted-foreground">
           <span>

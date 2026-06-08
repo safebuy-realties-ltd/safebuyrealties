@@ -8,6 +8,7 @@ import {
 import { ListingStatus, TransactionStatus, UserRole, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 
 @Injectable()
@@ -15,7 +16,7 @@ export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private serialize(tx: Prisma.TransactionGetPayload<{ include: { listing: true } }>) {

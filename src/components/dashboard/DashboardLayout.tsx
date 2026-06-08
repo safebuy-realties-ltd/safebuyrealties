@@ -19,7 +19,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useAuth, dashboardPathForRole, type Role } from "@/lib/auth";
+import { useAuth, dashboardPathForRole, canAccessDashboardRole, type Role } from "@/lib/auth";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 export type NavItem = { label: string; to: string; icon: LucideIcon };
@@ -59,6 +59,13 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Escrow", to: "/dashboard/admin/escrows", icon: Landmark },
     { label: "Settings", to: "/dashboard/admin/settings", icon: Settings },
   ],
+  super_admin: [
+    { label: "Command Center", to: "/dashboard/super-admin", icon: LayoutDashboard },
+    { label: "Users", to: "/dashboard/admin/users", icon: Users },
+    { label: "Platform Settings", to: "/dashboard/admin/settings", icon: Settings },
+    { label: "Escrows", to: "/dashboard/admin/escrows", icon: Landmark },
+    { label: "Staff Workflow", to: "/dashboard/staff/workflow", icon: FileText },
+  ],
 };
 
 const roleLabels: Record<Role, string> = {
@@ -67,6 +74,7 @@ const roleLabels: Record<Role, string> = {
   professional: "Professional",
   staff: "Staff",
   admin: "Administrator",
+  super_admin: "Super Administrator",
 };
 
 function initialsOf(name: string) {
@@ -81,10 +89,15 @@ function initialsOf(name: string) {
 }
 
 export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
-  const items = navByRole[role];
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAuthenticated, isReady, logout } = useAuth();
   const navigate = useNavigate();
+  const navRole =
+    user?.role === "super_admin" && (role === "admin" || role === "staff")
+      ? "super_admin"
+      : role;
+  const items = navByRole[navRole];
+  const hasAccess = user ? canAccessDashboardRole(user.role, role) : false;
 
   useEffect(() => {
     if (!isReady) return;
@@ -92,12 +105,12 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
       navigate({ to: "/login" });
       return;
     }
-    if (user && user.role !== role) {
+    if (user && !canAccessDashboardRole(user.role, role)) {
       navigate({ to: dashboardPathForRole(user.role) });
     }
   }, [isReady, isAuthenticated, user, role, navigate]);
 
-  if (!isReady || !isAuthenticated || !user || user.role !== role) {
+  if (!isReady || !isAuthenticated || !user || !hasAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary/30">
         <div className="text-sm text-muted-foreground">Loading workspace…</div>
@@ -118,12 +131,14 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
         </div>
         <div className="px-4 py-4">
           <p className="px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {roleLabels[role]} workspace
+            {roleLabels[navRole]} workspace
           </p>
         </div>
         <nav className="flex-1 space-y-1 px-3">
           {items.map((item) => {
-            const active = pathname === item.to;
+            const active =
+              pathname === item.to ||
+              (item.to !== "/dashboard/super-admin" && pathname.startsWith(`${item.to}/`));
             return (
               <Link
                 key={item.to}
@@ -149,7 +164,7 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{roleLabels[role]}</p>
+              <p className="truncate text-xs text-muted-foreground">{roleLabels[navRole]}</p>
             </div>
             <button
               onClick={handleLogout}

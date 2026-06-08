@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import * as path from "path";
 
 @Injectable()
@@ -20,7 +21,7 @@ export class DocumentsService {
   ) {}
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private toDocumentDto(
