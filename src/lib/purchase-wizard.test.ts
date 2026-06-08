@@ -79,9 +79,9 @@ describe("purchase-wizard helpers", () => {
         state: "Abuja",
       }),
     ).toBe(true);
-    expect(isBuyerInfoComplete({ legalName: "", email: "", phone: "", country: "", state: "" })).toBe(
-      false,
-    );
+    expect(
+      isBuyerInfoComplete({ legalName: "", email: "", phone: "", country: "", state: "" }),
+    ).toBe(false);
   });
 
   it("validates service selection", () => {

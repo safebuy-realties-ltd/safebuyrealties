@@ -30,11 +30,7 @@ const EMPTY_CONSENTS: PoaConsentFlags = {
   irrevocability: false,
 };
 
-function SignatureCanvas({
-  onChange,
-}: {
-  onChange: (hasSignature: boolean) => void;
-}) {
+function SignatureCanvas({ onChange }: { onChange: (hasSignature: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
 
@@ -145,13 +141,12 @@ export function PoAExecutionScreen({
   }, [buyerName, typedName]);
 
   const allConsentsChecked = POA_CONSENT_ITEMS.every((item) => consents[item.key]);
-  const signatureReady =
-    signatureTab === "draw" ? hasDrawnSignature : typedName.trim().length >= 2;
+  const signatureReady = signatureTab === "draw" ? hasDrawnSignature : typedName.trim().length >= 2;
   const canExecute = allConsentsChecked && signatureReady && !executePoa.isPending;
 
   const handleExecute = async () => {
     const signatureName =
-      signatureTab === "type" ? typedName.trim() : (buyerName?.trim() || "Signed");
+      signatureTab === "type" ? typedName.trim() : buyerName?.trim() || "Signed";
     const payload = {
       transactionId,
       signatureMethod: signatureTab === "draw" ? ("DRAWN" as const) : ("TYPED" as const),

@@ -168,9 +168,7 @@ function Transactions() {
 
       <div className="mt-8 rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
         <h2 className="text-lg font-semibold">Scheduled inspections</h2>
-        {inspectionsLoading && (
-          <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
-        )}
+        {inspectionsLoading && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
         {!inspectionsLoading && (!inspections || inspections.length === 0) && (
           <p className="mt-2 text-sm text-muted-foreground">
             No inspection requests yet. Schedule one from a live listing detail page.
@@ -224,14 +222,20 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
   const storedPayment = getStoredPayment(tx.id);
   const paymentId = storedPayment?.paymentId ?? null;
   const { data: payment } = usePaymentQuery(paymentId);
-  const pp=["DD_COMPLETE","PURCHASE_PENDING","PURCHASE_IN_ESCROW","COMPLETED"].includes(tx.status);
-  const { data: escrow } = useEscrowQuery(tx.id, pp||tx.status==="PURCHASE_IN_ESCROW"||payment?.intent==="PROPERTY_PURCHASE");
+  const pp = ["DD_COMPLETE", "PURCHASE_PENDING", "PURCHASE_IN_ESCROW", "COMPLETED"].includes(
+    tx.status,
+  );
+  const { data: escrow } = useEscrowQuery(
+    tx.id,
+    pp || tx.status === "PURCHASE_IN_ESCROW" || payment?.intent === "PROPERTY_PURCHASE",
+  );
   const steps = payment ? timelineForPaymentStatus(payment.status) : timelineForStatus(tx.status);
   const amount = formatMoney(tx.listing.price, tx.listing.currency);
   const payMutation = useInitiatePaymentMutation();
   const verifyMutation = useVerifyPaymentMutation();
   const deposit = depositAmountForListing(tx.listing.price);
-  const payAmount=pp?Number(tx.listing.price):deposit; const canPay=tx.status!=="COMPLETED"&&tx.status!=="PURCHASE_IN_ESCROW";
+  const payAmount = pp ? Number(tx.listing.price) : deposit;
+  const canPay = tx.status !== "COMPLETED" && tx.status !== "PURCHASE_IN_ESCROW";
 
   const pay = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -301,7 +305,9 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
             <Button size="sm" onClick={() => pay()} disabled={payMutation.isPending}>
               {payMutation.isPending
                 ? "Processing…"
-                : pp ? `Purchase ${formatMoney(String(payAmount), tx.listing.currency)}` : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
+                : pp
+                  ? `Purchase ${formatMoney(String(payAmount), tx.listing.currency)}`
+                  : `Pay ${formatMoney(String(deposit), tx.listing.currency)}`}
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
@@ -353,7 +359,20 @@ function TransactionCard({ tx }: { tx: TransactionDto }) {
             Payment reference: <span className="font-mono">{storedPayment.reference}</span>
           </p>
         )}
-        {escrow&&<div className="mt-6 rounded-lg border p-4"><h4 className="text-sm font-semibold">Escrow</h4><p className="text-sm">{escrowStatusLabel(escrow.status)} · {formatMoney(escrow.heldAmount,tx.listing.currency)}</p>{escrow.releasedAt&&<p className="text-xs text-muted-foreground">Released {new Date(escrow.releasedAt).toLocaleString()}</p>}</div>}
+        {escrow && (
+          <div className="mt-6 rounded-lg border p-4">
+            <h4 className="text-sm font-semibold">Escrow</h4>
+            <p className="text-sm">
+              {escrowStatusLabel(escrow.status)} ·{" "}
+              {formatMoney(escrow.heldAmount, tx.listing.currency)}
+            </p>
+            {escrow.releasedAt && (
+              <p className="text-xs text-muted-foreground">
+                Released {new Date(escrow.releasedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

@@ -43,16 +43,12 @@ function StaffInspectionsPage() {
       void qc.invalidateQueries({ queryKey: ["inspections"] });
       toast.success("Inspection updated");
     },
-    onError: (e) =>
-      toast.error(e instanceof ApiError ? e.message : "Could not update inspection"),
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Could not update inspection"),
   });
 
   return (
     <>
-      <PageHeader
-        title="Inspection requests"
-        description="Confirm visits and log outcomes."
-      />
+      <PageHeader title="Inspection requests" description="Confirm visits and log outcomes." />
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {isError && <p className="text-sm text-destructive">Could not load queue.</p>}
       <div className="mt-6 space-y-3">
