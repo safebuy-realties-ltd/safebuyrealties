@@ -15,6 +15,7 @@ import { ShoppingBag, Home, Briefcase } from "lucide-react";
 import {
   useAuth,
   dashboardPathForRole,
+  navigateAfterAuth,
   postAuthPath,
   type ProfessionalTypeOption,
   type Role,
@@ -50,19 +51,31 @@ const roles: {
   id: SelfRegisterRole;
   label: string;
   desc: string;
+  explainer: string;
   icon: typeof ShoppingBag;
 }[] = [
   {
     id: "buyer",
     label: "Buyer",
     desc: "Browse and purchase verified properties",
+    explainer:
+      "Search live listings, complete due diligence, and pay securely through escrow when you are ready to buy.",
     icon: ShoppingBag,
   },
-  { id: "seller", label: "Seller", desc: "List and sell with verification", icon: Home },
+  {
+    id: "seller",
+    label: "Seller",
+    desc: "List and sell with verification",
+    explainer:
+      "Submit your property for staff verification, go live with a trusted badge, and manage offers from qualified buyers.",
+    icon: Home,
+  },
   {
     id: "professional",
     label: "Professional",
     desc: "Lawyers, surveyors, and licensed experts",
+    explainer:
+      "Join as a licensed expert to review documents, conduct surveys, and support verified transactions on the platform.",
     icon: Briefcase,
   },
 ];
@@ -91,7 +104,7 @@ function RegisterPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!firstName || !email || !password) {
+    if (!firstName.trim() || !email.trim() || !password) {
       setError("Fill in your name, email, and password.");
       return;
     }
@@ -111,7 +124,7 @@ function RegisterPage() {
         ...(role === "professional" ? { professionalType } : {}),
       });
       const target = postAuthPath(redirect, dashboardPathForRole(user.role as Role));
-      navigate({ href: target });
+      navigateAfterAuth(navigate, target);
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -126,6 +139,7 @@ function RegisterPage() {
   };
 
   const loginSearch = redirect ? { redirect } : undefined;
+  const selectedRole = roles.find((r) => r.id === role);
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -143,17 +157,21 @@ function RegisterPage() {
         <Logo />
         <div className="mx-auto w-full max-w-md">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Choose buyer, seller, or professional to get started.
-          </p>
+          {selectedRole ? (
+            <p className="mt-2 text-sm text-muted-foreground">{selectedRole.explainer}</p>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Choose buyer, seller, or professional to get started.
+            </p>
+          )}
 
-          <div className="mt-6 grid gap-2">
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
             {roles.map((r) => (
               <button
                 key={r.id}
                 type="button"
                 onClick={() => setRole(r.id)}
-                className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all sm:p-3.5 ${
                   role === r.id
                     ? "border-primary bg-primary-soft shadow-[var(--shadow-card)]"
                     : "border-border bg-card hover:border-primary/40"
@@ -168,13 +186,36 @@ function RegisterPage() {
                 >
                   <r.icon className="h-4 w-4" />
                 </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold text-foreground">{r.label}</span>
-                  <span className="block text-xs text-muted-foreground">{r.desc}</span>
-                </span>
+                <span className="text-xs font-semibold text-foreground sm:text-sm">{r.label}</span>
               </button>
             ))}
           </div>
+
+          {role === "professional" && (
+            <div className="mt-4 rounded-xl border border-primary/30 bg-primary-soft/40 p-4">
+              <Label htmlFor="professionalType" className="text-sm font-semibold text-foreground">
+                Professional type
+              </Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tell us your licensed specialty so we can route the right work to you.
+              </p>
+              <Select
+                value={professionalType}
+                onValueChange={(v) => setProfessionalType(v as ProfessionalTypeOption)}
+              >
+                <SelectTrigger id="professionalType" className="mt-3 w-full bg-background">
+                  <SelectValue placeholder="Select your professional type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFESSIONAL_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-3">
@@ -197,26 +238,6 @@ function RegisterPage() {
                 />
               </div>
             </div>
-            {role === "professional" && (
-              <div className="space-y-2">
-                <Label htmlFor="professionalType">Professional type</Label>
-                <Select
-                  value={professionalType}
-                  onValueChange={(v) => setProfessionalType(v as ProfessionalTypeOption)}
-                >
-                  <SelectTrigger id="professionalType" className="w-full">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROFESSIONAL_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

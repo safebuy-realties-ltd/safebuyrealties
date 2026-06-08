@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Prisma, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
@@ -33,6 +34,8 @@ export type PlatformConfigResponse = {
 export type PlatformConfigPublicResponse = {
   vatRate: string;
   maxUploadMb: number;
+  paystackEnabled: boolean;
+  paystackPublicKey: string | null;
 };
 
 @Injectable()
@@ -42,6 +45,7 @@ export class PlatformConfigService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private config: ConfigService,
   ) {}
 
   async get(): Promise<PlatformConfigResponse> {
@@ -67,7 +71,15 @@ export class PlatformConfigService {
     return {
       vatRate: config.vatRate,
       maxUploadMb: config.maxUploadMb,
+      paystackEnabled: config.paystackEnabled,
+      paystackPublicKey: this.paystackPublicKey(),
     };
+  }
+
+  private paystackPublicKey(): string | null {
+    const primary = this.config.get<string>("PAYSTACK_PUBLIC_KEY")?.trim();
+    if (primary) return primary;
+    return this.config.get<string>("PAYSTACK_TEST_PUBLIC_KEY")?.trim() || null;
   }
 
   async update(dto: UpdatePlatformConfigDto, actorId: string): Promise<PlatformConfigResponse> {

@@ -200,7 +200,7 @@ function ListingDetail() {
         )}
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="order-2 lg:order-none lg:col-span-2">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -287,7 +287,7 @@ function ListingDetail() {
             </section>
           </div>
 
-          <aside className="space-y-6">
+          <aside className="order-1 space-y-6 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Asking price
@@ -297,7 +297,7 @@ function ListingDetail() {
                 <Button className="mt-5 w-full" size="lg" asChild>
                   <Link to="/purchase/$listingId" params={{ listingId }}>
                     <PlayCircle className="mr-2 h-4 w-4" />
-                    Start due diligence
+                    Continue to purchase
                   </Link>
                 </Button>
               ) : !isAuthenticated && isLive ? (
@@ -308,18 +308,17 @@ function ListingDetail() {
                       search={{ redirect: `/purchase/${listingId}` }}
                     >
                       <PlayCircle className="mr-2 h-4 w-4" />
-                      Start purchase
+                      I want to buy this property
                     </Link>
                   </Button>
-                  <Button className="mt-2 w-full" variant="outline" size="lg" asChild>
-                    <Link
-                      to="/register"
-                      search={{ redirect: `/purchase/${listingId}` }}
-                    >
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      Buy with verification
-                    </Link>
-                  </Button>
+                  <div className="mt-4 rounded-lg border border-primary/20 bg-primary-soft/50 px-4 py-3">
+                    <p className="text-xs font-medium text-foreground">How buying works</p>
+                    <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
+                      <li>1. Create free account</li>
+                      <li>2. Complete due diligence</li>
+                      <li>3. Pay securely</li>
+                    </ol>
+                  </div>
                   <p className="mt-3 text-center text-xs text-muted-foreground">
                     Already have an account?{" "}
                     <Link
@@ -327,7 +326,7 @@ function ListingDetail() {
                       search={{ redirect: `/purchase/${listingId}` }}
                       className="font-medium text-primary hover:underline"
                     >
-                      Log in
+                      Log in to continue
                     </Link>
                   </p>
                 </>
@@ -335,7 +334,7 @@ function ListingDetail() {
                 <>
                   <Button className="mt-5 w-full" size="lg" type="button" disabled>
                     <PlayCircle className="mr-2 h-4 w-4" />
-                    Start due diligence
+                    Continue to purchase
                   </Button>
                   <p className="mt-3 text-center text-xs text-muted-foreground">
                     This property is currently under offer and cannot be reserved by another buyer.

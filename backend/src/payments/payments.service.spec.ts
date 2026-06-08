@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UserRole, PaymentStatus, ListingStatus, TransactionStatus } from "@prisma/client";
+import { UserRole, PaymentStatus, TransactionStatus } from "@prisma/client";
 import { PaymentsService } from "./payments.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { EscrowService } from "../escrow/escrow.service";
-import { ConfigService } from "@nestjs/config";
+import { PaystackService } from "./paystack.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -13,23 +13,24 @@ const buyerActor = {
   professionalType: null,
 };
 
-describe("PaymentsService paystack email", () => {
+describe("PaymentsService paystack integration", () => {
   let service: PaymentsService;
-  let fetchMock: jest.Mock;
+  let paystack: {
+    isConfigured: jest.Mock;
+    customerEmail: jest.Mock;
+    initializeTransaction: jest.Mock;
+  };
 
   beforeEach(async () => {
-    fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        status: true,
-        data: {
-          authorization_url: "https://checkout.paystack.com/x",
-          access_code: "code",
-          reference: "ref_1",
-        },
+    paystack = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      customerEmail: jest.fn().mockReturnValue("buyer+buyer-1@example.com"),
+      initializeTransaction: jest.fn().mockResolvedValue({
+        authorizationUrl: "https://checkout.paystack.com/x",
+        accessCode: "code",
+        reference: "ref_1",
       }),
-    });
-    global.fetch = fetchMock;
+    };
 
     const prisma = {
       payment: {
@@ -63,21 +64,15 @@ describe("PaymentsService paystack email", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationsService, useValue: { create: jest.fn(), createForStaff: jest.fn() } },
         { provide: EscrowService, useValue: { hold: jest.fn() } },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string) =>
-              key === "PAYSTACK_TEST_SECRET_KEY" ? "sk_test_x" : undefined,
-          },
-        },
+        { provide: PaystackService, useValue: paystack },
       ],
     }).compile();
 
     service = module.get(PaymentsService);
   });
 
-  it("maps .test seed emails to example.com for Paystack initialize", async () => {
-    await service.initiate(
+  it("maps .test seed emails via PaystackService and initializes checkout", async () => {
+    const result = await service.initiate(
       {
         amount: 5000,
         currency: "NGN",
@@ -87,9 +82,15 @@ describe("PaymentsService paystack email", () => {
       buyerActor,
     );
 
-    expect(fetchMock).toHaveBeenCalled();
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
-    expect(body.email).toBe("buyer+buyer-1@example.com");
-    expect(body.email).not.toContain(".test");
+    expect(paystack.customerEmail).toHaveBeenCalledWith("buyer@safebuyrealties.test", "buyer-1");
+    expect(paystack.initializeTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "buyer+buyer-1@example.com",
+        amountMinor: 500000,
+        currency: "NGN",
+      }),
+    );
+    expect(result.accessCode).toBe("code");
+    expect(result.reference).toBe("ref_1");
   });
 });

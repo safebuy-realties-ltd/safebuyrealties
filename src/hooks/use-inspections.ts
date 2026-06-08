@@ -42,16 +42,13 @@ export function useCreateInspectionMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: { listingId: string; scheduledAt: string; notes?: string }) =>
-      apiRequest<InspectionSlotDto>(
-        `/listings/${body.listingId}/inspection-requests`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            scheduledAt: body.scheduledAt,
-            notes: body.notes,
-          }),
-        },
-      ).then((e) => e.data),
+      apiRequest<InspectionSlotDto>(`/listings/${body.listingId}/inspection-requests`, {
+        method: "POST",
+        body: JSON.stringify({
+          scheduledAt: body.scheduledAt,
+          notes: body.notes,
+        }),
+      }).then((e) => e.data),
     onSuccess: (_data, vars) => {
       void qc.invalidateQueries({ queryKey: ["inspections", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["inspections", "me"] });

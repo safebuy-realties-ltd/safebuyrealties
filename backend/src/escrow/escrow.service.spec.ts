@@ -1,8 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { ListingStatus, TransactionStatus, Prisma } from "@prisma/client";
 import { EscrowService } from "./escrow.service";
+import { PaystackService } from "../payments/paystack.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -61,7 +61,10 @@ describe("EscrowService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
         { provide: NotificationsService, useValue: notifications },
-        { provide: ConfigService, useValue: { get: () => undefined } },
+        {
+          provide: PaystackService,
+          useValue: { isConfigured: () => false, createTransfer: jest.fn() },
+        },
       ],
     }).compile();
 

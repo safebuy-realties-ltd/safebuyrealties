@@ -9,4 +9,7 @@ module.exports = {
   collectCoverageFrom: ["**/*.(t|j)s"],
   coverageDirectory: "../coverage",
   testEnvironment: "node",
+  moduleNameMapper: {
+    "^@alexasomba/paystack-node$": "<rootDir>/../test/mocks/paystack-node.mock.ts",
+  },
 };

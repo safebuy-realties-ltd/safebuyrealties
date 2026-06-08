@@ -4,7 +4,7 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, dashboardPathForRole, postAuthPath } from "@/lib/auth";
+import { useAuth, dashboardPathForRole, navigateAfterAuth, postAuthPath } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 
 type LoginSearch = {
@@ -38,7 +38,7 @@ function LoginPage() {
     try {
       const user = await login(email, password);
       const target = postAuthPath(redirect, dashboardPathForRole(user.role));
-      navigate({ href: target });
+      navigateAfterAuth(navigate, target);
     } catch (err) {
       const msg =
         err instanceof ApiError

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { ConfigService } from "@nestjs/config";
 import { Prisma } from "@prisma/client";
 import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
@@ -36,6 +37,13 @@ describe("PlatformConfigService", () => {
         PlatformConfigService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string) =>
+              key === "PAYSTACK_TEST_PUBLIC_KEY" ? "pk_test_x" : undefined,
+          },
+        },
       ],
     }).compile();
 
@@ -136,6 +144,8 @@ describe("PlatformConfigService", () => {
     expect(service.getForRole(UserRole.BUYER, full)).toEqual({
       vatRate: "0.075",
       maxUploadMb: 15,
+      paystackEnabled: true,
+      paystackPublicKey: "pk_test_x",
     });
   });
 });

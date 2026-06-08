@@ -35,6 +35,31 @@ export function postAuthPath(redirect: string | undefined, fallback: string): st
   return isSafeInternalRedirect(redirect) ? redirect : fallback;
 }
 
+type RouterNavigate = (opts: {
+  to: string;
+  params?: Record<string, string>;
+  search?: Record<string, string>;
+}) => void;
+
+/** Client-side navigation after auth — avoids full-page `href` loads that can leave localhost. */
+export function navigateAfterAuth(navigate: RouterNavigate, path: string) {
+  const [pathname, query = ""] = path.split("?");
+  if (pathname.startsWith("/purchase/")) {
+    const listingId = pathname.slice("/purchase/".length);
+    navigate({ to: "/purchase/$listingId", params: { listingId } });
+    return;
+  }
+  if (pathname.startsWith("/listings/")) {
+    const listingId = pathname.slice("/listings/".length);
+    navigate({ to: "/listings/$listingId", params: { listingId } });
+    return;
+  }
+  const search = query
+    ? (Object.fromEntries(new URLSearchParams(query)) as Record<string, string>)
+    : undefined;
+  navigate({ to: pathname, ...(search ? { search } : {}) });
+}
+
 type ApiUser = {
   id: string;
   email: string;
