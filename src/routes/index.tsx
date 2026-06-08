@@ -143,7 +143,7 @@ const buyerSteps = [
 ] as const;
 
 function Landing() {
-  const { data, isLoading, isError } = usePublicListingsQuery({ pageSize: 6 });
+  const { data, isLoading, isError } = usePublicListingsQuery({ pageSize: 12 });
   const featured = useMemo(
     () => (data?.listings ?? []).map(listingDtoToCard),
     [data?.listings],
