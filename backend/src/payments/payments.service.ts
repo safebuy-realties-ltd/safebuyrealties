@@ -5,7 +5,6 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import {
   UserRole,
   PaymentStatus,
@@ -14,8 +13,8 @@ import {
   PaymentIntent,
   Prisma,
 } from "@prisma/client";
-import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { PaystackService } from "./paystack.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import {
   NotificationEntityType,
@@ -29,9 +28,9 @@ import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 export class PaymentsService {
   constructor(
     private prisma: PrismaService,
-    private config: ConfigService,
     private notifications: NotificationsService,
     private escrow: EscrowService,
+    private paystack: PaystackService,
   ) {}
 
   private async notifyDdPaymentSucceeded(transactionId: string) {
@@ -74,29 +73,12 @@ export class PaymentsService {
     return role === UserRole.STAFF || role === UserRole.ADMIN;
   }
 
-  /** Supports PAYSTACK_SECRET_KEY (production) or PAYSTACK_TEST_SECRET_KEY (local .env). */
-  private paystackSecret(): string | undefined {
-    const primary = this.config.get<string>("PAYSTACK_SECRET_KEY")?.trim();
-    if (primary) return primary;
-    return this.config.get<string>("PAYSTACK_TEST_SECRET_KEY")?.trim() || undefined;
-  }
-
-  /**
-   * Calls the Paystack API and parses the JSON body, translating transport-level failures
-   * (provider unreachable, non-JSON gateway responses) into a clean 503 rather than a raw 500.
-   */
-  private async paystackJson<T>(url: string, init?: RequestInit): Promise<{ res: Response; json: T }> {
-    let res: Response;
-    try {
-      res = await fetch(url, init);
-    } catch {
-      throw new ServiceUnavailableException("Could not reach the payment provider. Please try again.");
-    }
-    try {
-      return { res, json: (await res.json()) as T };
-    } catch {
-      throw new ServiceUnavailableException("The payment provider returned an unexpected response.");
-    }
+  getPaymentConfig() {
+    return {
+      enabled: this.paystack.isConfigured(),
+      publicKey: this.paystack.publicKey() ?? null,
+      mockMode: !this.paystack.isConfigured(),
+    };
   }
 
   private serializePayment(p: {
@@ -129,16 +111,6 @@ export class PaymentsService {
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
     };
-  }
-
-  /** Paystack rejects `.test` seed emails — use a valid-format address for initialize only. */
-  private paystackCustomerEmail(email: string, userId: string): string {
-    const trimmed = email.trim();
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) && !trimmed.endsWith(".test")) {
-      return trimmed;
-    }
-    const local = trimmed.split("@")[0]?.replace(/[^a-zA-Z0-9._+-]/g, "") || "buyer";
-    return `${local}+${userId.slice(0, 8)}@example.com`;
   }
 
   async initiate(dto: InitiatePaymentDto, actor: JwtPayload) {
@@ -197,10 +169,9 @@ export class PaymentsService {
     }
 
     const payer = await this.prisma.user.findUniqueOrThrow({ where: { id: actor.sub } });
-    const secret = this.paystackSecret();
     const amountMinor = Math.round(Number(dto.amount) * 100);
 
-    if (!secret) {
+    if (!this.paystack.isConfigured()) {
       const mockRef = `mock_${payment.id}`;
       await this.prisma.payment.update({
         where: { id: payment.id },
@@ -215,49 +186,47 @@ export class PaymentsService {
       };
     }
 
-    const { res, json } = await this.paystackJson<{
-      status: boolean;
-      message: string;
-      data?: { authorization_url: string; access_code: string; reference: string };
-    }>("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: this.paystackCustomerEmail(payer.email, payer.id),
-        amount: amountMinor,
+    let initialized;
+    try {
+      initialized = await this.paystack.initializeTransaction({
+        email: this.paystack.customerEmail(payer.email, payer.id),
+        amountMinor,
         currency,
-        callback_url: dto.callbackUrl,
+        callbackUrl: dto.callbackUrl,
         metadata: { paymentId: payment.id },
-      }),
-    });
-    if (!res.ok || !json.status || !json.data?.reference) {
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Paystack initialize failed";
       await this.prisma.payment.update({
         where: { id: payment.id },
-        data: { status: PaymentStatus.FAILED, metadata: { error: json.message } as object },
+        data: { status: PaymentStatus.FAILED, metadata: { error: message } as object },
       });
-      throw new BadRequestException(json.message || "Paystack initialize failed");
+      if (message.includes("fetch") || message.includes("network")) {
+        throw new ServiceUnavailableException(
+          "Could not reach the payment provider. Please try again.",
+        );
+      }
+      throw new BadRequestException(message);
     }
 
     await this.prisma.payment.update({
       where: { id: payment.id },
       data: {
-        providerReference: json.data.reference,
+        providerReference: initialized.reference,
         status: PaymentStatus.PROCESSING,
         metadata: {
           callbackUrl: dto.callbackUrl,
-          authorizationUrl: json.data.authorization_url,
+          authorizationUrl: initialized.authorizationUrl,
         } as object,
       },
     });
 
     return {
       paymentId: payment.id,
-      authorizationUrl: json.data.authorization_url,
-      reference: json.data.reference,
-      accessCode: json.data.access_code,
+      authorizationUrl: initialized.authorizationUrl,
+      reference: initialized.reference,
+      accessCode: initialized.accessCode,
     };
   }
 
@@ -354,29 +323,24 @@ export class PaymentsService {
       return this.serializePayment(payment);
     }
 
-    const secret = this.paystackSecret();
-    // Mock mode (no Paystack key): initiate() already auto-applied success.
-    if (!secret) {
+    if (!this.paystack.isConfigured()) {
       return this.serializePayment(payment);
     }
     if (!payment.providerReference) {
       throw new BadRequestException("Payment has no provider reference to verify");
     }
 
-    const { res, json } = await this.paystackJson<{
-      status: boolean;
-      message: string;
-      data?: { status?: string };
-    }>(`https://api.paystack.co/transaction/verify/${encodeURIComponent(payment.providerReference)}`, {
-      headers: { Authorization: `Bearer ${secret}` },
-    });
-    if (!res.ok || !json.status) {
-      throw new BadRequestException(json.message || "Paystack verify failed");
+    let paystackStatus: string | undefined;
+    try {
+      paystackStatus = await this.paystack.verifyTransaction(payment.providerReference);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Paystack verify failed";
+      throw new BadRequestException(message);
     }
 
-    if (json.data?.status === "success") {
+    if (paystackStatus === "success") {
       await this.applyPaymentChargeSuccess(payment.id);
-    } else if (json.data?.status === "failed") {
+    } else if (paystackStatus === "failed") {
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED },
@@ -388,14 +352,7 @@ export class PaymentsService {
   }
 
   verifyPaystackSignature(rawBody: Buffer, signature: string | undefined): boolean {
-    const secret = this.paystackSecret();
-    if (!secret || !signature) return false;
-    const hash = createHmac("sha512", secret).update(rawBody).digest("hex");
-    try {
-      return timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
-    } catch {
-      return false;
-    }
+    return this.paystack.verifyWebhookSignature(rawBody, signature);
   }
 
   async handlePaystackWebhook(payload: {

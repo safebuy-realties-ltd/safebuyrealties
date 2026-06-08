@@ -141,10 +141,7 @@ function BrowseListings() {
   const [sortKey, setSortKey] = useState<SortKey>("priceValue");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const baseRows = useMemo(
-    () => (data?.listings ?? []).map(listingToRow),
-    [data?.listings],
-  );
+  const baseRows = useMemo(() => (data?.listings ?? []).map(listingToRow), [data?.listings]);
 
   const rows = useMemo(() => {
     const sorted = [...baseRows].sort((a, b) => {
@@ -165,10 +162,12 @@ function BrowseListings() {
     if (location) chips.push({ key: "location", label: `Location: ${location}` });
 
     const minPrice = parseOptionalNumber(filters.minPrice);
-    if (minPrice != null) chips.push({ key: "minPrice", label: `Min price: ${formatNgn(String(minPrice))}` });
+    if (minPrice != null)
+      chips.push({ key: "minPrice", label: `Min price: ${formatNgn(String(minPrice))}` });
 
     const maxPrice = parseOptionalNumber(filters.maxPrice);
-    if (maxPrice != null) chips.push({ key: "maxPrice", label: `Max price: ${formatNgn(String(maxPrice))}` });
+    if (maxPrice != null)
+      chips.push({ key: "maxPrice", label: `Max price: ${formatNgn(String(maxPrice))}` });
 
     const buildType = filters.buildType.trim();
     if (buildType) {
@@ -181,7 +180,8 @@ function BrowseListings() {
     const minBeds = parseOptionalInt(filters.minBeds);
     if (minBeds != null) chips.push({ key: "minBeds", label: `${minBeds}+ beds` });
 
-    if (filters.status) chips.push({ key: "status", label: `Status: ${statusLabel(filters.status)}` });
+    if (filters.status)
+      chips.push({ key: "status", label: `Status: ${statusLabel(filters.status)}` });
 
     return chips;
   }, [filters]);
@@ -299,11 +299,7 @@ function BrowseListings() {
         {(activeChips.length > 0 || isFetching) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {activeChips.map((chip) => (
-              <Badge
-                key={chip.key}
-                variant="secondary"
-                className="gap-1 pr-1 font-normal"
-              >
+              <Badge key={chip.key} variant="secondary" className="gap-1 pr-1 font-normal">
                 {chip.label}
                 <button
                   type="button"

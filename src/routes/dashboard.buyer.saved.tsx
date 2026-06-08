@@ -25,15 +25,10 @@ function SavedPropertiesPage() {
 
   return (
     <>
-      <PageHeader
-        title="Saved properties"
-        description="Listings you have saved for later."
-      />
+      <PageHeader title="Saved properties" description="Listings you have saved for later." />
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading saved listings…</p>}
-      {isError && (
-        <p className="text-sm text-destructive">Could not load saved properties.</p>
-      )}
+      {isError && <p className="text-sm text-destructive">Could not load saved properties.</p>}
       {!isLoading && !isError && listings.length === 0 && (
         <p className="text-sm text-muted-foreground">
           No saved properties yet. Browse{" "}

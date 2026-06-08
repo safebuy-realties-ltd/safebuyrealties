@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import {
   ListingStatus,
   Prisma,
@@ -19,6 +18,7 @@ import {
   NotificationType,
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { PaystackService } from "../payments/paystack.service";
 import {
   DEFAULT_RELEASE_CONDITIONS,
   ESCROW_STATUS,
@@ -43,8 +43,8 @@ export class EscrowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
-    private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
+    private readonly paystack: PaystackService,
   ) {}
 
   private isStaff(role: UserRole) {
@@ -356,26 +356,42 @@ export class EscrowService {
     const sellerId = escrow.transaction.listing.sellerId;
     const now = new Date();
 
-    const secret =
-      this.config.get<string>("PAYSTACK_SECRET_KEY")?.trim() ||
-      this.config.get<string>("PAYSTACK_TEST_SECRET_KEY")?.trim();
-
     let status: string = PAYOUT_STATUS.PENDING;
     let gatewayReference: string | null = null;
     let initiatedAt: Date | null = null;
     let completedAt: Date | null = null;
 
-    if (!secret) {
-      // TODO: wire Paystack Transfer API when transfer recipient codes and keys are configured.
+    if (!this.paystack.isConfigured()) {
       status = PAYOUT_STATUS.COMPLETED;
       gatewayReference = `mock_transfer_${transactionId.slice(0, 8)}`;
       initiatedAt = now;
       completedAt = now;
     } else {
-      // TODO: POST https://api.paystack.co/transfer with recipient and amount (net in kobo).
-      status = PAYOUT_STATUS.INITIATED;
-      gatewayReference = `pending_transfer_${transactionId.slice(0, 8)}`;
-      initiatedAt = now;
+      const seller = await this.prisma.user.findUnique({
+        where: { id: sellerId },
+        select: { firstName: true, lastName: true },
+      });
+      const sellerName = seller
+        ? `${seller.firstName} ${seller.lastName}`.trim()
+        : "Seller payout";
+      const amountMinor = Math.round(Number(netAmount) * 100);
+      try {
+        const transfer = await this.paystack.createTransfer({
+          amountMinor,
+          recipientName: sellerName,
+          reason: `Escrow payout for transaction ${transactionId.slice(0, 8)}`,
+          reference: `sbr_payout_${transactionId.slice(0, 12)}`,
+        });
+        gatewayReference = transfer.reference;
+        initiatedAt = now;
+        status =
+          transfer.status === "success" ? PAYOUT_STATUS.COMPLETED : PAYOUT_STATUS.INITIATED;
+        if (status === PAYOUT_STATUS.COMPLETED) completedAt = now;
+      } catch {
+        status = PAYOUT_STATUS.FAILED;
+        gatewayReference = `transfer_failed_${transactionId.slice(0, 8)}`;
+        initiatedAt = now;
+      }
     }
 
     const payout = await this.prisma.payout.create({

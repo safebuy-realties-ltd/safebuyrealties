@@ -45,8 +45,7 @@ import { useServiceBundlesQuery, useServiceItemsQuery } from "@/hooks/use-servic
 import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
 
-const PLACEHOLDER_IMG =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
+const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
 export const Route = createFileRoute("/purchase/$listingId")({
   component: PurchaseWizardPage,
@@ -368,9 +367,7 @@ function PropertyConfirmationStep({
   onNext: () => void;
 }) {
   const priceLabel = formatMoney(listing.price, listing.currency);
-  const verifiedAt = listing.verifiedAt
-    ? new Date(listing.verifiedAt).toLocaleDateString()
-    : null;
+  const verifiedAt = listing.verifiedAt ? new Date(listing.verifiedAt).toLocaleDateString() : null;
 
   return (
     <section className="space-y-6">
@@ -394,7 +391,9 @@ function PropertyConfirmationStep({
           <p className="mt-4 border-t border-border/60 pt-4 text-sm text-muted-foreground">
             {formatListingSpecSummary(listing)}
           </p>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {listing.description}
+          </p>
         </div>
       </div>
       <Button className="w-full" size="lg" onClick={onNext}>
@@ -490,7 +489,11 @@ function BuyerInfoStep({
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button className="flex-1" disabled={!isBuyerInfoComplete(form)} onClick={() => onNext(form)}>
+        <Button
+          className="flex-1"
+          disabled={!isBuyerInfoComplete(form)}
+          onClick={() => onNext(form)}
+        >
           Continue
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -503,9 +506,7 @@ type TxRow = { id: string; listingId: string; status: string };
 
 function findOpenTransaction(list: TxRow[] | undefined, listingId: string) {
   return list?.find(
-    (t) =>
-      t.listingId === listingId &&
-      (t.status === "INITIATED" || t.status === "IN_PROGRESS"),
+    (t) => t.listingId === listingId && (t.status === "INITIATED" || t.status === "IN_PROGRESS"),
   );
 }
 
@@ -620,7 +621,9 @@ function PoaExecutionStep({
     return (
       <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
         <h2 className="text-xl font-semibold">Power of Attorney</h2>
-        <p className="mt-4 text-sm text-destructive">{resolveError ?? "Transaction unavailable."}</p>
+        <p className="mt-4 text-sm text-destructive">
+          {resolveError ?? "Transaction unavailable."}
+        </p>
         <Button className="mt-6" variant="outline" onClick={onBack}>
           Back
         </Button>
@@ -665,7 +668,8 @@ function PoaExecutionStep({
       <div className="border-b border-border/60 px-6 py-4">
         <h2 className="text-xl font-semibold">Power of Attorney</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Authorise SafeBuyRealties to conduct verification on your behalf before selecting services.
+          Authorise SafeBuyRealties to conduct verification on your behalf before selecting
+          services.
         </p>
       </div>
       <PoAExecutionScreen
@@ -674,9 +678,7 @@ function PoaExecutionStep({
         listingTitle={listingTitle}
         listingAddress={listingAddress}
         className="px-6 pb-6 pt-2"
-        onSuccess={(poa) =>
-          onExecuted({ poaId: poa.id, poaDocumentHash: poa.documentHash })
-        }
+        onSuccess={(poa) => onExecuted({ poaId: poa.id, poaDocumentHash: poa.documentHash })}
       />
       <div className="border-t border-border/60 px-6 py-4">
         <Button variant="outline" onClick={onBack}>
@@ -861,7 +863,12 @@ function OrderSummaryStep({
         <Button variant="outline" onClick={onBack} disabled={submitting}>
           Back
         </Button>
-        <Button className="flex-1" size="lg" disabled={submitting} onClick={() => void confirmOrder()}>
+        <Button
+          className="flex-1"
+          size="lg"
+          disabled={submitting}
+          onClick={() => void confirmOrder()}
+        >
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -970,7 +977,10 @@ function PaymentStep({
     verifyMutation.mutate(paymentId, {
       onSuccess: (payment) => {
         toast.success("Payment simulated successfully.");
-        handlePaymentSuccess(payment.id, wizard.paymentReference ?? payment.providerReference ?? "");
+        handlePaymentSuccess(
+          payment.id,
+          wizard.paymentReference ?? payment.providerReference ?? "",
+        );
       },
       onError: (e) => {
         toast.error(e instanceof ApiError ? e.message : "Verification failed.");

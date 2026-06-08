@@ -37,7 +37,9 @@ function NotificationRow({
         {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
         <div className={unread ? "min-w-0 flex-1" : "min-w-0 flex-1 pl-4"}>
           <p className="text-sm font-medium leading-snug text-foreground">{notification.title}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{notification.body}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            {notification.body}
+          </p>
           <p className="mt-1 text-[11px] text-muted-foreground/80">
             {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
           </p>
