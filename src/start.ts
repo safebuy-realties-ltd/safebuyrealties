@@ -34,7 +34,8 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     "font-src 'self' data: https://fonts.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""} https:`,
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://js.paystack.co",
+    "frame-src 'self' https://checkout.paystack.com https://*.paystack.com",
     "upgrade-insecure-requests",
   ].join("; ");
 
