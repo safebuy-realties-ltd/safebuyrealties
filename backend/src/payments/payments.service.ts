@@ -16,6 +16,7 @@ import {
 } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { isInternalRole } from "../common/user-roles";
 import { NotificationsService } from "../notifications/notifications.service";
 import {
   NotificationEntityType,
@@ -71,7 +72,7 @@ export class PaymentsService {
   }
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   /** Supports PAYSTACK_SECRET_KEY (production) or PAYSTACK_TEST_SECRET_KEY (local .env). */

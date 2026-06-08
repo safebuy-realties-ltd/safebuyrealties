@@ -19,6 +19,7 @@ import {
   NotificationType,
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import { AssignVerificationDto } from "./dto/assign-verification.dto";
 import { PatchVerificationStepDto } from "./dto/patch-verification-step.dto";
 import { VERIFICATION_STEP_LABELS } from "./verification.constants";
@@ -47,7 +48,7 @@ export class VerificationService {
   ) {}
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private async assertProfessionalVerified(professionalId: string): Promise<void> {

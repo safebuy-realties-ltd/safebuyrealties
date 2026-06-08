@@ -163,6 +163,13 @@ async function main() {
   }
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
 
+  await upsertUser({
+    email: "superadmin@safebuyrealties.test",
+    firstName: "Sue",
+    lastName: "SuperAdmin",
+    role: UserRole.SUPER_ADMIN,
+    passwordHash,
+  });
   const admin = await upsertUser({
     email: "admin@safebuyrealties.test",
     firstName: "Ada",

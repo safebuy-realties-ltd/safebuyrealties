@@ -21,6 +21,7 @@ import {
   NotificationType,
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
 import { ListListingsQueryDto } from "./dto/list-listings.query";
@@ -117,7 +118,7 @@ export class ListingsService {
   } satisfies Prisma.ListingInclude;
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private buildSearchWhere(query: ListListingsQueryDto): Prisma.ListingWhereInput {
@@ -206,15 +207,11 @@ export class ListingsService {
   }
 
   async create(dto: CreateListingDto, actor: JwtPayload) {
-    if (
-      actor.role !== UserRole.SELLER &&
-      actor.role !== UserRole.STAFF &&
-      actor.role !== UserRole.ADMIN
-    ) {
+    if (actor.role !== UserRole.SELLER && !isInternalRole(actor.role)) {
       throw new ForbiddenException("Only sellers and staff can create listings");
     }
     let sellerId = actor.sub;
-    if (actor.role === UserRole.STAFF || actor.role === UserRole.ADMIN) {
+    if (isInternalRole(actor.role) && actor.role !== UserRole.SELLER) {
       if (!dto.sellerId) {
         throw new BadRequestException("sellerId is required when staff creates a listing");
       }

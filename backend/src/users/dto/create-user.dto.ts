@@ -6,7 +6,7 @@ function trimLowerEmail({ value }: { value: unknown }) {
   return typeof value === "string" ? value.trim().toLowerCase() : value;
 }
 
-export class RegisterDto {
+export class CreateUserDto {
   @Transform(trimLowerEmail)
   @IsEmail()
   email!: string;

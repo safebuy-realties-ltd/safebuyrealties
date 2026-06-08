@@ -19,6 +19,7 @@ import {
   NotificationType,
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { isInternalRole } from "../common/user-roles";
 import {
   DEFAULT_RELEASE_CONDITIONS,
   ESCROW_STATUS,
@@ -48,7 +49,7 @@ export class EscrowService {
   ) {}
 
   private isStaff(role: UserRole) {
-    return role === UserRole.STAFF || role === UserRole.ADMIN;
+    return isInternalRole(role);
   }
 
   private serializeEscrow(row: EscrowRow, unmetConditions: ReleaseCondition[] = []) {

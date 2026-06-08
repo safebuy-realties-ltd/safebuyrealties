@@ -89,7 +89,7 @@ describe("NotificationsService", () => {
     });
 
     expect(prisma.user.findMany).toHaveBeenCalledWith({
-      where: { role: { in: [UserRole.STAFF, UserRole.ADMIN] } },
+      where: { role: { in: [UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN] } },
       select: { id: true },
     });
     expect(createSpy).toHaveBeenCalledTimes(2);
