@@ -63,6 +63,7 @@ export class TransactionsService {
         buyerId: actor.sub,
         status: { in: [TransactionStatus.INITIATED, TransactionStatus.IN_PROGRESS] },
       },
+      orderBy: { createdAt: "asc" },
       include: { listing: true },
     });
     if (open) {

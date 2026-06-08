@@ -598,7 +598,7 @@ function PoaExecutionStep({
       return;
     }
 
-    if (!transactionsFetched || resolveAttemptedRef.current) return;
+    if (!transactionsFetched) return;
 
     const existing = findOpenTransaction(myTransactionsRef.current, listingId);
     if (existing) {
@@ -607,6 +607,8 @@ function PoaExecutionStep({
       setResolving(false);
       return;
     }
+
+    if (resolveAttemptedRef.current) return;
 
     resolveAttemptedRef.current = true;
     let cancelled = false;
@@ -627,6 +629,15 @@ function PoaExecutionStep({
         onReadyRef.current(txId);
       } catch (e) {
         if (cancelled) return;
+        if (e instanceof ApiError && e.code === "CONFLICT") {
+          const refreshed = await refetchTransactionsRef.current();
+          const retry = findOpenTransaction(refreshed.data ?? myTransactionsRef.current, listingId);
+          if (retry) {
+            setResolvedTxId(retry.id);
+            onReadyRef.current(retry.id);
+            return;
+          }
+        }
         resolveAttemptedRef.current = false;
         setResolveError(e instanceof ApiError ? e.message : "Could not start transaction.");
       } finally {
@@ -637,7 +648,7 @@ function PoaExecutionStep({
     return () => {
       cancelled = true;
     };
-  }, [listingId, transactionId, transactionsFetched, myTransactions]);
+  }, [listingId, transactionId, transactionsFetched]);
 
   if (resolving) {
     return (
