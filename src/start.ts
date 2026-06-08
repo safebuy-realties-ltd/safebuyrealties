@@ -44,7 +44,10 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
   setResponseHeader("X-Frame-Options", "DENY");
   setResponseHeader("X-Content-Type-Options", "nosniff");
   setResponseHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  setResponseHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  setResponseHeader(
+    "Permissions-Policy",
+    'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.paystack.com" "https://js.paystack.co")',
+  );
 
   return next();
 });
