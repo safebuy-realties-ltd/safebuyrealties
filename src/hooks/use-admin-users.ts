@@ -3,9 +3,18 @@ import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { UserListItemDto } from "@/hooks/use-users";
 
+export type CreateUserBody = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  professionalType?: string;
+};
+
 export function useAdminUsersQuery(opts?: { role?: string; page?: number; pageSize?: number }) {
   const { user, isReady } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const page = opts?.page ?? 1;
   const pageSize = opts?.pageSize ?? 50;
   const qs = new URLSearchParams();
@@ -26,10 +35,27 @@ export function useAdminUsersQuery(opts?: { role?: string; page?: number; pageSi
 export function usePatchUserMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; body: { role?: string; professionalType?: string | null } }) =>
+    mutationFn: (args: {
+      id: string;
+      body: { role?: string; professionalType?: string | null; isActive?: boolean };
+    }) =>
       apiRequest<UserListItemDto>(`/users/${args.id}`, {
         method: "PATCH",
         body: JSON.stringify(args.body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
+
+export function useCreateUserMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateUserBody) =>
+      apiRequest<UserListItemDto>("/users", {
+        method: "POST",
+        body: JSON.stringify(body),
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["users"] });

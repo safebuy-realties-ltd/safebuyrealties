@@ -3,8 +3,10 @@ import { useMemo } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
+import { BadgeCheck } from "lucide-react";
 import { useMyTasksQuery, useTaskKpiCounts } from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
+import { useMyProfileQuery } from "@/hooks/use-professional-profile";
 
 export const Route = createFileRoute("/dashboard/professional/")({
   component: ProOverview,
@@ -34,7 +36,10 @@ function ProOverview() {
   const { data: tasksData, isLoading } = useMyTasksQuery({ pageSize: 20 });
   const tasks = tasksData?.tasks ?? [];
   const kpis = useTaskKpiCounts();
+  const { data: profile, isLoading: profileLoading } = useMyProfileQuery();
   const { data: listingsData } = useListingsQuery();
+  const showCredentialBanner =
+    !profileLoading && (!profile || profile.verifiedStatus === "PENDING");
   const titleById = useMemo(() => {
     const m = new Map<string, string>();
     for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
@@ -54,6 +59,25 @@ function ProOverview() {
           </Button>
         }
       />
+
+      {showCredentialBanner && (
+        <div className="mb-6 flex gap-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 shadow-[var(--shadow-card)]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-600 text-white">
+            <BadgeCheck className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-foreground">Complete your credentials</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your professional credentials are pending review. Submit your license details on the
+              credentials page, then await staff approval before new tasks can be assigned.
+            </p>
+            <Button className="mt-4" size="sm" asChild>
+              <Link to="/dashboard/professional/credentials">Go to credentials</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Pending" value={kpis.isLoading ? "…" : String(kpis.data?.pending ?? 0)} />
         <StatCard

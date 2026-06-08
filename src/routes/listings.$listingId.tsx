@@ -300,6 +300,37 @@ function ListingDetail() {
                     Start due diligence
                   </Link>
                 </Button>
+              ) : !isAuthenticated && isLive ? (
+                <>
+                  <Button className="mt-5 w-full" size="lg" asChild>
+                    <Link
+                      to="/register"
+                      search={{ redirect: `/purchase/${listingId}` }}
+                    >
+                      <PlayCircle className="mr-2 h-4 w-4" />
+                      Start purchase
+                    </Link>
+                  </Button>
+                  <Button className="mt-2 w-full" variant="outline" size="lg" asChild>
+                    <Link
+                      to="/register"
+                      search={{ redirect: `/purchase/${listingId}` }}
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Buy with verification
+                    </Link>
+                  </Button>
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link
+                      to="/login"
+                      search={{ redirect: `/purchase/${listingId}` }}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Log in
+                    </Link>
+                  </p>
+                </>
               ) : isBuyer && isUnderOffer ? (
                 <>
                   <Button className="mt-5 w-full" size="lg" type="button" disabled>

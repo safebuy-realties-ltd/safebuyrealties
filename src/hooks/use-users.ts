@@ -11,6 +11,7 @@ export type UserListItemDto = {
   role: string;
   professionalType: string | null;
   phone: string | null;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 };

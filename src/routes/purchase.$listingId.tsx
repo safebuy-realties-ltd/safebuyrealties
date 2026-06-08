@@ -106,7 +106,10 @@ function PurchaseWizardPage() {
   useEffect(() => {
     if (!isReady) return;
     if (!isAuthenticated) {
-      void navigate({ to: "/login" });
+      void navigate({
+        to: "/login",
+        search: { redirect: `/purchase/${listingId}` },
+      });
       return;
     }
     if (user?.role !== "buyer") {

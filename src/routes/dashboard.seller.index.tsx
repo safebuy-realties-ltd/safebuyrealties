@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, FileText } from "lucide-react";
+import { Plus, Upload, FileText, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -45,6 +45,14 @@ function SellerOverview() {
   }, [listings]);
 
   const recentListings = useMemo(() => [...listings].slice(0, 8), [listings]);
+
+  const showWelcomeBanner = useMemo(
+    () =>
+      !isLoading &&
+      (listings.length === 0 ||
+        listings.every((l) => l.status === "DRAFT" || l.status === "PENDING_REVIEW")),
+    [isLoading, listings],
+  );
 
   const createListing = useCreateListingMutation();
   const [title, setTitle] = useState("");
@@ -91,6 +99,26 @@ function SellerOverview() {
           <button type="button" className="ml-2 underline" onClick={() => void refetch()}>
             Retry
           </button>
+        </div>
+      )}
+
+      {showWelcomeBanner && (
+        <div className="mb-6 flex gap-4 rounded-xl border border-primary/20 bg-primary-soft/40 p-5 shadow-[var(--shadow-card)]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-foreground">Welcome — here&apos;s how listing works</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-4 text-sm text-muted-foreground">
+              <li>Create a listing draft with property details.</li>
+              <li>Upload title deeds, photos, and supporting documents.</li>
+              <li>Submit for staff review when your dossier is complete.</li>
+              <li>After verification, your listing goes LIVE for buyers.</li>
+            </ol>
+            <Button className="mt-4" size="sm" asChild>
+              <Link to="/dashboard/seller/listings">Create your first listing</Link>
+            </Button>
+          </div>
         </div>
       )}
 
