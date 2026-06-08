@@ -1,0 +1,26 @@
+Role,Professional Type,First Name,Last Name,Email,Password,App URL,Dashboard Path,Notes
+ADMIN,,Ada,Admin,admin@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
+ADMIN,,Alex,Adeyemi,admin2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
+ADMIN,,Amina,Hassan,admin3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
+ADMIN,,Chidi,Nwosu,admin4@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
+ADMIN,,Diana,Osei,admin5@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/admin,Shared demo account — do not use for real transactions
+STAFF,,Sam,Staff,staff@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+STAFF,,Sola,Bakare,staff2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+STAFF,,Ngozi,Eze,staff3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+STAFF,,Ibrahim,Bello,staff4@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+STAFF,,Grace,Okon,staff5@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+SELLER,,Sara,Seller,seller@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
+SELLER,,Kemi,Okafor,seller2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
+SELLER,,Tunde,Adebayo,seller3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
+SELLER,,Fatima,Yusuf,seller4@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
+SELLER,,Emeka,Chukwu,seller5@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
+BUYER,,Ben,Buyer,buyer@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/buyer,Shared demo account — do not use for real transactions
+BUYER,,Zain,Musa,buyer2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/buyer,Shared demo account — do not use for real transactions
+BUYER,,Chioma,Ibe,buyer3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/buyer,Shared demo account — do not use for real transactions
+BUYER,,David,Peterson,buyer4@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/buyer,Shared demo account — do not use for real transactions
+BUYER,,Halima,Garba,buyer5@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/buyer,Shared demo account — do not use for real transactions
+PROFESSIONAL (LAWYER),LAWYER,Lee,Lawyer,lawyer@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/professional,Shared demo account — do not use for real transactions
+PROFESSIONAL (SURVEYOR),SURVEYOR,Tobi,Survey,surveyor@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/professional,Shared demo account — do not use for real transactions
+PROFESSIONAL (VALUER),VALUER,Femi,Valuer,valuer@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/professional,Shared demo account — do not use for real transactions
+PROFESSIONAL (ARCHITECT),ARCHITECT,Adaora,Design,architect@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/professional,Shared demo account — do not use for real transactions
+PROFESSIONAL (ENGINEER),ENGINEER,Kunle,Build,engineer@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/professional,Shared demo account — do not use for real transactions

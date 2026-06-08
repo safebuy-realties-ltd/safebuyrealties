@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "validate:tsc": "npx tsc --noEmit && cd backend && npx tsc --noEmit",
     "smoke:api": "node scripts/vercel-api-smoke.mjs",
+    "seed:demo-users": "node backend/scripts/seed-extended-users.mjs",
     "validate:e2e": "node scripts/validate-e2e-claims.mjs",
     "env:sync-paystack": "node scripts/sync-paystack-env-vercel.mjs"
   },
