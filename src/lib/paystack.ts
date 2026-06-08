@@ -1,9 +1,9 @@
 import { loadPaystack } from "@alexasomba/paystack-inline";
 
 export type PaystackSuccessResponse = {
-  id?: string;
+  id: number;
   reference: string;
-  message?: string;
+  message: string;
 };
 
 export type OpenCheckoutArgs = {
