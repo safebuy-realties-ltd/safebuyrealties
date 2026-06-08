@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://safebuyrealties.vercel.app/api/v1/:path*"
+      "destination": "https://safebuyrealties-new.onrender.com/api/v1/:path*"
     }
   ],
   "ignoreCommand": "node scripts/vercel-ignore-frontend.mjs"
