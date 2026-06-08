@@ -1,7 +1,17 @@
 /** Same-origin in production (Vercel /api/v1 rewrite); Vite proxy in local dev. */
 const DEFAULT_API = "/api/v1";
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? DEFAULT_API;
+function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_URL?.trim();
+  // Session cookies require same-origin requests. Ignore absolute VITE_API_URL values
+  // (e.g. Render host set in Vercel env) and rely on /api/v1 rewrites/proxy instead.
+  if (configured?.startsWith("/")) {
+    return configured.replace(/\/$/, "") || DEFAULT_API;
+  }
+  return DEFAULT_API;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 export class ApiError extends Error {
   readonly code: string;
