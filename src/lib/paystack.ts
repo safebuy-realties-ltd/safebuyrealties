@@ -1,8 +1,14 @@
-import type { PaystackTransaction } from "@paystack/inline-js";
+import { loadPaystack } from "@alexasomba/paystack-inline";
+
+export type PaystackSuccessResponse = {
+  id?: string;
+  reference: string;
+  message?: string;
+};
 
 export type OpenCheckoutArgs = {
   accessCode: string;
-  onSuccess: (transaction: PaystackTransaction) => void;
+  onSuccess: (transaction: PaystackSuccessResponse) => void;
   onCancel?: () => void;
   onError?: (error: { message: string }) => void;
 };
@@ -17,7 +23,7 @@ export async function openPaystackCheckout({
   onCancel,
   onError,
 }: OpenCheckoutArgs): Promise<void> {
-  const { default: PaystackPop } = await import("@paystack/inline-js");
+  const PaystackPop = await loadPaystack();
   const popup = new PaystackPop();
   popup.resumeTransaction(accessCode, { onSuccess, onCancel, onError });
 }

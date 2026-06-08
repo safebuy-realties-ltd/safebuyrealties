@@ -10,6 +10,11 @@ import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 export class PaymentsController {
   constructor(private payments: PaymentsService) {}
 
+  @Get("config")
+  config() {
+    return { data: this.payments.getPaymentConfig() };
+  }
+
   @Post("initiate")
   initiate(@Body() dto: InitiatePaymentDto, @CurrentUser() user: JwtPayload) {
     return this.payments.initiate(dto, user);

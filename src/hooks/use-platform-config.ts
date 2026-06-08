@@ -7,6 +7,7 @@ export type PlatformConfigDto = {
   vatRate: string;
   maxUploadMb: number;
   paystackEnabled?: boolean;
+  paystackPublicKey?: string | null;
   flutterwaveEnabled?: boolean;
   maintenanceMode?: boolean;
   updatedAt?: string;
@@ -16,6 +17,7 @@ export type UpdatePlatformConfigBody = {
   vatRate?: number;
   maxUploadMb?: number;
   paystackEnabled?: boolean;
+  paystackPublicKey?: string | null;
   flutterwaveEnabled?: boolean;
   maintenanceMode?: boolean;
 };
