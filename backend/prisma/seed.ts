@@ -198,6 +198,13 @@ async function main() {
     role: UserRole.SELLER,
     passwordHash,
   });
+  const companySeller = await upsertUser({
+    email: "company@safebuyrealties.test",
+    firstName: "SafeBuy",
+    lastName: "Realties",
+    role: UserRole.SELLER,
+    passwordHash,
+  });
   const buyer = await upsertUser({
     email: "buyer@safebuyrealties.test",
     firstName: "Ben",
@@ -429,6 +436,42 @@ async function main() {
       "Surulere",
       "Archived seller withdrawal.",
     ),
+    mk(
+      "UNDER_OFFER Lekki Flat",
+      seller2.id,
+      ListingStatus.UNDER_OFFER,
+      "89000000",
+      "Lekki Phase 2",
+      "Reserved — buyer due diligence in progress.",
+      { beds: 3, baths: 2, landAreaSqm: "140" },
+    ),
+    mk(
+      "UNDER_OFFER Abuja Terrace",
+      seller.id,
+      ListingStatus.UNDER_OFFER,
+      "125000000",
+      "Gwarinpa, Abuja",
+      "Under offer pending closing.",
+      { beds: 4, baths: 3, landAreaSqm: "260" },
+    ),
+    mk(
+      "SOLD Ikoyi Completed",
+      companySeller.id,
+      ListingStatus.SOLD,
+      "350000000",
+      "Ikoyi, Lagos",
+      "Successfully sold via SafeBuy escrow.",
+      { beds: 5, baths: 4, landAreaSqm: "480" },
+    ),
+    mk(
+      "SOLD VI Company Deal",
+      companySeller.id,
+      ListingStatus.SOLD,
+      "520000000",
+      "Victoria Island, Lagos",
+      "Company-listed property — completed sale.",
+      { beds: 4, baths: 4, landAreaSqm: "350" },
+    ),
   ];
 
   const listings = await prisma.$transaction(
@@ -453,6 +496,7 @@ async function main() {
     ListingStatus.IN_VERIFICATION,
     ListingStatus.VERIFIED,
     ListingStatus.LIVE,
+    ListingStatus.UNDER_OFFER,
   ];
   const needSteps = listings.filter((l) => needStepsStatuses.includes(l.status));
 
@@ -631,6 +675,7 @@ async function main() {
     { role: "STAFF", email: staff.email },
     { role: "SELLER", email: seller.email },
     { role: "SELLER", email: seller2.email },
+    { role: "SELLER (company)", email: companySeller.email },
     { role: "BUYER", email: buyer.email },
     { role: "BUYER", email: buyer2.email },
     { role: "PRO (lawyer)", email: lawyer.email },

@@ -15,6 +15,7 @@
     "validate:tsc": "npx tsc --noEmit && cd backend && npx tsc --noEmit",
     "smoke:api": "node scripts/vercel-api-smoke.mjs",
     "seed:demo-users": "node backend/scripts/seed-extended-users.mjs",
+    "seed:marketplace": "node backend/scripts/seed-marketplace-listings.mjs",
     "validate:e2e": "node scripts/validate-e2e-claims.mjs",
     "test:journey-e2e": "node scripts/journey-e2e-all-roles.mjs",
     "test:paystack-e2e": "node scripts/test-paystack-e2e.mjs",

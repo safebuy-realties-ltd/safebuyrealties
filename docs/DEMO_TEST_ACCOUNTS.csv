@@ -10,6 +10,7 @@ STAFF,,Sola,Bakare,staff2@safebuyrealties.test,password123,https://safebuyrealti
 STAFF,,Ngozi,Eze,staff3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
 STAFF,,Ibrahim,Bello,staff4@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
 STAFF,,Grace,Okon,staff5@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/staff,Shared demo account — do not use for real transactions
+SELLER,,SafeBuy,Realties,company@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Company direct listings (SafeBuy Realties inventory)
 SELLER,,Sara,Seller,seller@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
 SELLER,,Kemi,Okafor,seller2@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
 SELLER,,Tunde,Adebayo,seller3@safebuyrealties.test,password123,https://safebuyrealties-app.vercel.app,/dashboard/seller,Shared demo account — do not use for real transactions
