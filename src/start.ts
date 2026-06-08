@@ -31,11 +31,11 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     "frame-ancestors 'none'",
     "form-action 'self'",
     "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""} https:`,
-    "script-src 'self' 'unsafe-inline' https://js.paystack.co",
-    "frame-src 'self' https://checkout.paystack.com https://*.paystack.com",
+    "font-src 'self' data: https://fonts.gstatic.com https://checkout.paystack.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.paystack.com https://js.paystack.co",
+    `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""} https://api.paystack.co https:`,
+    "script-src 'self' 'unsafe-inline' https://js.paystack.co https://checkout.paystack.com",
+    "frame-src 'self' https://checkout.paystack.com https://js.paystack.co https://*.paystack.com",
     "upgrade-insecure-requests",
   ].join("; ");
 
@@ -44,7 +44,10 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
   setResponseHeader("X-Frame-Options", "DENY");
   setResponseHeader("X-Content-Type-Options", "nosniff");
   setResponseHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  setResponseHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  setResponseHeader(
+    "Permissions-Policy",
+    'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.paystack.com" "https://js.paystack.co")',
+  );
 
   return next();
 });

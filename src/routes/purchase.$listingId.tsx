@@ -86,7 +86,11 @@ function PurchaseWizardPage() {
   const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error } = useListingQuery(listingId);
   const { data: documents } = useListingDocumentsQuery(isAuthenticated ? listingId : null);
-  const { data: myTransactions, refetch: refetchTransactions } = useMyTransactionsQuery();
+  const {
+    data: myTransactions,
+    refetch: refetchTransactions,
+    isFetched: transactionsFetched,
+  } = useMyTransactionsQuery();
 
   const [wizard, setWizard] = useState<PurchaseWizardState>(() => defaultWizardState());
   const [hydrated, setHydrated] = useState(false);
@@ -298,6 +302,7 @@ function PurchaseWizardPage() {
             poaId={wizard.poaId}
             poaDocumentHash={wizard.poaDocumentHash}
             myTransactions={myTransactions}
+            transactionsFetched={transactionsFetched}
             onBack={goBack}
             onReady={handlePoaReady}
             onExecuted={handlePoaExecuted}
@@ -546,6 +551,7 @@ function PoaExecutionStep({
   poaId,
   poaDocumentHash,
   myTransactions,
+  transactionsFetched,
   onBack,
   onReady,
   onExecuted,
@@ -560,6 +566,7 @@ function PoaExecutionStep({
   poaId?: string;
   poaDocumentHash?: string;
   myTransactions?: TxRow[];
+  transactionsFetched: boolean;
   onBack: () => void;
   onReady: (transactionId: string) => void;
   onExecuted: (poa: { poaId: string; poaDocumentHash: string }) => void;
@@ -574,6 +581,15 @@ function PoaExecutionStep({
   myTransactionsRef.current = myTransactions;
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  const createTransactionRef = useRef(createTransaction);
+  createTransactionRef.current = createTransaction;
+  const refetchTransactionsRef = useRef(refetchTransactions);
+  refetchTransactionsRef.current = refetchTransactions;
+  const resolveAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    resolveAttemptedRef.current = false;
+  }, [listingId]);
 
   useEffect(() => {
     if (transactionId) {
@@ -582,6 +598,19 @@ function PoaExecutionStep({
       return;
     }
 
+    if (!transactionsFetched) return;
+
+    const existing = findOpenTransaction(myTransactionsRef.current, listingId);
+    if (existing) {
+      setResolvedTxId(existing.id);
+      onReadyRef.current(existing.id);
+      setResolving(false);
+      return;
+    }
+
+    if (resolveAttemptedRef.current) return;
+
+    resolveAttemptedRef.current = true;
     let cancelled = false;
     setResolving(true);
     setResolveError(null);
@@ -592,14 +621,24 @@ function PoaExecutionStep({
           listingId,
           transactionId,
           myTransactionsRef.current,
-          createTransaction,
-          refetchTransactions,
+          createTransactionRef.current,
+          refetchTransactionsRef.current,
         );
         if (cancelled) return;
         setResolvedTxId(txId);
         onReadyRef.current(txId);
       } catch (e) {
         if (cancelled) return;
+        if (e instanceof ApiError && e.code === "CONFLICT") {
+          const refreshed = await refetchTransactionsRef.current();
+          const retry = findOpenTransaction(refreshed.data ?? myTransactionsRef.current, listingId);
+          if (retry) {
+            setResolvedTxId(retry.id);
+            onReadyRef.current(retry.id);
+            return;
+          }
+        }
+        resolveAttemptedRef.current = false;
         setResolveError(e instanceof ApiError ? e.message : "Could not start transaction.");
       } finally {
         if (!cancelled) setResolving(false);
@@ -609,7 +648,7 @@ function PoaExecutionStep({
     return () => {
       cancelled = true;
     };
-  }, [listingId, transactionId, createTransaction, refetchTransactions]);
+  }, [listingId, transactionId, transactionsFetched]);
 
   if (resolving) {
     return (

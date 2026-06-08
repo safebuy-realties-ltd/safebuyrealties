@@ -126,5 +126,23 @@ describe("TransactionsService", () => {
         include: { listing: true },
       });
     });
+
+    it("returns an existing open transaction instead of creating a duplicate", async () => {
+      prisma.listing.findUnique.mockResolvedValue(baseListing);
+      prisma.transaction.findFirst.mockResolvedValue({
+        id: "tx-existing",
+        status: TransactionStatus.INITIATED,
+        buyerId: buyerActor.sub,
+        listingId: baseListing.id,
+        createdAt: new Date("2026-02-01T10:00:00.000Z"),
+        updatedAt: new Date("2026-02-01T10:00:00.000Z"),
+        listing: baseListing,
+      });
+
+      const result = await service.create({ listingId: "listing-1" }, buyerActor);
+
+      expect(result.id).toBe("tx-existing");
+      expect(prisma.transaction.create).not.toHaveBeenCalled();
+    });
   });
 });
