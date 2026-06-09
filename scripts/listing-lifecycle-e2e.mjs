@@ -108,6 +108,39 @@ const STEP_PRO_MAP = {
   FINAL_APPROVAL: "lawyer@safebuyrealties.test",
 };
 
+/** Professionals staff should approve so assignment succeeds in E2E. */
+const VERIFY_PRO_EMAILS = new Set([
+  "lawyer@safebuyrealties.test",
+  "surveyor@safebuyrealties.test",
+]);
+
+/** Intentionally left PENDING — assignment to these should remain blocked. */
+const LEAVE_UNVERIFIED_EMAILS = new Set([
+  "valuer@safebuyrealties.test",
+  "architect@safebuyrealties.test",
+  "engineer@safebuyrealties.test",
+]);
+
+const DEMO_PROFESSIONAL_PROFILES = [
+  { email: "lawyer@safebuyrealties.test", regulatoryBody: "NBA", licenseNumber: "NBA/E2E/001" },
+  {
+    email: "surveyor@safebuyrealties.test",
+    regulatoryBody: "SURCON",
+    licenseNumber: "SURCON/E2E/001",
+  },
+  { email: "valuer@safebuyrealties.test", regulatoryBody: "NIESV", licenseNumber: "NIESV/E2E/001" },
+  {
+    email: "architect@safebuyrealties.test",
+    regulatoryBody: "ARCON",
+    licenseNumber: "ARCON/E2E/001",
+  },
+  {
+    email: "engineer@safebuyrealties.test",
+    regulatoryBody: "COREN",
+    licenseNumber: "COREN/E2E/001",
+  },
+];
+
 async function assertInternalVisibility(listingId, stageLabel) {
   for (const { key, email } of INTERNAL_ROLES) {
     const login = await loginAs(email);
@@ -159,12 +192,109 @@ async function uploadDoc(listingId, category, filePath, fileName) {
   return req("/documents/upload", { method: "POST", body: form });
 }
 
-async function getProfessionalId(email) {
+let professionalIdCache = null;
+
+async function loadProfessionalIds() {
+  if (professionalIdCache) return professionalIdCache;
   const login = await loginAs("staff@safebuyrealties.test");
-  if (!login.ok) return null;
+  if (!login.ok) return {};
   const { json } = await req("/users?role=PROFESSIONAL&pageSize=100");
   const users = json?.data ?? [];
-  return users.find((u) => u.email === email)?.id ?? null;
+  professionalIdCache = Object.fromEntries(users.map((u) => [u.email, u.id]));
+  return professionalIdCache;
+}
+
+async function getProfessionalId(email) {
+  const ids = await loadProfessionalIds();
+  return ids[email] ?? null;
+}
+
+async function ensureProfessionalProfile({ email, regulatoryBody, licenseNumber }) {
+  const login = await loginAs(email);
+  if (!login.ok) {
+    record(`credentials.profile.${email}`, "fail", `login HTTP ${login.status}`);
+    return null;
+  }
+
+  const existing = await req("/professionals/me/profile");
+  const current = existing.json?.data;
+  if (current?.verifiedStatus === "VERIFIED" && VERIFY_PRO_EMAILS.has(email)) {
+    record(`credentials.profile.${email}`, "pass", "already VERIFIED");
+    return current;
+  }
+  if (current?.verifiedStatus === "PENDING" && LEAVE_UNVERIFIED_EMAILS.has(email)) {
+    record(`credentials.profile.${email}`, "pass", "already PENDING");
+    return current;
+  }
+  if (current && VERIFY_PRO_EMAILS.has(email) && current.verifiedStatus === "PENDING") {
+    record(`credentials.profile.${email}`, "pass", "PENDING — ready for staff approval");
+    return current;
+  }
+
+  const { ok, json, status } = await req("/professionals/me/profile", {
+    method: "PUT",
+    body: JSON.stringify({
+      regulatoryBody,
+      licenseNumber,
+      licenseExpiry: "2030-12-31T00:00:00.000Z",
+    }),
+  });
+  record(
+    `credentials.profile.${email}`,
+    ok ? "pass" : "fail",
+    ok ? "profile submitted (PENDING)" : `HTTP ${status}`,
+  );
+  return ok ? json?.data : null;
+}
+
+async function prepareProfessionalCredentials() {
+  for (const profile of DEMO_PROFESSIONAL_PROFILES) {
+    await ensureProfessionalProfile(profile);
+  }
+
+  const staff = await loginAs("staff@safebuyrealties.test");
+  if (!staff.ok) {
+    record("credentials.staffLogin", "fail", "staff login");
+    return;
+  }
+
+  const { ok, json, status } = await req("/professionals/credentials/pending");
+  if (!ok) {
+    record("credentials.listPending", "fail", `HTTP ${status}`);
+    return;
+  }
+
+  const pending = json?.data ?? [];
+  record("credentials.listPending", "pass", `${pending.length} pending profile(s)`);
+
+  for (const row of pending) {
+    const email = row.user?.email;
+    if (!email) continue;
+
+    if (LEAVE_UNVERIFIED_EMAILS.has(email)) {
+      record(`credentials.skip.${email}`, "pass", "left unverified for E2E");
+      continue;
+    }
+
+    if (!VERIFY_PRO_EMAILS.has(email)) continue;
+
+    const verify = await req(`/professionals/${row.id}/verify`, {
+      method: "PATCH",
+      body: JSON.stringify({ approve: true }),
+    });
+    record(
+      `credentials.verify.${email}`,
+      verify.ok ? "pass" : "fail",
+      verify.ok ? "VERIFIED" : verify.json?.error?.message ?? `HTTP ${verify.status}`,
+    );
+  }
+
+  for (const email of LEAVE_UNVERIFIED_EMAILS) {
+    const stillPending = pending.some((p) => p.user?.email === email);
+    if (stillPending) {
+      record(`credentials.pending.${email}`, "pass", "still PENDING as expected");
+    }
+  }
 }
 
 async function completeVerificationSteps(listingId) {
@@ -188,6 +318,7 @@ async function completeVerificationSteps(listingId) {
     const proEmail = STEP_PRO_MAP[step.type];
     const proId = proIds[proEmail];
     if (proId) {
+      const expectAssignPass = VERIFY_PRO_EMAILS.has(proEmail);
       const assign = await req("/verification/assign", {
         method: "POST",
         body: JSON.stringify({
@@ -196,13 +327,16 @@ async function completeVerificationSteps(listingId) {
           stepType: step.type,
         }),
       });
-      record(
-        `verification.assign.${step.type}`,
-        assign.ok ? "pass" : "partial",
-        assign.ok
-          ? `assigned ${proEmail}`
-          : assign.json?.error?.message ?? `HTTP ${assign.status}`,
-      );
+      const detail = assign.ok
+        ? `assigned ${proEmail}`
+        : assign.json?.error?.message ?? `HTTP ${assign.status}`;
+      if (assign.ok) {
+        record(`verification.assign.${step.type}`, "pass", detail);
+      } else if (!expectAssignPass) {
+        record(`verification.assign.${step.type}`, "pass", `blocked as expected — ${detail}`);
+      } else {
+        record(`verification.assign.${step.type}`, "fail", detail);
+      }
     }
 
     const patch = await req(`/verification/steps/${step.id}`, {
@@ -301,6 +435,8 @@ async function main() {
   );
 
   await assertInternalVisibility(listingId, "PENDING_REVIEW");
+
+  await prepareProfessionalCredentials();
 
   for (let i = 1; i < STATUS_PIPELINE.length; i++) {
     const nextStatus = STATUS_PIPELINE[i];
