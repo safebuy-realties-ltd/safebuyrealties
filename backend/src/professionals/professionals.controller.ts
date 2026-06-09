@@ -30,14 +30,14 @@ export class ProfessionalsController {
 
   @Get("credentials/pending")
   @UseGuards(RolesGuard)
-  @Roles(UserRole.STAFF, UserRole.ADMIN)
+  @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   listPending() {
     return this.professionals.listPending();
   }
 
   @Patch(":id/verify")
   @UseGuards(RolesGuard)
-  @Roles(UserRole.STAFF, UserRole.ADMIN)
+  @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   verify(
     @Param("id") id: string,
     @Body() dto: VerifyCredentialDto,

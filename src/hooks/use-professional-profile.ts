@@ -61,10 +61,12 @@ export function useUpdateMyProfileMutation() {
 
 export function usePendingCredentialsQuery() {
   const { user, isReady } = useAuth();
+  const canReview =
+    user?.role === "staff" || user?.role === "admin" || user?.role === "super_admin";
   return useQuery({
     queryKey: PENDING_KEY,
     queryFn: () => apiRequest<PendingCredentialDto[]>("/professionals/credentials/pending"),
-    enabled: isReady && !!user,
+    enabled: isReady && canReview,
     select: (envelope) => envelope.data,
   });
 }
