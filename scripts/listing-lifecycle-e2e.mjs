@@ -108,19 +108,6 @@ const STEP_PRO_MAP = {
   FINAL_APPROVAL: "lawyer@safebuyrealties.test",
 };
 
-/** Professionals staff should approve so assignment succeeds in E2E. */
-const VERIFY_PRO_EMAILS = new Set([
-  "lawyer@safebuyrealties.test",
-  "surveyor@safebuyrealties.test",
-]);
-
-/** Intentionally left PENDING — assignment to these should remain blocked. */
-const LEAVE_UNVERIFIED_EMAILS = new Set([
-  "valuer@safebuyrealties.test",
-  "architect@safebuyrealties.test",
-  "engineer@safebuyrealties.test",
-]);
-
 const DEMO_PROFESSIONAL_PROFILES = [
   { email: "lawyer@safebuyrealties.test", regulatoryBody: "NBA", licenseNumber: "NBA/E2E/001" },
   {
@@ -140,6 +127,9 @@ const DEMO_PROFESSIONAL_PROFILES = [
     licenseNumber: "COREN/E2E/001",
   },
 ];
+
+const DEMO_PRO_EMAILS = new Set(DEMO_PROFESSIONAL_PROFILES.map((p) => p.email));
+const ASSIGNED_PRO_EMAILS = new Set(Object.values(STEP_PRO_MAP));
 
 async function assertInternalVisibility(listingId, stageLabel) {
   for (const { key, email } of INTERNAL_ROLES) {
@@ -218,15 +208,11 @@ async function ensureProfessionalProfile({ email, regulatoryBody, licenseNumber 
 
   const existing = await req("/professionals/me/profile");
   const current = existing.json?.data;
-  if (current?.verifiedStatus === "VERIFIED" && VERIFY_PRO_EMAILS.has(email)) {
+  if (current?.verifiedStatus === "VERIFIED") {
     record(`credentials.profile.${email}`, "pass", "already VERIFIED");
     return current;
   }
-  if (current?.verifiedStatus === "PENDING" && LEAVE_UNVERIFIED_EMAILS.has(email)) {
-    record(`credentials.profile.${email}`, "pass", "already PENDING");
-    return current;
-  }
-  if (current && VERIFY_PRO_EMAILS.has(email) && current.verifiedStatus === "PENDING") {
+  if (current?.verifiedStatus === "PENDING") {
     record(`credentials.profile.${email}`, "pass", "PENDING — ready for staff approval");
     return current;
   }
@@ -269,14 +255,7 @@ async function prepareProfessionalCredentials() {
 
   for (const row of pending) {
     const email = row.user?.email;
-    if (!email) continue;
-
-    if (LEAVE_UNVERIFIED_EMAILS.has(email)) {
-      record(`credentials.skip.${email}`, "pass", "left unverified for E2E");
-      continue;
-    }
-
-    if (!VERIFY_PRO_EMAILS.has(email)) continue;
+    if (!email || !DEMO_PRO_EMAILS.has(email)) continue;
 
     const verify = await req(`/professionals/${row.id}/verify`, {
       method: "PATCH",
@@ -289,11 +268,19 @@ async function prepareProfessionalCredentials() {
     );
   }
 
-  for (const email of LEAVE_UNVERIFIED_EMAILS) {
-    const stillPending = pending.some((p) => p.user?.email === email);
-    if (stillPending) {
-      record(`credentials.pending.${email}`, "pass", "still PENDING as expected");
+  for (const email of DEMO_PRO_EMAILS) {
+    const login = await loginAs(email);
+    if (!login.ok) {
+      record(`credentials.confirmed.${email}`, "fail", "login");
+      continue;
     }
+    const mine = await req("/professionals/me/profile");
+    const status = mine.json?.data?.verifiedStatus;
+    record(
+      `credentials.confirmed.${email}`,
+      status === "VERIFIED" ? "pass" : "fail",
+      status ?? "no profile",
+    );
   }
 }
 
@@ -318,7 +305,7 @@ async function completeVerificationSteps(listingId) {
     const proEmail = STEP_PRO_MAP[step.type];
     const proId = proIds[proEmail];
     if (proId) {
-      const expectAssignPass = VERIFY_PRO_EMAILS.has(proEmail);
+      const expectAssignPass = ASSIGNED_PRO_EMAILS.has(proEmail);
       const assign = await req("/verification/assign", {
         method: "POST",
         body: JSON.stringify({
