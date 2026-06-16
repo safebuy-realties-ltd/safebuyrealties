@@ -22,9 +22,11 @@ import {
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
+import { SbrIdService } from "../sbr-id/sbr-id.service";
 import { CreateListingDto } from "./dto/create-listing.dto";
 import { UpdateListingDto } from "./dto/update-listing.dto";
 import { ListListingsQueryDto } from "./dto/list-listings.query";
+import { isPubliclyVisible, publiclyVisibleWhere } from "./listings-public.helper";
 
 const VERIFICATION_TEMPLATE: { type: VerificationStepType; order: number }[] = [
   { type: VerificationStepType.SUBMISSION, order: 0 },
@@ -51,6 +53,7 @@ export class ListingsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private sbrId: SbrIdService,
   ) {}
 
   private serializeListing(
@@ -63,6 +66,9 @@ export class ListingsService {
       price: Prisma.Decimal;
       currency: string;
       status: ListingStatus;
+      propertyId?: string | null;
+      isPublished?: boolean;
+      propertyType?: string | null;
       beds?: number | null;
       baths?: number | null;
       landAreaSqm?: Prisma.Decimal | null;
@@ -95,6 +101,9 @@ export class ListingsService {
       price: l.price.toString(),
       currency: l.currency,
       status: l.status,
+      propertyId: l.propertyId ?? null,
+      isPublished: l.isPublished ?? false,
+      propertyType: l.propertyType ?? null,
       beds: l.beds ?? null,
       baths: l.baths ?? null,
       landAreaSqm: l.landAreaSqm != null ? Number(l.landAreaSqm) : null,
@@ -168,7 +177,7 @@ export class ListingsService {
     actor: JwtPayload | null,
   ): Prisma.ListingWhereInput {
     if (!actor) {
-      return { status: ListingStatus.LIVE };
+      return publiclyVisibleWhere();
     }
 
     if (actor.role === UserRole.SELLER) {
@@ -199,7 +208,8 @@ export class ListingsService {
     }
 
     if (actor.role === UserRole.BUYER) {
-      return { status: query.status ?? ListingStatus.LIVE };
+      if (query.status) return { status: query.status };
+      return publiclyVisibleWhere();
     }
 
     return {
@@ -229,10 +239,20 @@ export class ListingsService {
       }
       sellerId = dto.sellerId;
     }
-    const status = dto.status ?? ListingStatus.DRAFT;
-    if (status !== ListingStatus.DRAFT && status !== ListingStatus.PENDING_REVIEW) {
-      throw new BadRequestException("Sellers can only create listings as DRAFT or PENDING_REVIEW");
+    const isStaffCreator = isInternalRole(actor.role) && actor.role !== UserRole.SELLER;
+    let status: ListingStatus = ListingStatus.DRAFT;
+    if (isStaffCreator && dto.status) {
+      status = dto.status;
     }
+    if (status !== ListingStatus.DRAFT && status !== ListingStatus.PENDING_REVIEW) {
+      throw new BadRequestException("Listings can only be created as DRAFT or PENDING_REVIEW");
+    }
+
+    let propertyId: string | undefined;
+    if (status === ListingStatus.PENDING_REVIEW) {
+      propertyId = await this.sbrId.nextPropertyId(dto.location);
+    }
+
     const listing = await this.prisma.listing.create({
       data: {
         sellerId,
@@ -242,6 +262,9 @@ export class ListingsService {
         price: dto.price,
         currency: dto.currency ?? "NGN",
         status,
+        isPublished: false,
+        ...(propertyId ? { propertyId } : {}),
+        ...(dto.propertyType !== undefined ? { propertyType: dto.propertyType } : {}),
         ...(dto.beds !== undefined ? { beds: dto.beds } : {}),
         ...(dto.baths !== undefined ? { baths: dto.baths } : {}),
         ...(dto.landAreaSqm !== undefined ? { landAreaSqm: dto.landAreaSqm } : {}),
@@ -302,6 +325,16 @@ export class ListingsService {
     const nextStatus = dto.status ?? prevStatus;
     this.assertStatusTransition(prevStatus, nextStatus, actor.role);
 
+    let propertyIdUpdate: string | undefined;
+    if (
+      nextStatus === ListingStatus.PENDING_REVIEW &&
+      !listing.propertyId &&
+      prevStatus !== ListingStatus.PENDING_REVIEW
+    ) {
+      propertyIdUpdate = await this.sbrId.nextPropertyId(dto.location ?? listing.location);
+    }
+
+    const staffCanSetPublished = this.isStaff(actor.role);
     const updated = await this.prisma.listing.update({
       where: { id },
       data: {
@@ -316,6 +349,12 @@ export class ListingsService {
         ...(dto.baths !== undefined ? { baths: dto.baths } : {}),
         ...(dto.landAreaSqm !== undefined ? { landAreaSqm: dto.landAreaSqm } : {}),
         ...(dto.buildType !== undefined ? { buildType: dto.buildType } : {}),
+        ...(dto.propertyType !== undefined ? { propertyType: dto.propertyType } : {}),
+        ...(propertyIdUpdate ? { propertyId: propertyIdUpdate } : {}),
+        ...(nextStatus === ListingStatus.LIVE ? { isPublished: true } : {}),
+        ...(staffCanSetPublished && dto.isPublished !== undefined
+          ? { isPublished: dto.isPublished }
+          : {}),
         ...(nextStatus === ListingStatus.VERIFIED && !listing.verifiedAt
           ? { verifiedAt: new Date() }
           : {}),
@@ -526,10 +565,10 @@ export class ListingsService {
   }
 
   private async canAccessListing(
-    listing: { id: string; sellerId: string; status: ListingStatus },
+    listing: { id: string; sellerId: string; status: ListingStatus; isPublished: boolean },
     actor: JwtPayload | null,
   ): Promise<boolean> {
-    if (listing.status === ListingStatus.LIVE) return true;
+    if (isPubliclyVisible(listing)) return true;
     if (!actor) return false;
     if (listing.sellerId === actor.sub) return true;
     if (this.isStaff(actor.role)) return true;
@@ -673,6 +712,7 @@ export class ListingsService {
       where: { id: listingId },
       data: {
         status: candidate,
+        ...(candidate === ListingStatus.LIVE ? { isPublished: true } : {}),
         ...((candidate === ListingStatus.VERIFIED || candidate === ListingStatus.LIVE) &&
         !listing.verifiedAt
           ? { verifiedAt: new Date() }

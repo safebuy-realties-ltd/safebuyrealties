@@ -41,3 +41,13 @@ export class DocumentsController {
     return this.documents.listByListing(listingId, user);
   }
 }
+
+@Controller("listings")
+export class ListingPublicDocumentsController {
+  constructor(private documents: DocumentsService) {}
+
+  @Get(":listingId/public-documents")
+  listPublic(@Param("listingId") listingId: string) {
+    return this.documents.listPublicDocumentNames(listingId);
+  }
+}

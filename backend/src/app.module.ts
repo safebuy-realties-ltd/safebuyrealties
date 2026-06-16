@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { SbrIdModule } from "./sbr-id/sbr-id.module";
 import { MaintenanceGuard } from "./common/guards/maintenance.guard";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
@@ -23,11 +24,14 @@ import { EscrowModule } from "./escrow/escrow.module";
 import { KycModule } from "./kyc/kyc.module";
 import { AdminModule } from "./admin/admin.module";
 import { InspectionsModule } from "./inspections/inspections.module";
+import { GuestCheckoutModule } from "./guest-checkout/guest-checkout.module";
+import { EmailModule } from "./email/email.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    SbrIdModule,
     AuditModule,
     NotificationsModule,
     AuthModule,
@@ -47,6 +51,8 @@ import { InspectionsModule } from "./inspections/inspections.module";
     KycModule,
     AdminModule,
     InspectionsModule,
+    GuestCheckoutModule,
+    EmailModule,
     HealthModule,
   ],
   providers: [

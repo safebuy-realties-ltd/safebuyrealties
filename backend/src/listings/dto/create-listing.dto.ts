@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
@@ -60,4 +61,13 @@ export class CreateListingDto {
   @IsString()
   @MaxLength(100)
   buildType?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  propertyType?: string;
 }

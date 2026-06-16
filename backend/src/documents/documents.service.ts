@@ -4,13 +4,23 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import { UserRole, ListingStatus } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
+import { isPubliclyVisible } from "../listings/listings-public.helper";
 import * as path from "path";
+
+const PUBLIC_DOCUMENT_CATEGORIES: Record<string, string> = {
+  survey_plan: "Survey Plan",
+  deed_of_assignment: "Deed of Assignment",
+  cof_o: "Certificate of Occupancy",
+  governors_consent: "Governor's Consent",
+  building_approval: "Building Approval",
+  other: "Other Document",
+};
 
 @Injectable()
 export class DocumentsService {
@@ -60,7 +70,7 @@ export class DocumentsService {
     const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
     if (!listing) throw new NotFoundException("Listing not found");
     if (listing.sellerId === actor.sub || this.isStaff(actor.role)) return listing;
-    if (actor.role === UserRole.BUYER && listing.status === ListingStatus.LIVE) return listing;
+    if (actor.role === UserRole.BUYER && isPubliclyVisible(listing)) return listing;
     if (actor.role === UserRole.PROFESSIONAL) {
       const [v, t] = await Promise.all([
         this.prisma.verificationStep.count({
@@ -116,5 +126,23 @@ export class DocumentsService {
       orderBy: { createdAt: "desc" },
     });
     return docs.map((d) => this.toDocumentDto(d, actor));
+  }
+
+  async listPublicDocumentNames(listingId: string) {
+    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing) throw new NotFoundException("Listing not found");
+    if (!isPubliclyVisible(listing)) throw new NotFoundException("Listing not found");
+
+    const categories = Object.keys(PUBLIC_DOCUMENT_CATEGORIES);
+    const docs = await this.prisma.document.findMany({
+      where: { listingId, category: { in: categories } },
+      orderBy: { createdAt: "asc" },
+      select: { category: true, fileName: true },
+    });
+
+    return docs.map((doc) => ({
+      category: doc.category,
+      name: PUBLIC_DOCUMENT_CATEGORIES[doc.category] ?? doc.fileName,
+    }));
   }
 }
