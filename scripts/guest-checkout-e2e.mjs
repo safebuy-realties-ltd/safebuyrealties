@@ -117,9 +117,9 @@ async function main() {
   const pay = await req(`/guest-checkout/orders/${serviceId}/pay`, {
     method: "POST",
     body: JSON.stringify({
-      guestName: "E2E Guest Buyer",
-      guestEmail,
-      guestPhone: "+2348012345678",
+      name: "E2E Guest Buyer",
+      email: guestEmail,
+      phone: "+2348012345678",
       callbackUrl: "http://localhost:8080/checkout/success",
     }),
   });

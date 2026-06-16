@@ -75,7 +75,12 @@ export function usePayGuestOrderMutation() {
     mutationFn: ({ serviceId, body }: { serviceId: string; body: PayGuestOrderBody }) =>
       apiRequest<GuestPayInitResult>(`/guest-checkout/orders/${serviceId}/pay`, {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          name: body.guestName,
+          email: body.guestEmail,
+          phone: body.guestPhone,
+          callbackUrl: body.callbackUrl,
+        }),
       }).then((envelope) => envelope.data),
   });
 }
