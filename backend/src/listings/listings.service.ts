@@ -37,6 +37,14 @@ const VERIFICATION_TEMPLATE: { type: VerificationStepType; order: number }[] = [
   { type: VerificationStepType.FINAL_APPROVAL, order: 7 },
 ];
 
+const LISTING_STATUS_PIPELINE: ListingStatus[] = [
+  ListingStatus.PENDING_REVIEW,
+  ListingStatus.ASSIGNED,
+  ListingStatus.IN_VERIFICATION,
+  ListingStatus.VERIFIED,
+  ListingStatus.LIVE,
+];
+
 @Injectable()
 export class ListingsService {
   constructor(
@@ -590,5 +598,115 @@ export class ListingsService {
         completedAt: t.order === 0 ? new Date() : null,
       })),
     });
+  }
+
+  private listingStatusRank(status: ListingStatus): number {
+    const rank = LISTING_STATUS_PIPELINE.indexOf(status);
+    return rank === -1 ? -1 : rank;
+  }
+
+  private isVerificationStepDone(status: VerificationStepStatus): boolean {
+    return (
+      status === VerificationStepStatus.ACCEPTED || status === VerificationStepStatus.COMPLETED
+    );
+  }
+
+  resolveListingStatusFromVerificationSteps(
+    currentStatus: ListingStatus,
+    steps: { status: VerificationStepStatus; order: number }[],
+  ): ListingStatus | null {
+    if (steps.length === 0) return null;
+
+    if (steps.every((s) => this.isVerificationStepDone(s.status))) {
+      return ListingStatus.LIVE;
+    }
+
+    const verificationUnderway = steps.some(
+      (s) => s.order > 0 && s.status !== VerificationStepStatus.PENDING,
+    );
+    if (verificationUnderway) {
+      return ListingStatus.IN_VERIFICATION;
+    }
+
+    if (currentStatus === ListingStatus.PENDING_REVIEW) {
+      return ListingStatus.ASSIGNED;
+    }
+
+    return null;
+  }
+
+  /**
+   * Advances listing status based on verification step progress so staff workflow
+   * does not require separate Submissions approve clicks.
+   */
+  async syncListingStatusFromVerification(
+    listingId: string,
+    actorId: string,
+  ): Promise<ListingStatus | null> {
+    const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing) return null;
+
+    const frozen: ListingStatus[] = [
+      ListingStatus.LIVE,
+      ListingStatus.REJECTED,
+      ListingStatus.ARCHIVED,
+    ];
+    if (frozen.includes(listing.status)) return listing.status;
+
+    const steps = await this.prisma.verificationStep.findMany({
+      where: { listingId },
+      orderBy: { order: "asc" },
+    });
+    if (steps.length === 0) return listing.status;
+
+    const candidate = this.resolveListingStatusFromVerificationSteps(listing.status, steps);
+    if (!candidate || candidate === listing.status) return listing.status;
+
+    const currentRank = this.listingStatusRank(listing.status);
+    const candidateRank = this.listingStatusRank(candidate);
+    if (currentRank !== -1 && candidateRank !== -1 && candidateRank <= currentRank) {
+      return listing.status;
+    }
+
+    const prevStatus = listing.status;
+    const updated = await this.prisma.listing.update({
+      where: { id: listingId },
+      data: {
+        status: candidate,
+        ...((candidate === ListingStatus.VERIFIED || candidate === ListingStatus.LIVE) &&
+        !listing.verifiedAt
+          ? { verifiedAt: new Date() }
+          : {}),
+      },
+    });
+
+    void this.audit.log({
+      actorId,
+      action: AuditAction.LISTING_STATUS_CHANGED,
+      entity: "Listing",
+      entityId: listingId,
+      before: { status: prevStatus },
+      after: { status: candidate },
+    });
+
+    if (candidate === ListingStatus.VERIFIED || candidate === ListingStatus.LIVE) {
+      void this.notifications.create({
+        userId: listing.sellerId,
+        type: NotificationType.LISTING_VERIFIED,
+        title: candidate === ListingStatus.LIVE ? "Listing is live" : "Listing verified",
+        body:
+          candidate === ListingStatus.LIVE
+            ? `"${updated.title}" is now live on the marketplace.`
+            : `"${updated.title}" has been verified and can proceed toward going live.`,
+        entityId: listingId,
+        entityType: NotificationEntityType.Listing,
+      });
+    }
+
+    if (candidate === ListingStatus.LIVE) {
+      void this.notifySavedBuyersOnStatusChange(listingId, updated.title, ListingStatus.LIVE);
+    }
+
+    return candidate;
   }
 }

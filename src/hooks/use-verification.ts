@@ -47,6 +47,7 @@ export function useAssignVerificationMutation() {
     onSuccess: (_env, vars) => {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["staff", "queue"] });
     },
   });
 }
@@ -66,6 +67,7 @@ export function usePatchVerificationStepMutation() {
     onSuccess: (_env, vars) => {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["staff", "queue"] });
     },
   });
 }
@@ -80,6 +82,7 @@ export function useAcceptStepMutation() {
     onSuccess: (_env, vars) => {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["staff", "queue"] });
     },
   });
 }
@@ -95,6 +98,7 @@ export function useRequestRevisionMutation() {
     onSuccess: (_env, vars) => {
       void qc.invalidateQueries({ queryKey: ["verification", "listing", vars.listingId] });
       void qc.invalidateQueries({ queryKey: ["listings"] });
+      void qc.invalidateQueries({ queryKey: ["staff", "queue"] });
     },
   });
 }

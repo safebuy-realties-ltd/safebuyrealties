@@ -20,6 +20,7 @@ import {
 } from "../notifications/notification-types.constants";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
+import { ListingsService } from "../listings/listings.service";
 import { AssignVerificationDto } from "./dto/assign-verification.dto";
 import { PatchVerificationStepDto } from "./dto/patch-verification-step.dto";
 import { VERIFICATION_STEP_LABELS } from "./verification.constants";
@@ -45,6 +46,7 @@ export class VerificationService {
     private prisma: PrismaService,
     private audit: AuditService,
     private notifications: NotificationsService,
+    private listings: ListingsService,
   ) {}
 
   private isStaff(role: UserRole) {
@@ -175,6 +177,7 @@ export class VerificationService {
             : step.status,
       },
     });
+    await this.listings.syncListingStatusFromVerification(dto.listingId, actor.sub);
     return this.serializeStep(updated);
   }
 
@@ -272,6 +275,7 @@ export class VerificationService {
         entityType: NotificationEntityType.Listing,
       });
     }
+    await this.listings.syncListingStatusFromVerification(step.listingId, actor.sub);
     return this.serializeStepForActor(updated, actor);
   }
 
@@ -298,6 +302,7 @@ export class VerificationService {
       before: { status: step.status },
       after: { status: VerificationStepStatus.ACCEPTED },
     });
+    await this.listings.syncListingStatusFromVerification(step.listingId, actor.sub);
     return this.serializeStep(updated);
   }
 

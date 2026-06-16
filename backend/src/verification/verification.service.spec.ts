@@ -13,6 +13,7 @@ import { ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { ListingsService } from "../listings/listings.service";
 import { VerificationService } from "./verification.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 
@@ -56,6 +57,7 @@ const baseStep = {
 
 describe("VerificationService accept / request-revision", () => {
   let service: VerificationService;
+  let listings: { syncListingStatusFromVerification: jest.Mock };
   let prisma: {
     verificationStep: {
       findUnique: jest.Mock;
@@ -68,6 +70,9 @@ describe("VerificationService accept / request-revision", () => {
 
   beforeEach(async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-05-26T12:00:00.000Z"));
+    listings = {
+      syncListingStatusFromVerification: jest.fn().mockResolvedValue(null),
+    };
     prisma = {
       verificationStep: {
         findUnique: jest.fn().mockResolvedValue({ ...baseStep }),
@@ -89,6 +94,7 @@ describe("VerificationService accept / request-revision", () => {
           provide: NotificationsService,
           useValue: { create: jest.fn(), createForStaff: jest.fn() },
         },
+        { provide: ListingsService, useValue: listings },
       ],
     }).compile();
 
@@ -111,6 +117,10 @@ describe("VerificationService accept / request-revision", () => {
           revisionNote: null,
         },
       });
+      expect(listings.syncListingStatusFromVerification).toHaveBeenCalledWith(
+        "listing-1",
+        "staff-1",
+      );
       expect(result.status).toBe(VerificationStepStatus.ACCEPTED);
       expect(result.completedAt).toBe("2026-05-26T12:00:00.000Z");
       expect(result.revisionNote).toBeNull();
@@ -222,6 +232,10 @@ describe("VerificationService getForListing buyer view", () => {
         {
           provide: NotificationsService,
           useValue: { create: jest.fn(), createForStaff: jest.fn() },
+        },
+        {
+          provide: ListingsService,
+          useValue: { syncListingStatusFromVerification: jest.fn() },
         },
       ],
     }).compile();
