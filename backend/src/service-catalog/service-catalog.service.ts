@@ -3,6 +3,37 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 
+const DD_CHECK_ITEMS = [
+  {
+    code: "LEGAL_CHECK",
+    name: "Legal Check",
+    description: "Legal title and documentation review for the property.",
+    basePrice: new Prisma.Decimal(350000),
+    sortOrder: 101,
+  },
+  {
+    code: "PHYSICAL_CHECK",
+    name: "Physical Check",
+    description: "On-site physical inspection of structures and boundaries.",
+    basePrice: new Prisma.Decimal(275000),
+    sortOrder: 102,
+  },
+  {
+    code: "ENVIRONMENTAL_CHECK",
+    name: "Environmental Check",
+    description: "Environmental and drainage risk assessment.",
+    basePrice: new Prisma.Decimal(225000),
+    sortOrder: 103,
+  },
+  {
+    code: "SECURITY_CHECK",
+    name: "Security Check",
+    description: "Neighbourhood security and access route assessment.",
+    basePrice: new Prisma.Decimal(175000),
+    sortOrder: 104,
+  },
+];
+
 const CATALOG_ITEMS = [
   { code: "DUE_DILIGENCE",        name: "Due Diligence",           sortOrder: 1 },
   { code: "LAND_CHARTING_SEARCH", name: "Land/Charting Search",    sortOrder: 2 },
@@ -67,39 +98,46 @@ export class ServiceCatalogService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     const count = await this.prisma.serviceCatalogItem.count();
-    if (count > 0) return;
+    if (count === 0) {
+      // Seed items
+      for (const item of CATALOG_ITEMS) {
+        await this.prisma.serviceCatalogItem.create({
+          data: {
+            code: item.code,
+            name: item.name,
+            description: `Professional ${item.name} service for property verification and documentation.`,
+            basePrice: new Prisma.Decimal(150000),
+            sortOrder: item.sortOrder,
+          },
+        });
+      }
 
-    // Seed items
-    for (const item of CATALOG_ITEMS) {
-      await this.prisma.serviceCatalogItem.create({
-        data: {
-          code: item.code,
-          name: item.name,
-          description: `Professional ${item.name} service for property verification and documentation.`,
-          basePrice: new Prisma.Decimal(150000),
-          sortOrder: item.sortOrder,
-        },
-      });
+      // Seed bundles
+      for (const bundle of BUNDLES) {
+        const items = await this.prisma.serviceCatalogItem.findMany({
+          where: { sortOrder: { in: bundle.itemSortOrders } },
+          select: { id: true },
+        });
+
+        await this.prisma.serviceBundle.create({
+          data: {
+            code: bundle.code,
+            name: bundle.name,
+            description: bundle.description,
+            basePrice: bundle.basePrice,
+            items: {
+              create: items.map((item) => ({ itemId: item.id })),
+            },
+          },
+        });
+      }
     }
 
-    // Seed bundles
-    for (const bundle of BUNDLES) {
-      // Fetch items for this bundle
-      const items = await this.prisma.serviceCatalogItem.findMany({
-        where: { sortOrder: { in: bundle.itemSortOrders } },
-        select: { id: true },
-      });
-
-      await this.prisma.serviceBundle.create({
-        data: {
-          code: bundle.code,
-          name: bundle.name,
-          description: bundle.description,
-          basePrice: bundle.basePrice,
-          items: {
-            create: items.map((item) => ({ itemId: item.id })),
-          },
-        },
+    for (const item of DD_CHECK_ITEMS) {
+      await this.prisma.serviceCatalogItem.upsert({
+        where: { code: item.code },
+        create: item,
+        update: {},
       });
     }
   }

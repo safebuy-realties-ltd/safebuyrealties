@@ -128,6 +128,15 @@ export class PlatformConfigService {
     return Number((await this.get()).vatRate);
   }
 
+  async getInspectionFee(): Promise<number> {
+    const config = await this.prisma.platformConfig.upsert({
+      where: { id: SINGLETON_ID },
+      create: { id: SINGLETON_ID },
+      update: {},
+    });
+    return Number(config.inspectionFee);
+  }
+
   async getMaxUploadBytes(): Promise<number> {
     return (await this.get()).maxUploadMb * 1024 * 1024;
   }
