@@ -34,7 +34,10 @@ function readDotEnvValue(fileName: string, key: string): string | undefined {
 // so SSR routes work; Cloudflare's worker output does not.
 const deployToVercel = process.env.VERCEL === "1";
 const apiProxyTarget =
+  process.env.API_PROXY_TARGET?.trim() ||
   process.env.SBR_API_PROXY_TARGET?.trim() ||
+  readDotEnvValue(".env.local", "API_PROXY_TARGET") ||
+  readDotEnvValue(".env", "API_PROXY_TARGET") ||
   readDotEnvValue(".env.local", "SBR_API_PROXY_TARGET") ||
   readDotEnvValue(".env", "SBR_API_PROXY_TARGET") ||
   "http://localhost:3001";

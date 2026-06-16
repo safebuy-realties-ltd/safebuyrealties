@@ -4,7 +4,7 @@ const DEFAULT_API = "/api/v1";
 function resolveApiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_URL?.trim();
   // Session cookies require same-origin requests. Ignore absolute VITE_API_URL values
-  // (e.g. Render host set in Vercel env) and rely on /api/v1 rewrites/proxy instead.
+  // (e.g. Render host). Vercel proxies /api/v1 using API_PROXY_TARGET in vercel.mjs.
   if (configured?.startsWith("/")) {
     return configured.replace(/\/$/, "") || DEFAULT_API;
   }

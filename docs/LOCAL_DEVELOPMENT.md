@@ -144,7 +144,7 @@ Coordinate with teammates — one schema PR at a time on the shared database.
 
 ## Optional: Vercel deploy check
 
-See `docs/VERCEL_VALIDATION.md` for production URLs and deploy-only troubleshooting. Skip Vercel preview when deployment protection blocks curl/browser automation.
+See `docs/VERCEL_VALIDATION.md` for production URLs, **`API_PROXY_TARGET`** on the Vercel frontend project, and deploy-only troubleshooting. Skip Vercel preview when deployment protection blocks curl/browser automation.
 
 ## Troubleshooting
 
