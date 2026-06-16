@@ -150,7 +150,17 @@ function StaffWorkflow() {
     acceptStepMutation.mutate(
       { stepId, listingId: selectedListingId },
       {
-        onSuccess: () => toast.success("Report accepted."),
+        onSuccess: async () => {
+          const { data: refreshedSteps } = await refetchSteps();
+          const allDone =
+            refreshedSteps?.length &&
+            refreshedSteps.every((s) => s.status === "ACCEPTED" || s.status === "COMPLETED");
+          if (allDone) {
+            toast.success("All verification steps complete — listing is now live.");
+          } else {
+            toast.success("Report accepted.");
+          }
+        },
         onError: (e) => toast.error(e instanceof ApiError ? e.message : "Accept failed."),
       },
     );

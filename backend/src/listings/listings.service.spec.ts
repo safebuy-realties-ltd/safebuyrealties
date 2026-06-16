@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ListingMediaType, ListingStatus, Prisma } from "@prisma/client";
+import { ListingMediaType, ListingStatus, Prisma, VerificationStepStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -81,7 +81,7 @@ describe("ListingsService", () => {
       update: jest.Mock;
       create: jest.Mock;
     };
-    verificationStep: { count: jest.Mock; createMany: jest.Mock };
+    verificationStep: { count: jest.Mock; createMany: jest.Mock; findMany: jest.Mock };
     savedProperty: { count: jest.Mock; upsert: jest.Mock; findMany: jest.Mock };
     dueDiligenceOrder: { count: jest.Mock };
     transaction: { count: jest.Mock; findMany: jest.Mock };
@@ -106,6 +106,7 @@ describe("ListingsService", () => {
       verificationStep: {
         count: jest.fn().mockResolvedValue(1),
         createMany: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       savedProperty: {
         count: jest.fn().mockResolvedValue(0),
@@ -420,6 +421,88 @@ describe("ListingsService", () => {
         transactionCount: 2,
         ddPurchases: 1,
       });
+    });
+  });
+
+  describe("resolveListingStatusFromVerificationSteps", () => {
+    it("returns LIVE when every step is accepted or completed", () => {
+      const steps = [
+        { order: 0, status: VerificationStepStatus.COMPLETED },
+        { order: 1, status: VerificationStepStatus.ACCEPTED },
+      ];
+      expect(service.resolveListingStatusFromVerificationSteps(ListingStatus.IN_VERIFICATION, steps)).toBe(
+        ListingStatus.LIVE,
+      );
+    });
+
+    it("returns IN_VERIFICATION when non-submission work has started", () => {
+      const steps = [
+        { order: 0, status: VerificationStepStatus.COMPLETED },
+        { order: 1, status: VerificationStepStatus.IN_PROGRESS },
+      ];
+      expect(service.resolveListingStatusFromVerificationSteps(ListingStatus.ASSIGNED, steps)).toBe(
+        ListingStatus.IN_VERIFICATION,
+      );
+    });
+
+    it("returns ASSIGNED for pending review listings with no verification work yet", () => {
+      const steps = [
+        { order: 0, status: VerificationStepStatus.COMPLETED },
+        { order: 1, status: VerificationStepStatus.PENDING },
+      ];
+      expect(
+        service.resolveListingStatusFromVerificationSteps(ListingStatus.PENDING_REVIEW, steps),
+      ).toBe(ListingStatus.ASSIGNED);
+    });
+  });
+
+  describe("syncListingStatusFromVerification", () => {
+    it("advances listing to LIVE when all steps are done", async () => {
+      const listingRow = {
+        ...baseListing,
+        status: ListingStatus.IN_VERIFICATION,
+        verifiedAt: null,
+      };
+      prisma.listing.findUnique.mockResolvedValue(listingRow);
+      prisma.verificationStep.findMany.mockResolvedValue([
+        { order: 0, status: VerificationStepStatus.COMPLETED },
+        { order: 1, status: VerificationStepStatus.ACCEPTED },
+      ]);
+      prisma.listing.update.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.LIVE,
+        verifiedAt: new Date("2026-06-08T12:00:00.000Z"),
+      });
+
+      const result = await service.syncListingStatusFromVerification("listing-1", "staff-1");
+
+      expect(result).toBe(ListingStatus.LIVE);
+      expect(prisma.listing.update).toHaveBeenCalledWith({
+        where: { id: "listing-1" },
+        data: expect.objectContaining({
+          status: ListingStatus.LIVE,
+          verifiedAt: expect.any(Date),
+        }),
+      });
+      expect(notifications.create).toHaveBeenCalled();
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: AuditAction.LISTING_STATUS_CHANGED,
+          after: { status: ListingStatus.LIVE },
+        }),
+      );
+    });
+
+    it("does not change terminal listing statuses", async () => {
+      prisma.listing.findUnique.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.LIVE,
+      });
+
+      const result = await service.syncListingStatusFromVerification("listing-1", "staff-1");
+
+      expect(result).toBe(ListingStatus.LIVE);
+      expect(prisma.listing.update).not.toHaveBeenCalled();
     });
   });
 });
