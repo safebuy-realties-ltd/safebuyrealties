@@ -20,6 +20,7 @@
     "test:journey-e2e": "node scripts/journey-e2e-all-roles.mjs",
     "test:listing-lifecycle-e2e": "node scripts/listing-lifecycle-e2e.mjs",
     "test:guest-checkout-e2e": "node scripts/guest-checkout-e2e.mjs",
+    "generate:flow-diagrams-pdf": "node scripts/generate-flow-diagrams-pdf.mjs",
     "test:paystack-e2e": "node scripts/test-paystack-e2e.mjs",
     "env:sync-paystack": "node scripts/sync-paystack-env-vercel.mjs"
   },
