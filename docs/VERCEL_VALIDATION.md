@@ -10,7 +10,7 @@ Use this doc for production/preview URLs, deploy migrations, and post-merge smok
 | -------- | ---------------- | ----- |
 | **Buyer/seller app** | https://safebuyrealties-app.vercel.app | TanStack app; browser calls same-origin `/api/v1` |
 | **API (via Vercel rewrite)** | https://safebuyrealties-app.vercel.app/api/v1 | Proxied to Render — see `API_PROXY_TARGET` below |
-| **API (direct Render)** | Set in `API_PROXY_TARGET` | e.g. `https://safebuyrealties-yc0i.onrender.com/api/v1` |
+| **API (direct Render)** | Set in `API_PROXY_TARGET` | Your Render service URL + `/api/v1` |
 | **Health (through app)** | https://safebuyrealties-app.vercel.app/api/v1/health | Confirms rewrite + backend |
 
 ```bash
@@ -24,7 +24,7 @@ The Render backend URL is **not** stored in git. Configure it in **Vercel → Pr
 
 | Variable | Required | Example | Purpose |
 | -------- | -------- | ------- | ------- |
-| `API_PROXY_TARGET` | **Yes** (Production + Preview) | `https://safebuyrealties-yc0i.onrender.com` | Vercel rewrite destination for `/api/v1` and `/uploads` (`vercel.mjs`) |
+| `API_PROXY_TARGET` | **Yes** (Production + Preview) | `https://your-service.onrender.com` | Vercel rewrite destination for `/api/v1` and `/uploads` (`vercel.mjs`) |
 | `VITE_API_URL` | Optional | `/api/v1` | Browser API base (default is `/api/v1`; keep relative for cookie auth) |
 
 **Do not** set `VITE_API_URL` to the Render hostname in production — session cookies require same-origin requests. The browser talks to `/api/v1` on the Vercel app; Vercel proxies to Render using `API_PROXY_TARGET`.
