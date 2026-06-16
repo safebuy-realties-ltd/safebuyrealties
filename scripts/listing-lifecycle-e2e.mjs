@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Full listing lifecycle E2E: seller upload → verification stages → LIVE.
- * Verifies staff, admin, and super-admin can see listing, documents, and verification details.
+ * Full listing lifecycle E2E: seller upload → staff verification workflow → LIVE.
+ * Verifies workflow auto-sync (no manual Submissions status PATCHes) and that
+ * staff, admin, and super-admin can see listing, documents, and verification details.
  *
  *   npm run test:listing-lifecycle-e2e
  *   SBR_API_BASE=http://localhost:3001/api/v1 npm run test:listing-lifecycle-e2e
@@ -90,13 +91,7 @@ const INTERNAL_ROLES = [
   { key: "super_admin", email: "superadmin@safebuyrealties.test" },
 ];
 
-const STATUS_PIPELINE = [
-  "PENDING_REVIEW",
-  "ASSIGNED",
-  "IN_VERIFICATION",
-  "VERIFIED",
-  "LIVE",
-];
+const WORKFLOW_ACTIVE_STATUSES = new Set(["ASSIGNED", "IN_VERIFICATION"]);
 
 const STEP_PRO_MAP = {
   DOCUMENT_REVIEW: "lawyer@safebuyrealties.test",
@@ -288,7 +283,7 @@ async function completeVerificationSteps(listingId) {
   const staff = await loginAs("staff@safebuyrealties.test");
   if (!staff.ok) {
     record("verification.completeSteps", "fail", "staff login");
-    return;
+    return false;
   }
 
   const proIds = {};
@@ -298,9 +293,20 @@ async function completeVerificationSteps(listingId) {
 
   const { json } = await req(`/verification/listing/${listingId}`);
   const steps = json?.data ?? [];
+  let checkedMidStatus = false;
 
   for (const step of steps) {
-    if (step.type === "SUBMISSION") continue;
+    if (step.type === "SUBMISSION") {
+      if (step.status === "COMPLETED") {
+        const accept = await req(`/verification/steps/${step.id}/accept`, { method: "PATCH" });
+        record(
+          `verification.accept.${step.type}`,
+          accept.ok ? "pass" : "fail",
+          accept.ok ? "ACCEPTED" : `HTTP ${accept.status}`,
+        );
+      }
+      continue;
+    }
 
     const proEmail = STEP_PRO_MAP[step.type];
     const proId = proIds[proEmail];
@@ -319,6 +325,20 @@ async function completeVerificationSteps(listingId) {
         : assign.json?.error?.message ?? `HTTP ${assign.status}`;
       if (assign.ok) {
         record(`verification.assign.${step.type}`, "pass", detail);
+        if (!checkedMidStatus) {
+          const listing = await req(`/listings/${listingId}`);
+          const status = listing.json?.data?.status;
+          const advanced = WORKFLOW_ACTIVE_STATUSES.has(status);
+          record(
+            "workflow.autoSync.firstAction",
+            advanced ? "pass" : "fail",
+            status ?? `HTTP ${listing.status}`,
+          );
+          if (advanced) {
+            await assertInternalVisibility(listingId, status);
+          }
+          checkedMidStatus = true;
+        }
       } else if (!expectAssignPass) {
         record(`verification.assign.${step.type}`, "pass", `blocked as expected — ${detail}`);
       } else {
@@ -345,6 +365,30 @@ async function completeVerificationSteps(listingId) {
       accept.ok ? "ACCEPTED" : `HTTP ${accept.status}`,
     );
   }
+
+  return true;
+}
+
+async function assertWorkflowReachedLive(listingId) {
+  const staff = await loginAs("staff@safebuyrealties.test");
+  if (!staff.ok) {
+    record("workflow.autoSync.live", "fail", "staff login");
+    return;
+  }
+
+  const listing = await req(`/listings/${listingId}`);
+  const status = listing.json?.data?.status;
+  const verifiedAt = listing.json?.data?.verifiedAt;
+  record(
+    "workflow.autoSync.live",
+    status === "LIVE" ? "pass" : "fail",
+    status ?? `HTTP ${listing.status}`,
+  );
+  record(
+    "workflow.autoSync.verifiedAt",
+    verifiedAt ? "pass" : "fail",
+    verifiedAt ?? "missing",
+  );
 }
 
 async function main() {
@@ -425,30 +469,11 @@ async function main() {
 
   await prepareProfessionalCredentials();
 
-  for (let i = 1; i < STATUS_PIPELINE.length; i++) {
-    const nextStatus = STATUS_PIPELINE[i];
-    const staffLogin = await loginAs("staff@safebuyrealties.test");
-    if (!staffLogin.ok) {
-      record(`staff.transition.${nextStatus}`, "fail", "login");
-      break;
-    }
+  const workflowOk = await completeVerificationSteps(listingId);
+  record("verification.completeSteps", workflowOk ? "pass" : "fail", "workflow steps processed");
 
-    if (nextStatus === "IN_VERIFICATION") {
-      await completeVerificationSteps(listingId);
-    }
-
-    const patch = await req(`/listings/${listingId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: nextStatus }),
-    });
-    record(
-      `staff.transition.${nextStatus}`,
-      patch.ok && patch.json?.data?.status === nextStatus ? "pass" : "fail",
-      patch.json?.data?.status ?? `HTTP ${patch.status}`,
-    );
-
-    await assertInternalVisibility(listingId, nextStatus);
-  }
+  await assertWorkflowReachedLive(listingId);
+  await assertInternalVisibility(listingId, "LIVE");
 
   clearSession();
   const guestList = await req("/listings?page=1&pageSize=100");
