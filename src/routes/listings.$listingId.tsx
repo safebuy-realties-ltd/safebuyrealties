@@ -22,11 +22,7 @@ import { API_BASE_URL, ApiError } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import { formatListingSpecSummary, formatBuildType } from "@/lib/listing-spec";
-import {
-  listingIsPubliclyViewable,
-  statusBadgeClass,
-  statusLabel,
-} from "@/lib/listing-status";
+import { listingIsPubliclyViewable, statusBadgeClass, statusLabel } from "@/lib/listing-status";
 import { ListingSaveButton } from "@/components/ListingSaveButton";
 import { ScheduleInspectionDialog } from "@/components/ScheduleInspectionDialog";
 import { useListingInspectionsQuery } from "@/hooks/use-inspections";
@@ -99,8 +95,7 @@ function ListingDetail() {
   const verificationSectionId = "listing-verification-milestones";
 
   const isPublicListing =
-    !!listing &&
-    listingIsPubliclyViewable(listing.status, listing.isPublished);
+    !!listing && listingIsPubliclyViewable(listing.status, listing.isPublished);
 
   const canFetchAuthExtras = isReady && isAuthenticated && !!listingId;
   const { data: authDocuments, isLoading: authDocsLoading } = useListingDocumentsQuery(
@@ -416,25 +411,20 @@ function ListingDetail() {
                   Progress from the verification API.
                 </p>
                 <div className="mt-5">
-                  {verLoading && (
-                    <p className="text-sm text-muted-foreground">Loading steps…</p>
-                  )}
+                  {verLoading && <p className="text-sm text-muted-foreground">Loading steps…</p>}
                   {verError && (
                     <p className="text-sm text-muted-foreground">
                       Verification details are not available for your role.
                     </p>
                   )}
-                  {!verLoading &&
-                    !verError &&
-                    trackerSteps &&
-                    trackerSteps.length > 0 && <VerificationTracker steps={trackerSteps} />}
-                  {!verLoading &&
-                    !verError &&
-                    (!trackerSteps || trackerSteps.length === 0) && (
-                      <p className="text-sm text-muted-foreground">
-                        No verification steps yet (listing not in review).
-                      </p>
-                    )}
+                  {!verLoading && !verError && trackerSteps && trackerSteps.length > 0 && (
+                    <VerificationTracker steps={trackerSteps} />
+                  )}
+                  {!verLoading && !verError && (!trackerSteps || trackerSteps.length === 0) && (
+                    <p className="text-sm text-muted-foreground">
+                      No verification steps yet (listing not in review).
+                    </p>
+                  )}
                 </div>
               </div>
             )}

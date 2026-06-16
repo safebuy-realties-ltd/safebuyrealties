@@ -72,13 +72,7 @@ export function useCreateGuestOrderMutation() {
 
 export function usePayGuestOrderMutation() {
   return useMutation({
-    mutationFn: ({
-      serviceId,
-      body,
-    }: {
-      serviceId: string;
-      body: PayGuestOrderBody;
-    }) =>
+    mutationFn: ({ serviceId, body }: { serviceId: string; body: PayGuestOrderBody }) =>
       apiRequest<GuestPayInitResult>(`/guest-checkout/orders/${serviceId}/pay`, {
         method: "POST",
         body: JSON.stringify(body),

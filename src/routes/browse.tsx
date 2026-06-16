@@ -74,10 +74,7 @@ function BrowsePage() {
   const { data, isLoading, isFetching, isError, error, refetch } =
     usePublicListingsQuery(queryOptions);
 
-  const cards = useMemo(
-    () => (data?.listings ?? []).map(listingDtoToCard),
-    [data?.listings],
-  );
+  const cards = useMemo(() => (data?.listings ?? []).map(listingDtoToCard), [data?.listings]);
 
   const activeChips = useMemo(() => {
     const chips: { key: keyof ListingFilters; label: string }[] = [];
@@ -201,7 +198,9 @@ function BrowsePage() {
             <div className="mt-10 text-center text-sm text-muted-foreground">Loading listings…</div>
           ) : cards.length === 0 ? (
             <div className="mt-10 rounded-xl border border-border/60 bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
-              <p className="text-sm font-medium text-foreground">No properties match your filters</p>
+              <p className="text-sm font-medium text-foreground">
+                No properties match your filters
+              </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Try broadening your search or{" "}
                 <button type="button" className="text-primary underline" onClick={resetFilters}>

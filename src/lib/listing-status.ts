@@ -56,10 +56,7 @@ export function statusIsPublic(status: string, isPublished?: boolean): boolean {
 }
 
 /** Whether a listing detail page is visible without authentication. */
-export function listingIsPubliclyViewable(
-  status: string,
-  isPublished?: boolean,
-): boolean {
+export function listingIsPubliclyViewable(status: string, isPublished?: boolean): boolean {
   if (isPublished === false) return false;
   return status === "LIVE" || status === "UNDER_OFFER";
 }

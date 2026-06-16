@@ -85,11 +85,7 @@ function ActivateAccountPage() {
             Your buyer account is ready. Sign in to track due diligence and manage your property
             journey.
           </p>
-          <Button
-            className="mt-8"
-            size="lg"
-            onClick={() => void navigate({ to: "/login" })}
-          >
+          <Button className="mt-8" size="lg" onClick={() => void navigate({ to: "/login" })}>
             Sign in
           </Button>
         </main>

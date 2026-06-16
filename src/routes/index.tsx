@@ -37,7 +37,8 @@ const heroPaths = [
     id: "buying",
     label: "I'm buying",
     headline: "Find a verified home",
-    description: "Browse live listings, compare title-checked properties, and buy with escrow protection.",
+    description:
+      "Browse live listings, compare title-checked properties, and buy with escrow protection.",
     icon: ShoppingBag,
     to: "/browse" as const,
     accent: "from-emerald-500/10 to-emerald-600/5",
@@ -46,7 +47,8 @@ const heroPaths = [
     id: "selling",
     label: "I'm selling",
     headline: "List with proof",
-    description: "Submit your property, pass verification, and reach buyers who trust the SafeBuy badge.",
+    description:
+      "Submit your property, pass verification, and reach buyers who trust the SafeBuy badge.",
     icon: Home,
     to: "/register" as const,
     search: { role: "seller" },
@@ -56,7 +58,8 @@ const heroPaths = [
     id: "professional",
     label: "I'm a professional",
     headline: "Work on verified deals",
-    description: "Lawyers, surveyors, and inspectors deliver structured reports on active transactions.",
+    description:
+      "Lawyers, surveyors, and inspectors deliver structured reports on active transactions.",
     icon: Briefcase,
     to: "/register" as const,
     search: { role: "professional" },
@@ -78,7 +81,8 @@ const personas = [
       { icon: Lock, text: "Pay through escrow until closing conditions are met" },
     ],
     cta: { label: "Start browsing", to: "/browse" as const },
-    gradient: "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20",
+    gradient:
+      "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20",
     iconBg: "bg-emerald-600 text-white",
   },
   {
@@ -94,7 +98,8 @@ const personas = [
       { icon: Users, text: "Qualified buyers routed through SafeBuy" },
     ],
     cta: { label: "List your property", to: "/register" as const, search: { role: "seller" } },
-    gradient: "bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20",
+    gradient:
+      "bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20",
     iconBg: "bg-blue-600 text-white",
   },
   {
@@ -114,7 +119,8 @@ const personas = [
       to: "/register" as const,
       search: { role: "professional" },
     },
-    gradient: "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20",
+    gradient:
+      "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20",
     iconBg: "bg-amber-600 text-white",
   },
 ] as const;
@@ -144,10 +150,7 @@ const buyerSteps = [
 
 function Landing() {
   const { data, isLoading, isError } = usePublicListingsQuery({ pageSize: 12 });
-  const featured = useMemo(
-    () => (data?.listings ?? []).map(listingDtoToCard),
-    [data?.listings],
-  );
+  const featured = useMemo(() => (data?.listings ?? []).map(listingDtoToCard), [data?.listings]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -167,9 +170,9 @@ function Landing() {
                 <span className="text-primary">with proof, not promises.</span>
               </h1>
               <p className="mx-auto mt-5 max-w-2xl text-balance text-lg text-muted-foreground">
-                SafeBuyRealties verifies every listing, connects licensed professionals, and
-                secures payments through escrow — so buyers, sellers, and experts all work from
-                the same trusted record.
+                SafeBuyRealties verifies every listing, connects licensed professionals, and secures
+                payments through escrow — so buyers, sellers, and experts all work from the same
+                trusted record.
               </p>
             </div>
 
@@ -224,8 +227,7 @@ function Landing() {
                   Verified properties for sale
                 </h2>
                 <p className="mt-3 text-muted-foreground">
-                  Browse real listings on the marketplace today — each verified before going
-                  public.
+                  Browse real listings on the marketplace today — each verified before going public.
                 </p>
               </div>
               <Button asChild variant="outline">
@@ -261,7 +263,9 @@ function Landing() {
             {!isLoading && !isError && featured.length === 0 && (
               <div className="mt-10 flex flex-col items-center rounded-xl border border-border/60 bg-card px-6 py-14 text-center shadow-[var(--shadow-card)]">
                 <Building2 className="h-10 w-10 text-muted-foreground" />
-                <p className="mt-4 text-sm font-medium text-foreground">New listings arriving soon</p>
+                <p className="mt-4 text-sm font-medium text-foreground">
+                  New listings arriving soon
+                </p>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                   Sellers are onboarding verified properties. Check back shortly or create an
                   account to get notified when matches appear.
@@ -283,8 +287,8 @@ function Landing() {
                 Built for buyers, sellers, and professionals
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Whether you are purchasing your first home, listing an estate, or delivering
-                legal opinions — here is what you get on SafeBuyRealties.
+                Whether you are purchasing your first home, listing an estate, or delivering legal
+                opinions — here is what you get on SafeBuyRealties.
               </p>
             </div>
 
@@ -323,10 +327,7 @@ function Landing() {
                       ))}
                     </ul>
                     <Button asChild className="mt-6 w-full" size="sm">
-                      <Link
-                        to={p.cta.to}
-                        search={"search" in p.cta ? p.cta.search : undefined}
-                      >
+                      <Link to={p.cta.to} search={"search" in p.cta ? p.cta.search : undefined}>
                         {p.cta.label}
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Link>
@@ -394,8 +395,8 @@ function Landing() {
                 Your path from browse to keys
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Four clear steps for buyers — from discovering a verified home to closing with
-                full protection.
+                Four clear steps for buyers — from discovering a verified home to closing with full
+                protection.
               </p>
             </div>
             <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">

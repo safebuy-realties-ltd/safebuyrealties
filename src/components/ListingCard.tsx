@@ -22,17 +22,11 @@ export type Listing = {
 export function ListingCard({ listing }: { listing: Listing }) {
   const status = listing.status;
   const showVerified =
-    status != null
-      ? statusIsPublic(status, listing.isPublished)
-      : (listing.verified ?? false);
+    status != null ? statusIsPublic(status, listing.isPublished) : (listing.verified ?? false);
 
   return (
     <article className="group overflow-hidden rounded-xl border border-border/60 bg-card shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]">
-      <Link
-        to="/listings/$listingId"
-        params={{ listingId: listing.id }}
-        className="block"
-      >
+      <Link to="/listings/$listingId" params={{ listingId: listing.id }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img
             src={listing.image}

@@ -18,8 +18,7 @@ export type UserListItemDto = {
 
 export function useProfessionalsQuery() {
   const { user, isReady } = useAuth();
-  const canList =
-    user?.role === "staff" || user?.role === "admin" || user?.role === "super_admin";
+  const canList = user?.role === "staff" || user?.role === "admin" || user?.role === "super_admin";
   return useQuery({
     queryKey: ["users", "PROFESSIONAL"],
     queryFn: () => apiRequest<UserListItemDto[]>(`/users?role=PROFESSIONAL&pageSize=100`),
