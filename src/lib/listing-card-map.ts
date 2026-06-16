@@ -24,6 +24,7 @@ export function listingDtoToCard(listing: ListingDto): Listing {
     baths: listing.baths ?? 0,
     area: listing.landAreaSqm ? `${listing.landAreaSqm} m²` : "—",
     status: listing.status,
+    isPublished: listing.isPublished,
     image: LISTING_CARD_PLACEHOLDER_IMG,
   };
 }

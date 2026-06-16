@@ -21,6 +21,8 @@ import { Route as DashboardSellerRouteImport } from './routes/dashboard.seller'
 import { Route as DashboardProfessionalRouteImport } from './routes/dashboard.professional'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard.buyer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as CheckoutListingIdRouteImport } from './routes/checkout.$listingId'
+import { Route as ActivateTokenRouteImport } from './routes/activate.$token'
 import { Route as DashboardSuperAdminIndexRouteImport } from './routes/dashboard.super-admin.index'
 import { Route as DashboardStaffIndexRouteImport } from './routes/dashboard.staff.index'
 import { Route as DashboardSellerIndexRouteImport } from './routes/dashboard.seller.index'
@@ -105,6 +107,16 @@ const DashboardBuyerRoute = DashboardBuyerRouteImport.update({
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/dashboard/admin',
   path: '/dashboard/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutListingIdRoute = CheckoutListingIdRouteImport.update({
+  id: '/checkout/$listingId',
+  path: '/checkout/$listingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateTokenRoute = ActivateTokenRouteImport.update({
+  id: '/activate/$token',
+  path: '/activate/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardSuperAdminIndexRoute =
@@ -248,6 +260,8 @@ export interface FileRoutesByFullPath {
   '/browse': typeof BrowseRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/activate/$token': typeof ActivateTokenRoute
+  '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
   '/dashboard/professional': typeof DashboardProfessionalRouteWithChildren
@@ -287,6 +301,8 @@ export interface FileRoutesByTo {
   '/browse': typeof BrowseRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/activate/$token': typeof ActivateTokenRoute
+  '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
@@ -321,6 +337,8 @@ export interface FileRoutesById {
   '/browse': typeof BrowseRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/activate/$token': typeof ActivateTokenRoute
+  '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
   '/dashboard/professional': typeof DashboardProfessionalRouteWithChildren
@@ -362,6 +380,8 @@ export interface FileRouteTypes {
     | '/browse'
     | '/login'
     | '/register'
+    | '/activate/$token'
+    | '/checkout/$listingId'
     | '/dashboard/admin'
     | '/dashboard/buyer'
     | '/dashboard/professional'
@@ -401,6 +421,8 @@ export interface FileRouteTypes {
     | '/browse'
     | '/login'
     | '/register'
+    | '/activate/$token'
+    | '/checkout/$listingId'
     | '/listings/$listingId'
     | '/purchase/$listingId'
     | '/dashboard/admin/escrows'
@@ -434,6 +456,8 @@ export interface FileRouteTypes {
     | '/browse'
     | '/login'
     | '/register'
+    | '/activate/$token'
+    | '/checkout/$listingId'
     | '/dashboard/admin'
     | '/dashboard/buyer'
     | '/dashboard/professional'
@@ -474,6 +498,8 @@ export interface RootRouteChildren {
   BrowseRoute: typeof BrowseRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  ActivateTokenRoute: typeof ActivateTokenRoute
+  CheckoutListingIdRoute: typeof CheckoutListingIdRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardBuyerRoute: typeof DashboardBuyerRouteWithChildren
   DashboardProfessionalRoute: typeof DashboardProfessionalRouteWithChildren
@@ -568,6 +594,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/admin'
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/$listingId': {
+      id: '/checkout/$listingId'
+      path: '/checkout/$listingId'
+      fullPath: '/checkout/$listingId'
+      preLoaderRoute: typeof CheckoutListingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate/$token': {
+      id: '/activate/$token'
+      path: '/activate/$token'
+      fullPath: '/activate/$token'
+      preLoaderRoute: typeof ActivateTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/super-admin/': {
@@ -876,6 +916,8 @@ const rootRouteChildren: RootRouteChildren = {
   BrowseRoute: BrowseRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  ActivateTokenRoute: ActivateTokenRoute,
+  CheckoutListingIdRoute: CheckoutListingIdRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardBuyerRoute: DashboardBuyerRouteWithChildren,
   DashboardProfessionalRoute: DashboardProfessionalRouteWithChildren,

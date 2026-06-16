@@ -3,15 +3,30 @@ import { useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, MapPin, FileText, CheckCircle2, PlayCircle } from "lucide-react";
+import {
+  ShieldCheck,
+  MapPin,
+  FileText,
+  CheckCircle2,
+  ClipboardList,
+  CalendarDays,
+} from "lucide-react";
 import { VerificationTracker, type VerificationStep } from "@/components/VerificationTracker";
-import { useListingQuery } from "@/hooks/use-listings";
+import {
+  useListingQuery,
+  usePublicListingDocumentsQuery,
+  type ListingMediaDto,
+} from "@/hooks/use-listings";
 import { useAuth } from "@/lib/auth";
 import { API_BASE_URL, ApiError } from "@/lib/api";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
-import { formatListingSpecSummary } from "@/lib/listing-spec";
-import { statusBadgeClass, statusLabel } from "@/lib/listing-status";
+import { formatListingSpecSummary, formatBuildType } from "@/lib/listing-spec";
+import {
+  listingIsPubliclyViewable,
+  statusBadgeClass,
+  statusLabel,
+} from "@/lib/listing-status";
 import { ListingSaveButton } from "@/components/ListingSaveButton";
 import { ScheduleInspectionDialog } from "@/components/ScheduleInspectionDialog";
 import { useListingInspectionsQuery } from "@/hooks/use-inspections";
@@ -41,12 +56,6 @@ function formatMoney(amount: string, currency: string) {
   }
 }
 
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] {
   const sorted = [...steps].sort((a, b) => a.order - b.order);
   const firstIncomplete = sorted.findIndex((s) => s.status !== "COMPLETED");
@@ -74,40 +83,53 @@ function mapVerificationSteps(steps: VerificationStepDto[]): VerificationStep[] 
   });
 }
 
+function listingPhotos(media: ListingMediaDto[] | undefined) {
+  const hero = media?.find((m) => m.type === "hero");
+  const gallery = (media ?? []).filter((m) => m.type === "gallery");
+  return {
+    heroSrc: hero ? uploadAssetUrl(hero.storageKey) : PLACEHOLDER_IMG,
+    gallery,
+  };
+}
+
 function ListingDetail() {
   const { listingId } = Route.useParams();
   const { user, isAuthenticated, isReady } = useAuth();
   const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
   const verificationSectionId = "listing-verification-milestones";
 
-  const canFetchExtras = isReady && isAuthenticated && !!listingId;
-  const { data: documents, isLoading: docsLoading } = useListingDocumentsQuery(
-    canFetchExtras ? listingId : null,
+  const isPublicListing =
+    !!listing &&
+    listingIsPubliclyViewable(listing.status, listing.isPublished);
+
+  const canFetchAuthExtras = isReady && isAuthenticated && !!listingId;
+  const { data: authDocuments, isLoading: authDocsLoading } = useListingDocumentsQuery(
+    canFetchAuthExtras && !isPublicListing ? listingId : null,
+  );
+  const { data: publicDocuments, isLoading: publicDocsLoading } = usePublicListingDocumentsQuery(
+    isPublicListing ? listingId : null,
   );
   const {
     data: verSteps,
     isLoading: verLoading,
     isError: verError,
-  } = useVerificationListingQuery(listingId, canFetchExtras);
+  } = useVerificationListingQuery(listingId, canFetchAuthExtras);
 
   const isBuyer = isAuthenticated && user?.role === "buyer";
   const resolvedListing = listing;
   const isLive = resolvedListing?.status === "LIVE";
   const isUnderOffer = resolvedListing?.status === "UNDER_OFFER";
-  const canStartTransaction = isBuyer && isLive;
+  const canStartGuestCheckout = isPublicListing && isLive;
+  const canStartBuyerCheckout = isBuyer && isLive;
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const { data: inspections } = useListingInspectionsQuery(
-    isBuyer && canFetchExtras ? listingId : null,
+    isBuyer && canFetchAuthExtras ? listingId : null,
   );
 
   const trackerSteps = useMemo((): VerificationStep[] | null => {
     if (!verSteps?.length) return null;
     return mapVerificationSteps(verSteps);
   }, [verSteps]);
-
-  const openVerificationStatus = () => {
-    document.getElementById(verificationSectionId)?.scrollIntoView({ behavior: "smooth" });
-  };
 
   if (isLoading) {
     return (
@@ -160,13 +182,15 @@ function ListingDetail() {
   }
 
   const priceLabel = formatMoney(resolvedListing.price, resolvedListing.currency);
-  const verified = isLive;
-  const heroDoc = documents?.find((d) => d.category === "listing_hero");
-  const heroSrc = heroDoc ? uploadAssetUrl(heroDoc.storageKey) : PLACEHOLDER_IMG;
-  const galleryPhotos = (documents ?? []).filter((d) => d.category === "listing_gallery");
-  const verificationDocs = (documents ?? []).filter(
-    (d) => d.category !== "listing_hero" && d.category !== "listing_gallery",
-  );
+  const { heroSrc, gallery } = listingPhotos(resolvedListing.media);
+  const propertyTypeLabel =
+    formatBuildType(resolvedListing.propertyType ?? resolvedListing.buildType) ?? null;
+  const docsLoading = isPublicListing ? publicDocsLoading : authDocsLoading;
+  const documentNames = isPublicListing
+    ? (publicDocuments ?? []).map((d) => d.name)
+    : (authDocuments ?? [])
+        .filter((d) => d.category !== "listing_hero" && d.category !== "listing_gallery")
+        .map((d) => d.fileName);
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,17 +204,17 @@ function ListingDetail() {
           />
         </div>
 
-        {galleryPhotos.length > 0 && (
+        {gallery.length > 0 && (
           <section className="mt-4" aria-label="Property gallery">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-              {galleryPhotos.map((photo) => (
+              {gallery.map((photo) => (
                 <div
                   key={photo.id}
-                  className="overflow-hidden rounded-lg border border-border/60 bg-muted aspect-square"
+                  className="aspect-square overflow-hidden rounded-lg border border-border/60 bg-muted"
                 >
                   <img
                     src={uploadAssetUrl(photo.storageKey)}
-                    alt={photo.fileName}
+                    alt={`${resolvedListing.title} gallery`}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -215,8 +239,13 @@ function ListingDetail() {
                     Listed by {resolvedListing.sellerName}
                   </p>
                 )}
+                {resolvedListing.propertyId && (
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    Property ID: {resolvedListing.propertyId}
+                  </p>
+                )}
               </div>
-              {verified && (
+              {isLive && (
                 <Badge className="gap-1 border-primary/20 bg-primary-soft text-primary">
                   <ShieldCheck className="h-3.5 w-3.5" /> Live listing
                 </Badge>
@@ -228,9 +257,15 @@ function ListingDetail() {
               )}
             </div>
 
-            <p className="mt-6 border-y border-border/60 py-4 text-sm text-muted-foreground">
-              {formatListingSpecSummary(resolvedListing)}
-            </p>
+            <div className="mt-6 space-y-2 border-y border-border/60 py-4 text-sm text-muted-foreground">
+              <p>{formatListingSpecSummary(resolvedListing)}</p>
+              {propertyTypeLabel && (
+                <p>
+                  <span className="font-medium text-foreground">Property type:</span>{" "}
+                  {propertyTypeLabel}
+                </p>
+              )}
+            </div>
 
             <section className="mt-8">
               <h2 className="text-lg font-semibold">About this property</h2>
@@ -241,44 +276,34 @@ function ListingDetail() {
 
             <section className="mt-10">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Documents</h2>
+                <h2 className="text-lg font-semibold">Documents on file</h2>
                 <span className="text-xs text-muted-foreground">
-                  {!isAuthenticated
-                    ? "Sign in to view uploaded documents."
-                    : docsLoading
-                      ? "Loading…"
-                      : `${verificationDocs.length} on file`}
+                  {docsLoading ? "Loading…" : `${documentNames.length} listed`}
                 </span>
               </div>
-              {!isAuthenticated && (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Log in as a buyer or seller to see document uploads.
-                </p>
-              )}
-              {isAuthenticated && docsLoading && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Document names are shown for transparency. Full files are available to verified
+                buyers after due diligence begins.
+              </p>
+              {docsLoading && (
                 <p className="mt-3 text-sm text-muted-foreground">Loading documents…</p>
               )}
-              {isAuthenticated && !docsLoading && verificationDocs.length === 0 && (
+              {!docsLoading && documentNames.length === 0 && (
                 <p className="mt-3 text-sm text-muted-foreground">
-                  No documents uploaded for this listing yet.
+                  No documents listed for this property yet.
                 </p>
               )}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {verificationDocs.map((d) => (
+                {documentNames.map((name) => (
                   <div
-                    key={d.id}
+                    key={name}
                     className="flex min-w-0 items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
                         <FileText className="h-4 w-4" />
                       </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{d.fileName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {d.mimeType} · {formatSize(d.sizeBytes)} · {d.category.replace(/_/g, " ")}
-                        </p>
-                      </div>
+                      <p className="truncate text-sm font-medium">{name}</p>
                     </div>
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   </div>
@@ -293,78 +318,70 @@ function ListingDetail() {
                 Asking price
               </p>
               <p className="mt-2 text-3xl font-semibold text-primary">{priceLabel}</p>
-              {canStartTransaction ? (
-                <Button className="mt-5 w-full" size="lg" asChild>
-                  <Link to="/purchase/$listingId" params={{ listingId }}>
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Continue to purchase
-                  </Link>
-                </Button>
-              ) : !isAuthenticated && isLive ? (
+
+              {canStartGuestCheckout && (
                 <>
                   <Button className="mt-5 w-full" size="lg" asChild>
-                    <Link
-                      to="/register"
-                      search={{ redirect: `/purchase/${listingId}` }}
-                    >
-                      <PlayCircle className="mr-2 h-4 w-4" />
-                      I want to buy this property
+                    <Link to="/checkout/$listingId" params={{ listingId }}>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Start Due Diligence
                     </Link>
                   </Button>
-                  <div className="mt-4 rounded-lg border border-primary/20 bg-primary-soft/50 px-4 py-3">
-                    <p className="text-xs font-medium text-foreground">How buying works</p>
-                    <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-                      <li>1. Create free account</li>
-                      <li>2. Complete due diligence</li>
-                      <li>3. Pay securely</li>
-                    </ol>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Official title, survey, and land checks by licensed professionals — no account
+                    required.
+                  </p>
+
+                  <div className="mt-5 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
+                    <p className="text-sm font-medium text-foreground">Schedule inspection</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Book a physical visit to inspect the property.
+                    </p>
+                    <Button className="mt-3 w-full" variant="outline" size="sm" asChild>
+                      <Link
+                        to="/checkout/$listingId"
+                        params={{ listingId }}
+                        search={{ inspection: true }}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        Schedule inspection
+                      </Link>
+                    </Button>
                   </div>
-                  <p className="mt-3 text-center text-xs text-muted-foreground">
-                    Already have an account?{" "}
-                    <Link
-                      to="/login"
-                      search={{ redirect: `/purchase/${listingId}` }}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      Log in to continue
-                    </Link>
-                  </p>
                 </>
-              ) : isBuyer && isUnderOffer ? (
-                <>
-                  <Button className="mt-5 w-full" size="lg" type="button" disabled>
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Continue to purchase
-                  </Button>
-                  <p className="mt-3 text-center text-xs text-muted-foreground">
-                    This property is currently under offer and cannot be reserved by another buyer.
-                  </p>
-                </>
-              ) : (
-                <Button className="mt-5 w-full" size="lg" onClick={openVerificationStatus}>
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  View verification status
+              )}
+
+              {canStartBuyerCheckout && (
+                <Button className="mt-3 w-full" variant="secondary" size="lg" asChild>
+                  <Link to="/purchase/$listingId" params={{ listingId }}>
+                    Continue to purchase (signed in)
+                  </Link>
                 </Button>
               )}
-              {isBuyer && isLive ? (
+
+              {isBuyer && isLive && (
                 <Button
                   variant="outline"
                   className="mt-2 w-full"
                   type="button"
                   onClick={() => setInspectionOpen(true)}
                 >
-                  Schedule inspection
-                </Button>
-              ) : (
-                <Button variant="ghost" className="mt-2 w-full" type="button" disabled>
-                  Schedule visit
+                  Schedule inspection (dashboard)
                 </Button>
               )}
+
+              {isBuyer && isUnderOffer && (
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  This property is currently under offer.
+                </p>
+              )}
+
               {isBuyer && (isLive || isUnderOffer) && (
                 <div className="mt-3 flex justify-center">
                   <ListingSaveButton listingId={listingId} />
                 </div>
               )}
+
               {isBuyer && inspections && inspections.length > 0 && (
                 <div className="mt-4 rounded-lg border border-border/60 p-3 text-left">
                   <p className="text-xs font-medium text-muted-foreground">Your inspections</p>
@@ -377,48 +394,50 @@ function ListingDetail() {
                   </ul>
                 </div>
               )}
+
+              {!canStartGuestCheckout && !canStartBuyerCheckout && (
+                <Button className="mt-5 w-full" size="lg" variant="outline" asChild>
+                  <Link to="/browse">Browse live listings</Link>
+                </Button>
+              )}
+
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 Independent verification by SafeBuyRealties experts.
               </p>
             </div>
 
-            <div
-              id={verificationSectionId}
-              className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]"
-            >
-              <h3 className="font-semibold">Verification milestones</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Progress from the verification API.
-              </p>
-              <div className="mt-5">
-                {!isAuthenticated && (
-                  <p className="text-sm text-muted-foreground">
-                    Sign in to see verification steps for this listing.
-                  </p>
-                )}
-                {isAuthenticated && verLoading && (
-                  <p className="text-sm text-muted-foreground">Loading steps…</p>
-                )}
-                {isAuthenticated && verError && (
-                  <p className="text-sm text-muted-foreground">
-                    Verification details are not available for your role.
-                  </p>
-                )}
-                {isAuthenticated &&
-                  !verLoading &&
-                  !verError &&
-                  trackerSteps &&
-                  trackerSteps.length > 0 && <VerificationTracker steps={trackerSteps} />}
-                {isAuthenticated &&
-                  !verLoading &&
-                  !verError &&
-                  (!trackerSteps || trackerSteps.length === 0) && (
+            {isAuthenticated && (
+              <div
+                id={verificationSectionId}
+                className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]"
+              >
+                <h3 className="font-semibold">Verification milestones</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Progress from the verification API.
+                </p>
+                <div className="mt-5">
+                  {verLoading && (
+                    <p className="text-sm text-muted-foreground">Loading steps…</p>
+                  )}
+                  {verError && (
                     <p className="text-sm text-muted-foreground">
-                      No verification steps yet (listing not in review).
+                      Verification details are not available for your role.
                     </p>
                   )}
+                  {!verLoading &&
+                    !verError &&
+                    trackerSteps &&
+                    trackerSteps.length > 0 && <VerificationTracker steps={trackerSteps} />}
+                  {!verLoading &&
+                    !verError &&
+                    (!trackerSteps || trackerSteps.length === 0) && (
+                      <p className="text-sm text-muted-foreground">
+                        No verification steps yet (listing not in review).
+                      </p>
+                    )}
+                </div>
               </div>
-            </div>
+            )}
           </aside>
         </div>
       </main>

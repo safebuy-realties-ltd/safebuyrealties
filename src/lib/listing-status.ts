@@ -50,6 +50,16 @@ export function statusBadgeClass(status: string): string {
 }
 
 /** Buyers only see listings with this status on public browse surfaces. */
-export function statusIsPublic(status: string): boolean {
-  return status === "LIVE";
+export function statusIsPublic(status: string, isPublished?: boolean): boolean {
+  if (isPublished === false) return false;
+  return status === "LIVE" || status === "UNDER_OFFER";
+}
+
+/** Whether a listing detail page is visible without authentication. */
+export function listingIsPubliclyViewable(
+  status: string,
+  isPublished?: boolean,
+): boolean {
+  if (isPublished === false) return false;
+  return status === "LIVE" || status === "UNDER_OFFER";
 }

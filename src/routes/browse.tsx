@@ -225,16 +225,13 @@ function BrowsePage() {
 
           <div className="mt-10 rounded-2xl border border-border/60 bg-secondary/40 px-6 py-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Ready to save favorites, schedule inspections, or start due diligence?
+              View property details and start due diligence — no account required.
             </p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild>
-                <Link to="/register" search={{ redirect: "/browse" }}>
-                  Create buyer account
-                </Link>
-              </Button>
               <Button asChild variant="outline">
-                <Link to="/login">Log in</Link>
+                <Link to="/register" search={{ redirect: "/browse" }}>
+                  Create account to save favorites
+                </Link>
               </Button>
             </div>
           </div>
