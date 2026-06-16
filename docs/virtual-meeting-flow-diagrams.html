@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeBuy Realties — Platform Flow Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #1a1a2e;
+      line-height: 1.5;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+    }
+    .cover {
+      text-align: center;
+      padding: 48px 24px 64px;
+      border-bottom: 3px solid #0d9488;
+      margin-bottom: 32px;
+      page-break-after: always;
+    }
+    .cover h1 { font-size: 28px; margin: 0 0 8px; color: #0f766e; }
+    .cover .subtitle { font-size: 16px; color: #64748b; margin-bottom: 24px; }
+    .cover .meta { font-size: 13px; color: #94a3b8; }
+    .cover .badge {
+      display: inline-block;
+      background: #ccfbf1;
+      color: #0f766e;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+    h2 {
+      font-size: 20px;
+      color: #0f766e;
+      margin: 32px 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 14px; color: #475569; font-weight: 500; margin: 0 0 16px; page-break-after: avoid; }
+    .section { page-break-inside: avoid; margin-bottom: 28px; }
+    .mermaid { margin: 12px 0 20px; text-align: center; }
+    .toc { page-break-after: always; }
+    .toc ul { list-style: none; padding: 0; }
+    .toc li { padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .toc li span { color: #0d9488; font-weight: 600; margin-right: 8px; }
+    .footer-note {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+    }
+    .cross-role { page-break-before: always; }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <h1>SafeBuy Realties</h1>
+    <p class="subtitle">Platform Flow Diagrams — Milestone 1 Review</p>
+    <p class="meta">Prepared for virtual client meeting · June 2026</p>
+    <p class="meta">Production: https://safebuyrealties-app.vercel.app</p>
+    <span class="badge">E2E verified on production</span>
+  </div>
+
+  <div class="toc">
+    <h2>Contents</h2>
+    <ul>
+      <li><span>1</span> Guest buyer journey (no login before payment)</li>
+      <li><span>2</span> Registered buyer journey</li>
+      <li><span>3</span> Seller &amp; property listing lifecycle</li>
+      <li><span>4</span> Staff operations workflow</li>
+      <li><span>5</span> Professional (lawyer / surveyor / valuer)</li>
+      <li><span>6</span> Admin platform management</li>
+      <li><span>7</span> Super Admin decision center</li>
+      <li><span>8</span> Property entity lifecycle</li>
+      <li><span>9</span> Transaction, payment &amp; escrow</li>
+      <li><span>10</span> Cross-role end-to-end property journey</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>1. Guest buyer journey</h2>
+    <h3>Browse → View details → Pay → Get access (no account required upfront)</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Browse listings] --> B[View Property Details]
+  B --> C{Choose action}
+  C --> D[Start Due Diligence]
+  C --> E[Schedule Inspection + fee]
+  D --> F[Select 4 DD checks]
+  E --> F
+  F --> G[Order Summary + Service ID]
+  G --> H[Pay: name / email / phone]
+  H --> I[Success + email receipt]
+  I --> J[Activate via email link]
+  J --> K[Set password and login]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>2. Registered buyer journey</h2>
+    <h3>Dashboard, transactions, KYC, and signed-in purchase flow</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Register / Login] --> B[Buyer Dashboard]
+  B --> C[Browse listings]
+  B --> D[Saved properties]
+  B --> E[Transactions]
+  B --> F[DD Services catalog]
+  B --> G[KYC upload]
+  C --> H[Property details]
+  H --> I[Purchase / DD flow]
+  I --> J[PoA + service selection]
+  J --> K[Paystack payment]
+  K --> L[Track in Transactions]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>3. Seller &amp; listing lifecycle</h2>
+    <h3>Draft stays private until verified and published</h3>
+    <pre class="mermaid">
+flowchart TD
+  A[Seller Login] --> B[Create Draft listing]
+  B --> C[Upload media + documents]
+  C --> D[Submit for review]
+  D --> E[PENDING_REVIEW]
+  E --> F[Staff assigns professionals]
+  F --> G[IN_VERIFICATION]
+  G --> H{All steps accepted?}
+  H -->|Yes| I[VERIFIED]
+  H -->|No| J[REJECTED / revision]
+  I --> K[Staff publishes]
+  K --> L[LIVE + isPublished=true]
+  L --> M[Visible on public Browse]
+  B -.->|Never public| N[DRAFT hidden]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>4. Staff operations</h2>
+    <h3>Submissions, verification workflow, inspections, KYC, credentials</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Staff Login] --> B[Operations Dashboard]
+  B --> C[Submissions queue]
+  B --> D[Verification workflow]
+  B --> E[Inspection queue]
+  B --> F[KYC reviews]
+  B --> G[Pro credential reviews]
+  C --> H[Approve to ASSIGNED]
+  D --> I[Assign professionals]
+  I --> J[Track 8 verification steps]
+  J --> K[Advance to VERIFIED then LIVE]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>5. Professional workflow</h2>
+    <h3>Lawyer, surveyor, valuer — tasks and credentials</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Pro Login] --> B[Professional Dashboard]
+  B --> C[Assigned tasks]
+  B --> D[Manage credentials]
+  C --> E[Open task detail]
+  E --> F[Upload report / risk flags]
+  F --> G[Submit for staff review]
+  G --> H[Staff accepts - listing advances]
+  D --> I[Staff verifies license]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>6. Admin platform management</h2>
+    <h3>Listings, users, escrow, and platform settings</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Admin Login] --> B[Platform Overview]
+  B --> C[Listings overview]
+  B --> D[User management]
+  B --> E[Escrow management]
+  B --> F[Platform settings]
+  C --> G[Override listing status]
+  D --> H[Create / deactivate users]
+  E --> I[Release or refund escrow]
+  F --> J[VAT / upload limits / Paystack]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>7. Super Admin</h2>
+    <h3>Platform-wide decision center</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Super Admin Login] --> B[Decision Center]
+  B --> C[Platform metrics]
+  B --> D[Listings by status]
+  B --> E[Users by role]
+  B --> F[Pending verifications / KYC]
+  F --> G[Escalate to admin actions]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>8. Property entity lifecycle</h2>
+    <h3>From creation to public catalogue and buyer engagement</h3>
+    <pre class="mermaid">
+flowchart TD
+  A[Property Created] --> B[propertyId on submit]
+  B --> C[Documents attached]
+  C --> D[Verification steps 1-8]
+  D --> E[VERIFIED]
+  E --> F{isPublished?}
+  F -->|Yes| G[Public catalogue]
+  F -->|No| H[Internal only]
+  G --> I[Guest DD orders]
+  G --> J[Buyer transactions]
+  I --> K[UNDER_OFFER status]
+    </pre>
+  </div>
+
+  <div class="section">
+    <h2>9. Transaction, payment &amp; escrow</h2>
+    <h3>SBR IDs: Service ID, Case ID, Transaction ID, Buyer ID</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Buyer initiates] --> B[Transaction created]
+  B --> C[DD Order + Service ID]
+  C --> D[Payment via Paystack]
+  D --> E{Payment intent}
+  E -->|DD_SERVICE| F[DD_PURCHASED]
+  E -->|PROPERTY| G[PURCHASE_IN_ESCROW]
+  F --> H[Case ID assigned]
+  G --> I[Escrow held]
+  I --> J[Admin release / refund]
+  D --> K[Email receipt + activation]
+    </pre>
+  </div>
+
+  <div class="section cross-role">
+    <h2>10. Cross-role end-to-end property journey</h2>
+    <h3>How seller, staff, professional, buyer, and admin connect on one property</h3>
+    <pre class="mermaid">
+flowchart TD
+  subgraph Seller
+    S1[Create Draft] --> S2[Upload docs] --> S3[Submit]
+  end
+  subgraph Staff
+    T1[Review submission] --> T2[Assign pros] --> T3[Verify steps] --> T4[Publish LIVE]
+  end
+  subgraph Professional
+    P1[Receive task] --> P2[Submit report]
+  end
+  subgraph GuestBuyer
+    B1[Browse property] --> B2[Pay for DD] --> B3[Account activated]
+  end
+  subgraph Admin
+    A1[Monitor platform] --> A2[Manage escrow]
+  end
+  S3 --> T1
+  T2 --> P1
+  P2 --> T3
+  T4 --> B1
+  B2 --> A2
+    </pre>
+  </div>
+
+  <div class="footer-note">
+    SafeBuy Realties Limited · Platform Flow Diagrams · Generated for Milestone 1 virtual meeting · All flows E2E tested on production June 2026
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "neutral",
+      flowchart: { curve: "basis", padding: 12 },
+      themeVariables: {
+        primaryColor: "#ccfbf1",
+        primaryTextColor: "#134e4a",
+        primaryBorderColor: "#0d9488",
+        lineColor: "#64748b",
+        secondaryColor: "#f1f5f9",
+        tertiaryColor: "#fff"
+      }
+    });
+  </script>
+</body>
+</html>
