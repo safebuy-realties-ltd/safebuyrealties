@@ -3,7 +3,8 @@
 #
 # Usage:
 #   export OLD_DATABASE_URL='postgresql://...'   # current / Prisma cloud DB
-#   export NEW_DATABASE_URL='postgresql://...'   # new Render Postgres external URL
+#   export NEW_DATABASE_URL='postgresql://...'   # Render Postgres (use full external host:
+#     dpg-XXXX-a.oregon-postgres.render.com — not the shortened internal hostname)
 #   ./scripts/migrate-postgres-db.sh
 #
 # Requires: pg_dump, pg_restore, psql (postgresql-client), node, npm deps in backend/
