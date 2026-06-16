@@ -38,7 +38,16 @@ OLD_URL="$(append_ssl "$OLD_DATABASE_URL")"
 NEW_URL="$(append_ssl "$NEW_DATABASE_URL")"
 
 echo "==> Testing OLD database connection..."
-psql "$OLD_URL" -c "SELECT current_database(), COUNT(*) AS users FROM \"User\";" 2>/dev/null || \
+if ! psql "$OLD_URL" -c "SELECT current_database();" >/dev/null 2>&1; then
+  psql "$OLD_URL" -c "SELECT 1;" || {
+    echo "" >&2
+    echo "OLD database connection failed." >&2
+    echo "If Prisma reports planLimitReached, upgrade the plan temporarily or export a backup from the Prisma console." >&2
+    echo "Then re-run this script." >&2
+    exit 1
+  }
+fi
+psql "$OLD_URL" -c "SELECT current_database(), (SELECT COUNT(*) FROM \"User\") AS users, (SELECT COUNT(*) FROM \"Listing\") AS listings;" 2>/dev/null || \
   psql "$OLD_URL" -c "SELECT current_database();"
 
 echo "==> Testing NEW database connection..."
