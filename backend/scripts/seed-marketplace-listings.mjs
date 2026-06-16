@@ -9,7 +9,7 @@
  * Requires DATABASE_URL (Prisma) OR runs via API with staff session.
  */
 import { PrismaClient, ListingStatus, UserRole, VerificationStepType, VerificationStepStatus } from "@prisma/client";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 const PASSWORD = process.env.SBR_DEMO_PASSWORD?.trim() || "password123";
 const API_BASE = (process.env.SBR_API_BASE ?? "http://localhost:3001/api/v1").replace(/\/$/, "");
