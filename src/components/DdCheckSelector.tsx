@@ -8,12 +8,12 @@ import { useServiceItemsQuery } from "@/hooks/use-service-catalog";
 const VAT_RATE = 0.075;
 const DEFAULT_INSPECTION_FEE = 50_000;
 
-/** Core due-diligence checks offered in the guest checkout flow. */
+/** Core due-diligence checks per client spec (Feedback 1). */
 export const GUEST_DD_CHECK_CODES = [
-  "DUE_DILIGENCE",
-  "LAND_CHARTING_SEARCH",
-  "COF_O",
-  "TITLE_VERIFICATION",
+  "LEGAL_CHECK",
+  "PHYSICAL_CHECK",
+  "ENVIRONMENTAL_CHECK",
+  "SECURITY_CHECK",
 ] as const;
 
 export type DdCheckSelection = {
