@@ -292,7 +292,10 @@ function AdminUsers() {
           hint="This page"
         />
         <StatCard label="Total (server)" value={isLoading ? "…" : String(total)} />
-        <StatCard label="Filter" value={roleFilter === "all" ? "All roles" : roleLabel(roleFilter)} />
+        <StatCard
+          label="Filter"
+          value={roleFilter === "all" ? "All roles" : roleLabel(roleFilter)}
+        />
         <StatCard label="Search" value={q ? "On" : "Off"} />
       </div>
 

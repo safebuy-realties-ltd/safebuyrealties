@@ -2,16 +2,32 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, type ApiEnvelope } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+export type ListingMediaDto = {
+  id: string;
+  listingId: string;
+  storageKey: string;
+  type: "hero" | "gallery";
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type PublicListingDocumentDto = {
+  name: string;
+};
+
 export type ListingDto = {
   id: string;
   sellerId: string;
   sellerName?: string;
+  propertyId?: string | null;
   title: string;
   description: string;
   location: string;
   price: string;
   currency: string;
   status: string;
+  isPublished?: boolean;
+  propertyType?: string | null;
   verifiedAt: string | null;
   rejectionReason: string | null;
   createdAt: string;
@@ -20,6 +36,7 @@ export type ListingDto = {
   baths?: number | null;
   landAreaSqm?: number | null;
   buildType?: string | null;
+  media?: ListingMediaDto[];
 };
 
 export type ListingsQueryOptions = {
@@ -113,6 +130,16 @@ export function useListingQuery(listingId: string, initialData?: ListingDto) {
     initialData: initialData
       ? ({ data: initialData } satisfies ApiEnvelope<ListingDto>)
       : undefined,
+  });
+}
+
+export function usePublicListingDocumentsQuery(listingId: string | null) {
+  return useQuery({
+    queryKey: ["listing", listingId, "public-documents"],
+    queryFn: () =>
+      apiRequest<PublicListingDocumentDto[]>(`/listings/${listingId}/public-documents`),
+    select: (envelope) => envelope.data,
+    enabled: !!listingId,
   });
 }
 

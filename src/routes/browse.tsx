@@ -74,10 +74,7 @@ function BrowsePage() {
   const { data, isLoading, isFetching, isError, error, refetch } =
     usePublicListingsQuery(queryOptions);
 
-  const cards = useMemo(
-    () => (data?.listings ?? []).map(listingDtoToCard),
-    [data?.listings],
-  );
+  const cards = useMemo(() => (data?.listings ?? []).map(listingDtoToCard), [data?.listings]);
 
   const activeChips = useMemo(() => {
     const chips: { key: keyof ListingFilters; label: string }[] = [];
@@ -201,7 +198,9 @@ function BrowsePage() {
             <div className="mt-10 text-center text-sm text-muted-foreground">Loading listings…</div>
           ) : cards.length === 0 ? (
             <div className="mt-10 rounded-xl border border-border/60 bg-card px-6 py-16 text-center shadow-[var(--shadow-card)]">
-              <p className="text-sm font-medium text-foreground">No properties match your filters</p>
+              <p className="text-sm font-medium text-foreground">
+                No properties match your filters
+              </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Try broadening your search or{" "}
                 <button type="button" className="text-primary underline" onClick={resetFilters}>
@@ -225,16 +224,13 @@ function BrowsePage() {
 
           <div className="mt-10 rounded-2xl border border-border/60 bg-secondary/40 px-6 py-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Ready to save favorites, schedule inspections, or start due diligence?
+              View property details and start due diligence — no account required.
             </p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild>
-                <Link to="/register" search={{ redirect: "/browse" }}>
-                  Create buyer account
-                </Link>
-              </Button>
               <Button asChild variant="outline">
-                <Link to="/login">Log in</Link>
+                <Link to="/register" search={{ redirect: "/browse" }}>
+                  Create account to save favorites
+                </Link>
               </Button>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { EscrowService } from "../escrow/escrow.service";
 import { PaystackService } from "./paystack.service";
+import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -65,6 +66,7 @@ describe("PaymentsService paystack integration", () => {
         { provide: NotificationsService, useValue: { create: jest.fn(), createForStaff: jest.fn() } },
         { provide: EscrowService, useValue: { hold: jest.fn() } },
         { provide: PaystackService, useValue: paystack },
+        { provide: GuestCheckoutService, useValue: { completePayment: jest.fn() } },
       ],
     }).compile();
 

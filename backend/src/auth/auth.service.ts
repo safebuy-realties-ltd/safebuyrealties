@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
@@ -34,6 +35,7 @@ export class AuthService {
     professionalType: ProfessionalType | null;
     phone: string | null;
     isActive: boolean;
+    publicId: string | null;
     createdAt: Date;
   }) {
     return {
@@ -46,6 +48,7 @@ export class AuthService {
       professionalType: user.professionalType,
       phone: user.phone,
       isActive: user.isActive,
+      publicId: user.publicId,
       createdAt: user.createdAt.toISOString(),
     };
   }
@@ -112,6 +115,55 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) throw new UnauthorizedException();
     return { data: this.userPublic(user) };
+  }
+
+  async getActivationPreview(token: string) {
+    const record = await this.prisma.accountActivationToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new NotFoundException("Activation link is invalid or expired");
+    }
+    const user = record.user;
+    return {
+      data: {
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        phone: user.phone,
+        buyerId: user.publicId,
+      },
+    };
+  }
+
+  async activateAccount(token: string, password: string) {
+    const record = await this.prisma.accountActivationToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException("Activation link is invalid or expired");
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.prisma.$transaction(async (tx) => {
+      await tx.accountActivationToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      });
+      return tx.user.update({
+        where: { id: record.userId },
+        data: { passwordHash, isActive: true },
+      });
+    });
+
+    const accessToken = await this.signToken(user);
+    return {
+      data: {
+        accessToken,
+        user: this.userPublic(user),
+      },
+    };
   }
 
   private signToken(user: {

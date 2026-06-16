@@ -105,8 +105,11 @@ model User {
   isActive           Boolean             @default(true)
   professionalType   ProfessionalType?
   phone              String?
+  /// SBR public ID e.g. SBR-BUY-LOS-20260609-001 or SBR-SEL-LOS-20260609-001
+  publicId           String?             @unique
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  activationTokens   AccountActivationToken[]
   listings           Listing[]           @relation("SellerListings")
   documentsUploaded Document[]         @relation("DocumentUploader")
   verificationAssigned VerificationStep[] @relation("StepAssignee")
@@ -127,12 +130,17 @@ model Listing {
   id               String             @id @default(uuid())
   sellerId         String
   seller           User               @relation("SellerListings", fields: [sellerId], references: [id])
+  /// SBR property ID e.g. SBR-PROP-IKY-2026-00001
+  propertyId       String?            @unique
   title            String
   description      String
   location         String
   price            Decimal            @db.Decimal(18, 2)
   currency         String             @default("NGN")
   status           ListingStatus      @default(DRAFT)
+  /// True only after staff publishes a verified listing to the public catalogue
+  isPublished      Boolean            @default(false)
+  propertyType     String?
   beds             Int?
   baths            Int?
   landAreaSqm      Decimal?           @db.Decimal(10, 2)
@@ -141,6 +149,7 @@ model Listing {
   rejectionReason  String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+  serviceRequests  ServiceRequest[]
   documents        Document[]
   media            ListingMedia[]
   verificationSteps VerificationStep[]
@@ -225,9 +234,12 @@ model Transaction {
   listing   Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyerId   String
   buyer     User                @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  /// SBR due diligence case ID e.g. SBR-CASE-DD-LOS-20260609-001
+  caseId    String?             @unique
   status    TransactionStatus   @default(INITIATED)
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
+  serviceRequest ServiceRequest?
   payments  Payment[]
   powerOfAttorney PowerOfAttorney?
   escrow    Escrow?
@@ -242,6 +254,8 @@ model Payment {
   transaction        Transaction?  @relation(fields: [transactionId], references: [id])
   payerId            String
   payer              User          @relation("PayerPayments", fields: [payerId], references: [id])
+  /// SBR transaction ID e.g. SBR-TXN-20260609-001
+  transactionPublicId String?      @unique
   amount             Decimal       @db.Decimal(18, 2)
   currency           String        @default("NGN")
   provider           String        @default("paystack")
@@ -273,6 +287,7 @@ model AuditLog {
 model PlatformConfig {
   id                 String   @id @default("singleton")
   vatRate            Decimal  @default(0.075) @db.Decimal(5, 4)
+  inspectionFee      Decimal  @default(50000) @db.Decimal(18, 2)
   maxUploadMb        Int      @default(15)
   paystackEnabled    Boolean  @default(true)
   flutterwaveEnabled Boolean  @default(false)
@@ -338,6 +353,8 @@ model DueDiligenceOrder {
   id            String   @id @default(uuid())
   transactionId String   @unique
   buyerId       String
+  /// SBR service request ID e.g. SBR-SRV-BUY-20260609-001
+  serviceId     String?  @unique
   bundleId      String?
   itemIds       Json     @default("[]")
   subtotal      Decimal  @db.Decimal(18, 2)
@@ -475,4 +492,60 @@ model InspectionSlot {
   @@index([listingId])
   @@index([requestedById])
   @@map("inspection_slots")
+}
+
+/// Sequential counter for SBR public ID generation (prefix + date bucket).
+model IdSequence {
+  id        String   @id @default(uuid())
+  prefix    String
+  dateKey   String
+  lastValue Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([prefix, dateKey])
+  @@map("id_sequences")
+}
+
+/// Guest buyer service order created before payment (main order reference).
+model ServiceRequest {
+  id               String   @id @default(uuid())
+  /// SBR-SRV-BUY-YYYYMMDD-NNN
+  serviceId        String   @unique
+  listingId        String
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId          String?
+  guestName        String
+  guestEmail       String
+  guestPhone       String
+  bundleId         String?
+  itemIds          Json     @default("[]")
+  includeInspection Boolean @default(false)
+  inspectionFee    Decimal  @default(0) @db.Decimal(18, 2)
+  subtotal         Decimal  @db.Decimal(18, 2)
+  vatAmount        Decimal  @db.Decimal(18, 2)
+  total            Decimal  @db.Decimal(18, 2)
+  /// SBR-CASE-DD-LOC-YYYYMMDD-NNN
+  caseId           String   @unique
+  transactionId    String?  @unique
+  transaction      Transaction? @relation(fields: [transactionId], references: [id])
+  status           String   @default("PENDING_PAYMENT")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([listingId])
+  @@index([guestEmail])
+  @@map("service_requests")
+}
+
+model AccountActivationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("account_activation_tokens")
 }

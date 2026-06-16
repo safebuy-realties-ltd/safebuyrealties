@@ -1,8 +1,9 @@
-import { Body, Controller, Get, HttpCode, Post, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Post, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
+import { ActivateAccountDto } from "./dto/activate-account.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { JwtPayload } from "./jwt.strategy";
@@ -64,5 +65,21 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: JwtPayload) {
     return this.auth.me(user);
+  }
+
+  @Get("activate/:token")
+  getActivationPreview(@Param("token") token: string) {
+    return this.auth.getActivationPreview(token);
+  }
+
+  @Post("activate")
+  @HttpCode(200)
+  async activate(
+    @Body() dto: ActivateAccountDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.activateAccount(dto.token, dto.password);
+    setSessionCookie(res, result.data.accessToken);
+    return { data: { user: result.data.user } };
   }
 }

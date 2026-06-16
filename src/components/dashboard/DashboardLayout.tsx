@@ -93,9 +93,7 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
   const { user, isAuthenticated, isReady, logout } = useAuth();
   const navigate = useNavigate();
   const navRole =
-    user?.role === "super_admin" && (role === "admin" || role === "staff")
-      ? "super_admin"
-      : role;
+    user?.role === "super_admin" && (role === "admin" || role === "staff") ? "super_admin" : role;
   const items = navByRole[navRole];
   const hasAccess = user ? canAccessDashboardRole(user.role, role) : false;
 

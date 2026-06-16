@@ -88,8 +88,8 @@ function SellerListingRow({
   return (
     <div className="rounded-md border border-border/60 px-4 py-3">
       <Link
-        to="/listings/$listingId"
-        params={{ listingId: listing.id }}
+        to="/dashboard/seller/documents"
+        search={{ listingId: listing.id }}
         className="flex items-center justify-between transition-colors hover:opacity-90"
       >
         <div>

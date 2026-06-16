@@ -39,8 +39,15 @@ import { useUpdateListingMutation } from "@/hooks/use-update-listing";
 import { ApiError } from "@/lib/api";
 import { statusLabel } from "@/lib/listing-status";
 
+type SellerDocumentsSearch = {
+  listingId?: string;
+};
+
 export const Route = createFileRoute("/dashboard/seller/documents")({
   component: SellerDocuments,
+  validateSearch: (search: Record<string, unknown>): SellerDocumentsSearch => ({
+    listingId: typeof search.listingId === "string" ? search.listingId : undefined,
+  }),
 });
 
 type DocType =
@@ -136,6 +143,7 @@ function userVisibleApiError(error: unknown, fallback: string) {
 }
 
 function SellerDocuments() {
+  const { listingId: listingIdFromSearch } = Route.useSearch();
   const qc = useQueryClient();
   const {
     data: listingsData,
@@ -158,10 +166,14 @@ function SellerDocuments() {
       setListingId(null);
       return;
     }
+    if (listingIdFromSearch && listings.some((l) => l.id === listingIdFromSearch)) {
+      setListingId(listingIdFromSearch);
+      return;
+    }
     if (!listingId || !listings.some((l) => l.id === listingId)) {
       setListingId(listings[0].id);
     }
-  }, [listings, listingId]);
+  }, [listings, listingId, listingIdFromSearch]);
 
   const {
     data: documents,

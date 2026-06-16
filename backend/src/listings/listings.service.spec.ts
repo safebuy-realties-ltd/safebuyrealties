@@ -3,10 +3,12 @@ import { ListingMediaType, ListingStatus, Prisma, VerificationStepStatus } from 
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { SbrIdService } from "../sbr-id/sbr-id.service";
 import { AuditAction } from "../audit/audit-actions.constants";
 import { ListingsService } from "./listings.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { UserRole } from "@prisma/client";
+import { publiclyVisibleWhere } from "./listings-public.helper";
 
 const sellerActor: JwtPayload = {
   sub: "seller-1",
@@ -18,12 +20,15 @@ const sellerActor: JwtPayload = {
 const baseListing = {
   id: "listing-1",
   sellerId: "seller-1",
+  propertyId: null,
   title: "Test Home",
   description: "A property",
   location: "Lagos",
   price: new Prisma.Decimal("25000000"),
   currency: "NGN",
   status: ListingStatus.DRAFT,
+  isPublished: false,
+  propertyType: null,
   beds: 4,
   baths: 3,
   landAreaSqm: new Prisma.Decimal("450.50"),
@@ -71,6 +76,7 @@ describe("ListingsService", () => {
   let service: ListingsService;
   let audit: { log: jest.Mock };
   let notifications: { create: jest.Mock; createForStaff: jest.Mock };
+  let sbrId: { nextPropertyId: jest.Mock };
   let prisma: {
     $transaction: jest.Mock;
     listing: {
@@ -85,6 +91,7 @@ describe("ListingsService", () => {
     savedProperty: { count: jest.Mock; upsert: jest.Mock; findMany: jest.Mock };
     dueDiligenceOrder: { count: jest.Mock };
     transaction: { count: jest.Mock; findMany: jest.Mock };
+    user: { findUnique: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -92,6 +99,9 @@ describe("ListingsService", () => {
     notifications = {
       create: jest.fn().mockResolvedValue(undefined),
       createForStaff: jest.fn().mockResolvedValue(undefined),
+    };
+    sbrId = {
+      nextPropertyId: jest.fn().mockResolvedValue("SBR-PROP-LOS-2026-00001"),
     };
     prisma = {
       $transaction: jest.fn(),
@@ -118,6 +128,9 @@ describe("ListingsService", () => {
         count: jest.fn().mockResolvedValue(0),
         findMany: jest.fn().mockResolvedValue([{ id: "tx-1" }]),
       },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ id: "seller-1", role: UserRole.SELLER }),
+      },
     };
     prisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
     prisma.listing.count.mockResolvedValue(0);
@@ -129,6 +142,7 @@ describe("ListingsService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: audit },
         { provide: NotificationsService, useValue: notifications },
+        { provide: SbrIdService, useValue: sbrId },
       ],
     }).compile();
 
@@ -167,6 +181,8 @@ describe("ListingsService", () => {
           baths: 3,
           landAreaSqm: 450,
           buildType: "Detached",
+          status: ListingStatus.DRAFT,
+          isPublished: false,
         }),
       });
       expect(result).toMatchObject({
@@ -174,6 +190,64 @@ describe("ListingsService", () => {
         baths: 3,
         landAreaSqm: 450,
         buildType: "Detached",
+      });
+    });
+
+    it("forces DRAFT and isPublished false for sellers even when status is requested", async () => {
+      prisma.listing.create.mockResolvedValue(baseListing);
+      prisma.listing.findUniqueOrThrow.mockResolvedValue(baseListing);
+
+      await service.create(
+        {
+          title: "New Home",
+          description: "Desc",
+          location: "Lagos",
+          price: 1000000,
+          status: ListingStatus.PENDING_REVIEW,
+        },
+        sellerActor,
+      );
+
+      expect(prisma.listing.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          status: ListingStatus.DRAFT,
+          isPublished: false,
+        }),
+      });
+      expect(sbrId.nextPropertyId).not.toHaveBeenCalled();
+    });
+
+    it("assigns propertyId when staff creates as PENDING_REVIEW", async () => {
+      prisma.listing.create.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.PENDING_REVIEW,
+        propertyId: "SBR-PROP-LOS-2026-00001",
+      });
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.PENDING_REVIEW,
+        propertyId: "SBR-PROP-LOS-2026-00001",
+      });
+
+      await service.create(
+        {
+          title: "New Home",
+          description: "Desc",
+          location: "Lagos",
+          price: 1000000,
+          status: ListingStatus.PENDING_REVIEW,
+          sellerId: "seller-1",
+        },
+        staffActor,
+      );
+
+      expect(sbrId.nextPropertyId).toHaveBeenCalledWith("Lagos");
+      expect(prisma.listing.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          status: ListingStatus.PENDING_REVIEW,
+          propertyId: "SBR-PROP-LOS-2026-00001",
+          isPublished: false,
+        }),
       });
     });
   });
@@ -190,6 +264,9 @@ describe("ListingsService", () => {
         baths: 3,
         landAreaSqm: 450.5,
         buildType: "detached",
+        propertyId: null,
+        isPublished: false,
+        propertyType: null,
       });
     });
 
@@ -234,6 +311,43 @@ describe("ListingsService", () => {
           createdAt: "2026-01-15T11:01:00.000Z",
         },
       ]);
+    });
+  });
+
+  describe("public visibility", () => {
+    it("allows anonymous access to VERIFIED published listings", async () => {
+      prisma.listing.findUnique.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.VERIFIED,
+        isPublished: true,
+      });
+
+      const result = await service.findOne("listing-1", null);
+
+      expect(result.status).toBe(ListingStatus.VERIFIED);
+      expect(result.isPublished).toBe(true);
+    });
+
+    it("denies anonymous access to VERIFIED unpublished listings", async () => {
+      prisma.listing.findUnique.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.VERIFIED,
+        isPublished: false,
+      });
+
+      await expect(service.findOne("listing-1", null)).rejects.toThrow("Forbidden");
+    });
+
+    it("allows buyers to access VERIFIED published listings", async () => {
+      prisma.listing.findUnique.mockResolvedValue({
+        ...baseListing,
+        status: ListingStatus.VERIFIED,
+        isPublished: true,
+      });
+
+      const result = await service.findOne("listing-1", buyerActor);
+
+      expect(result.isPublished).toBe(true);
     });
   });
 
@@ -320,6 +434,59 @@ describe("ListingsService", () => {
 
       expect(audit.log).not.toHaveBeenCalled();
     });
+
+    it("sets isPublished when staff publishes a verified listing", async () => {
+      const listingRow = {
+        ...baseListing,
+        status: ListingStatus.VERIFIED,
+        isPublished: false,
+      };
+      prisma.listing.findUnique.mockResolvedValue(listingRow);
+      prisma.listing.update.mockResolvedValue({
+        ...listingRow,
+        isPublished: true,
+      });
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...listingRow,
+        isPublished: true,
+      });
+
+      await service.update("listing-1", { isPublished: true }, staffActor);
+
+      expect(prisma.listing.update).toHaveBeenCalledWith({
+        where: { id: "listing-1" },
+        data: expect.objectContaining({ isPublished: true }),
+      });
+    });
+
+    it("sets isPublished true when status transitions to LIVE", async () => {
+      const listingRow = {
+        ...baseListing,
+        status: ListingStatus.VERIFIED,
+        isPublished: false,
+      };
+      prisma.listing.findUnique.mockResolvedValue(listingRow);
+      prisma.listing.update.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.LIVE,
+        isPublished: true,
+      });
+      prisma.listing.findUniqueOrThrow.mockResolvedValue({
+        ...listingRow,
+        status: ListingStatus.LIVE,
+        isPublished: true,
+      });
+
+      await service.update("listing-1", { status: ListingStatus.LIVE }, staffActor);
+
+      expect(prisma.listing.update).toHaveBeenCalledWith({
+        where: { id: "listing-1" },
+        data: expect.objectContaining({
+          status: ListingStatus.LIVE,
+          isPublished: true,
+        }),
+      });
+    });
   });
 
   describe("findAll search filters", () => {
@@ -333,7 +500,7 @@ describe("ListingsService", () => {
         expect.objectContaining({
           where: {
             AND: [
-              { status: ListingStatus.LIVE },
+              publiclyVisibleWhere(),
               {
                 AND: [
                   { location: { contains: "Lagos", mode: "insensitive" } },
@@ -360,7 +527,7 @@ describe("ListingsService", () => {
         expect.objectContaining({
           where: {
             AND: [
-              { status: ListingStatus.LIVE },
+              publiclyVisibleWhere(),
               {
                 AND: [
                   { price: { gte: 10_000_000 } },
@@ -392,12 +559,22 @@ describe("ListingsService", () => {
       );
     });
 
-    it("defaults buyers to LIVE listings when status is omitted", async () => {
+    it("defaults buyers to publicly visible listings when status is omitted", async () => {
       await service.findAll({}, buyerActor);
 
       expect(prisma.listing.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: ListingStatus.LIVE },
+          where: publiclyVisibleWhere(),
+        }),
+      );
+    });
+
+    it("defaults anonymous users to publicly visible listings", async () => {
+      await service.findAll({}, null);
+
+      expect(prisma.listing.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: publiclyVisibleWhere(),
         }),
       );
     });
@@ -471,6 +648,7 @@ describe("ListingsService", () => {
       prisma.listing.update.mockResolvedValue({
         ...listingRow,
         status: ListingStatus.LIVE,
+        isPublished: true,
         verifiedAt: new Date("2026-06-08T12:00:00.000Z"),
       });
 
@@ -481,6 +659,7 @@ describe("ListingsService", () => {
         where: { id: "listing-1" },
         data: expect.objectContaining({
           status: ListingStatus.LIVE,
+          isPublished: true,
           verifiedAt: expect.any(Date),
         }),
       });

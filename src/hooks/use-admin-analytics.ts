@@ -16,8 +16,7 @@ export type AdminAnalyticsDto = {
 
 export function useAdminAnalyticsQuery() {
   const { user, isReady } = useAuth();
-  const isAdmin =
-    user?.role === "admin" || user?.role === "staff" || user?.role === "super_admin";
+  const isAdmin = user?.role === "admin" || user?.role === "staff" || user?.role === "super_admin";
   return useQuery({
     queryKey: ["admin", "analytics"],
     queryFn: () => apiRequest<AdminAnalyticsDto>("/admin/analytics").then((e) => e.data),
