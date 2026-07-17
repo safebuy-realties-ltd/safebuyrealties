@@ -367,7 +367,7 @@ function DueDiligenceRequestPage() {
         </section>
 
         <section className="mx-auto max-w-5xl px-6 py-10">
-          {isAuthenticated && user?.role !== "buyer" && (
+          {isAuthenticated && user?.role !== "buyer" && !hasConfirmedPayment && (
             <div className="mb-6 rounded-2xl border border-warning/40 bg-warning/10 px-5 py-4 text-sm text-foreground">
               You are signed in as <strong>{user?.role}</strong>. This flow supports guests or
               signed-in buyers only. Sign out or switch to a buyer account before paying.
