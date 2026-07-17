@@ -37,12 +37,14 @@ type DdCheckSelectorProps = {
   includeInspection?: boolean;
   onIncludeInspectionChange?: (value: boolean) => void;
   onSelectionChange?: (selection: DdCheckSelection) => void;
+  showInspection?: boolean;
 };
 
 export function DdCheckSelector({
   includeInspection: includeInspectionProp,
   onIncludeInspectionChange,
   onSelectionChange,
+  showInspection = true,
 }: DdCheckSelectorProps) {
   const { data: items, isLoading } = useServiceItemsQuery();
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
@@ -145,21 +147,23 @@ export function DdCheckSelector({
         })}
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
-        <div>
-          <Label htmlFor="include-inspection" className="text-sm font-medium">
-            Physical property inspection
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Book a physical visit to inspect the property ({formatNgn(DEFAULT_INSPECTION_FEE)}).
-          </p>
+      {showInspection && (
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3">
+          <div>
+            <Label htmlFor="include-inspection" className="text-sm font-medium">
+              Physical property inspection
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Book a physical visit to inspect the property ({formatNgn(DEFAULT_INSPECTION_FEE)}).
+            </p>
+          </div>
+          <Switch
+            id="include-inspection"
+            checked={includeInspection}
+            onCheckedChange={setIncludeInspection}
+          />
         </div>
-        <Switch
-          id="include-inspection"
-          checked={includeInspection}
-          onCheckedChange={setIncludeInspection}
-        />
-      </div>
+      )}
 
       <div className="rounded-xl border border-border/60 bg-card px-5 py-4">
         <div className="space-y-2 text-sm">

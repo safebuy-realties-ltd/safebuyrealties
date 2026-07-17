@@ -178,7 +178,7 @@ export class GuestCheckoutService {
         location: string;
         propertyId: string | null;
         currency: string;
-      };
+      } | null;
       transaction?: {
         id: string;
         caseId: string | null;
@@ -188,6 +188,9 @@ export class GuestCheckoutService {
     },
     buyerPublicId: string | null,
   ) {
+    if (!order.listing) {
+      throw new NotFoundException("Order listing not found");
+    }
     const latestPayment = order.transaction?.payments?.[0];
     return {
       serviceId: order.serviceId,
@@ -342,6 +345,11 @@ export class GuestCheckoutService {
     if (order.status !== GUEST_ORDER_STATUS.PENDING_PAYMENT) {
       throw new BadRequestException("Order is not awaiting payment");
     }
+    if (!order.listingId || !order.listing) {
+      throw new NotFoundException("Order listing not found");
+    }
+    const listingId = order.listingId;
+    const listingCurrency = order.listing.currency;
 
     const buyer = await this.findOrCreateGuestBuyer(dto.email, dto.name, dto.phone);
     const { firstName, lastName } = this.splitGuestName(dto.name);
@@ -417,10 +425,10 @@ export class GuestCheckoutService {
         const payment = await tx.payment.create({
           data: {
             payerId: buyer.id,
-            listingId: order.listingId,
+            listingId,
             transactionId,
             amount: order.total,
-            currency: order.listing.currency,
+            currency: listingCurrency,
             status: PaymentStatus.PENDING,
             intent: PaymentIntent.DD_SERVICE,
             provider: "paystack",
@@ -459,7 +467,7 @@ export class GuestCheckoutService {
           data: { status: "PAID" },
         });
         await tx.listing.updateMany({
-          where: { id: order.listingId, status: ListingStatus.LIVE },
+          where: { id: listingId, status: ListingStatus.LIVE },
           data: { status: ListingStatus.UNDER_OFFER },
         });
       });
@@ -477,7 +485,7 @@ export class GuestCheckoutService {
       initialized = await this.paystack.initializeTransaction({
         email: this.paystack.customerEmail(dto.email, buyer.id),
         amountMinor,
-        currency: order.listing.currency,
+        currency: listingCurrency,
         callbackUrl: dto.callbackUrl,
         metadata: { paymentId: payment.id, serviceRequestId: order.id },
       });
@@ -579,8 +587,8 @@ export class GuestCheckoutService {
       transactionPublicId: payment.transactionPublicId ?? payment.id,
       caseId: serviceRequest.caseId,
       buyerPublicId: buyer.publicId ?? buyer.id,
-      propertyTitle: payment.transaction?.listing.title ?? "",
-      propertyLocation: payment.transaction?.listing.location ?? "",
+      propertyTitle: payment.transaction?.listing?.title ?? "",
+      propertyLocation: payment.transaction?.listing?.location ?? "",
       services: serviceLabels,
       total: serviceRequest.total.toFixed(2),
       currency: payment.currency,
@@ -588,7 +596,7 @@ export class GuestCheckoutService {
       guestName: serviceRequest.guestName,
     });
 
-    const listingTitle = payment.transaction?.listing.title ?? "property";
+    const listingTitle = payment.transaction?.listing?.title ?? "property";
     void this.notifications.create({
       userId: buyer.id,
       type: NotificationType.DD_PAYMENT_SUCCEEDED,
@@ -597,7 +605,7 @@ export class GuestCheckoutService {
       entityId: payment.transactionId ?? payment.id,
       entityType: NotificationEntityType.Transaction,
     });
-    if (payment.transaction?.listing.sellerId) {
+    if (payment.transaction?.listing?.sellerId) {
       void this.notifications.create({
         userId: payment.transaction.listing.sellerId,
         type: NotificationType.DD_PAYMENT_SUCCEEDED,

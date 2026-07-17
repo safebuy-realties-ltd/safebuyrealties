@@ -30,6 +30,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Browse Listings", to: "/dashboard/buyer/listings", icon: Building2 },
     { label: "Saved Properties", to: "/dashboard/buyer/saved", icon: Heart },
     { label: "Transactions", to: "/dashboard/buyer/transactions", icon: FileText },
+    { label: "Due Diligence", to: "/dashboard/buyer/due-diligence", icon: ClipboardList },
     { label: "Verify Identity", to: "/dashboard/buyer/kyc", icon: BadgeCheck },
     { label: "Services", to: "/dashboard/buyer/services", icon: ShoppingCart },
   ],
@@ -50,6 +51,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Credentials", to: "/dashboard/staff/credentials", icon: BadgeCheck },
     { label: "KYC Reviews", to: "/dashboard/staff/kyc", icon: Users },
     { label: "Workflow", to: "/dashboard/staff/workflow", icon: FileText },
+    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
     { label: "Inspections", to: "/dashboard/staff/inspections", icon: Calendar },
   ],
   admin: [
@@ -65,6 +67,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Platform Settings", to: "/dashboard/admin/settings", icon: Settings },
     { label: "Escrows", to: "/dashboard/admin/escrows", icon: Landmark },
     { label: "Staff Workflow", to: "/dashboard/staff/workflow", icon: FileText },
+    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
   ],
 };
 

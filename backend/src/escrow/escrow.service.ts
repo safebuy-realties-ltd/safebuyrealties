@@ -52,7 +52,15 @@ export class EscrowService {
     return isInternalRole(role);
   }
 
+  private requireListing(listing: EscrowRow["transaction"]["listing"] | null) {
+    if (!listing) {
+      throw new NotFoundException("Escrow transaction listing not found");
+    }
+    return listing;
+  }
+
   private serializeEscrow(row: EscrowRow, unmetConditions: ReleaseCondition[] = []) {
+    const listing = this.requireListing(row.transaction.listing);
     return {
       id: row.id,
       transactionId: row.transactionId,
@@ -72,10 +80,10 @@ export class EscrowService {
         buyerId: row.transaction.buyerId,
         listingId: row.transaction.listingId,
         listing: {
-          id: row.transaction.listing.id,
-          title: row.transaction.listing.title,
-          sellerId: row.transaction.listing.sellerId,
-          status: row.transaction.listing.status,
+          id: listing.id,
+          title: listing.title,
+          sellerId: listing.sellerId,
+          status: listing.status,
         },
         buyer: {
           id: row.transaction.buyer.id,
@@ -189,7 +197,7 @@ export class EscrowService {
     }
 
     const reservedStatuses: ListingStatus[] = [ListingStatus.UNDER_OFFER, ListingStatus.SOLD];
-    if (!reservedStatuses.includes(tx.listing.status as ListingStatus)) {
+    if (!tx.listing || !reservedStatuses.includes(tx.listing.status as ListingStatus)) {
       unmet.push(
         DEFAULT_RELEASE_CONDITIONS.find((c) => c.code === "PROPERTY_RESERVED") ?? {
           code: "PROPERTY_RESERVED",
@@ -209,7 +217,7 @@ export class EscrowService {
     if (!tx) throw new NotFoundException("Transaction not found");
     if (this.isStaff(actor.role)) return tx;
     if (tx.buyerId === actor.sub) return tx;
-    if (tx.listing.sellerId === actor.sub) return tx;
+    if (tx.listing?.sellerId === actor.sub) return tx;
     throw new ForbiddenException();
   }
 
@@ -274,10 +282,12 @@ export class EscrowService {
         data: { status: TransactionStatus.COMPLETED },
       });
 
-      await db.listing.updateMany({
-        where: { id: updated.transaction.listingId, status: ListingStatus.UNDER_OFFER },
-        data: { status: ListingStatus.SOLD },
-      });
+      if (updated.transaction.listingId) {
+        await db.listing.updateMany({
+          where: { id: updated.transaction.listingId, status: ListingStatus.UNDER_OFFER },
+          data: { status: ListingStatus.SOLD },
+        });
+      }
 
       return updated;
     });
@@ -319,10 +329,12 @@ export class EscrowService {
         include: this.escrowInclude(),
       });
 
-      await db.listing.update({
-        where: { id: existing.transaction.listingId },
-        data: { status: ListingStatus.VERIFIED },
-      });
+      if (existing.transaction.listingId) {
+        await db.listing.update({
+          where: { id: existing.transaction.listingId },
+          data: { status: ListingStatus.VERIFIED },
+        });
+      }
 
       return updated;
     });
@@ -354,7 +366,11 @@ export class EscrowService {
     const gross = escrow.heldAmount;
     const platformFee = gross.mul(PLATFORM_FEE_RATE);
     const netAmount = gross.sub(platformFee);
-    const sellerId = escrow.transaction.listing.sellerId;
+    const listing = escrow.transaction.listing;
+    if (!listing) {
+      throw new NotFoundException("Escrow transaction listing not found");
+    }
+    const sellerId = listing.sellerId;
     const now = new Date();
 
     let status: string = PAYOUT_STATUS.PENDING;
@@ -418,9 +434,10 @@ export class EscrowService {
       | typeof NotificationType.ESCROW_RELEASED
       | typeof NotificationType.ESCROW_REFUNDED,
   ) {
-    const listingTitle = row.transaction.listing.title;
+    const listing = this.requireListing(row.transaction.listing);
+    const listingTitle = listing.title;
     const buyerId = row.transaction.buyer.id;
-    const sellerId = row.transaction.listing.sellerId;
+    const sellerId = listing.sellerId;
     const entityId = row.transactionId;
     const entityType = NotificationEntityType.Transaction;
 

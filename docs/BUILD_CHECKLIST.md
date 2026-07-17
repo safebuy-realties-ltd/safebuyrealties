@@ -20,10 +20,10 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-07-17
-- **Tool:** Cursor (Cloud Agent) — standalone DD + pro onboarding
-- **Last completed:** Shared schema migration `20260717210000_standalone_dd_and_pro_docs` (ExternalProperty, optional listing on Transaction/ServiceRequest, DD order fulfillment fields, pro license/id document keys)
-- **Done this session:** Schema foundation for parallel feature build
-- **Next:** Parallel tracks — Standalone Due Diligence (P0) + Professional onboarding E2E (P0)
+- **Tool:** Cursor (Cloud Agent) — standalone due diligence
+- **Last completed:** Step 12 Track A — Standalone Due Diligence
+- **Done this session:** Added Schedule A-D catalog branding and bundle, shipped standalone DD backend/frontend flows, validated local typechecks, smoke, curl lifecycle, and public landing route
+- **Next:** Track B — Professional onboarding E2E
 - **Blockers:** none
 
 ---
@@ -40,24 +40,24 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 ### Track A — Standalone Due Diligence
 
-- [ ] **Catalog — Schedules A–D + Full DD bundle**
+- [x] **Catalog — Schedules A–D + Full DD bundle**
   - Rename/align guest check items to Schedule A Legal / B Environmental / C Physical / D Security (keep codes `LEGAL_CHECK` etc.)
   - Ensure `FULL_DD_BUNDLE` (or equivalent) with A+B+C+D exists and is active
   - Validation: `GET /service-catalog/items` + `bundles` show schedules
 
-- [ ] **API — standalone DD create + pay (guest + auth)**
+- [x] **API — standalone DD create + pay (guest + auth)**
   - New module or extend guest-checkout: `POST /standalone-dd/orders` accepts external property fields OR listingId, schedule itemIds/bundleId, guest/auth client info
   - Creates `ExternalProperty` when off-platform; `ServiceRequest` with `source=STANDALONE`; Paystack `DD_SERVICE` without forcing listing UNDER_OFFER
   - On pay: Transaction with `source=STANDALONE`, `listingId` null when external; DueDiligenceOrder `PAID`
   - Validation: unit tests + curl create/pay path
 
-- [ ] **API — staff/client DD case lifecycle**
+- [x] **API — staff/client DD case lifecycle**
   - `GET /standalone-dd/orders` (buyer mine / staff all)
   - `GET /standalone-dd/orders/:id`
   - Staff: `PATCH` status IN_PROGRESS → COMPLETE with verdict + report upload
   - Validation: staff completes case; buyer sees COMPLETE + verdict
 
-- [ ] **UI — `/due-diligence` landing + request wizard**
+- [x] **UI — `/due-diligence` landing + request wizard**
   - Marketing landing + wizard: property source (listing vs external) → schedules → contact → pay
   - Buyer dashboard cases list; staff DD queue
   - Validation: local E2E off-platform guest path on :8080

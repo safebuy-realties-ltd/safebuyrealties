@@ -192,6 +192,9 @@ export class PoaService {
     if (transaction.powerOfAttorney) {
       throw new ConflictException("A Power of Attorney has already been executed for this transaction");
     }
+    if (!transaction.listing || !transaction.listingId) {
+      throw new BadRequestException("Power of Attorney requires a transaction linked to a listing");
+    }
 
     const buyerName = `${transaction.buyer.firstName} ${transaction.buyer.lastName}`.trim();
     const executedAt = new Date();

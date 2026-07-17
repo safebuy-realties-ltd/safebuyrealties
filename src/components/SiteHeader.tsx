@@ -30,6 +30,9 @@ export function SiteHeader() {
           <Link to="/browse" className="hover:text-foreground transition-colors">
             Browse properties
           </Link>
+          <Link to="/due-diligence" className="hover:text-foreground transition-colors">
+            Due diligence
+          </Link>
           <a href="/#personas" className="hover:text-foreground transition-colors">
             Who it&apos;s for
           </a>
