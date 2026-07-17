@@ -2,16 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+export type ProfessionalDocumentKind = "license" | "id";
+
 export type ProfessionalProfileDto = {
   id: string;
   userId: string;
   regulatoryBody: string;
   licenseNumber: string;
   licenseExpiry: string | null;
+  licenseDocumentKey: string | null;
+  idDocumentKey: string | null;
+  licenseDocumentUrl: string | null;
+  idDocumentUrl: string | null;
   verifiedStatus: string;
   verifiedById: string | null;
   verifiedAt: string | null;
   rejectionNote: string | null;
+  isReviewReady: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -35,6 +42,25 @@ export type UpdateMyProfileBody = {
 const MY_PROFILE_KEY = ["professional-profile", "me"] as const;
 const PENDING_KEY = ["professional-credentials", "pending"] as const;
 
+export function isProfessionalProfileComplete(profile: ProfessionalProfileDto | null | undefined) {
+  return Boolean(
+    profile?.regulatoryBody.trim() &&
+      profile.licenseNumber.trim() &&
+      profile.licenseDocumentKey &&
+      profile.idDocumentKey,
+  );
+}
+
+export function isProfessionalProfilePendingReview(
+  profile: ProfessionalProfileDto | null | undefined,
+) {
+  return Boolean(profile && profile.verifiedStatus === "PENDING" && isProfessionalProfileComplete(profile));
+}
+
+export function isProfessionalProfileRejected(profile: ProfessionalProfileDto | null | undefined) {
+  return profile?.verifiedStatus === "REJECTED";
+}
+
 export function useMyProfileQuery() {
   const { user, isReady } = useAuth();
   return useQuery({
@@ -53,6 +79,24 @@ export function useUpdateMyProfileMutation() {
         method: "PUT",
         body: JSON.stringify(body),
       }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: MY_PROFILE_KEY });
+    },
+  });
+}
+
+export function useUploadProfessionalDocumentMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ kind, file }: { kind: ProfessionalDocumentKind; file: File }) => {
+      const form = new FormData();
+      form.append("kind", kind);
+      form.append("file", file);
+      return apiRequest<ProfessionalProfileDto>(`/professionals/me/documents?kind=${kind}`, {
+        method: "POST",
+        body: form,
+      });
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: MY_PROFILE_KEY });
     },
@@ -89,6 +133,7 @@ export function useVerifyCredentialMutation() {
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: PENDING_KEY });
+      void qc.invalidateQueries({ queryKey: MY_PROFILE_KEY });
     },
   });
 }

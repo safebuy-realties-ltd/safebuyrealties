@@ -20,11 +20,19 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-07-17
+<<<<<<< HEAD
 - **Tool:** Cursor (Cloud Agent) — standalone due diligence
 - **Last completed:** Step 12 Track A — Standalone Due Diligence
 - **Done this session:** Added Schedule A-D catalog branding and bundle, shipped standalone DD backend/frontend flows, validated local typechecks, smoke, curl lifecycle, and public landing route
 - **Next:** Track B — Professional onboarding E2E
 - **Blockers:** none
+=======
+- **Tool:** Cursor (Cloud Agent) — professional onboarding E2E
+- **Last completed:** Step 12 Track B — pro onboarding document upload, wizard/gating UX, staff review polish, seed updates
+- **Done this session:** Added pro document upload + approval gating, onboarding flow, credentials resubmit UX, staff doc links, register redirect, and live localhost API walkthrough
+- **Next:** Merge with Track A branch work and resolve unrelated dirty frontend due-diligence route type errors before a clean root `npx tsc --noEmit`
+- **Blockers:** Root frontend typecheck still fails outside Track B in `src/routes/due-diligence.request.tsx` and `src/routes/due-diligence.tsx`, which were already dirty in this worktree and are out of scope for pro onboarding
+>>>>>>> origin/goodness/pro-onboarding-e2e-69e9
 
 ---
 
@@ -64,17 +72,17 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 ### Track B — Professional onboarding E2E
 
-- [ ] **API — pro credential document upload**
+- [x] **API — pro credential document upload**
   - `POST /professionals/me/documents` (license + id) via StorageService (mirror KYC upload pattern)
   - Extend profile DTO/serialize with document keys; require docs before staff can approve (or soft-require for demo)
   - Validation: upload + profile returns keys
 
-- [ ] **UI — pro onboarding wizard + gate**
+- [x] **UI — pro onboarding wizard + gate**
   - `/onboarding/professional` multi-step; redirect incomplete/pending pros from dashboard
   - Credentials page supports document upload + rejection resubmit UX
   - Validation: new pro register → submit → pending state
 
-- [ ] **Staff review polish + seed**
+- [x] **Staff review polish + seed**
   - Staff credentials queue shows docs; approve/reject notifies pro
   - Seed: lawyer/surveyor/valuer all VERIFIED with profiles; optional pending pro for review demo
   - Validation: staff verifies; pro becomes assignable to a task
