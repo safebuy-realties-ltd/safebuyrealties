@@ -20,10 +20,10 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-07-17
-- **Tool:** Cursor (Cloud Agent) — merged Track A + Track B
-- **Last completed:** Step 12 — Standalone Due Diligence + Professional onboarding E2E
-- **Done this session:** Merged parallel agent branches; schema + standalone DD APIs/UI + pro onboarding docs/wizard/seed
-- **Next:** Integration validation (tsc, tests, local smoke) and demo walkthrough
+- **Tool:** Cursor (Cloud Agent) — homepage DD guest funnel
+- **Last completed:** Homepage flagship DD entry + guest E2E pay/verify/staff notify fixes
+- **Done this session:** Hero/persona DD CTAs; activation URL; public verify; staff DD notification routing + alert email; guest case lookup
+- **Next:** Demo guest flow from `/` → request → pay (mock or Paystack) → staff queue
 - **Blockers:** none
 
 ---
