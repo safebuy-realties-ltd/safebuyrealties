@@ -89,7 +89,7 @@
   --border: oklch(0.93 0.008 160);
   --input: oklch(0.93 0.008 160);
   --ring: oklch(0.45 0.12 155);
-  --gradient-hero: linear-gradient(135deg, oklch(0.45 0.12 155) 0%, oklch(0.38 0.1 160) 100%);
+  --gradient-hero: linear-gradient(135deg, oklch(0.45 0.12 155) 0%, oklch(0.32 0.1 160) 100%);
   --shadow-soft: 0 1px 2px 0 oklch(0.18 0.02 160 / 0.04), 0 1px 3px 0 oklch(0.18 0.02 160 / 0.06);
   --shadow-elegant: 0 4px 20px -4px oklch(0.45 0.12 155 / 0.15);
   --shadow-card:
@@ -142,6 +142,17 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Keep brand gradient deep so light text stays readable on CTA panels */
+  --gradient-hero: linear-gradient(135deg, oklch(0.42 0.11 155) 0%, oklch(0.28 0.08 160) 100%);
+}
+
+/* Gradients must use background-image — Tailwind `bg-[var(--gradient-hero)]` sets
+   background-color, which ignores linear-gradient and leaves a white panel. */
+@layer utilities {
+  .bg-hero-gradient {
+    background-color: oklch(0.38 0.1 160);
+    background-image: var(--gradient-hero);
+  }
 }
 
 @layer base {

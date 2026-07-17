@@ -224,14 +224,14 @@ function ProfessionalOnboardingRoute() {
     <div className="min-h-screen bg-secondary/30 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-3xl bg-[var(--gradient-hero)] p-8 text-primary-foreground shadow-[var(--shadow-card)]">
+          <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-card)]">
             <Badge variant="secondary" className="border-0 bg-white/15 text-white">
               Professional onboarding
             </Badge>
             <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
               Become an assignment-ready {professionalTypeLabel.toLowerCase()}.
             </h1>
-            <p className="mt-4 max-w-2xl text-sm text-primary-foreground/80">
+            <p className="mt-4 max-w-2xl text-sm text-white/80">
               Confirm your specialty, add your regulatory credentials, and upload your license plus
               a matching identity document so staff can verify you for transaction work.
             </p>
@@ -239,7 +239,7 @@ function ProfessionalOnboardingRoute() {
             {profile?.verifiedStatus === "REJECTED" && profile.rejectionNote && (
               <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-4">
                 <p className="text-sm font-semibold text-white">Resubmission needed</p>
-                <p className="mt-2 text-sm text-primary-foreground/85">{profile.rejectionNote}</p>
+                <p className="mt-2 text-sm text-white/85">{profile.rejectionNote}</p>
               </div>
             )}
 

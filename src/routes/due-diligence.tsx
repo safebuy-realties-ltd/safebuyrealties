@@ -85,8 +85,8 @@ function DueDiligenceLandingPage() {
                 </span>
               </div>
             </div>
-            <div className="rounded-3xl bg-[var(--gradient-hero)] p-8 text-primary-foreground shadow-[var(--shadow-elegant)]">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary-foreground/80">
+            <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-elegant)]">
+              <p className="text-sm font-semibold uppercase tracking-wider text-white/80">
                 How the service works
               </p>
               <ol className="mt-6 space-y-5">
@@ -100,9 +100,7 @@ function DueDiligenceLandingPage() {
                     <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
                       {index + 1}
                     </span>
-                    <span className="text-sm leading-relaxed text-primary-foreground/90">
-                      {step}
-                    </span>
+                    <span className="text-sm leading-relaxed text-white/90">{step}</span>
                   </li>
                 ))}
               </ol>
@@ -172,11 +170,11 @@ function DueDiligenceLandingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-18 md:py-22">
-          <div className="overflow-hidden rounded-3xl bg-[var(--gradient-hero)] px-8 py-14 text-center text-primary-foreground shadow-[var(--shadow-elegant)] md:px-14">
+          <div className="overflow-hidden rounded-3xl bg-hero-gradient px-8 py-14 text-center text-white shadow-[var(--shadow-elegant)] md:px-14">
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
               Ready to open a due diligence case?
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-primary-foreground/90">
+            <p className="mx-auto mt-4 max-w-2xl text-white/90">
               Start with a listing or an address, select your schedules, and get a service ID in
               minutes.
             </p>
@@ -184,7 +182,7 @@ function DueDiligenceLandingPage() {
               <Button
                 asChild
                 size="lg"
-                className="bg-white text-primary shadow-md hover:bg-white/90 hover:text-primary"
+                className="bg-white text-[oklch(0.35_0.1_155)] shadow-md hover:bg-white/90 hover:text-[oklch(0.32_0.1_155)]"
               >
                 <Link to="/due-diligence/request">Start a request</Link>
               </Button>
@@ -192,7 +190,7 @@ function DueDiligenceLandingPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-white/80 bg-transparent text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+                className="border-white/80 bg-transparent text-white hover:bg-white/15 hover:text-white"
               >
                 <Link to="/dashboard/buyer/due-diligence">Track my cases</Link>
               </Button>
