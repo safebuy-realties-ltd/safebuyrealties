@@ -193,6 +193,35 @@ export function DdOrderConfirmation({
           </div>
         </section>
 
+        {(order.verdict || (order.reports ?? []).length > 0) && (
+          <section className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Results
+            </p>
+            {order.verdict && (
+              <p className="mt-2 text-base font-medium text-foreground">
+                Verdict: {order.verdict.replace(/_/g, " ")}
+              </p>
+            )}
+            {(order.reports ?? []).length > 0 && (
+              <ul className="mt-3 space-y-2 text-sm">
+                {(order.reports ?? []).map((report, index) => (
+                  <li key={report.key}>
+                    <a
+                      href={report.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary underline"
+                    >
+                      Download report {index + 1}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
           <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p>

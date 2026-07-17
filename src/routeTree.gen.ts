@@ -42,6 +42,7 @@ import { Route as DashboardStaffCredentialsRouteImport } from './routes/dashboar
 import { Route as DashboardSellerListingsRouteImport } from './routes/dashboard.seller.listings'
 import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard.seller.documents'
 import { Route as DashboardProfessionalTasksRouteImport } from './routes/dashboard.professional.tasks'
+import { Route as DashboardProfessionalDueDiligenceRouteImport } from './routes/dashboard.professional.due-diligence'
 import { Route as DashboardProfessionalCredentialsRouteImport } from './routes/dashboard.professional.credentials'
 import { Route as DashboardBuyerTransactionsRouteImport } from './routes/dashboard.buyer.transactions'
 import { Route as DashboardBuyerServicesRouteImport } from './routes/dashboard.buyer.services'
@@ -228,6 +229,12 @@ const DashboardProfessionalTasksRoute =
     path: '/tasks',
     getParentRoute: () => DashboardProfessionalRoute,
   } as any)
+const DashboardProfessionalDueDiligenceRoute =
+  DashboardProfessionalDueDiligenceRouteImport.update({
+    id: '/due-diligence',
+    path: '/due-diligence',
+    getParentRoute: () => DashboardProfessionalRoute,
+  } as any)
 const DashboardProfessionalCredentialsRoute =
   DashboardProfessionalCredentialsRouteImport.update({
     id: '/credentials',
@@ -323,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
+  '/dashboard/professional/due-diligence': typeof DashboardProfessionalDueDiligenceRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
@@ -363,6 +371,7 @@ export interface FileRoutesByTo {
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
+  '/dashboard/professional/due-diligence': typeof DashboardProfessionalDueDiligenceRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
@@ -411,6 +420,7 @@ export interface FileRoutesById {
   '/dashboard/buyer/services': typeof DashboardBuyerServicesRoute
   '/dashboard/buyer/transactions': typeof DashboardBuyerTransactionsRoute
   '/dashboard/professional/credentials': typeof DashboardProfessionalCredentialsRoute
+  '/dashboard/professional/due-diligence': typeof DashboardProfessionalDueDiligenceRoute
   '/dashboard/professional/tasks': typeof DashboardProfessionalTasksRouteWithChildren
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
+    | '/dashboard/professional/due-diligence'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
@@ -500,6 +511,7 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
+    | '/dashboard/professional/due-diligence'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
@@ -547,6 +559,7 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/services'
     | '/dashboard/buyer/transactions'
     | '/dashboard/professional/credentials'
+    | '/dashboard/professional/due-diligence'
     | '/dashboard/professional/tasks'
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
@@ -817,6 +830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProfessionalTasksRouteImport
       parentRoute: typeof DashboardProfessionalRoute
     }
+    '/dashboard/professional/due-diligence': {
+      id: '/dashboard/professional/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/dashboard/professional/due-diligence'
+      preLoaderRoute: typeof DashboardProfessionalDueDiligenceRouteImport
+      parentRoute: typeof DashboardProfessionalRoute
+    }
     '/dashboard/professional/credentials': {
       id: '/dashboard/professional/credentials'
       path: '/credentials'
@@ -979,12 +999,15 @@ const DashboardProfessionalTasksRouteWithChildren =
 
 interface DashboardProfessionalRouteChildren {
   DashboardProfessionalCredentialsRoute: typeof DashboardProfessionalCredentialsRoute
+  DashboardProfessionalDueDiligenceRoute: typeof DashboardProfessionalDueDiligenceRoute
   DashboardProfessionalTasksRoute: typeof DashboardProfessionalTasksRouteWithChildren
   DashboardProfessionalIndexRoute: typeof DashboardProfessionalIndexRoute
 }
 
 const DashboardProfessionalRouteChildren: DashboardProfessionalRouteChildren = {
   DashboardProfessionalCredentialsRoute: DashboardProfessionalCredentialsRoute,
+  DashboardProfessionalDueDiligenceRoute:
+    DashboardProfessionalDueDiligenceRoute,
   DashboardProfessionalTasksRoute: DashboardProfessionalTasksRouteWithChildren,
   DashboardProfessionalIndexRoute: DashboardProfessionalIndexRoute,
 }

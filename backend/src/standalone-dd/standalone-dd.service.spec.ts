@@ -57,6 +57,7 @@ describe("StandaloneDdService", () => {
         update: jest.fn(),
         updateMany: jest.fn(),
       },
+      dueDiligenceAssignment: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
       dueDiligenceOrder: {
         findUnique: jest.fn(),
         create: jest.fn(),
@@ -83,9 +84,13 @@ describe("StandaloneDdService", () => {
         {
           provide: PaystackService,
           useValue: {
-            isConfigured: jest.fn().mockReturnValue(false),
+            isConfigured: jest.fn().mockReturnValue(true),
             customerEmail: jest.fn((email: string) => email),
-            initializeTransaction: jest.fn(),
+            initializeTransaction: jest.fn().mockResolvedValue({
+              authorizationUrl: "https://checkout.paystack.com/test_access",
+              accessCode: "test_access",
+              reference: "psk_ref_standalone_1",
+            }),
           },
         },
         { provide: EmailService, useValue: { sendPaymentReceipt: jest.fn() } },
@@ -280,7 +285,7 @@ describe("StandaloneDdService", () => {
     expect(result.property?.kind).toBe("LISTING");
   });
 
-  it("initiates standalone payment in mock mode without reserving a listing", async () => {
+  it("initiates standalone payment via Paystack without reserving a listing", async () => {
     (prisma.serviceRequest.findUnique as jest.Mock).mockResolvedValue({
       id: "service-request-3",
       serviceId: "SBR-SRV-BUY-20260717-001",
@@ -337,9 +342,8 @@ describe("StandaloneDdService", () => {
       transactionId: "tx-standalone-1",
     });
 
-    const completeSpy = jest
-      .spyOn(service as unknown as { completePayment: (paymentId: string) => Promise<void> }, "completePayment")
-      .mockResolvedValue();
+    (prisma.payment.update as jest.Mock).mockResolvedValue({});
+    (prisma.transaction.update as jest.Mock).mockResolvedValue({});
 
     const result = await service.initiatePayment("SBR-SRV-BUY-20260717-001", {
       callbackUrl: "http://localhost:8080/due-diligence/request",
@@ -361,8 +365,9 @@ describe("StandaloneDdService", () => {
         }),
       }),
     );
-    expect(completeSpy).toHaveBeenCalledWith("pay-standalone-1");
-    expect(result.authorizationUrl).toContain("mock=1");
+    expect(result.accessCode).toBe("test_access");
+    expect(result.authorizationUrl).toContain("checkout.paystack.com");
+    expect(result.reference).toBe("psk_ref_standalone_1");
   });
 
   it("marks a case complete with verdict and transaction status", async () => {

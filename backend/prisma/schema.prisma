@@ -126,6 +126,7 @@ model User {
   inspectionAssigned InspectionSlot[]    @relation("InspectionProfessional")
   externalProperties ExternalProperty[]  @relation("ExternalPropertyOwner")
   standaloneDdOrders DueDiligenceOrder[] @relation("DdOrderBuyer")
+  ddAssignments      DueDiligenceAssignment[] @relation("DdAssignmentProfessional")
 }
 
 model Listing {
@@ -395,11 +396,34 @@ model DueDiligenceOrder {
   completedAt        DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  assignments        DueDiligenceAssignment[]
 
   @@index([buyerId])
   @@index([status])
   @@index([externalPropertyId])
   @@map("due_diligence_orders")
+}
+
+/// Staff assigns a verified professional to a standalone DD case (per schedule or full bundle).
+model DueDiligenceAssignment {
+  id                  String            @id @default(uuid())
+  dueDiligenceOrderId String
+  dueDiligenceOrder   DueDiligenceOrder @relation(fields: [dueDiligenceOrderId], references: [id], onDelete: Cascade)
+  professionalId      String
+  professional        User              @relation("DdAssignmentProfessional", fields: [professionalId], references: [id])
+  /// Catalog item code e.g. LEGAL_CHECK, or FULL_DD
+  scheduleCode        String
+  title               String
+  /// PENDING | IN_PROGRESS | SUBMITTED
+  status              String            @default("PENDING")
+  reportStorageKey    String?
+  notes               String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([professionalId, status])
+  @@index([dueDiligenceOrderId])
+  @@map("due_diligence_assignments")
 }
 
 /// Off-platform property submitted for standalone due diligence.

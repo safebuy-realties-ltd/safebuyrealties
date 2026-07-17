@@ -29,6 +29,7 @@ import {
 } from "@/hooks/use-standalone-dd";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/due-diligence/request")({
@@ -297,10 +298,41 @@ function DueDiligenceRequestPage() {
         },
       });
 
-      // Mock and live Paystack both return a callback URL; follow it so verify + receipt run.
-      if (typeof window !== "undefined") {
-        window.location.href = payment.authorizationUrl;
+      if (!payment.accessCode) {
+        throw new Error("Paystack did not return an access code. Check API keys and try again.");
       }
+
+      // Same inline Paystack model as listed-property guest checkout.
+      await openPaystackCheckout({
+        accessCode: payment.accessCode,
+        onSuccess: (transaction) => {
+          void (async () => {
+            try {
+              const verified = await verifyPayment.mutateAsync({
+                serviceId: created.serviceId,
+                reference: transaction.reference || payment.reference,
+              });
+              setPaidServiceId(verified.serviceId);
+              toast.success("Payment confirmed. Your due diligence case is open.");
+              if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.searchParams.set("serviceId", verified.serviceId);
+                url.searchParams.set("reference", transaction.reference || payment.reference);
+                window.history.replaceState({}, "", url.toString());
+              }
+            } catch (verifyError) {
+              toast.error(
+                verifyError instanceof ApiError
+                  ? verifyError.message
+                  : "Payment received but verification is still pending. Keep your Service ID.",
+              );
+            }
+          })();
+        },
+        onCancel: () => toast.message("Payment window closed. Your Service ID is still available."),
+        onError: (err) =>
+          toast.error(err.message || "Paystack checkout failed. Please try again."),
+      });
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Could not create the due diligence order.",

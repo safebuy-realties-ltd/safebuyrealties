@@ -33,6 +33,7 @@ import { CreateStandaloneDdOrderDto } from "./dto/create-standalone-dd-order.dto
 import { InitiateStandaloneDdPaymentDto } from "./dto/initiate-standalone-dd-payment.dto";
 import { ListStandaloneDdOrdersQueryDto } from "./dto/list-standalone-dd-orders.query";
 import { UpdateStandaloneDdOrderDto } from "./dto/update-standalone-dd-order.dto";
+import { AssignStandaloneDdDto } from "./dto/assign-standalone-dd.dto";
 
 const REQUEST_STATUS = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
@@ -60,7 +61,23 @@ type StandaloneServiceRequest = Prisma.ServiceRequestGetPayload<{
           orderBy: { createdAt: "desc" };
           take: 1;
         };
-        dueDiligenceOrder: true;
+        dueDiligenceOrder: {
+          include: {
+            assignments: {
+              include: {
+                professional: {
+                  select: {
+                    id: true;
+                    email: true;
+                    firstName: true;
+                    lastName: true;
+                    professionalType: true;
+                  };
+                };
+              };
+            };
+          };
+        };
       };
     };
   };
@@ -86,8 +103,56 @@ type DueDiligenceOrderWithRelations = Prisma.DueDiligenceOrderGetPayload<{
         };
       };
     };
+    assignments: {
+      include: {
+        professional: {
+          select: {
+            id: true;
+            email: true;
+            firstName: true;
+            lastName: true;
+            professionalType: true;
+          };
+        };
+      };
+    };
   };
 }>;
+
+const ddOrderInclude = {
+  listing: {
+    select: {
+      id: true,
+      title: true,
+      location: true,
+      propertyId: true,
+      currency: true,
+    },
+  },
+  externalProperty: true,
+  transaction: {
+    include: {
+      payments: {
+        orderBy: { createdAt: "desc" as const },
+        take: 1,
+      },
+    },
+  },
+  assignments: {
+    include: {
+      professional: {
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          professionalType: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" as const },
+  },
+} satisfies Prisma.DueDiligenceOrderInclude;
 
 @Injectable()
 export class StandaloneDdService {
@@ -289,6 +354,9 @@ export class StandaloneDdService {
       externalProperty: order.externalProperty,
     });
     const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
+    const assignments = await Promise.all(
+      (ddOrder?.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
+    );
 
     return {
       id: ddOrder?.id ?? order.id,
@@ -323,11 +391,40 @@ export class StandaloneDdService {
       completedAt: ddOrder?.completedAt?.toISOString() ?? null,
       reportStorageKeys: reportKeys,
       reports,
+      assignments,
       property,
       listing: order.listing,
       externalProperty: order.externalProperty,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),
+    };
+  }
+
+  private async serializeAssignment(
+    assignment: DueDiligenceOrderWithRelations["assignments"][number],
+  ) {
+    return {
+      id: assignment.id,
+      dueDiligenceOrderId: assignment.dueDiligenceOrderId,
+      professionalId: assignment.professionalId,
+      scheduleCode: assignment.scheduleCode,
+      title: assignment.title,
+      status: assignment.status,
+      notes: assignment.notes,
+      reportStorageKey: assignment.reportStorageKey,
+      reportUrl: assignment.reportStorageKey
+        ? await this.storage.getSignedUrl(assignment.reportStorageKey)
+        : null,
+      professional: assignment.professional
+        ? {
+            id: assignment.professional.id,
+            email: assignment.professional.email,
+            name: `${assignment.professional.firstName} ${assignment.professional.lastName}`.trim(),
+            professionalType: assignment.professional.professionalType,
+          }
+        : null,
+      createdAt: assignment.createdAt.toISOString(),
+      updatedAt: assignment.updatedAt.toISOString(),
     };
   }
 
@@ -347,6 +444,9 @@ export class StandaloneDdService {
       externalProperty: order.externalProperty,
     });
     const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
+    const assignments = await Promise.all(
+      (order.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
+    );
 
     return {
       id: order.id,
@@ -371,6 +471,7 @@ export class StandaloneDdService {
       completedAt: order.completedAt?.toISOString() ?? null,
       reportStorageKeys: reportKeys,
       reports,
+      assignments,
       property,
       listing: order.listing,
       externalProperty: order.externalProperty,
@@ -400,7 +501,24 @@ export class StandaloneDdService {
             orderBy: { createdAt: "desc" as const },
             take: 1,
           },
-          dueDiligenceOrder: true,
+          dueDiligenceOrder: {
+            include: {
+              assignments: {
+                include: {
+                  professional: {
+                    select: {
+                      id: true,
+                      email: true,
+                      firstName: true,
+                      lastName: true,
+                      professionalType: true,
+                    },
+                  },
+                },
+                orderBy: { createdAt: "asc" as const },
+              },
+            },
+          },
         },
       },
     };
@@ -666,20 +784,9 @@ export class StandaloneDdService {
     const amountMinor = Math.round(Number(order.total) * 100);
 
     if (!this.paystack.isConfigured()) {
-      const mockRef = `mock_standalone_${payment.id}`;
-      const callbackSeparator = dto.callbackUrl.includes("?") ? "&" : "?";
-      await this.prisma.payment.update({
-        where: { id: payment.id },
-        data: { providerReference: mockRef },
-      });
-      await this.completePayment(payment.id);
-      return {
-        paymentId: payment.id,
-        authorizationUrl:
-          `${dto.callbackUrl}${callbackSeparator}mock=1&ref=${mockRef}&paymentId=${payment.id}`,
-        reference: mockRef,
-        transactionPublicId,
-      };
+      throw new ServiceUnavailableException(
+        "Paystack is not configured. Set PAYSTACK_SECRET_KEY (or PAYSTACK_TEST_SECRET_KEY) and ensure PAYSTACK_FORCE_MOCK is false.",
+      );
     }
 
     let initialized;
@@ -715,6 +822,7 @@ export class StandaloneDdService {
           standaloneDd: true,
           callbackUrl: dto.callbackUrl,
           authorizationUrl: initialized.authorizationUrl,
+          accessCode: initialized.accessCode,
           serviceId: order.serviceId,
         } as object,
       },
@@ -723,6 +831,7 @@ export class StandaloneDdService {
     return {
       paymentId: payment.id,
       authorizationUrl: initialized.authorizationUrl,
+      accessCode: initialized.accessCode,
       reference: initialized.reference,
       transactionPublicId,
     };
@@ -732,26 +841,7 @@ export class StandaloneDdService {
     this.assertStaffActor(actor);
     const existing = await this.prisma.dueDiligenceOrder.findUnique({
       where: { id },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            location: true,
-            propertyId: true,
-            currency: true,
-          },
-        },
-        externalProperty: true,
-        transaction: {
-          include: {
-            payments: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        },
-      },
+      include: ddOrderInclude,
     });
     if (!existing) throw new NotFoundException("Due diligence order not found");
     if (dto.status === "COMPLETE" && !(dto.verdict?.trim() || existing.verdict)) {
@@ -765,26 +855,6 @@ export class StandaloneDdService {
         ...(dto.verdict !== undefined ? { verdict: dto.verdict.trim() || null } : {}),
         ...(dto.staffNotes !== undefined ? { staffNotes: dto.staffNotes.trim() || null } : {}),
         ...(dto.status === "COMPLETE" ? { completedAt: new Date() } : {}),
-      },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            location: true,
-            propertyId: true,
-            currency: true,
-          },
-        },
-        externalProperty: true,
-        transaction: {
-          include: {
-            payments: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        },
       },
     });
 
@@ -800,28 +870,20 @@ export class StandaloneDdService {
       });
     }
 
+    if (dto.status === "COMPLETE") {
+      void this.notifications.create({
+        userId: existing.buyerId,
+        type: NotificationType.DD_PAYMENT_SUCCEEDED,
+        title: "Due diligence report ready",
+        body: `Your due diligence case ${existing.serviceId ?? existing.caseId ?? existing.id} is complete. Look it up with your Service ID.`,
+        entityId: existing.serviceId ?? existing.id,
+        entityType: NotificationEntityType.DueDiligenceOrder,
+      });
+    }
+
     const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
       where: { id },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            location: true,
-            propertyId: true,
-            currency: true,
-          },
-        },
-        externalProperty: true,
-        transaction: {
-          include: {
-            payments: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        },
-      },
+      include: ddOrderInclude,
     });
     if (!refreshed) {
       throw new NotFoundException("Due diligence order not found after update");
@@ -838,26 +900,7 @@ export class StandaloneDdService {
 
     const existing = await this.prisma.dueDiligenceOrder.findUnique({
       where: { id },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            location: true,
-            propertyId: true,
-            currency: true,
-          },
-        },
-        externalProperty: true,
-        transaction: {
-          include: {
-            payments: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        },
-      },
+      include: ddOrderInclude,
     });
     if (!existing) throw new NotFoundException("Due diligence order not found");
 
@@ -874,29 +917,191 @@ export class StandaloneDdService {
       data: {
         reportStorageKeys: [...currentKeys, storageKey] as Prisma.InputJsonValue,
       },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            location: true,
-            propertyId: true,
-            currency: true,
-          },
-        },
-        externalProperty: true,
-        transaction: {
-          include: {
-            payments: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-            },
-          },
-        },
-      },
+      include: ddOrderInclude,
     });
 
     return this.serializeDueDiligenceOrder(updated);
+  }
+
+  async listAssignableProfessionals(actor: JwtPayload) {
+    this.assertStaffActor(actor);
+    const rows = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.PROFESSIONAL,
+        isActive: true,
+        professionalProfile: { verifiedStatus: "VERIFIED" },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        professionalType: true,
+      },
+      orderBy: [{ professionalType: "asc" }, { lastName: "asc" }],
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: `${row.firstName} ${row.lastName}`.trim(),
+      professionalType: row.professionalType,
+    }));
+  }
+
+  async assignProfessional(orderId: string, dto: AssignStandaloneDdDto, actor: JwtPayload) {
+    this.assertStaffActor(actor);
+    const order = await this.prisma.dueDiligenceOrder.findUnique({
+      where: { id: orderId },
+      include: ddOrderInclude,
+    });
+    if (!order) throw new NotFoundException("Due diligence order not found");
+    if (order.status === "PENDING" || order.status === "CANCELLED") {
+      throw new BadRequestException("Only paid due diligence cases can be assigned");
+    }
+
+    const professional = await this.prisma.user.findUnique({
+      where: { id: dto.professionalId },
+      include: { professionalProfile: true },
+    });
+    if (!professional || professional.role !== UserRole.PROFESSIONAL) {
+      throw new BadRequestException("professionalId must be a professional");
+    }
+    if (professional.professionalProfile?.verifiedStatus !== "VERIFIED") {
+      throw new BadRequestException("Professional must be verified before assignment");
+    }
+
+    const scheduleCode = dto.scheduleCode.trim().toUpperCase();
+    const title =
+      dto.title?.trim() ||
+      `Due diligence — ${scheduleCode.replace(/_/g, " ")} (${order.serviceId ?? order.caseId ?? order.id})`;
+
+    const assignment = await this.prisma.dueDiligenceAssignment.create({
+      data: {
+        dueDiligenceOrderId: order.id,
+        professionalId: professional.id,
+        scheduleCode,
+        title,
+        notes: dto.notes?.trim() || null,
+        status: "PENDING",
+      },
+    });
+
+    if (order.status === "PAID") {
+      await this.prisma.dueDiligenceOrder.update({
+        where: { id: order.id },
+        data: { status: "IN_PROGRESS" },
+      });
+      if (order.transactionId) {
+        await this.prisma.transaction.update({
+          where: { id: order.transactionId },
+          data: { status: TransactionStatus.DD_IN_PROGRESS },
+        });
+      }
+    }
+
+    void this.notifications.create({
+      userId: professional.id,
+      type: NotificationType.TASK_ASSIGNED,
+      title: "Due diligence assignment",
+      body: title,
+      entityId: assignment.id,
+      entityType: NotificationEntityType.Task,
+    });
+
+    const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
+      where: { id: order.id },
+      include: ddOrderInclude,
+    });
+    if (!refreshed) throw new NotFoundException("Due diligence order not found after assign");
+    return this.serializeDueDiligenceOrder(refreshed);
+  }
+
+  async listMyAssignments(actor: JwtPayload) {
+    if (actor.role !== UserRole.PROFESSIONAL) {
+      throw new ForbiddenException("Only professionals have due diligence assignments");
+    }
+    const rows = await this.prisma.dueDiligenceAssignment.findMany({
+      where: { professionalId: actor.sub },
+      include: {
+        professional: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            professionalType: true,
+          },
+        },
+        dueDiligenceOrder: { include: ddOrderInclude },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return Promise.all(
+      rows.map(async (row) => ({
+        ...(await this.serializeAssignment(row)),
+        order: await this.serializeDueDiligenceOrder(row.dueDiligenceOrder),
+      })),
+    );
+  }
+
+  async uploadAssignmentReport(
+    assignmentId: string,
+    file: Express.Multer.File,
+    actor: JwtPayload,
+  ) {
+    if (!file) throw new BadRequestException("Report file is required");
+    const assignment = await this.prisma.dueDiligenceAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        dueDiligenceOrder: { include: ddOrderInclude },
+      },
+    });
+    if (!assignment) throw new NotFoundException("Assignment not found");
+    if (assignment.professionalId !== actor.sub && !isInternalRole(actor.role)) {
+      throw new ForbiddenException();
+    }
+
+    const order = assignment.dueDiligenceOrder;
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storageKey = `due-diligence/${order.id}/assignments/${assignment.id}/${Date.now()}-${safeName}`;
+    await this.storage.upload(file.buffer, storageKey, file.mimetype);
+
+    const currentKeys =
+      Array.isArray(order.reportStorageKeys) && order.reportStorageKeys.length > 0
+        ? (order.reportStorageKeys as string[])
+        : [];
+
+    await this.prisma.$transaction([
+      this.prisma.dueDiligenceAssignment.update({
+        where: { id: assignment.id },
+        data: {
+          reportStorageKey: storageKey,
+          status: "SUBMITTED",
+        },
+      }),
+      this.prisma.dueDiligenceOrder.update({
+        where: { id: order.id },
+        data: {
+          reportStorageKeys: [...currentKeys, storageKey] as Prisma.InputJsonValue,
+          status: order.status === "PAID" ? "IN_PROGRESS" : order.status,
+        },
+      }),
+    ]);
+
+    void this.notifications.createForStaff({
+      type: NotificationType.TASK_ASSIGNED,
+      title: "DD report submitted",
+      body: `${assignment.title} report uploaded for ${order.serviceId ?? order.id}.`,
+      entityId: order.serviceId ?? order.id,
+      entityType: NotificationEntityType.DueDiligenceOrder,
+    });
+
+    const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
+      where: { id: order.id },
+      include: ddOrderInclude,
+    });
+    if (!refreshed) throw new NotFoundException("Due diligence order not found");
+    return this.serializeDueDiligenceOrder(refreshed);
   }
 
   async completePayment(paymentId: string) {

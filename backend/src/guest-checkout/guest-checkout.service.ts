@@ -513,6 +513,7 @@ export class GuestCheckoutService {
           guestCheckout: true,
           callbackUrl: dto.callbackUrl,
           authorizationUrl: initialized.authorizationUrl,
+          accessCode: initialized.accessCode,
         } as object,
       },
     });
@@ -520,6 +521,7 @@ export class GuestCheckoutService {
     return {
       paymentId: payment.id,
       authorizationUrl: initialized.authorizationUrl,
+      accessCode: initialized.accessCode,
       reference: initialized.reference,
       transactionPublicId,
     };
