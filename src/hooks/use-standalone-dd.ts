@@ -50,6 +50,8 @@ export type StandaloneDdOrderDto = {
   buyerId?: string | null;
   bundleId?: string | null;
   itemIds: string[];
+  /** Human-readable schedule / catalog labels when available */
+  services?: string[];
   subtotal: string;
   vatAmount: string;
   total: string;

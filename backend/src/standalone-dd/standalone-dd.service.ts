@@ -288,6 +288,7 @@ export class StandaloneDdService {
       listing: order.listing,
       externalProperty: order.externalProperty,
     });
+    const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
 
     return {
       id: ddOrder?.id ?? order.id,
@@ -304,6 +305,7 @@ export class StandaloneDdService {
       buyerId: order.buyerId ?? ddOrder?.buyerId ?? null,
       bundleId: order.bundleId,
       itemIds: order.itemIds,
+      services,
       subtotal: order.subtotal.toFixed(2),
       vatAmount: order.vatAmount.toFixed(2),
       total: order.total.toFixed(2),
@@ -344,6 +346,7 @@ export class StandaloneDdService {
       listing: order.listing,
       externalProperty: order.externalProperty,
     });
+    const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
 
     return {
       id: order.id,
@@ -354,6 +357,7 @@ export class StandaloneDdService {
       buyerId: order.buyerId,
       bundleId: order.bundleId,
       itemIds: order.itemIds,
+      services,
       subtotal: order.subtotal.toFixed(2),
       vatAmount: order.vatAmount.toFixed(2),
       total: order.total.toFixed(2),
@@ -1042,21 +1046,24 @@ export class StandaloneDdService {
     const propertyTitle = property?.title ?? "Standalone due diligence";
     const propertyLocation = property?.location ?? location;
 
-    if (activationLink) {
-      void this.email.sendPaymentReceipt(buyer.email, {
-        serviceId: serviceRequest.serviceId,
-        transactionPublicId: payment.transactionPublicId ?? payment.id,
-        caseId: serviceRequest.caseId,
-        buyerPublicId,
-        propertyTitle,
-        propertyLocation,
-        services,
-        total: serviceRequest.total.toFixed(2),
-        currency: payment.currency,
-        activationLink,
-        guestName: serviceRequest.guestName,
-      });
-    }
+    // Always email the guest a confirmation receipt (logged when SMTP is unset).
+    void this.email.sendPaymentReceipt(buyer.email, {
+      serviceId: serviceRequest.serviceId,
+      transactionPublicId: payment.transactionPublicId ?? payment.id,
+      caseId: serviceRequest.caseId,
+      buyerPublicId,
+      propertyTitle,
+      propertyLocation,
+      services,
+      subtotal: serviceRequest.subtotal.toFixed(2),
+      vatAmount: serviceRequest.vatAmount.toFixed(2),
+      total: serviceRequest.total.toFixed(2),
+      currency: payment.currency,
+      activationLink,
+      guestName: serviceRequest.guestName,
+      guestEmail: serviceRequest.guestEmail,
+      guestPhone: serviceRequest.guestPhone,
+    });
 
     void this.notifications.create({
       userId: buyer.id,
