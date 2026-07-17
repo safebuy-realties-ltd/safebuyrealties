@@ -231,7 +231,7 @@ function ProfessionalOnboardingRoute() {
             <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
               Become an assignment-ready {professionalTypeLabel.toLowerCase()}.
             </h1>
-            <p className="mt-4 max-w-2xl text-sm text-primary-foreground/80">
+            <p className="mt-4 max-w-2xl text-sm text-white/80">
               Confirm your specialty, add your regulatory credentials, and upload your license plus
               a matching identity document so staff can verify you for transaction work.
             </p>
@@ -239,7 +239,7 @@ function ProfessionalOnboardingRoute() {
             {profile?.verifiedStatus === "REJECTED" && profile.rejectionNote && (
               <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-4">
                 <p className="text-sm font-semibold text-white">Resubmission needed</p>
-                <p className="mt-2 text-sm text-primary-foreground/85">{profile.rejectionNote}</p>
+                <p className="mt-2 text-sm text-white/85">{profile.rejectionNote}</p>
               </div>
             )}
 
