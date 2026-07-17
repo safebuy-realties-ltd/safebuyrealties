@@ -140,10 +140,7 @@ export function DdOrderConfirmation({
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <DetailTile label="Case ID" value={order.caseId} mono />
           <DetailTile label="Status" value={formatStatus(order.status)} />
-          <DetailTile
-            label="Total paid"
-            value={formatNgn(order.total, order.currency)}
-          />
+          <DetailTile label="Total paid" value={formatNgn(order.total, order.currency)} />
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">

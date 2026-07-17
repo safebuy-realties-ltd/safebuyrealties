@@ -342,25 +342,27 @@ function DueDiligenceRequestPage() {
                 </div>
               )}
             </div>
-            <div className="mt-8">
-              <div className="mb-3 flex flex-wrap gap-2">
-                {STEPS.map((entry) => (
-                  <span
-                    key={entry}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      step === entry
-                        ? "bg-primary text-primary-foreground"
-                        : STEPS.indexOf(entry) < STEPS.indexOf(step)
-                          ? "bg-primary/15 text-primary"
-                          : "bg-card text-muted-foreground"
-                    }`}
-                  >
-                    {stepLabel(entry)}
-                  </span>
-                ))}
+            {!hasConfirmedPayment && (
+              <div className="mt-8">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {STEPS.map((entry) => (
+                    <span
+                      key={entry}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        step === entry
+                          ? "bg-primary text-primary-foreground"
+                          : STEPS.indexOf(entry) < STEPS.indexOf(step)
+                            ? "bg-primary/15 text-primary"
+                            : "bg-card text-muted-foreground"
+                      }`}
+                    >
+                      {stepLabel(entry)}
+                    </span>
+                  ))}
+                </div>
+                <Progress value={progress} className="h-2" />
               </div>
-              <Progress value={progress} className="h-2" />
-            </div>
+            )}
           </div>
         </section>
 

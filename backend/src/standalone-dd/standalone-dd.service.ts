@@ -1160,10 +1160,11 @@ export class StandaloneDdService {
       const bundle = await this.prisma.serviceBundle.findUnique({ where: { id: bundleId } });
       if (bundle) labels.push(bundle.name);
     } else if (Array.isArray(itemIds) && itemIds.length > 0) {
-      const items = await this.prisma.serviceCatalogItem.findMany({
-        where: { id: { in: itemIds as string[] } },
-        select: { name: true },
-      });
+      const items =
+        (await this.prisma.serviceCatalogItem.findMany({
+          where: { id: { in: itemIds as string[] } },
+          select: { name: true },
+        })) ?? [];
       labels.push(...items.map((item) => item.name));
     }
     return labels;
