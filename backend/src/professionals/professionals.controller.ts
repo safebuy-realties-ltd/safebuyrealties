@@ -1,4 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Put, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { memoryStorage } from "multer";
 import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -26,6 +40,24 @@ export class ProfessionalsController {
   @Roles(UserRole.PROFESSIONAL)
   updateMyProfile(@Body() dto: UpdateMyProfileDto, @CurrentUser() user: JwtPayload) {
     return this.professionals.upsertMyProfile(user.sub, dto);
+  }
+
+  @Post("me/documents")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.PROFESSIONAL)
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: memoryStorage(),
+      limits: { fileSize: 100 * 1024 * 1024 },
+    }),
+  )
+  uploadDocument(
+    @UploadedFile() file: Express.Multer.File,
+    @Query("kind") queryKind: string | undefined,
+    @Body("kind") bodyKind: string | undefined,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.professionals.uploadDocument(user.sub, queryKind ?? bodyKind, file);
   }
 
   @Get("credentials/pending")

@@ -67,6 +67,11 @@ async function ensureVerifiedProfessionalProfiles(staffId: string) {
       regulatoryBody: "SURCON",
       licenseNumber: "SURCON/TEST/001",
     },
+    {
+      email: "valuer@safebuyrealties.test",
+      regulatoryBody: "NIESV",
+      licenseNumber: "NIESV/TEST/001",
+    },
   ] as const;
 
   for (const profile of profiles) {
@@ -258,6 +263,14 @@ async function main() {
         userId: surveyor.id,
         regulatoryBody: "SURCON",
         licenseNumber: "SURCON/TEST/001",
+        verifiedStatus: "VERIFIED",
+        verifiedById: staff.id,
+        verifiedAt: new Date(),
+      },
+      {
+        userId: valuer.id,
+        regulatoryBody: "NIESV",
+        licenseNumber: "NIESV/TEST/001",
         verifiedStatus: "VERIFIED",
         verifiedById: staff.id,
         verifiedAt: new Date(),
