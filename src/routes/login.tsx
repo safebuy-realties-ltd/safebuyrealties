@@ -113,12 +113,12 @@ function LoginPage() {
           © {new Date().getFullYear()} SafeBuyRealties
         </p>
       </div>
-      <div className="relative hidden bg-[var(--gradient-hero)] lg:block">
-        <div className="absolute inset-0 flex flex-col justify-end p-12 text-primary-foreground">
+      <div className="relative hidden bg-hero-gradient lg:block">
+        <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
           <h2 className="max-w-md text-3xl font-semibold leading-tight">
             Verified listings. Safer transactions.
           </h2>
-          <p className="mt-4 max-w-md text-primary-foreground/80">
+          <p className="mt-4 max-w-md text-white/80">
             Sign in to continue due diligence, manage listings, and collaborate with professionals.
           </p>
         </div>

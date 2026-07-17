@@ -148,12 +148,12 @@ function RegisterPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden bg-[var(--gradient-hero)] lg:block">
-        <div className="absolute inset-0 flex flex-col justify-end p-12 text-primary-foreground">
+      <div className="relative hidden bg-hero-gradient lg:block">
+        <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
           <h2 className="max-w-md text-3xl font-semibold leading-tight">
             Join the verified real estate network.
           </h2>
-          <p className="mt-4 max-w-md text-primary-foreground/80">
+          <p className="mt-4 max-w-md text-white/80">
             Create your account in under a minute and start transacting with confidence.
           </p>
         </div>

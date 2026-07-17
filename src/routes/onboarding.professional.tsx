@@ -224,7 +224,7 @@ function ProfessionalOnboardingRoute() {
     <div className="min-h-screen bg-secondary/30 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-3xl bg-[var(--gradient-hero)] p-8 text-primary-foreground shadow-[var(--shadow-card)]">
+          <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-card)]">
             <Badge variant="secondary" className="border-0 bg-white/15 text-white">
               Professional onboarding
             </Badge>

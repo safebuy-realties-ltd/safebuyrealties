@@ -85,7 +85,7 @@ function DueDiligenceLandingPage() {
                 </span>
               </div>
             </div>
-            <div className="rounded-3xl bg-[var(--gradient-hero)] p-8 text-primary-foreground shadow-[var(--shadow-elegant)]">
+            <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-elegant)]">
               <p className="text-sm font-semibold uppercase tracking-wider text-primary-foreground/80">
                 How the service works
               </p>
@@ -172,7 +172,7 @@ function DueDiligenceLandingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-18 md:py-22">
-          <div className="overflow-hidden rounded-3xl bg-[var(--gradient-hero)] px-8 py-14 text-center text-primary-foreground shadow-[var(--shadow-elegant)] md:px-14">
+          <div className="overflow-hidden rounded-3xl bg-hero-gradient px-8 py-14 text-center text-white shadow-[var(--shadow-elegant)] md:px-14">
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
               Ready to open a due diligence case?
             </h2>

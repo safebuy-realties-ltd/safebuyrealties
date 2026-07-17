@@ -419,15 +419,15 @@ function Landing() {
           </div>
         </section>
 
-        {/* Trust / CTA — high-contrast buttons */}
+        {/* Trust / CTA — brand gradient panel with light text */}
         <section id="trust" className="border-t border-border/60">
           <div className="mx-auto max-w-7xl px-6 py-20 md:py-24">
-            <div className="overflow-hidden rounded-3xl bg-[var(--gradient-hero)] px-8 py-16 text-center shadow-[var(--shadow-elegant)] md:px-16">
-              <FileCheck2 className="mx-auto h-10 w-10 text-primary-foreground/90" />
-              <h2 className="mx-auto mt-5 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-primary-foreground md:text-4xl">
+            <div className="bg-hero-gradient overflow-hidden rounded-3xl px-8 py-16 text-center text-white shadow-[var(--shadow-elegant)] md:px-16">
+              <FileCheck2 className="mx-auto h-10 w-10 text-white/90" />
+              <h2 className="mx-auto mt-5 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-white md:text-4xl">
                 Ready to make your next property move with full confidence?
               </h2>
-              <p className="mx-auto mt-4 max-w-xl text-primary-foreground/90">
+              <p className="mx-auto mt-4 max-w-xl text-white/90">
                 Browse verified homes today, or create a free account as a buyer, seller, or
                 licensed professional.
               </p>
@@ -435,14 +435,14 @@ function Landing() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-white text-primary shadow-md hover:bg-white/90 hover:text-primary"
+                  className="bg-white text-[oklch(0.35_0.1_155)] shadow-md hover:bg-white/90 hover:text-[oklch(0.32_0.1_155)]"
                 >
                   <Link to="/browse">Browse properties</Link>
                 </Button>
                 <Button
                   asChild
                   size="lg"
-                  className="bg-white text-primary shadow-md hover:bg-white/90 hover:text-primary"
+                  className="bg-white text-[oklch(0.35_0.1_155)] shadow-md hover:bg-white/90 hover:text-[oklch(0.32_0.1_155)]"
                 >
                   <Link to="/register">Create free account</Link>
                 </Button>
@@ -450,7 +450,7 @@ function Landing() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/80 bg-transparent text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+                  className="border-white/80 bg-transparent text-white hover:bg-white/15 hover:text-white"
                 >
                   <Link to="/register" search={{ role: "professional" }}>
                     Apply as professional
@@ -460,7 +460,7 @@ function Landing() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/80 bg-transparent text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+                  className="border-white/80 bg-transparent text-white hover:bg-white/15 hover:text-white"
                 >
                   <Link to="/login">Sign in</Link>
                 </Button>
