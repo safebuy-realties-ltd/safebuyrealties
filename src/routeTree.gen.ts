@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DueDiligenceIndexRouteImport } from './routes/due-diligence.index'
 import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
 import { Route as OnboardingProfessionalRouteImport } from './routes/onboarding.professional'
 import { Route as ListingsListingIdRouteImport } from './routes/listings.$listingId'
@@ -78,6 +79,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DueDiligenceIndexRoute = DueDiligenceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DueDiligenceRoute,
 } as any)
 const PurchaseListingIdRoute = PurchaseListingIdRouteImport.update({
   id: '/purchase/$listingId',
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/due-diligence/': typeof DueDiligenceIndexRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
@@ -336,7 +343,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
-  '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
@@ -345,6 +351,7 @@ export interface FileRoutesByTo {
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/due-diligence': typeof DueDiligenceIndexRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
@@ -392,6 +399,7 @@ export interface FileRoutesById {
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
+  '/due-diligence/': typeof DueDiligenceIndexRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
@@ -440,6 +448,7 @@ export interface FileRouteTypes {
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
+    | '/due-diligence/'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -471,7 +480,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/browse'
-    | '/due-diligence'
     | '/login'
     | '/register'
     | '/activate/$token'
@@ -480,6 +488,7 @@ export interface FileRouteTypes {
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
+    | '/due-diligence'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -526,6 +535,7 @@ export interface FileRouteTypes {
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
+    | '/due-diligence/'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -610,6 +620,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/due-diligence/': {
+      id: '/due-diligence/'
+      path: '/'
+      fullPath: '/due-diligence/'
+      preLoaderRoute: typeof DueDiligenceIndexRouteImport
+      parentRoute: typeof DueDiligenceRoute
     }
     '/purchase/$listingId': {
       id: '/purchase/$listingId'
@@ -889,10 +906,12 @@ declare module '@tanstack/react-router' {
 
 interface DueDiligenceRouteChildren {
   DueDiligenceRequestRoute: typeof DueDiligenceRequestRoute
+  DueDiligenceIndexRoute: typeof DueDiligenceIndexRoute
 }
 
 const DueDiligenceRouteChildren: DueDiligenceRouteChildren = {
   DueDiligenceRequestRoute: DueDiligenceRequestRoute,
+  DueDiligenceIndexRoute: DueDiligenceIndexRoute,
 }
 
 const DueDiligenceRouteWithChildren = DueDiligenceRoute._addFileChildren(
