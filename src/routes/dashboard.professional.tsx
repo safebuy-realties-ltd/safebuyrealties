@@ -16,9 +16,11 @@ function ProfessionalDashboardLayout() {
 
   useEffect(() => {
     if (!isReady || !isAuthenticated || user?.role !== "professional" || isLoading) return;
-    const isIndex = pathname === "/dashboard/professional" || pathname === "/dashboard/professional/";
+    const isIndex =
+      pathname === "/dashboard/professional" || pathname === "/dashboard/professional/";
     const needsOnboarding =
-      !profile || (profile.verifiedStatus !== "VERIFIED" && !isProfessionalProfileComplete(profile));
+      !profile ||
+      (profile.verifiedStatus !== "VERIFIED" && !isProfessionalProfileComplete(profile));
     if (isIndex && needsOnboarding) {
       navigate({ to: "/onboarding/professional" });
     }

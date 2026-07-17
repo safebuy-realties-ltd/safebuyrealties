@@ -56,8 +56,8 @@ function DueDiligenceLandingPage() {
                 <span className="text-primary">on or off the platform.</span>
               </h1>
               <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-                SafeBuyRealties opens a dedicated case, assigns staff review, and delivers a verdict-backed report
-                for any property you want assessed.
+                SafeBuyRealties opens a dedicated case, assigns staff review, and delivers a
+                verdict-backed report for any property you want assessed.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg">
@@ -100,7 +100,9 @@ function DueDiligenceLandingPage() {
                     <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
                       {index + 1}
                     </span>
-                    <span className="text-sm leading-relaxed text-primary-foreground/90">{step}</span>
+                    <span className="text-sm leading-relaxed text-primary-foreground/90">
+                      {step}
+                    </span>
                   </li>
                 ))}
               </ol>
@@ -116,7 +118,8 @@ function DueDiligenceLandingPage() {
                 Structured around Schedules A-D
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Every request is anchored to the four due diligence schedules already used by the operations team.
+                Every request is anchored to the four due diligence schedules already used by the
+                operations team.
               </p>
             </div>
             <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -129,7 +132,9 @@ function DueDiligenceLandingPage() {
                     <schedule.icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-5 text-lg font-semibold text-foreground">{schedule.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{schedule.description}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {schedule.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -172,7 +177,8 @@ function DueDiligenceLandingPage() {
               Ready to open a due diligence case?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-primary-foreground/90">
-              Start with a listing or an address, select your schedules, and get a service ID in minutes.
+              Start with a listing or an address, select your schedules, and get a service ID in
+              minutes.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button

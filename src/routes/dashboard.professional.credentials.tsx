@@ -62,7 +62,12 @@ function ProCredentials() {
     if (profile.verifiedStatus === "VERIFIED") return "verified" as const;
     if (profile.verifiedStatus === "REJECTED") return "rejected" as const;
     if (isProfessionalProfilePendingReview(profile)) return "pending" as const;
-    if (profile.regulatoryBody || profile.licenseNumber || profile.licenseDocumentKey || profile.idDocumentKey) {
+    if (
+      profile.regulatoryBody ||
+      profile.licenseNumber ||
+      profile.licenseDocumentKey ||
+      profile.idDocumentKey
+    ) {
       return "in_progress" as const;
     }
     return "not_started" as const;
@@ -71,9 +76,9 @@ function ProCredentials() {
   const canSubmit = isProfessionalProfileComplete(profile);
   const readyForReview = Boolean(
     regulatoryBody.trim() &&
-      licenseNumber.trim() &&
-      profile?.licenseDocumentKey &&
-      profile?.idDocumentKey,
+    licenseNumber.trim() &&
+    profile?.licenseDocumentKey &&
+    profile?.idDocumentKey,
   );
 
   const handleUpload = async (kind: "license" | "id", file: File | undefined) => {

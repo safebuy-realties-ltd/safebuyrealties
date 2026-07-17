@@ -42,7 +42,10 @@ function toDateInput(iso: string | null) {
   return iso ? iso.slice(0, 10) : "";
 }
 
-function documentMeta(profile: ReturnType<typeof useMyProfileQuery>["data"], kind: ProfessionalDocumentKind) {
+function documentMeta(
+  profile: ReturnType<typeof useMyProfileQuery>["data"],
+  kind: ProfessionalDocumentKind,
+) {
   if (!profile) return { key: null, url: null };
   return kind === "license"
     ? { key: profile.licenseDocumentKey, url: profile.licenseDocumentUrl }
@@ -150,7 +153,10 @@ function ProfessionalOnboardingRoute() {
     return (
       <div className="min-h-screen bg-secondary/30 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl rounded-3xl border border-border/60 bg-card p-8 shadow-[var(--shadow-card)]">
-          <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700">
+          <Badge
+            variant="outline"
+            className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700"
+          >
             Verified
           </Badge>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">
@@ -292,7 +298,9 @@ function ProfessionalOnboardingRoute() {
                   <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Account type
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{professionalTypeLabel}</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    {professionalTypeLabel}
+                  </p>
                 </div>
                 <Button className="mt-6" onClick={() => setStep(2)}>
                   Continue
@@ -393,12 +401,17 @@ function ProfessionalOnboardingRoute() {
                     url: idDoc.url,
                   },
                 ].map((item) => (
-                  <div key={item.kind} className="rounded-2xl border border-border/60 bg-secondary/30 p-4">
+                  <div
+                    key={item.kind}
+                    className="rounded-2xl border border-border/60 bg-secondary/30 p-4"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-foreground">{item.label}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {item.key ? "Uploaded and attached to your profile." : "Required before submission."}
+                          {item.key
+                            ? "Uploaded and attached to your profile."
+                            : "Required before submission."}
                         </p>
                       </div>
                       {item.key ? (
@@ -469,7 +482,9 @@ function ProfessionalOnboardingRoute() {
                       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         Professional type
                       </p>
-                      <p className="mt-1 text-sm font-medium text-foreground">{professionalTypeLabel}</p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {professionalTypeLabel}
+                      </p>
                     </div>
                     <Badge variant="outline">Ready to submit</Badge>
                   </div>

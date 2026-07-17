@@ -45,16 +45,18 @@ const PENDING_KEY = ["professional-credentials", "pending"] as const;
 export function isProfessionalProfileComplete(profile: ProfessionalProfileDto | null | undefined) {
   return Boolean(
     profile?.regulatoryBody.trim() &&
-      profile.licenseNumber.trim() &&
-      profile.licenseDocumentKey &&
-      profile.idDocumentKey,
+    profile.licenseNumber.trim() &&
+    profile.licenseDocumentKey &&
+    profile.idDocumentKey,
   );
 }
 
 export function isProfessionalProfilePendingReview(
   profile: ProfessionalProfileDto | null | undefined,
 ) {
-  return Boolean(profile && profile.verifiedStatus === "PENDING" && isProfessionalProfileComplete(profile));
+  return Boolean(
+    profile && profile.verifiedStatus === "PENDING" && isProfessionalProfileComplete(profile),
+  );
 }
 
 export function isProfessionalProfileRejected(profile: ProfessionalProfileDto | null | undefined) {

@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, FileCheck2, Loader2, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  FileCheck2,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DdCheckSelector, type DdCheckSelection } from "@/components/DdCheckSelector";
@@ -22,7 +29,9 @@ import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/due-diligence/request")({
-  validateSearch: (search: Record<string, unknown>): { listingId?: string; serviceId?: string } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { listingId?: string; serviceId?: string } => ({
     listingId: typeof search.listingId === "string" ? search.listingId : undefined,
     serviceId: typeof search.serviceId === "string" ? search.serviceId : undefined,
   }),
@@ -160,7 +169,9 @@ function DueDiligenceRequestPage() {
   }, [bundlePricing, fullBundle, selectedBundleId, selectorSelection]);
 
   const propertyStepValid =
-    propertySource === "LISTING" ? Boolean(listingId.trim()) : isExternalPropertyValid(externalProperty);
+    propertySource === "LISTING"
+      ? Boolean(listingId.trim())
+      : isExternalPropertyValid(externalProperty);
   const scheduleStepValid = Boolean(selectedBundleId || activeSelection.itemIds.length > 0);
   const canSubmit =
     propertyStepValid &&
@@ -219,7 +230,9 @@ function DueDiligenceRequestPage() {
         window.location.href = payment.authorizationUrl;
       }
     } catch (error) {
-      toast.error(error instanceof ApiError ? error.message : "Could not create the due diligence order.");
+      toast.error(
+        error instanceof ApiError ? error.message : "Could not create the due diligence order.",
+      );
     }
   };
 
@@ -239,13 +252,15 @@ function DueDiligenceRequestPage() {
             </Button>
             <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <Badge className="border-primary/20 bg-primary-soft text-primary">Standalone due diligence</Badge>
+                <Badge className="border-primary/20 bg-primary-soft text-primary">
+                  Standalone due diligence
+                </Badge>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                   Request Schedules A-D for any property
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-                  Choose an on-platform listing or enter an off-platform property, select the checks you need,
-                  and pay to open a due diligence case.
+                  Choose an on-platform listing or enter an off-platform property, select the checks
+                  you need, and pay to open a due diligence case.
                 </p>
               </div>
               {serviceId && (
@@ -280,8 +295,8 @@ function DueDiligenceRequestPage() {
         <section className="mx-auto max-w-5xl px-6 py-10">
           {isAuthenticated && user?.role !== "buyer" && (
             <div className="mb-6 rounded-2xl border border-warning/40 bg-warning/10 px-5 py-4 text-sm text-foreground">
-              You are signed in as <strong>{user?.role}</strong>. This flow supports guests or signed-in buyers only.
-              Sign out or switch to a buyer account before paying.
+              You are signed in as <strong>{user?.role}</strong>. This flow supports guests or
+              signed-in buyers only. Sign out or switch to a buyer account before paying.
             </div>
           )}
 
@@ -304,7 +319,9 @@ function DueDiligenceRequestPage() {
                 <SummaryTile label="Status" value={paidOrder.status.replace(/_/g, " ")} />
               </div>
               <div className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Property</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Property
+                </p>
                 <p className="mt-2 text-base font-medium text-foreground">
                   {paidOrder.property?.title ?? "Standalone property due diligence"}
                 </p>
@@ -335,20 +352,22 @@ function DueDiligenceRequestPage() {
                   <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
                     <h2 className="text-xl font-semibold">1. Choose the property source</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      You can request due diligence for a SafeBuyRealties listing or for a property not yet listed on
-                      the platform.
+                      You can request due diligence for a SafeBuyRealties listing or for a property
+                      not yet listed on the platform.
                     </p>
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
                       {[
                         {
                           value: "LISTING" as const,
                           title: "On-platform listing",
-                          description: "Use an existing SafeBuyRealties listing ID and keep the request attached to that property record.",
+                          description:
+                            "Use an existing SafeBuyRealties listing ID and keep the request attached to that property record.",
                         },
                         {
                           value: "EXTERNAL" as const,
                           title: "Off-platform property",
-                          description: "Enter the address and any available title or seller details for a property outside the marketplace.",
+                          description:
+                            "Enter the address and any available title or seller details for a property outside the marketplace.",
                         },
                       ].map((option) => (
                         <button
@@ -385,7 +404,9 @@ function DueDiligenceRequestPage() {
                           .
                         </p>
                         {listingLoading && listingId.trim() && (
-                          <p className="mt-4 text-sm text-muted-foreground">Loading listing preview…</p>
+                          <p className="mt-4 text-sm text-muted-foreground">
+                            Loading listing preview…
+                          </p>
                         )}
                         {listing && (
                           <div className="mt-4 rounded-2xl border border-border/60 bg-muted/30 p-4">
@@ -393,7 +414,9 @@ function DueDiligenceRequestPage() {
                               <ShieldCheck className="h-4 w-4" />
                               Listing preview
                             </div>
-                            <p className="mt-2 text-base font-semibold text-foreground">{listing.title}</p>
+                            <p className="mt-2 text-base font-semibold text-foreground">
+                              {listing.title}
+                            </p>
                             <p className="text-sm text-muted-foreground">{listing.location}</p>
                           </div>
                         )}
@@ -407,7 +430,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.address}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, address: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                address: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -418,7 +444,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.state}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, state: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                state: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -429,7 +458,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.lga}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, lga: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                lga: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -440,7 +472,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.propertyType}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, propertyType: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                propertyType: event.target.value,
+                              }))
                             }
                             placeholder="Duplex, land, apartment…"
                           />
@@ -452,7 +487,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.approxSize}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, approxSize: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                approxSize: event.target.value,
+                              }))
                             }
                             placeholder="500 sqm, 2 plots…"
                           />
@@ -464,7 +502,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.titleRef}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, titleRef: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                titleRef: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -475,7 +516,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.sellerName}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, sellerName: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                sellerName: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -486,7 +530,10 @@ function DueDiligenceRequestPage() {
                             className="mt-2"
                             value={externalProperty.sellerContact}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, sellerContact: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                sellerContact: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -498,7 +545,10 @@ function DueDiligenceRequestPage() {
                             rows={4}
                             value={externalProperty.notes}
                             onChange={(event) =>
-                              setExternalProperty((current) => ({ ...current, notes: event.target.value }))
+                              setExternalProperty((current) => ({
+                                ...current,
+                                notes: event.target.value,
+                              }))
                             }
                             placeholder="Known concerns, document gaps, access notes, or context for the review team."
                           />
@@ -518,7 +568,8 @@ function DueDiligenceRequestPage() {
                   <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
                     <h2 className="text-xl font-semibold">2. Select the due diligence schedules</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Take the full Schedule A-D bundle or uncheck any individual schedule to create an a la carte order.
+                      Take the full Schedule A-D bundle or uncheck any individual schedule to create
+                      an a la carte order.
                     </p>
                     {fullBundle && (
                       <div className="mt-6 rounded-2xl border border-border/60 bg-secondary/40 p-5">
@@ -528,8 +579,12 @@ function DueDiligenceRequestPage() {
                               <FileCheck2 className="h-4 w-4" />
                               Recommended
                             </div>
-                            <p className="mt-2 text-lg font-semibold text-foreground">{fullBundle.name}</p>
-                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{fullBundle.description}</p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">
+                              {fullBundle.name}
+                            </p>
+                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                              {fullBundle.description}
+                            </p>
                             <ul className="mt-4 grid gap-2 text-sm text-foreground md:grid-cols-2">
                               {fullBundle.items.map((item) => (
                                 <li key={item.id} className="flex items-center gap-2">
@@ -550,10 +605,14 @@ function DueDiligenceRequestPage() {
                               className="mt-4 w-full"
                               variant={selectedBundleId === fullBundle.id ? "default" : "outline"}
                               onClick={() =>
-                                setSelectedBundleId((current) => (current === fullBundle.id ? undefined : fullBundle.id))
+                                setSelectedBundleId((current) =>
+                                  current === fullBundle.id ? undefined : fullBundle.id,
+                                )
                               }
                             >
-                              {selectedBundleId === fullBundle.id ? "Bundle selected" : "Choose full bundle"}
+                              {selectedBundleId === fullBundle.id
+                                ? "Bundle selected"
+                                : "Choose full bundle"}
                             </Button>
                           </div>
                         </div>
@@ -562,18 +621,27 @@ function DueDiligenceRequestPage() {
                     <div className="mt-6">
                       <div className="mb-3 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-foreground">Individual schedules</p>
+                          <p className="text-sm font-medium text-foreground">
+                            Individual schedules
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             If you do not need every schedule, keep only the checks you want below.
                           </p>
                         </div>
                         {selectedBundleId && (
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedBundleId(undefined)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedBundleId(undefined)}
+                          >
                             Switch to custom selection
                           </Button>
                         )}
                       </div>
-                      <DdCheckSelector showInspection={false} onSelectionChange={setSelectorSelection} />
+                      <DdCheckSelector
+                        showInspection={false}
+                        onSelectionChange={setSelectorSelection}
+                      />
                     </div>
                     <div className="mt-8 flex justify-between gap-3">
                       <Button variant="outline" onClick={() => setStep("PROPERTY")}>
@@ -613,7 +681,10 @@ function DueDiligenceRequestPage() {
                           className="mt-2"
                           value={contact.guestEmail}
                           onChange={(event) =>
-                            setContact((current) => ({ ...current, guestEmail: event.target.value }))
+                            setContact((current) => ({
+                              ...current,
+                              guestEmail: event.target.value,
+                            }))
                           }
                         />
                       </div>
@@ -624,7 +695,10 @@ function DueDiligenceRequestPage() {
                           className="mt-2"
                           value={contact.guestPhone}
                           onChange={(event) =>
-                            setContact((current) => ({ ...current, guestPhone: event.target.value }))
+                            setContact((current) => ({
+                              ...current,
+                              guestPhone: event.target.value,
+                            }))
                           }
                         />
                       </div>
@@ -645,7 +719,8 @@ function DueDiligenceRequestPage() {
                   <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
                     <h2 className="text-xl font-semibold">4. Review and pay</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Creating the order generates your service ID and case ID before Paystack checkout starts.
+                      Creating the order generates your service ID and case ID before Paystack
+                      checkout starts.
                     </p>
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
                       <div className="rounded-2xl border border-border/60 p-5">
@@ -660,7 +735,11 @@ function DueDiligenceRequestPage() {
                         <p className="mt-1 text-sm text-muted-foreground">
                           {propertySource === "LISTING"
                             ? listing?.location || listingId
-                            : [externalProperty.address, externalProperty.lga, externalProperty.state]
+                            : [
+                                externalProperty.address,
+                                externalProperty.lga,
+                                externalProperty.state,
+                              ]
                                 .filter(Boolean)
                                 .join(", ")}
                         </p>
@@ -677,7 +756,9 @@ function DueDiligenceRequestPage() {
                     <div className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
-                          {activeSelection.bundleId ? "Full due diligence bundle" : "Selected schedules"}
+                          {activeSelection.bundleId
+                            ? "Full due diligence bundle"
+                            : "Selected schedules"}
                         </span>
                         <span className="font-medium text-foreground">
                           {activeSelection.bundleId
@@ -728,7 +809,9 @@ function DueDiligenceRequestPage() {
 
               <aside className="space-y-4">
                 <div className="rounded-3xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What happens next</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    What happens next
+                  </p>
                   <ol className="mt-4 space-y-4 text-sm">
                     {[
                       "We open a standalone due diligence case and generate a service ID.",
@@ -745,10 +828,15 @@ function DueDiligenceRequestPage() {
                   </ol>
                 </div>
                 <div className="rounded-3xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Current total</p>
-                  <p className="mt-3 text-3xl font-semibold text-foreground">{formatNgn(activeSelection.total)}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Current total
+                  </p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">
+                    {formatNgn(activeSelection.total)}
+                  </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    VAT included. Bundle pricing applies automatically when you choose the full Schedule A-D package.
+                    VAT included. Bundle pricing applies automatically when you choose the full
+                    Schedule A-D package.
                   </p>
                 </div>
               </aside>
@@ -761,11 +849,23 @@ function DueDiligenceRequestPage() {
   );
 }
 
-function SummaryTile({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function SummaryTile({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={`mt-2 text-sm font-medium text-foreground ${mono ? "font-mono" : ""}`}>{value}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className={`mt-2 text-sm font-medium text-foreground ${mono ? "font-mono" : ""}`}>
+        {value}
+      </p>
     </div>
   );
 }

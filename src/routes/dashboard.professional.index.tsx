@@ -44,20 +44,23 @@ function ProOverview() {
   const { data: listingsData } = useListingsQuery();
   const profileComplete = isProfessionalProfileComplete(profile);
   const pendingReview = isProfessionalProfilePendingReview(profile);
-  const showCredentialBanner = !profileLoading && (!profile || profile.verifiedStatus !== "VERIFIED");
+  const showCredentialBanner =
+    !profileLoading && (!profile || profile.verifiedStatus !== "VERIFIED");
   const needsOnboarding = !profile || !profileComplete;
-  const bannerTitle = !profile || !profileComplete
-    ? "Finish your onboarding"
-    : profile.verifiedStatus === "REJECTED"
-      ? "Credentials need changes"
-      : "Credentials pending review";
-  const bannerBody = !profile || !profileComplete
-    ? "Complete your regulatory details and upload both required documents before staff can review your profile."
-    : profile.verifiedStatus === "REJECTED"
-      ? `Staff rejected your last submission${profile.rejectionNote ? `: ${profile.rejectionNote}` : "."}`
-      : pendingReview
-        ? "Your onboarding package is in the staff review queue. You will be notified when it is approved or rejected."
-        : "Add the missing details or documents on your credentials page to become eligible for staff approval.";
+  const bannerTitle =
+    !profile || !profileComplete
+      ? "Finish your onboarding"
+      : profile.verifiedStatus === "REJECTED"
+        ? "Credentials need changes"
+        : "Credentials pending review";
+  const bannerBody =
+    !profile || !profileComplete
+      ? "Complete your regulatory details and upload both required documents before staff can review your profile."
+      : profile.verifiedStatus === "REJECTED"
+        ? `Staff rejected your last submission${profile.rejectionNote ? `: ${profile.rejectionNote}` : "."}`
+        : pendingReview
+          ? "Your onboarding package is in the staff review queue. You will be notified when it is approved or rejected."
+          : "Add the missing details or documents on your credentials page to become eligible for staff approval.";
   const titleById = useMemo(() => {
     const m = new Map<string, string>();
     for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
@@ -85,9 +88,7 @@ function ProOverview() {
           </span>
           <div className="min-w-0">
             <p className="font-semibold text-foreground">{bannerTitle}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {bannerBody}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{bannerBody}</p>
             <Button className="mt-4" size="sm" asChild>
               {needsOnboarding ? (
                 <Link to="/onboarding/professional">Continue</Link>

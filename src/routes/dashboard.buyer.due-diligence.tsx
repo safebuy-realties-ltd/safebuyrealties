@@ -40,7 +40,7 @@ function statusBadgeClass(status: string) {
 
 function BuyerDueDiligencePage() {
   const { data: orders, isLoading, isError, error, refetch } = useStandaloneDdOrdersQuery();
-  const rows = orders ?? [];
+  const rows = useMemo(() => orders ?? [], [orders]);
 
   const stats = useMemo(() => {
     return {
@@ -101,7 +101,8 @@ function BuyerDueDiligencePage() {
             {!isLoading && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
-                  No standalone due diligence cases yet. Start one from the public due diligence page.
+                  No standalone due diligence cases yet. Start one from the public due diligence
+                  page.
                 </TableCell>
               </TableRow>
             )}

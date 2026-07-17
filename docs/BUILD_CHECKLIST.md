@@ -20,19 +20,11 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-07-17
-<<<<<<< HEAD
-- **Tool:** Cursor (Cloud Agent) — standalone due diligence
-- **Last completed:** Step 12 Track A — Standalone Due Diligence
-- **Done this session:** Added Schedule A-D catalog branding and bundle, shipped standalone DD backend/frontend flows, validated local typechecks, smoke, curl lifecycle, and public landing route
-- **Next:** Track B — Professional onboarding E2E
+- **Tool:** Cursor (Cloud Agent) — merged Track A + Track B
+- **Last completed:** Step 12 — Standalone Due Diligence + Professional onboarding E2E
+- **Done this session:** Merged parallel agent branches; schema + standalone DD APIs/UI + pro onboarding docs/wizard/seed
+- **Next:** Integration validation (tsc, tests, local smoke) and demo walkthrough
 - **Blockers:** none
-=======
-- **Tool:** Cursor (Cloud Agent) — professional onboarding E2E
-- **Last completed:** Step 12 Track B — pro onboarding document upload, wizard/gating UX, staff review polish, seed updates
-- **Done this session:** Added pro document upload + approval gating, onboarding flow, credentials resubmit UX, staff doc links, register redirect, and live localhost API walkthrough
-- **Next:** Merge with Track A branch work and resolve unrelated dirty frontend due-diligence route type errors before a clean root `npx tsc --noEmit`
-- **Blockers:** Root frontend typecheck still fails outside Track B in `src/routes/due-diligence.request.tsx` and `src/routes/due-diligence.tsx`, which were already dirty in this worktree and are out of scope for pro onboarding
->>>>>>> origin/goodness/pro-onboarding-e2e-69e9
 
 ---
 

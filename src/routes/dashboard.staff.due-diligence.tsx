@@ -39,12 +39,19 @@ function statusBadgeClass(status: string) {
 
 function StaffDueDiligenceQueuePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const { data: orders, isLoading, isError, error, refetch } = useStandaloneDdOrdersQuery(
-    statusFilter === "all" ? undefined : statusFilter,
-  );
+  const {
+    data: orders,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useStandaloneDdOrdersQuery(statusFilter === "all" ? undefined : statusFilter);
 
   const rows = useMemo(
-    () => (orders ?? []).filter((row) => row.status !== "PENDING_PAYMENT" || statusFilter === "PENDING_PAYMENT"),
+    () =>
+      (orders ?? []).filter(
+        (row) => row.status !== "PENDING_PAYMENT" || statusFilter === "PENDING_PAYMENT",
+      ),
     [orders, statusFilter],
   );
 
@@ -163,10 +170,12 @@ function StaffDueDiligenceCard({ row }: { row: StandaloneDdOrderDto }) {
           </p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span>
-              <strong className="text-foreground">Service ID:</strong> <span className="font-mono">{row.serviceId}</span>
+              <strong className="text-foreground">Service ID:</strong>{" "}
+              <span className="font-mono">{row.serviceId}</span>
             </span>
             <span>
-              <strong className="text-foreground">Case ID:</strong> <span className="font-mono">{row.caseId}</span>
+              <strong className="text-foreground">Case ID:</strong>{" "}
+              <span className="font-mono">{row.caseId}</span>
             </span>
             <span>
               <strong className="text-foreground">Total:</strong> {formatNgn(row.total)}
@@ -245,7 +254,10 @@ function StaffDueDiligenceCard({ row }: { row: StandaloneDdOrderDto }) {
         >
           Mark in progress
         </Button>
-        <Button onClick={() => void updateStatus("COMPLETE")} disabled={!canManage || updateOrder.isPending}>
+        <Button
+          onClick={() => void updateStatus("COMPLETE")}
+          disabled={!canManage || updateOrder.isPending}
+        >
           Mark complete
         </Button>
       </div>
