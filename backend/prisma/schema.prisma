@@ -124,6 +124,8 @@ model User {
   savedProperties    SavedProperty[]     @relation("BuyerSaved")
   inspectionRequests InspectionSlot[]    @relation("InspectionRequester")
   inspectionAssigned InspectionSlot[]    @relation("InspectionProfessional")
+  externalProperties ExternalProperty[]  @relation("ExternalPropertyOwner")
+  standaloneDdOrders DueDiligenceOrder[] @relation("DdOrderBuyer")
 }
 
 model Listing {
@@ -159,6 +161,7 @@ model Listing {
   powerOfAttorneys PowerOfAttorney[]
   savedBy          SavedProperty[]
   inspectionSlots  InspectionSlot[]
+  dueDiligenceOrders DueDiligenceOrder[]
 
   @@index([sellerId, status])
 }
@@ -230,20 +233,27 @@ model Task {
 
 model Transaction {
   id        String              @id @default(uuid())
-  listingId String
-  listing   Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  /// Null for standalone (off-platform) due diligence cases
+  listingId String?
+  listing   Listing?            @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyerId   String
   buyer     User                @relation("BuyerTransactions", fields: [buyerId], references: [id])
   /// SBR due diligence case ID e.g. SBR-CASE-DD-LOS-20260609-001
   caseId    String?             @unique
+  /// LISTING (default) or STANDALONE
+  source    String              @default("LISTING")
   status    TransactionStatus   @default(INITIATED)
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   serviceRequest ServiceRequest?
+  dueDiligenceOrder DueDiligenceOrder?
   payments  Payment[]
   powerOfAttorney PowerOfAttorney?
   escrow    Escrow?
   payouts   Payout[]
+
+  @@index([buyerId])
+  @@index([listingId])
 }
 
 model Payment {
@@ -296,18 +306,22 @@ model PlatformConfig {
 }
 
 model ProfessionalProfile {
-  id             String    @id @default(uuid())
-  userId         String    @unique
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  regulatoryBody String
-  licenseNumber  String
-  licenseExpiry  DateTime?
-  verifiedStatus String    @default("PENDING")
-  verifiedById   String?
-  verifiedAt     DateTime?
-  rejectionNote  String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  regulatoryBody     String
+  licenseNumber      String
+  licenseExpiry      DateTime?
+  /// Storage key for uploaded professional license / certificate
+  licenseDocumentKey String?
+  /// Storage key for government ID used during onboarding
+  idDocumentKey      String?
+  verifiedStatus     String    @default("PENDING")
+  verifiedById       String?
+  verifiedAt         DateTime?
+  rejectionNote      String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model ServiceCatalogItem {
@@ -350,21 +364,67 @@ model BundleItem {
 }
 
 model DueDiligenceOrder {
-  id            String   @id @default(uuid())
-  transactionId String   @unique
-  buyerId       String
+  id                 String            @id @default(uuid())
+  transactionId      String?           @unique
+  transaction        Transaction?      @relation(fields: [transactionId], references: [id])
+  buyerId            String
+  buyer              User              @relation("DdOrderBuyer", fields: [buyerId], references: [id])
+  /// Platform listing when DD is for an on-platform property
+  listingId          String?
+  listing            Listing?          @relation(fields: [listingId], references: [id])
+  /// Off-platform property subject
+  externalPropertyId String?
+  externalProperty   ExternalProperty? @relation(fields: [externalPropertyId], references: [id])
   /// SBR service request ID e.g. SBR-SRV-BUY-20260609-001
-  serviceId     String?  @unique
-  bundleId      String?
-  itemIds       Json     @default("[]")
-  subtotal      Decimal  @db.Decimal(18, 2)
-  vatAmount     Decimal  @db.Decimal(18, 2)
-  total         Decimal  @db.Decimal(18, 2)
-  status        String   @default("PENDING")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  serviceId          String?           @unique
+  /// SBR case ID e.g. SBR-CASE-DD-LOS-20260609-001
+  caseId             String?           @unique
+  /// LISTING or STANDALONE
+  source             String            @default("LISTING")
+  bundleId           String?
+  itemIds            Json              @default("[]")
+  subtotal           Decimal           @db.Decimal(18, 2)
+  vatAmount          Decimal           @db.Decimal(18, 2)
+  total              Decimal           @db.Decimal(18, 2)
+  /// PENDING | PAID | IN_PROGRESS | COMPLETE | CANCELLED
+  status             String            @default("PENDING")
+  /// PROCEED | PROCEED_WITH_CAUTION | DO_NOT_PROCEED
+  verdict            String?
+  reportStorageKeys  Json              @default("[]")
+  staffNotes         String?
+  completedAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
+  @@index([buyerId])
+  @@index([status])
+  @@index([externalPropertyId])
   @@map("due_diligence_orders")
+}
+
+/// Off-platform property submitted for standalone due diligence.
+model ExternalProperty {
+  id              String              @id @default(uuid())
+  createdById     String?
+  createdBy       User?               @relation("ExternalPropertyOwner", fields: [createdById], references: [id])
+  address         String
+  lga             String?
+  state           String
+  propertyType    String?
+  approxSize      String?
+  titleRef        String?
+  sellerName      String?
+  sellerContact   String?
+  notes           String?
+  /// Client-uploaded supporting docs (storage keys)
+  documentKeys    Json                @default("[]")
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  serviceRequests ServiceRequest[]
+  dueDiligenceOrders DueDiligenceOrder[]
+
+  @@index([createdById])
+  @@map("external_properties")
 }
 
 model PowerOfAttorney {
@@ -506,33 +566,39 @@ model IdSequence {
   @@map("id_sequences")
 }
 
-/// Guest buyer service order created before payment (main order reference).
+/// Guest / standalone service order created before payment (main order reference).
 model ServiceRequest {
-  id               String   @id @default(uuid())
+  id                String            @id @default(uuid())
   /// SBR-SRV-BUY-YYYYMMDD-NNN
-  serviceId        String   @unique
-  listingId        String
-  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  buyerId          String?
-  guestName        String
-  guestEmail       String
-  guestPhone       String
-  bundleId         String?
-  itemIds          Json     @default("[]")
-  includeInspection Boolean @default(false)
-  inspectionFee    Decimal  @default(0) @db.Decimal(18, 2)
-  subtotal         Decimal  @db.Decimal(18, 2)
-  vatAmount        Decimal  @db.Decimal(18, 2)
-  total            Decimal  @db.Decimal(18, 2)
+  serviceId         String            @unique
+  /// Null when order is for an off-platform ExternalProperty
+  listingId         String?
+  listing           Listing?          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  externalPropertyId String?
+  externalProperty  ExternalProperty? @relation(fields: [externalPropertyId], references: [id])
+  buyerId           String?
+  guestName         String
+  guestEmail        String
+  guestPhone        String
+  bundleId          String?
+  itemIds           Json              @default("[]")
+  includeInspection Boolean           @default(false)
+  inspectionFee     Decimal           @default(0) @db.Decimal(18, 2)
+  subtotal          Decimal           @db.Decimal(18, 2)
+  vatAmount         Decimal           @db.Decimal(18, 2)
+  total             Decimal           @db.Decimal(18, 2)
   /// SBR-CASE-DD-LOC-YYYYMMDD-NNN
-  caseId           String   @unique
-  transactionId    String?  @unique
-  transaction      Transaction? @relation(fields: [transactionId], references: [id])
-  status           String   @default("PENDING_PAYMENT")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  caseId            String            @unique
+  transactionId     String?           @unique
+  transaction       Transaction?      @relation(fields: [transactionId], references: [id])
+  /// LISTING or STANDALONE
+  source            String            @default("LISTING")
+  status            String            @default("PENDING_PAYMENT")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([listingId])
+  @@index([externalPropertyId])
   @@index([guestEmail])
   @@map("service_requests")
 }
