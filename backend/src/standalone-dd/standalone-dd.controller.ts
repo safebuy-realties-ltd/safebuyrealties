@@ -48,6 +48,14 @@ export class StandaloneDdController {
     return this.standaloneDd.initiatePayment(serviceId, dto);
   }
 
+  @Post("orders/:serviceId/verify")
+  verifyPayment(
+    @Param("serviceId") serviceId: string,
+    @Body() body: { reference?: string },
+  ) {
+    return this.standaloneDd.verifyPayment(serviceId, body?.reference);
+  }
+
   @Get("orders/:serviceId")
   getOrder(@Param("serviceId") serviceId: string) {
     return this.standaloneDd.getOrder(serviceId);

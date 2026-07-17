@@ -29,6 +29,17 @@ export function notificationEntityTarget(
         return { to: "/dashboard/staff/workflow" };
       }
       return null;
+    case "DueDiligenceOrder":
+      if (role === "buyer") {
+        return { to: "/dashboard/buyer/due-diligence" };
+      }
+      if (role === "staff" || role === "admin") {
+        return {
+          to: "/dashboard/staff/due-diligence",
+          search: { serviceId: entityId },
+        };
+      }
+      return null;
     case "Task":
       if (role === "professional") {
         return { to: `/dashboard/professional/tasks/${entityId}` };

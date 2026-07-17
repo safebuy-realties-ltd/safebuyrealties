@@ -581,7 +581,7 @@ export class GuestCheckoutService {
       serviceRequest.includeInspection,
     );
 
-    const activationLink = `${this.activationBaseUrl()}/activate?token=${activationToken}`;
+    const activationLink = `${this.activationBaseUrl()}/activate/${activationToken}`;
     void this.email.sendPaymentReceipt(buyer.email, {
       serviceId: serviceRequest.serviceId,
       transactionPublicId: payment.transactionPublicId ?? payment.id,

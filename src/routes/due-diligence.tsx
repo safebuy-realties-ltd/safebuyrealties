@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -11,6 +12,8 @@ import {
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/due-diligence")({
   component: DueDiligenceLandingPage,
@@ -40,6 +43,9 @@ const schedules = [
 ] as const;
 
 function DueDiligenceLandingPage() {
+  const navigate = useNavigate();
+  const [lookupId, setLookupId] = useState("");
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -85,25 +91,56 @@ function DueDiligenceLandingPage() {
                 </span>
               </div>
             </div>
-            <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-elegant)]">
-              <p className="text-sm font-semibold uppercase tracking-wider text-white/80">
-                How the service works
-              </p>
-              <ol className="mt-6 space-y-5">
-                {[
-                  "Choose a live SafeBuyRealties listing or enter an off-platform property address.",
-                  "Select individual schedules or the full due diligence bundle.",
-                  "Pay to open the case and receive your service ID and case reference.",
-                  "Our staff progress the case to complete and attach the final report.",
-                ].map((step, index) => (
-                  <li key={step} className="flex gap-4">
-                    <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm leading-relaxed text-white/90">{step}</span>
-                  </li>
-                ))}
-              </ol>
+            <div className="space-y-4">
+              <div className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+                <Label htmlFor="serviceIdLookup">Already have a Service ID?</Label>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Guests can look up a case without signing in.
+                </p>
+                <form
+                  className="mt-4 flex flex-col gap-3 sm:flex-row"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const serviceId = lookupId.trim();
+                    if (!serviceId) return;
+                    void navigate({
+                      to: "/due-diligence/request",
+                      search: { serviceId },
+                    });
+                  }}
+                >
+                  <Input
+                    id="serviceIdLookup"
+                    value={lookupId}
+                    onChange={(event) => setLookupId(event.target.value)}
+                    placeholder="SBR-SRV-BUY-…"
+                    className="font-mono"
+                  />
+                  <Button type="submit" variant="outline">
+                    Look up
+                  </Button>
+                </form>
+              </div>
+              <div className="rounded-3xl bg-hero-gradient p-8 text-white shadow-[var(--shadow-elegant)]">
+                <p className="text-sm font-semibold uppercase tracking-wider text-white/80">
+                  How the service works
+                </p>
+                <ol className="mt-6 space-y-5">
+                  {[
+                    "Choose a live SafeBuyRealties listing or enter an off-platform property address.",
+                    "Select individual schedules or the full due diligence bundle.",
+                    "Pay to open the case and receive your service ID and case reference.",
+                    "Our staff progress the case to complete and attach the final report.",
+                  ].map((step, index) => (
+                    <li key={step} className="flex gap-4">
+                      <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm leading-relaxed text-white/90">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           </div>
         </section>
@@ -192,7 +229,7 @@ function DueDiligenceLandingPage() {
                 variant="outline"
                 className="border-white/80 bg-transparent text-white hover:bg-white/15 hover:text-white"
               >
-                <Link to="/dashboard/buyer/due-diligence">Track my cases</Link>
+                <Link to="/due-diligence/request">Track with Service ID</Link>
               </Button>
             </div>
           </div>

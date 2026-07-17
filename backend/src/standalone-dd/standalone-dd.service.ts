@@ -971,7 +971,7 @@ export class StandaloneDdService {
           expiresAt,
         },
       });
-      activationLink = `${this.activationBaseUrl()}/activate?token=${activationToken}`;
+      activationLink = `${this.activationBaseUrl()}/activate/${activationToken}`;
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -1063,16 +1063,85 @@ export class StandaloneDdService {
       type: NotificationType.DD_PAYMENT_SUCCEEDED,
       title: "Due diligence payment received",
       body: `Your standalone due diligence payment for "${propertyTitle}" was successful.`,
-      entityId: payment.transactionId ?? payment.id,
-      entityType: NotificationEntityType.Transaction,
+      entityId: serviceRequest.serviceId,
+      entityType: NotificationEntityType.DueDiligenceOrder,
     });
     void this.notifications.createForStaff({
       type: NotificationType.DD_PAYMENT_SUCCEEDED,
       title: "Standalone due diligence payment received",
-      body: `A client paid for standalone due diligence on "${propertyTitle}".`,
-      entityId: payment.transactionId ?? payment.id,
-      entityType: NotificationEntityType.Transaction,
+      body: `${serviceRequest.guestName} paid for standalone due diligence on "${propertyTitle}" (${serviceRequest.serviceId}).`,
+      entityId: serviceRequest.serviceId,
+      entityType: NotificationEntityType.DueDiligenceOrder,
     });
+    void this.email.sendStaffDdAlert({
+      serviceId: serviceRequest.serviceId,
+      caseId: serviceRequest.caseId,
+      guestName: serviceRequest.guestName,
+      guestEmail: serviceRequest.guestEmail,
+      guestPhone: serviceRequest.guestPhone,
+      propertyTitle,
+      propertyLocation,
+      services,
+      total: serviceRequest.total.toFixed(2),
+      currency: payment.currency,
+    });
+  }
+
+  /**
+   * Public callback helper: confirm Paystack charge (or mock) for a guest order
+   * after redirect without requiring JWT.
+   */
+  async verifyPayment(serviceId: string, reference?: string) {
+    const order = await this.prisma.serviceRequest.findUnique({
+      where: { serviceId },
+      include: this.orderInclude(),
+    });
+    if (!order) throw new NotFoundException("Order not found");
+
+    const latestPayment = order.transaction?.payments?.[0] ?? null;
+    if (!latestPayment) {
+      throw new BadRequestException("No payment found for this order");
+    }
+
+    if (
+      latestPayment.status === PaymentStatus.SUCCEEDED ||
+      order.status === REQUEST_STATUS.PAID
+    ) {
+      return this.getOrder(serviceId);
+    }
+
+    const ref = (reference ?? latestPayment.providerReference)?.trim();
+    if (!ref) {
+      throw new BadRequestException("Payment has no provider reference to verify");
+    }
+
+    if (ref.startsWith("mock_")) {
+      await this.completePayment(latestPayment.id);
+      return this.getOrder(serviceId);
+    }
+
+    if (!this.paystack.isConfigured()) {
+      throw new ServiceUnavailableException("Payment gateway is not configured");
+    }
+
+    let paystackStatus: string | undefined;
+    try {
+      paystackStatus = await this.paystack.verifyTransaction(ref);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Paystack verify failed";
+      throw new BadRequestException(message);
+    }
+
+    if (paystackStatus !== "success") {
+      throw new BadRequestException(`Payment not successful (status: ${paystackStatus ?? "unknown"})`);
+    }
+
+    await this.prisma.payment.update({
+      where: { id: latestPayment.id },
+      data: { providerReference: ref },
+    });
+    await this.completePayment(latestPayment.id);
+    return this.getOrder(serviceId);
   }
 
   private async resolveServiceLabels(
