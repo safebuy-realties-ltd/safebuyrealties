@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/staff/due-diligence")({
+  validateSearch: (search: Record<string, unknown>): { serviceId?: string } => ({
+    serviceId: typeof search.serviceId === "string" ? search.serviceId : undefined,
+  }),
   component: StaffDueDiligenceQueuePage,
 });
 
@@ -38,6 +41,7 @@ function statusBadgeClass(status: string) {
 }
 
 function StaffDueDiligenceQueuePage() {
+  const { serviceId: highlightServiceId } = Route.useSearch();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const {
     data: orders,
@@ -47,13 +51,17 @@ function StaffDueDiligenceQueuePage() {
     refetch,
   } = useStandaloneDdOrdersQuery(statusFilter === "all" ? undefined : statusFilter);
 
-  const rows = useMemo(
-    () =>
-      (orders ?? []).filter(
-        (row) => row.status !== "PENDING_PAYMENT" || statusFilter === "PENDING_PAYMENT",
-      ),
-    [orders, statusFilter],
-  );
+  const rows = useMemo(() => {
+    const filtered = (orders ?? []).filter(
+      (row) => row.status !== "PENDING_PAYMENT" || statusFilter === "PENDING_PAYMENT",
+    );
+    if (!highlightServiceId) return filtered;
+    return [...filtered].sort((a, b) => {
+      if (a.serviceId === highlightServiceId) return -1;
+      if (b.serviceId === highlightServiceId) return 1;
+      return 0;
+    });
+  }, [orders, statusFilter, highlightServiceId]);
 
   const stats = useMemo(() => {
     const list = orders ?? [];
@@ -64,12 +72,24 @@ function StaffDueDiligenceQueuePage() {
     };
   }, [orders]);
 
+  useEffect(() => {
+    if (!highlightServiceId) return;
+    const el = document.getElementById(`dd-case-${highlightServiceId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [highlightServiceId, rows.length]);
+
   return (
     <>
       <PageHeader
         title="Due diligence queue"
         description="Advance standalone due diligence cases, record verdicts, and upload reports."
       />
+      {highlightServiceId && (
+        <div className="mb-4 rounded-xl border border-primary/30 bg-primary-soft px-4 py-3 text-sm text-foreground">
+          Opened from notification for{" "}
+          <span className="font-mono font-medium">{highlightServiceId}</span>
+        </div>
+      )}
 
       {isError && (
         <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -107,14 +127,24 @@ function StaffDueDiligenceQueuePage() {
           </div>
         )}
         {rows.map((row) => (
-          <StaffDueDiligenceCard key={row.serviceId} row={row} />
+          <StaffDueDiligenceCard
+            key={row.serviceId}
+            row={row}
+            highlighted={row.serviceId === highlightServiceId}
+          />
         ))}
       </div>
     </>
   );
 }
 
-function StaffDueDiligenceCard({ row }: { row: StandaloneDdOrderDto }) {
+function StaffDueDiligenceCard({
+  row,
+  highlighted = false,
+}: {
+  row: StandaloneDdOrderDto;
+  highlighted?: boolean;
+}) {
   const updateOrder = useUpdateStandaloneDdOrderMutation();
   const uploadReport = useUploadStandaloneDdReportMutation();
   const [verdict, setVerdict] = useState(row.verdict ?? "");
@@ -154,7 +184,12 @@ function StaffDueDiligenceCard({ row }: { row: StandaloneDdOrderDto }) {
   const canManage = row.status !== "PENDING_PAYMENT";
 
   return (
-    <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+    <article
+      id={`dd-case-${row.serviceId}`}
+      className={`rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] ${
+        highlighted ? "border-primary ring-1 ring-primary/30" : "border-border/60"
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">

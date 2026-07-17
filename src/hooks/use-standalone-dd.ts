@@ -152,6 +152,31 @@ export function usePayStandaloneDdOrderMutation() {
   });
 }
 
+export function useVerifyStandaloneDdPaymentMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ serviceId, reference }: { serviceId: string; reference?: string }) =>
+      apiRequest<StandaloneDdOrderDto>(`/standalone-dd/orders/${serviceId}/verify`, {
+        method: "POST",
+        body: JSON.stringify({ reference }),
+      }).then((envelope) => envelope.data),
+    onSuccess: (order) => {
+      void qc.invalidateQueries({ queryKey: ["standalone-dd", "order", order.serviceId] });
+      void qc.invalidateQueries({ queryKey: STANDALONE_DD_QUERY_KEY });
+    },
+  });
+}
+
+export function isStandaloneDdPaid(order: StandaloneDdOrderDto | null | undefined) {
+  if (!order) return false;
+  const paidStatuses = new Set(["PAID", "IN_PROGRESS", "COMPLETE"]);
+  return (
+    paidStatuses.has(order.status) ||
+    order.requestStatus === "PAID" ||
+    order.paymentStatus === "SUCCEEDED"
+  );
+}
+
 export function useUpdateStandaloneDdOrderMutation() {
   const qc = useQueryClient();
   return useMutation({

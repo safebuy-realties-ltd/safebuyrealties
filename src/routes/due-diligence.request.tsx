@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,9 +20,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useListingQuery } from "@/hooks/use-listings";
 import { type ServiceBundle, useServiceBundlesQuery } from "@/hooks/use-service-catalog";
 import {
+  isStandaloneDdPaid,
   useCreateStandaloneDdOrderMutation,
   usePayStandaloneDdOrderMutation,
   useStandaloneDdOrderQuery,
+  useVerifyStandaloneDdPaymentMutation,
 } from "@/hooks/use-standalone-dd";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
@@ -31,9 +33,20 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/due-diligence/request")({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { listingId?: string; serviceId?: string } => ({
+  ): {
+    listingId?: string;
+    serviceId?: string;
+    ref?: string;
+    reference?: string;
+    paymentId?: string;
+    mock?: string;
+  } => ({
     listingId: typeof search.listingId === "string" ? search.listingId : undefined,
     serviceId: typeof search.serviceId === "string" ? search.serviceId : undefined,
+    ref: typeof search.ref === "string" ? search.ref : undefined,
+    reference: typeof search.reference === "string" ? search.reference : undefined,
+    paymentId: typeof search.paymentId === "string" ? search.paymentId : undefined,
+    mock: typeof search.mock === "string" ? search.mock : undefined,
   }),
   component: DueDiligenceRequestPage,
 });
@@ -100,7 +113,13 @@ function fullDdBundle(bundles: ServiceBundle[] | undefined) {
 }
 
 function DueDiligenceRequestPage() {
-  const { listingId: listingIdSearch, serviceId: serviceIdSearch } = Route.useSearch();
+  const {
+    listingId: listingIdSearch,
+    serviceId: serviceIdSearch,
+    ref: refSearch,
+    reference: referenceSearch,
+    mock: mockSearch,
+  } = Route.useSearch();
   const { user, isAuthenticated } = useAuth();
   const { data: bundles } = useServiceBundlesQuery();
   const fullBundle = useMemo(() => fullDdBundle(bundles), [bundles]);
@@ -128,16 +147,73 @@ function DueDiligenceRequestPage() {
     guestPhone: "",
   });
   const [serviceId, setServiceId] = useState<string | null>(serviceIdSearch ?? null);
-  const [paidServiceId, setPaidServiceId] = useState<string | null>(serviceIdSearch ?? null);
+  const [paidServiceId, setPaidServiceId] = useState<string | null>(null);
+  const [verifyingReturn, setVerifyingReturn] = useState(Boolean(serviceIdSearch));
 
   const createOrder = useCreateStandaloneDdOrderMutation();
   const payOrder = usePayStandaloneDdOrderMutation();
-  const { data: paidOrder } = useStandaloneDdOrderQuery(paidServiceId);
-  const hasConfirmedPayment = Boolean(paidOrder && paidOrder.status !== "PENDING_PAYMENT");
+  const verifyPayment = useVerifyStandaloneDdPaymentMutation();
+  const trackServiceId = paidServiceId ?? serviceIdSearch ?? serviceId;
+  const { data: paidOrder, refetch: refetchPaidOrder } = useStandaloneDdOrderQuery(trackServiceId);
+  const hasConfirmedPayment = isStandaloneDdPaid(paidOrder);
   const shouldResolveListing = propertySource === "LISTING" && listingId.trim().length > 0;
   const { data: listing, isLoading: listingLoading } = useListingQuery(
     shouldResolveListing ? listingId.trim() : "",
   );
+
+  useEffect(() => {
+    if (fullBundle?.id && !selectedBundleId) {
+      setSelectedBundleId(fullBundle.id);
+    }
+  }, [fullBundle?.id, selectedBundleId]);
+
+  useEffect(() => {
+    if (!serviceIdSearch) {
+      setVerifyingReturn(false);
+      return;
+    }
+
+    let cancelled = false;
+    const reference = referenceSearch ?? refSearch;
+    setServiceId(serviceIdSearch);
+    setVerifyingReturn(true);
+
+    (async () => {
+      try {
+        if (mockSearch === "1" || reference || paidOrder?.paymentReference) {
+          const verified = await verifyPayment.mutateAsync({
+            serviceId: serviceIdSearch,
+            reference: reference ?? paidOrder?.paymentReference ?? undefined,
+          });
+          if (!cancelled && isStandaloneDdPaid(verified)) {
+            setPaidServiceId(serviceIdSearch);
+            toast.success("Payment confirmed. Your due diligence case is open.");
+          }
+        } else {
+          const { data } = await refetchPaidOrder();
+          if (!cancelled && isStandaloneDdPaid(data)) {
+            setPaidServiceId(serviceIdSearch);
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            error instanceof ApiError
+              ? error.message
+              : "Could not confirm payment yet. Keep your Service ID and try again shortly.",
+          );
+        }
+      } finally {
+        if (!cancelled) setVerifyingReturn(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally run once on return-from-pay params.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceIdSearch, mockSearch, refSearch, referenceSearch]);
 
   const bundlePricing = useMemo(() => {
     if (!fullBundle) return { subtotal: 0, vat: 0, total: 0 };
@@ -170,7 +246,7 @@ function DueDiligenceRequestPage() {
 
   const propertyStepValid =
     propertySource === "LISTING"
-      ? Boolean(listingId.trim())
+      ? Boolean(listingId.trim() && listing)
       : isExternalPropertyValid(externalProperty);
   const scheduleStepValid = Boolean(selectedBundleId || activeSelection.itemIds.length > 0);
   const canSubmit =
@@ -300,7 +376,15 @@ function DueDiligenceRequestPage() {
             </div>
           )}
 
-          {hasConfirmedPayment && paidOrder ? (
+          {verifyingReturn && !hasConfirmedPayment ? (
+            <div className="rounded-3xl border border-border/60 bg-card p-8 text-center shadow-[var(--shadow-card)]">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <h2 className="mt-4 text-xl font-semibold">Confirming your payment…</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Hang tight while we verify the charge and open your due diligence case.
+              </p>
+            </div>
+          ) : hasConfirmedPayment && paidOrder ? (
             <div className="rounded-3xl border border-border/60 bg-card p-8 shadow-[var(--shadow-elegant)]">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
@@ -309,7 +393,8 @@ function DueDiligenceRequestPage() {
                 <div>
                   <h2 className="text-2xl font-semibold">Payment confirmed</h2>
                   <p className="text-sm text-muted-foreground">
-                    Your standalone due diligence case is open and ready for staff review.
+                    Your standalone due diligence case is open. SafeBuy staff have been notified and
+                    will progress the checks.
                   </p>
                 </div>
               </div>
@@ -327,21 +412,28 @@ function DueDiligenceRequestPage() {
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">{paidOrder.property?.location}</p>
               </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Save your Service ID. You can reopen this confirmation anytime with that ID — no
+                account required.
+              </p>
               <div className="mt-6 flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link to="/due-diligence/request" search={{ serviceId: paidOrder.serviceId }}>
+                    View this case again
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
                 {isAuthenticated && user?.role === "buyer" ? (
-                  <Button asChild>
-                    <Link to="/dashboard/buyer/due-diligence">
-                      View my cases
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                  <Button variant="outline" asChild>
+                    <Link to="/dashboard/buyer/due-diligence">Open buyer dashboard</Link>
                   </Button>
                 ) : (
-                  <Button asChild>
-                    <Link to="/login">Sign in to track this case</Link>
+                  <Button variant="outline" asChild>
+                    <Link to="/login">Sign in after activation email</Link>
                   </Button>
                 )}
                 <Button variant="outline" asChild>
-                  <Link to="/due-diligence">Start another request</Link>
+                  <Link to="/due-diligence/request">Start another request</Link>
                 </Button>
               </div>
             </div>

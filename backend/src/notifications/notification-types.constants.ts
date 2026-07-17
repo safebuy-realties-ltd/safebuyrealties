@@ -25,6 +25,7 @@ export const NotificationEntityType = {
   VerificationStep: "VerificationStep",
   KycRecord: "KycRecord",
   ProfessionalProfile: "ProfessionalProfile",
+  DueDiligenceOrder: "DueDiligenceOrder",
 } as const;
 
 export type NotificationEntityTypeValue =

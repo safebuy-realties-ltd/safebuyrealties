@@ -34,6 +34,17 @@ export const Route = createFileRoute("/")({
 
 const heroPaths = [
   {
+    id: "due-diligence",
+    label: "I need due diligence",
+    headline: "Verify before you pay",
+    description:
+      "Order Schedules A–D for any property — on SafeBuy or off-platform. No account required to start.",
+    icon: ClipboardCheck,
+    to: "/due-diligence/request" as const,
+    accent: "from-teal-500/15 to-emerald-600/10",
+    featured: true,
+  },
+  {
     id: "buying",
     label: "I'm buying",
     headline: "Find a verified home",
@@ -68,6 +79,23 @@ const heroPaths = [
 ] as const;
 
 const personas = [
+  {
+    id: "due-diligence",
+    icon: ClipboardCheck,
+    title: "Due diligence clients",
+    headline: "Our flagship protection service",
+    description:
+      "Whether the property is listed here or you found it elsewhere, run Legal, Environmental, Physical, and Security checks — then pay and let SafeBuy coordinate the report.",
+    benefits: [
+      { icon: ShieldCheck, text: "No signup required to request and pay" },
+      { icon: FileCheck2, text: "Schedules A–D or the full due diligence bundle" },
+      { icon: BadgeCheck, text: "Staff-managed case with a clear proceed verdict" },
+    ],
+    cta: { label: "Request due diligence", to: "/due-diligence/request" as const },
+    gradient:
+      "bg-gradient-to-br from-teal-50 to-emerald-100/50 dark:from-teal-950/40 dark:to-emerald-900/20",
+    iconBg: "bg-teal-700 text-white",
+  },
   {
     id: "buyers",
     icon: ShoppingBag,
@@ -166,25 +194,34 @@ function Landing() {
                 Nigeria&apos;s verified property marketplace
               </div>
               <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-                Buy and sell real estate{" "}
-                <span className="text-primary">with proof, not promises.</span>
+                Verify before you pay —{" "}
+                <span className="text-primary">due diligence that protects every deal.</span>
               </h1>
               <p className="mx-auto mt-5 max-w-2xl text-balance text-lg text-muted-foreground">
-                SafeBuyRealties verifies every listing, connects licensed professionals, and secures
-                payments through escrow — so buyers, sellers, and experts all work from the same
-                trusted record.
+                SafeBuyRealties&apos; flagship service is standalone due diligence for any property
+                in Nigeria. Browse verified listings, list with proof, or join as a licensed
+                professional — all on the same trusted platform.
               </p>
             </div>
 
-            {/* Three prominent paths */}
-            <div className="mx-auto mt-12 grid max-w-5xl gap-4 md:grid-cols-3">
+            {/* Four prominent paths — due diligence first */}
+            <div className="mx-auto mt-12 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {heroPaths.map((path) => (
                 <Link
                   key={path.id}
                   to={path.to}
                   search={"search" in path ? path.search : undefined}
-                  className={`group relative flex flex-col rounded-2xl border border-border/60 bg-gradient-to-br ${path.accent} p-6 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]`}
+                  className={`group relative flex flex-col rounded-2xl border bg-gradient-to-br ${path.accent} p-6 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)] ${
+                    "featured" in path && path.featured
+                      ? "border-primary/40 ring-1 ring-primary/20"
+                      : "border-border/60"
+                  }`}
                 >
+                  {"featured" in path && path.featured && (
+                    <span className="absolute top-3 right-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+                      Flagship
+                    </span>
+                  )}
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                     <path.icon className="h-5 w-5" />
                   </span>
@@ -195,8 +232,8 @@ function Landing() {
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                     {path.description}
                   </p>
-                  <span className="mt-4 inline-flex items-center text-sm font-medium text-primary group-hover:gap-2 transition-all">
-                    Get started
+                  <span className="mt-4 inline-flex items-center text-sm font-medium text-primary transition-all group-hover:gap-2">
+                    {path.id === "due-diligence" ? "Start request" : "Get started"}
                     <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </Link>
@@ -204,6 +241,9 @@ function Landing() {
             </div>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" /> Standalone due diligence
+              </span>
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" /> Title-verified listings
               </span>
@@ -284,15 +324,15 @@ function Landing() {
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-sm font-medium text-primary">Who we serve</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-                Built for buyers, sellers, and professionals
+                Due diligence first — then buying, selling, and pros
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Whether you are purchasing your first home, listing an estate, or delivering legal
-                opinions — here is what you get on SafeBuyRealties.
+                Start with our flagship verification service, or use the marketplace for listings,
+                sales, and licensed professional work.
               </p>
             </div>
 
-            <div className="mt-14 grid gap-8 lg:grid-cols-3">
+            <div className="mt-14 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
               {personas.map((p) => (
                 <div
                   key={p.id}
