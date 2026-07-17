@@ -21,6 +21,9 @@ export class TransactionsService {
 
   private serialize(tx: Prisma.TransactionGetPayload<{ include: { listing: true } }>) {
     const l = tx.listing;
+    if (!l) {
+      throw new NotFoundException("Transaction listing not found");
+    }
     return {
       id: tx.id,
       status: tx.status,

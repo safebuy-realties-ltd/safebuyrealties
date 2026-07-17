@@ -79,20 +79,21 @@ function StaffCredentials() {
               <TableHead>Type</TableHead>
               <TableHead>Regulatory body</TableHead>
               <TableHead>License number</TableHead>
+              <TableHead>Documents</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="text-sm text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="text-sm text-muted-foreground">
                   No pending credentials to review.
                 </TableCell>
               </TableRow>
@@ -109,6 +110,34 @@ function StaffCredentials() {
                   </TableCell>
                   <TableCell>{row.regulatoryBody}</TableCell>
                   <TableCell>{row.licenseNumber}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {row.licenseDocumentUrl ? (
+                        <a
+                          href={row.licenseDocumentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-primary underline"
+                        >
+                          License
+                        </a>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No license</span>
+                      )}
+                      {row.idDocumentUrl ? (
+                        <a
+                          href={row.idDocumentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-primary underline"
+                        >
+                          ID
+                        </a>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No ID</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -134,7 +163,7 @@ function StaffCredentials() {
                 </TableRow>
                 {rejectingId === row.id && (
                   <TableRow>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <div className="space-y-2">
                         <Textarea
                           value={note}

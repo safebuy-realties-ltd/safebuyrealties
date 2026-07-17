@@ -30,10 +30,22 @@ const VERIFICATION_TEMPLATE: { type: VerificationStepType; order: number }[] = [
 
 async function wipe() {
   await prisma.payment.deleteMany();
+  await prisma.payout.deleteMany();
+  await prisma.escrow.deleteMany();
+  await prisma.powerOfAttorney.deleteMany();
+  await prisma.dueDiligenceOrder.deleteMany();
+  await prisma.serviceRequest.deleteMany();
+  await prisma.externalProperty.deleteMany();
+  await prisma.accountActivationToken.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.task.deleteMany();
   await prisma.verificationStep.deleteMany();
   await prisma.document.deleteMany();
+  await prisma.listingMedia.deleteMany();
+  await prisma.savedProperty.deleteMany();
+  await prisma.inspectionSlot.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.kycRecord.deleteMany();
   await prisma.listing.deleteMany();
   await prisma.professionalProfile.deleteMany();
   await prisma.user.deleteMany();
@@ -66,6 +78,11 @@ async function ensureVerifiedProfessionalProfiles(staffId: string) {
       email: "surveyor@safebuyrealties.test",
       regulatoryBody: "SURCON",
       licenseNumber: "SURCON/TEST/001",
+    },
+    {
+      email: "valuer@safebuyrealties.test",
+      regulatoryBody: "NIESV",
+      licenseNumber: "NIESV/TEST/001",
     },
   ] as const;
 
@@ -258,6 +275,14 @@ async function main() {
         userId: surveyor.id,
         regulatoryBody: "SURCON",
         licenseNumber: "SURCON/TEST/001",
+        verifiedStatus: "VERIFIED",
+        verifiedById: staff.id,
+        verifiedAt: new Date(),
+      },
+      {
+        userId: valuer.id,
+        regulatoryBody: "NIESV",
+        licenseNumber: "NIESV/TEST/001",
         verifiedStatus: "VERIFIED",
         verifiedById: staff.id,
         verifiedAt: new Date(),

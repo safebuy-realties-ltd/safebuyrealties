@@ -25,6 +25,7 @@ import { EscrowService } from "../escrow/escrow.service";
 import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
+import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
 
 @Injectable()
 export class PaymentsService {
@@ -34,6 +35,7 @@ export class PaymentsService {
     private escrow: EscrowService,
     private paystack: PaystackService,
     private guestCheckout: GuestCheckoutService,
+    private standaloneDd: StandaloneDdService,
   ) {}
 
   private async notifyDdPaymentSucceeded(transactionId: string) {
@@ -44,7 +46,7 @@ export class PaymentsService {
         buyer: { select: { id: true } },
       },
     });
-    if (!tx) return;
+    if (!tx?.listing) return;
 
     const listingTitle = tx.listing.title;
     void this.notifications.create({
@@ -240,6 +242,16 @@ export class PaymentsService {
   private async applyPaymentChargeSuccess(paymentId: string) {
     const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!p) return;
+    const meta = p.metadata as {
+      serviceRequestId?: string;
+      guestCheckout?: boolean;
+      standaloneDd?: boolean;
+    };
+
+    if (meta.standaloneDd) {
+      await this.standaloneDd.completePayment(paymentId);
+      return;
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.payment.update({
@@ -260,10 +272,10 @@ export class PaymentsService {
           // Resolve the listing tied to the transaction (preferred) or the payment itself.
           const txRow = await tx.transaction.findUnique({
             where: { id: p.transactionId },
-            select: { listingId: true },
+            select: { listingId: true, source: true },
           });
           const listingId = txRow?.listingId ?? p.listingId ?? null;
-          if (listingId) {
+          if (listingId && txRow?.source !== "STANDALONE") {
             await tx.listing.updateMany({
               where: { id: listingId, status: ListingStatus.LIVE },
               data: { status: ListingStatus.UNDER_OFFER },
@@ -294,8 +306,12 @@ export class PaymentsService {
     });
 
     // Fire-and-forget notifications — outside the DB transaction.
-    const meta = p.metadata as { serviceRequestId?: string; guestCheckout?: boolean };
-    if (p.transactionId && p.intent === PaymentIntent.DD_SERVICE && !meta.guestCheckout) {
+    if (
+      p.transactionId &&
+      p.intent === PaymentIntent.DD_SERVICE &&
+      !meta.guestCheckout &&
+      !meta.standaloneDd
+    ) {
       void this.notifyDdPaymentSucceeded(p.transactionId);
     }
     if (p.transactionId && p.intent === PaymentIntent.PROPERTY_PURCHASE) {

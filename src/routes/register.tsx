@@ -123,7 +123,12 @@ function RegisterPage() {
         role,
         ...(role === "professional" ? { professionalType } : {}),
       });
-      const target = postAuthPath(redirect, dashboardPathForRole(user.role as Role));
+      const target = postAuthPath(
+        redirect,
+        user.role === "professional"
+          ? "/onboarding/professional"
+          : dashboardPathForRole(user.role as Role),
+      );
       navigateAfterAuth(navigate, target);
     } catch (err) {
       const msg =

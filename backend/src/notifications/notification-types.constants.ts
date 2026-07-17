@@ -10,6 +10,8 @@ export const NotificationType = {
   ESCROW_REFUNDED: "ESCROW_REFUNDED",
   KYC_VERIFIED: "KYC_VERIFIED",
   KYC_REJECTED: "KYC_REJECTED",
+  PROFESSIONAL_CREDENTIAL_VERIFIED: "PROFESSIONAL_CREDENTIAL_VERIFIED",
+  PROFESSIONAL_CREDENTIAL_REJECTED: "PROFESSIONAL_CREDENTIAL_REJECTED",
   SAVED_LISTING_LIVE: "SAVED_LISTING_LIVE",
   SAVED_LISTING_UNDER_OFFER: "SAVED_LISTING_UNDER_OFFER",
 } as const;
@@ -22,6 +24,7 @@ export const NotificationEntityType = {
   Task: "Task",
   VerificationStep: "VerificationStep",
   KycRecord: "KycRecord",
+  ProfessionalProfile: "ProfessionalProfile",
 } as const;
 
 export type NotificationEntityTypeValue =

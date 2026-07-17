@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
+import { Route as OnboardingProfessionalRouteImport } from './routes/onboarding.professional'
 import { Route as ListingsListingIdRouteImport } from './routes/listings.$listingId'
+import { Route as DueDiligenceRequestRouteImport } from './routes/due-diligence.request'
 import { Route as DashboardSuperAdminRouteImport } from './routes/dashboard.super-admin'
 import { Route as DashboardStaffRouteImport } from './routes/dashboard.staff'
 import { Route as DashboardSellerRouteImport } from './routes/dashboard.seller'
@@ -33,6 +36,7 @@ import { Route as DashboardStaffWorkflowRouteImport } from './routes/dashboard.s
 import { Route as DashboardStaffSubmissionsRouteImport } from './routes/dashboard.staff.submissions'
 import { Route as DashboardStaffKycRouteImport } from './routes/dashboard.staff.kyc'
 import { Route as DashboardStaffInspectionsRouteImport } from './routes/dashboard.staff.inspections'
+import { Route as DashboardStaffDueDiligenceRouteImport } from './routes/dashboard.staff.due-diligence'
 import { Route as DashboardStaffCredentialsRouteImport } from './routes/dashboard.staff.credentials'
 import { Route as DashboardSellerListingsRouteImport } from './routes/dashboard.seller.listings'
 import { Route as DashboardSellerDocumentsRouteImport } from './routes/dashboard.seller.documents'
@@ -43,6 +47,7 @@ import { Route as DashboardBuyerServicesRouteImport } from './routes/dashboard.b
 import { Route as DashboardBuyerSavedRouteImport } from './routes/dashboard.buyer.saved'
 import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.buyer.listings'
 import { Route as DashboardBuyerKycRouteImport } from './routes/dashboard.buyer.kyc'
+import { Route as DashboardBuyerDueDiligenceRouteImport } from './routes/dashboard.buyer.due-diligence'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
 import { Route as DashboardAdminSettingsRouteImport } from './routes/dashboard.admin.settings'
 import { Route as DashboardAdminListingsRouteImport } from './routes/dashboard.admin.listings'
@@ -57,6 +62,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DueDiligenceRoute = DueDiligenceRouteImport.update({
+  id: '/due-diligence',
+  path: '/due-diligence',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrowseRoute = BrowseRouteImport.update({
@@ -74,10 +84,20 @@ const PurchaseListingIdRoute = PurchaseListingIdRouteImport.update({
   path: '/purchase/$listingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingProfessionalRoute = OnboardingProfessionalRouteImport.update({
+  id: '/onboarding/professional',
+  path: '/onboarding/professional',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingsListingIdRoute = ListingsListingIdRouteImport.update({
   id: '/listings/$listingId',
   path: '/listings/$listingId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DueDiligenceRequestRoute = DueDiligenceRequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => DueDiligenceRoute,
 } as any)
 const DashboardSuperAdminRoute = DashboardSuperAdminRouteImport.update({
   id: '/dashboard/super-admin',
@@ -173,6 +193,12 @@ const DashboardStaffInspectionsRoute =
     path: '/inspections',
     getParentRoute: () => DashboardStaffRoute,
   } as any)
+const DashboardStaffDueDiligenceRoute =
+  DashboardStaffDueDiligenceRouteImport.update({
+    id: '/due-diligence',
+    path: '/due-diligence',
+    getParentRoute: () => DashboardStaffRoute,
+  } as any)
 const DashboardStaffCredentialsRoute =
   DashboardStaffCredentialsRouteImport.update({
     id: '/credentials',
@@ -228,6 +254,12 @@ const DashboardBuyerKycRoute = DashboardBuyerKycRouteImport.update({
   path: '/kyc',
   getParentRoute: () => DashboardBuyerRoute,
 } as any)
+const DashboardBuyerDueDiligenceRoute =
+  DashboardBuyerDueDiligenceRouteImport.update({
+    id: '/due-diligence',
+    path: '/due-diligence',
+    getParentRoute: () => DashboardBuyerRoute,
+  } as any)
 const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -258,6 +290,7 @@ const DashboardProfessionalTasksTaskIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
+  '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
@@ -268,12 +301,15 @@ export interface FileRoutesByFullPath {
   '/dashboard/seller': typeof DashboardSellerRouteWithChildren
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/dashboard/super-admin': typeof DashboardSuperAdminRouteWithChildren
+  '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
@@ -284,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/due-diligence': typeof DashboardStaffDueDiligenceRoute
   '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
@@ -299,16 +336,20 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
+  '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
+  '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
@@ -319,6 +360,7 @@ export interface FileRoutesByTo {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/due-diligence': typeof DashboardStaffDueDiligenceRoute
   '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
@@ -335,6 +377,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
+  '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
@@ -345,12 +388,15 @@ export interface FileRoutesById {
   '/dashboard/seller': typeof DashboardSellerRouteWithChildren
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/dashboard/super-admin': typeof DashboardSuperAdminRouteWithChildren
+  '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
@@ -361,6 +407,7 @@ export interface FileRoutesById {
   '/dashboard/seller/documents': typeof DashboardSellerDocumentsRoute
   '/dashboard/seller/listings': typeof DashboardSellerListingsRoute
   '/dashboard/staff/credentials': typeof DashboardStaffCredentialsRoute
+  '/dashboard/staff/due-diligence': typeof DashboardStaffDueDiligenceRoute
   '/dashboard/staff/inspections': typeof DashboardStaffInspectionsRoute
   '/dashboard/staff/kyc': typeof DashboardStaffKycRoute
   '/dashboard/staff/submissions': typeof DashboardStaffSubmissionsRoute
@@ -378,6 +425,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/browse'
+    | '/due-diligence'
     | '/login'
     | '/register'
     | '/activate/$token'
@@ -388,12 +436,15 @@ export interface FileRouteTypes {
     | '/dashboard/seller'
     | '/dashboard/staff'
     | '/dashboard/super-admin'
+    | '/due-diligence/request'
     | '/listings/$listingId'
+    | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
+    | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/saved'
@@ -404,6 +455,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/due-diligence'
     | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
@@ -419,16 +471,20 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/browse'
+    | '/due-diligence'
     | '/login'
     | '/register'
     | '/activate/$token'
     | '/checkout/$listingId'
+    | '/due-diligence/request'
     | '/listings/$listingId'
+    | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
+    | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/saved'
@@ -439,6 +495,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/due-diligence'
     | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
@@ -454,6 +511,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/browse'
+    | '/due-diligence'
     | '/login'
     | '/register'
     | '/activate/$token'
@@ -464,12 +522,15 @@ export interface FileRouteTypes {
     | '/dashboard/seller'
     | '/dashboard/staff'
     | '/dashboard/super-admin'
+    | '/due-diligence/request'
     | '/listings/$listingId'
+    | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
+    | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
     | '/dashboard/buyer/saved'
@@ -480,6 +541,7 @@ export interface FileRouteTypes {
     | '/dashboard/seller/documents'
     | '/dashboard/seller/listings'
     | '/dashboard/staff/credentials'
+    | '/dashboard/staff/due-diligence'
     | '/dashboard/staff/inspections'
     | '/dashboard/staff/kyc'
     | '/dashboard/staff/submissions'
@@ -496,6 +558,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BrowseRoute: typeof BrowseRoute
+  DueDiligenceRoute: typeof DueDiligenceRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
@@ -507,6 +570,7 @@ export interface RootRouteChildren {
   DashboardStaffRoute: typeof DashboardStaffRouteWithChildren
   DashboardSuperAdminRoute: typeof DashboardSuperAdminRouteWithChildren
   ListingsListingIdRoute: typeof ListingsListingIdRoute
+  OnboardingProfessionalRoute: typeof OnboardingProfessionalRoute
   PurchaseListingIdRoute: typeof PurchaseListingIdRoute
 }
 
@@ -524,6 +588,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/due-diligence': {
+      id: '/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/due-diligence'
+      preLoaderRoute: typeof DueDiligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/browse': {
@@ -547,12 +618,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PurchaseListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/professional': {
+      id: '/onboarding/professional'
+      path: '/onboarding/professional'
+      fullPath: '/onboarding/professional'
+      preLoaderRoute: typeof OnboardingProfessionalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listings/$listingId': {
       id: '/listings/$listingId'
       path: '/listings/$listingId'
       fullPath: '/listings/$listingId'
       preLoaderRoute: typeof ListingsListingIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/due-diligence/request': {
+      id: '/due-diligence/request'
+      path: '/request'
+      fullPath: '/due-diligence/request'
+      preLoaderRoute: typeof DueDiligenceRequestRouteImport
+      parentRoute: typeof DueDiligenceRoute
     }
     '/dashboard/super-admin': {
       id: '/dashboard/super-admin'
@@ -680,6 +765,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStaffInspectionsRouteImport
       parentRoute: typeof DashboardStaffRoute
     }
+    '/dashboard/staff/due-diligence': {
+      id: '/dashboard/staff/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/dashboard/staff/due-diligence'
+      preLoaderRoute: typeof DashboardStaffDueDiligenceRouteImport
+      parentRoute: typeof DashboardStaffRoute
+    }
     '/dashboard/staff/credentials': {
       id: '/dashboard/staff/credentials'
       path: '/credentials'
@@ -750,6 +842,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBuyerKycRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
+    '/dashboard/buyer/due-diligence': {
+      id: '/dashboard/buyer/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/dashboard/buyer/due-diligence'
+      preLoaderRoute: typeof DashboardBuyerDueDiligenceRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
     '/dashboard/admin/users': {
       id: '/dashboard/admin/users'
       path: '/users'
@@ -788,6 +887,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DueDiligenceRouteChildren {
+  DueDiligenceRequestRoute: typeof DueDiligenceRequestRoute
+}
+
+const DueDiligenceRouteChildren: DueDiligenceRouteChildren = {
+  DueDiligenceRequestRoute: DueDiligenceRequestRoute,
+}
+
+const DueDiligenceRouteWithChildren = DueDiligenceRoute._addFileChildren(
+  DueDiligenceRouteChildren,
+)
+
 interface DashboardAdminRouteChildren {
   DashboardAdminEscrowsRoute: typeof DashboardAdminEscrowsRoute
   DashboardAdminListingsRoute: typeof DashboardAdminListingsRoute
@@ -809,6 +920,7 @@ const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
 )
 
 interface DashboardBuyerRouteChildren {
+  DashboardBuyerDueDiligenceRoute: typeof DashboardBuyerDueDiligenceRoute
   DashboardBuyerKycRoute: typeof DashboardBuyerKycRoute
   DashboardBuyerListingsRoute: typeof DashboardBuyerListingsRoute
   DashboardBuyerSavedRoute: typeof DashboardBuyerSavedRoute
@@ -818,6 +930,7 @@ interface DashboardBuyerRouteChildren {
 }
 
 const DashboardBuyerRouteChildren: DashboardBuyerRouteChildren = {
+  DashboardBuyerDueDiligenceRoute: DashboardBuyerDueDiligenceRoute,
   DashboardBuyerKycRoute: DashboardBuyerKycRoute,
   DashboardBuyerListingsRoute: DashboardBuyerListingsRoute,
   DashboardBuyerSavedRoute: DashboardBuyerSavedRoute,
@@ -880,6 +993,7 @@ const DashboardSellerRouteWithChildren = DashboardSellerRoute._addFileChildren(
 
 interface DashboardStaffRouteChildren {
   DashboardStaffCredentialsRoute: typeof DashboardStaffCredentialsRoute
+  DashboardStaffDueDiligenceRoute: typeof DashboardStaffDueDiligenceRoute
   DashboardStaffInspectionsRoute: typeof DashboardStaffInspectionsRoute
   DashboardStaffKycRoute: typeof DashboardStaffKycRoute
   DashboardStaffSubmissionsRoute: typeof DashboardStaffSubmissionsRoute
@@ -889,6 +1003,7 @@ interface DashboardStaffRouteChildren {
 
 const DashboardStaffRouteChildren: DashboardStaffRouteChildren = {
   DashboardStaffCredentialsRoute: DashboardStaffCredentialsRoute,
+  DashboardStaffDueDiligenceRoute: DashboardStaffDueDiligenceRoute,
   DashboardStaffInspectionsRoute: DashboardStaffInspectionsRoute,
   DashboardStaffKycRoute: DashboardStaffKycRoute,
   DashboardStaffSubmissionsRoute: DashboardStaffSubmissionsRoute,
@@ -914,6 +1029,7 @@ const DashboardSuperAdminRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrowseRoute: BrowseRoute,
+  DueDiligenceRoute: DueDiligenceRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ActivateTokenRoute: ActivateTokenRoute,
@@ -925,6 +1041,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardStaffRoute: DashboardStaffRouteWithChildren,
   DashboardSuperAdminRoute: DashboardSuperAdminRouteWithChildren,
   ListingsListingIdRoute: ListingsListingIdRoute,
+  OnboardingProfessionalRoute: OnboardingProfessionalRoute,
   PurchaseListingIdRoute: PurchaseListingIdRoute,
 }
 export const routeTree = rootRouteImport

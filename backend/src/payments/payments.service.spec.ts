@@ -6,6 +6,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { EscrowService } from "../escrow/escrow.service";
 import { PaystackService } from "./paystack.service";
 import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
+import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -67,6 +68,7 @@ describe("PaymentsService paystack integration", () => {
         { provide: EscrowService, useValue: { hold: jest.fn() } },
         { provide: PaystackService, useValue: paystack },
         { provide: GuestCheckoutService, useValue: { completePayment: jest.fn() } },
+        { provide: StandaloneDdService, useValue: { completePayment: jest.fn() } },
       ],
     }).compile();
 

@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { BadgeCheck } from "lucide-react";
 import { useMyTasksQuery, useTaskKpiCounts } from "@/hooks/use-tasks";
 import { useListingsQuery } from "@/hooks/use-listings";
-import { useMyProfileQuery } from "@/hooks/use-professional-profile";
+import {
+  isProfessionalProfileComplete,
+  isProfessionalProfilePendingReview,
+  useMyProfileQuery,
+} from "@/hooks/use-professional-profile";
 
 export const Route = createFileRoute("/dashboard/professional/")({
   component: ProOverview,
@@ -38,8 +42,25 @@ function ProOverview() {
   const kpis = useTaskKpiCounts();
   const { data: profile, isLoading: profileLoading } = useMyProfileQuery();
   const { data: listingsData } = useListingsQuery();
+  const profileComplete = isProfessionalProfileComplete(profile);
+  const pendingReview = isProfessionalProfilePendingReview(profile);
   const showCredentialBanner =
-    !profileLoading && (!profile || profile.verifiedStatus === "PENDING");
+    !profileLoading && (!profile || profile.verifiedStatus !== "VERIFIED");
+  const needsOnboarding = !profile || !profileComplete;
+  const bannerTitle =
+    !profile || !profileComplete
+      ? "Finish your onboarding"
+      : profile.verifiedStatus === "REJECTED"
+        ? "Credentials need changes"
+        : "Credentials pending review";
+  const bannerBody =
+    !profile || !profileComplete
+      ? "Complete your regulatory details and upload both required documents before staff can review your profile."
+      : profile.verifiedStatus === "REJECTED"
+        ? `Staff rejected your last submission${profile.rejectionNote ? `: ${profile.rejectionNote}` : "."}`
+        : pendingReview
+          ? "Your onboarding package is in the staff review queue. You will be notified when it is approved or rejected."
+          : "Add the missing details or documents on your credentials page to become eligible for staff approval.";
   const titleById = useMemo(() => {
     const m = new Map<string, string>();
     for (const l of listingsData?.listings ?? []) m.set(l.id, l.title);
@@ -66,13 +87,14 @@ function ProOverview() {
             <BadgeCheck className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="font-semibold text-foreground">Complete your credentials</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your professional credentials are pending review. Submit your license details on the
-              credentials page, then await staff approval before new tasks can be assigned.
-            </p>
+            <p className="font-semibold text-foreground">{bannerTitle}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{bannerBody}</p>
             <Button className="mt-4" size="sm" asChild>
-              <Link to="/dashboard/professional/credentials">Go to credentials</Link>
+              {needsOnboarding ? (
+                <Link to="/onboarding/professional">Continue</Link>
+              ) : (
+                <Link to="/dashboard/professional/credentials">Continue</Link>
+              )}
             </Button>
           </div>
         </div>

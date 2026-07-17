@@ -6,29 +6,33 @@ import { PlatformConfigService } from "../platform-config/platform-config.servic
 const DD_CHECK_ITEMS = [
   {
     code: "LEGAL_CHECK",
-    name: "Legal Check",
-    description: "Legal title and documentation review for the property.",
+    name: "Schedule A - Legal Due Diligence",
+    description:
+      "Schedule A: legal title review covering ownership, encumbrances, and transaction documentation.",
     basePrice: new Prisma.Decimal(350000),
     sortOrder: 101,
   },
   {
-    code: "PHYSICAL_CHECK",
-    name: "Physical Check",
-    description: "On-site physical inspection of structures and boundaries.",
-    basePrice: new Prisma.Decimal(275000),
+    code: "ENVIRONMENTAL_CHECK",
+    name: "Schedule B - Environmental Review",
+    description:
+      "Schedule B: environmental and neighbourhood risk review covering drainage, flooding, and land-use concerns.",
+    basePrice: new Prisma.Decimal(225000),
     sortOrder: 102,
   },
   {
-    code: "ENVIRONMENTAL_CHECK",
-    name: "Environmental Check",
-    description: "Environmental and drainage risk assessment.",
-    basePrice: new Prisma.Decimal(225000),
+    code: "PHYSICAL_CHECK",
+    name: "Schedule C - Physical Inspection",
+    description:
+      "Schedule C: on-site inspection of structures, boundaries, access, and visible condition of the property.",
+    basePrice: new Prisma.Decimal(275000),
     sortOrder: 103,
   },
   {
     code: "SECURITY_CHECK",
-    name: "Security Check",
-    description: "Neighbourhood security and access route assessment.",
+    name: "Schedule D - Security Assessment",
+    description:
+      "Schedule D: security review of the neighbourhood, access routes, and occupancy-related risk signals.",
     basePrice: new Prisma.Decimal(175000),
     sortOrder: 104,
   },
@@ -58,21 +62,46 @@ const BUNDLES = [
     name: "Standard Bundle",
     description: "Essential property verification services covering due diligence, land search, C of O, title verification, and survey plan.",
     basePrice: new Prisma.Decimal(2950000),
-    itemSortOrders: [1, 2, 3, 4, 5],
+    itemCodes: [
+      "DUE_DILIGENCE",
+      "LAND_CHARTING_SEARCH",
+      "COF_O",
+      "TITLE_VERIFICATION",
+      "SURVEY_PLAN",
+    ],
   },
   {
     code: "PREMIUM",
     name: "Premium Bundle",
     description: "Comprehensive property verification including all standard services plus excision, gazette, deed, governor's consent, and title perfection.",
     basePrice: new Prisma.Decimal(4200000),
-    itemSortOrders: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    itemCodes: [
+      "DUE_DILIGENCE",
+      "LAND_CHARTING_SEARCH",
+      "COF_O",
+      "TITLE_VERIFICATION",
+      "SURVEY_PLAN",
+      "EXCISION",
+      "GAZETTE",
+      "DEED_OF_ASSIGNMENT",
+      "GOVERNORS_CONSENT",
+      "TITLE_PERFECTION",
+    ],
   },
   {
     code: "ELITE",
     name: "Elite Bundle",
     description: "Full-suite property verification and advisory covering all 15 services including documentation audit, valuation, risk assessment, and dispute advisory.",
     basePrice: new Prisma.Decimal(5850000),
-    itemSortOrders: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    itemCodes: CATALOG_ITEMS.map((item) => item.code),
+  },
+  {
+    code: "FULL_DD",
+    name: "Full Due Diligence Bundle",
+    description:
+      "Complete standalone due diligence covering Schedules A-D: legal, environmental, physical, and security checks.",
+    basePrice: new Prisma.Decimal(950000),
+    itemCodes: DD_CHECK_ITEMS.map((item) => item.code),
   },
 ];
 
@@ -97,49 +126,92 @@ export class ServiceCatalogService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const count = await this.prisma.serviceCatalogItem.count();
-    if (count === 0) {
-      // Seed items
-      for (const item of CATALOG_ITEMS) {
-        await this.prisma.serviceCatalogItem.create({
-          data: {
-            code: item.code,
-            name: item.name,
-            description: `Professional ${item.name} service for property verification and documentation.`,
-            basePrice: new Prisma.Decimal(150000),
-            sortOrder: item.sortOrder,
-          },
-        });
-      }
-
-      // Seed bundles
-      for (const bundle of BUNDLES) {
-        const items = await this.prisma.serviceCatalogItem.findMany({
-          where: { sortOrder: { in: bundle.itemSortOrders } },
-          select: { id: true },
-        });
-
-        await this.prisma.serviceBundle.create({
-          data: {
-            code: bundle.code,
-            name: bundle.name,
-            description: bundle.description,
-            basePrice: bundle.basePrice,
-            items: {
-              create: items.map((item) => ({ itemId: item.id })),
-            },
-          },
-        });
-      }
-    }
-
     for (const item of DD_CHECK_ITEMS) {
-      await this.prisma.serviceCatalogItem.upsert({
-        where: { code: item.code },
-        create: item,
-        update: {},
+      await this.upsertCatalogItem(item.code, {
+        name: item.name,
+        description: item.description,
+        basePrice: item.basePrice,
+        sortOrder: item.sortOrder,
       });
     }
+
+    for (const item of CATALOG_ITEMS) {
+      await this.upsertCatalogItem(item.code, {
+        name: item.name,
+        description: `Professional ${item.name} service for property verification and documentation.`,
+        basePrice: new Prisma.Decimal(150000),
+        sortOrder: item.sortOrder,
+      });
+    }
+
+    for (const bundle of BUNDLES) {
+      await this.upsertBundle(bundle);
+    }
+  }
+
+  private async upsertCatalogItem(
+    code: string,
+    fields: {
+      name: string;
+      description: string;
+      basePrice: Prisma.Decimal;
+      sortOrder: number;
+    },
+  ) {
+    await this.prisma.serviceCatalogItem.upsert({
+      where: { code },
+      create: {
+        code,
+        ...fields,
+        active: true,
+      },
+      update: {
+        ...fields,
+        active: true,
+      },
+    });
+  }
+
+  private async upsertBundle(bundle: (typeof BUNDLES)[number]) {
+    const resolvedItems = await this.prisma.serviceCatalogItem.findMany({
+      where: { code: { in: bundle.itemCodes } },
+      select: { id: true, code: true },
+    });
+    if (resolvedItems.length !== bundle.itemCodes.length) {
+      throw new Error(`Could not resolve all catalog items for bundle ${bundle.code}`);
+    }
+
+    const upserted = await this.prisma.serviceBundle.upsert({
+      where: { code: bundle.code },
+      create: {
+        code: bundle.code,
+        name: bundle.name,
+        description: bundle.description,
+        basePrice: bundle.basePrice,
+        active: true,
+      },
+      update: {
+        name: bundle.name,
+        description: bundle.description,
+        basePrice: bundle.basePrice,
+        active: true,
+      },
+      select: { id: true },
+    });
+
+    await this.prisma.bundleItem.deleteMany({
+      where: { bundleId: upserted.id },
+    });
+    await this.prisma.bundleItem.createMany({
+      data: bundle.itemCodes.map((itemCode) => {
+        const resolved = resolvedItems.find((item) => item.code === itemCode);
+        return {
+          bundleId: upserted.id,
+          itemId: resolved!.id,
+        };
+      }),
+      skipDuplicates: true,
+    });
   }
 
   async getItems() {

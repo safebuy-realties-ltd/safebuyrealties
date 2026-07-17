@@ -26,6 +26,7 @@ import { AdminModule } from "./admin/admin.module";
 import { InspectionsModule } from "./inspections/inspections.module";
 import { GuestCheckoutModule } from "./guest-checkout/guest-checkout.module";
 import { EmailModule } from "./email/email.module";
+import { StandaloneDdModule } from "./standalone-dd/standalone-dd.module";
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EmailModule } from "./email/email.module";
     AdminModule,
     InspectionsModule,
     GuestCheckoutModule,
+    StandaloneDdModule,
     EmailModule,
     HealthModule,
   ],

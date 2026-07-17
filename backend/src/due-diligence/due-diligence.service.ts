@@ -12,7 +12,7 @@ import { CreateDdOrderDto } from "./dto/create-dd-order.dto";
 
 type DueDiligenceOrderRow = {
   id: string;
-  transactionId: string;
+  transactionId: string | null;
   buyerId: string;
   bundleId: string | null;
   itemIds: Prisma.JsonValue;

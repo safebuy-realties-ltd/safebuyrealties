@@ -19,13 +19,65 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 > *(Each session updates this section before stopping)*
 
-- **Date:** 2026-05-27
-- **Tool:** Cursor (Cloud Agent) — wave 4
-- **Last completed:** Step 11 complete (saved properties, inspections, seller/admin analytics)
-- **Done this session:** SavedProperty + InspectionSlot; save/inspection/analytics APIs; buyer saved tab, staff inspection queue; validated tsc + 87 BE / 19 FE tests
-- **Tests:** `npm run validate:tsc`, `npm test` (19), `cd backend && npm test` (87)
-- **Next:** Completion gate — full E2E buyer/seller/staff journeys; `docs/POST_BUILD_ISSUES.md` if needed
-- **Blockers:** run `npx prisma migrate deploy` on cloud DB for migration `20260527140000_saved_and_inspections`
+- **Date:** 2026-07-17
+- **Tool:** Cursor (Cloud Agent) — merged Track A + Track B
+- **Last completed:** Step 12 — Standalone Due Diligence + Professional onboarding E2E
+- **Done this session:** Merged parallel agent branches; schema + standalone DD APIs/UI + pro onboarding docs/wizard/seed
+- **Next:** Integration validation (tsc, tests, local smoke) and demo walkthrough
+- **Blockers:** none
+
+---
+
+## Step 12 — Standalone Due Diligence + Professional Onboarding (Demo P0)
+
+### Shared foundation
+
+- [x] **Schema — standalone DD + pro docs**
+  - `ExternalProperty` model; `Transaction.listingId` / `ServiceRequest.listingId` optional; `source` LISTING|STANDALONE
+  - `DueDiligenceOrder` gains listing/externalProperty, caseId, verdict, reportStorageKeys, staffNotes, COMPLETE lifecycle fields
+  - `ProfessionalProfile.licenseDocumentKey` + `idDocumentKey`
+  - Migration: `20260717210000_standalone_dd_and_pro_docs`
+
+### Track A — Standalone Due Diligence
+
+- [x] **Catalog — Schedules A–D + Full DD bundle**
+  - Rename/align guest check items to Schedule A Legal / B Environmental / C Physical / D Security (keep codes `LEGAL_CHECK` etc.)
+  - Ensure `FULL_DD_BUNDLE` (or equivalent) with A+B+C+D exists and is active
+  - Validation: `GET /service-catalog/items` + `bundles` show schedules
+
+- [x] **API — standalone DD create + pay (guest + auth)**
+  - New module or extend guest-checkout: `POST /standalone-dd/orders` accepts external property fields OR listingId, schedule itemIds/bundleId, guest/auth client info
+  - Creates `ExternalProperty` when off-platform; `ServiceRequest` with `source=STANDALONE`; Paystack `DD_SERVICE` without forcing listing UNDER_OFFER
+  - On pay: Transaction with `source=STANDALONE`, `listingId` null when external; DueDiligenceOrder `PAID`
+  - Validation: unit tests + curl create/pay path
+
+- [x] **API — staff/client DD case lifecycle**
+  - `GET /standalone-dd/orders` (buyer mine / staff all)
+  - `GET /standalone-dd/orders/:id`
+  - Staff: `PATCH` status IN_PROGRESS → COMPLETE with verdict + report upload
+  - Validation: staff completes case; buyer sees COMPLETE + verdict
+
+- [x] **UI — `/due-diligence` landing + request wizard**
+  - Marketing landing + wizard: property source (listing vs external) → schedules → contact → pay
+  - Buyer dashboard cases list; staff DD queue
+  - Validation: local E2E off-platform guest path on :8080
+
+### Track B — Professional onboarding E2E
+
+- [x] **API — pro credential document upload**
+  - `POST /professionals/me/documents` (license + id) via StorageService (mirror KYC upload pattern)
+  - Extend profile DTO/serialize with document keys; require docs before staff can approve (or soft-require for demo)
+  - Validation: upload + profile returns keys
+
+- [x] **UI — pro onboarding wizard + gate**
+  - `/onboarding/professional` multi-step; redirect incomplete/pending pros from dashboard
+  - Credentials page supports document upload + rejection resubmit UX
+  - Validation: new pro register → submit → pending state
+
+- [x] **Staff review polish + seed**
+  - Staff credentials queue shows docs; approve/reject notifies pro
+  - Seed: lawyer/surveyor/valuer all VERIFIED with profiles; optional pending pro for review demo
+  - Validation: staff verifies; pro becomes assignable to a task
 
 ---
 
