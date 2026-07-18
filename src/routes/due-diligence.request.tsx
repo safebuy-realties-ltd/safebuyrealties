@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useListingQuery } from "@/hooks/use-listings";
 import { type ServiceBundle, useServiceBundlesQuery } from "@/hooks/use-service-catalog";
@@ -29,6 +36,7 @@ import {
 } from "@/hooks/use-standalone-dd";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { getLgasForState, NIGERIA_STATE_LABELS, NIGERIA_STATES } from "@/lib/nigeria-locations";
 import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
 
@@ -53,7 +61,7 @@ export const Route = createFileRoute("/due-diligence/request")({
   component: DueDiligenceRequestPage,
 });
 
-const STEPS = ["PROPERTY", "SCHEDULES", "CONTACT", "REVIEW"] as const;
+const STEPS = ["SCHEDULES", "PROPERTY", "CONTACT", "REVIEW"] as const;
 type RequestStep = (typeof STEPS)[number];
 type PropertySource = "LISTING" | "EXTERNAL";
 
@@ -87,10 +95,10 @@ function formatNgn(amount: number | string) {
 
 function stepLabel(step: RequestStep) {
   switch (step) {
-    case "PROPERTY":
-      return "Property";
     case "SCHEDULES":
       return "Schedules";
+    case "PROPERTY":
+      return "Property";
     case "CONTACT":
       return "Contact";
     case "REVIEW":
@@ -107,7 +115,7 @@ function isContactValid(form: ContactForm) {
 }
 
 function isExternalPropertyValid(form: ExternalPropertyForm) {
-  return form.address.trim() && form.state.trim();
+  return form.address.trim() && form.state.trim() && form.lga.trim();
 }
 
 function fullDdBundle(bundles: ServiceBundle[] | undefined) {
@@ -125,7 +133,7 @@ function DueDiligenceRequestPage() {
   const { user, isAuthenticated } = useAuth();
   const { data: bundles } = useServiceBundlesQuery();
   const fullBundle = useMemo(() => fullDdBundle(bundles), [bundles]);
-  const [step, setStep] = useState<RequestStep>("PROPERTY");
+  const [step, setStep] = useState<RequestStep>("SCHEDULES");
   const [propertySource, setPropertySource] = useState<PropertySource>(
     listingIdSearch ? "LISTING" : "EXTERNAL",
   );
@@ -246,6 +254,10 @@ function DueDiligenceRequestPage() {
     };
   }, [bundlePricing, fullBundle, selectedBundleId, selectorSelection]);
 
+  const availableLgas = useMemo(
+    () => getLgasForState(externalProperty.state),
+    [externalProperty.state],
+  );
   const propertyStepValid =
     propertySource === "LISTING"
       ? Boolean(listingId.trim() && listing)
@@ -362,8 +374,8 @@ function DueDiligenceRequestPage() {
                   Request Schedules A-D for any property
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-                  Choose an on-platform listing or enter an off-platform property, select the checks
-                  you need, and pay to open a due diligence case.
+                  Start by choosing the schedules and prices you need, then add property and contact
+                  details to pay and open a due diligence case.
                 </p>
               </div>
               {serviceId && (
@@ -421,12 +433,103 @@ function DueDiligenceRequestPage() {
           ) : (
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
+                {step === "SCHEDULES" && (
+                  <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
+                    <h2 className="text-xl font-semibold">1. Select the due diligence schedules</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Choose the services you need first — each schedule shows its price. You can
+                      take the full Schedule A–D bundle or pick individual checks.
+                    </p>
+                    {fullBundle && (
+                      <div className="mt-6 rounded-2xl border border-border/60 bg-secondary/40 p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <div className="flex items-center gap-2 text-sm text-primary">
+                              <FileCheck2 className="h-4 w-4" />
+                              Recommended
+                            </div>
+                            <p className="mt-2 text-lg font-semibold text-foreground">
+                              {fullBundle.name}
+                            </p>
+                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                              {fullBundle.description}
+                            </p>
+                            <ul className="mt-4 grid gap-2 text-sm text-foreground md:grid-cols-2">
+                              {fullBundle.items.map((item) => (
+                                <li key={item.id} className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                                  <span className="flex-1">{item.name}</span>
+                                  <span className="font-medium text-primary">
+                                    {formatNgn(item.basePrice)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="min-w-44 rounded-2xl border border-border/60 bg-card px-4 py-3 text-right shadow-[var(--shadow-card)]">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Bundle subtotal
+                            </p>
+                            <p className="mt-2 text-2xl font-semibold text-foreground">
+                              {formatNgn(fullBundle.basePrice)}
+                            </p>
+                            <Button
+                              className="mt-4 w-full"
+                              variant={selectedBundleId === fullBundle.id ? "default" : "outline"}
+                              onClick={() =>
+                                setSelectedBundleId((current) =>
+                                  current === fullBundle.id ? undefined : fullBundle.id,
+                                )
+                              }
+                            >
+                              {selectedBundleId === fullBundle.id
+                                ? "Bundle selected"
+                                : "Choose full bundle"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-6">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            Individual schedules
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            If you do not need every schedule, keep only the checks you want below.
+                          </p>
+                        </div>
+                        {selectedBundleId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedBundleId(undefined)}
+                          >
+                            Switch to custom selection
+                          </Button>
+                        )}
+                      </div>
+                      <DdCheckSelector
+                        showInspection={false}
+                        onSelectionChange={setSelectorSelection}
+                      />
+                    </div>
+                    <div className="mt-8 flex justify-end gap-3">
+                      <Button disabled={!scheduleStepValid} onClick={() => setStep("PROPERTY")}>
+                        Continue to property
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </section>
+                )}
+
                 {step === "PROPERTY" && (
                   <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-                    <h2 className="text-xl font-semibold">1. Choose the property source</h2>
+                    <h2 className="text-xl font-semibold">2. Property details</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      You can request due diligence for a SafeBuyRealties listing or for a property
-                      not yet listed on the platform.
+                      Add the property you want checked — a SafeBuyRealties listing or an
+                      off-platform address.
                     </p>
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
                       {[
@@ -512,31 +615,55 @@ function DueDiligenceRequestPage() {
                         </div>
                         <div>
                           <Label htmlFor="state">State</Label>
-                          <Input
-                            id="state"
-                            className="mt-2"
-                            value={externalProperty.state}
-                            onChange={(event) =>
+                          <Select
+                            value={externalProperty.state || undefined}
+                            onValueChange={(value) =>
                               setExternalProperty((current) => ({
                                 ...current,
-                                state: event.target.value,
+                                state: value,
+                                lga: "",
                               }))
                             }
-                          />
+                          >
+                            <SelectTrigger id="state" className="mt-2 w-full bg-background">
+                              <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                              {NIGERIA_STATES.map((state) => (
+                                <SelectItem key={state} value={state}>
+                                  {NIGERIA_STATE_LABELS[state]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div>
                           <Label htmlFor="lga">LGA</Label>
-                          <Input
-                            id="lga"
-                            className="mt-2"
-                            value={externalProperty.lga}
-                            onChange={(event) =>
+                          <Select
+                            value={externalProperty.lga || undefined}
+                            onValueChange={(value) =>
                               setExternalProperty((current) => ({
                                 ...current,
-                                lga: event.target.value,
+                                lga: value,
                               }))
                             }
-                          />
+                            disabled={!externalProperty.state}
+                          >
+                            <SelectTrigger id="lga" className="mt-2 w-full bg-background">
+                              <SelectValue
+                                placeholder={
+                                  externalProperty.state ? "Select LGA" : "Select a state first"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                              {availableLgas.map((lga) => (
+                                <SelectItem key={lga} value={lga}>
+                                  {lga}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div>
                           <Label htmlFor="propertyType">Property type</Label>
@@ -628,99 +755,11 @@ function DueDiligenceRequestPage() {
                         </div>
                       </div>
                     )}
-                    <div className="mt-8 flex justify-end">
-                      <Button disabled={!propertyStepValid} onClick={() => setStep("SCHEDULES")}>
-                        Continue to schedules
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </section>
-                )}
-
-                {step === "SCHEDULES" && (
-                  <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]">
-                    <h2 className="text-xl font-semibold">2. Select the due diligence schedules</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Take the full Schedule A-D bundle or uncheck any individual schedule to create
-                      an a la carte order.
-                    </p>
-                    {fullBundle && (
-                      <div className="mt-6 rounded-2xl border border-border/60 bg-secondary/40 p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2 text-sm text-primary">
-                              <FileCheck2 className="h-4 w-4" />
-                              Recommended
-                            </div>
-                            <p className="mt-2 text-lg font-semibold text-foreground">
-                              {fullBundle.name}
-                            </p>
-                            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                              {fullBundle.description}
-                            </p>
-                            <ul className="mt-4 grid gap-2 text-sm text-foreground md:grid-cols-2">
-                              {fullBundle.items.map((item) => (
-                                <li key={item.id} className="flex items-center gap-2">
-                                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                                  {item.name}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="min-w-44 rounded-2xl border border-border/60 bg-card px-4 py-3 text-right shadow-[var(--shadow-card)]">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                              Bundle subtotal
-                            </p>
-                            <p className="mt-2 text-2xl font-semibold text-foreground">
-                              {formatNgn(fullBundle.basePrice)}
-                            </p>
-                            <Button
-                              className="mt-4 w-full"
-                              variant={selectedBundleId === fullBundle.id ? "default" : "outline"}
-                              onClick={() =>
-                                setSelectedBundleId((current) =>
-                                  current === fullBundle.id ? undefined : fullBundle.id,
-                                )
-                              }
-                            >
-                              {selectedBundleId === fullBundle.id
-                                ? "Bundle selected"
-                                : "Choose full bundle"}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="mt-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            Individual schedules
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            If you do not need every schedule, keep only the checks you want below.
-                          </p>
-                        </div>
-                        {selectedBundleId && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedBundleId(undefined)}
-                          >
-                            Switch to custom selection
-                          </Button>
-                        )}
-                      </div>
-                      <DdCheckSelector
-                        showInspection={false}
-                        onSelectionChange={setSelectorSelection}
-                      />
-                    </div>
                     <div className="mt-8 flex justify-between gap-3">
-                      <Button variant="outline" onClick={() => setStep("PROPERTY")}>
+                      <Button variant="outline" onClick={() => setStep("SCHEDULES")}>
                         Back
                       </Button>
-                      <Button disabled={!scheduleStepValid} onClick={() => setStep("CONTACT")}>
+                      <Button disabled={!propertyStepValid} onClick={() => setStep("CONTACT")}>
                         Continue to contact
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -777,7 +816,7 @@ function DueDiligenceRequestPage() {
                       </div>
                     </div>
                     <div className="mt-8 flex justify-between gap-3">
-                      <Button variant="outline" onClick={() => setStep("SCHEDULES")}>
+                      <Button variant="outline" onClick={() => setStep("PROPERTY")}>
                         Back
                       </Button>
                       <Button disabled={!isContactValid(contact)} onClick={() => setStep("REVIEW")}>
