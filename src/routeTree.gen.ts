@@ -18,6 +18,7 @@ import { Route as DueDiligenceIndexRouteImport } from './routes/due-diligence.in
 import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
 import { Route as OnboardingProfessionalRouteImport } from './routes/onboarding.professional'
 import { Route as ListingsListingIdRouteImport } from './routes/listings.$listingId'
+import { Route as HomeClassicRouteImport } from './routes/home.classic'
 import { Route as DueDiligenceRequestRouteImport } from './routes/due-diligence.request'
 import { Route as DashboardSuperAdminRouteImport } from './routes/dashboard.super-admin'
 import { Route as DashboardStaffRouteImport } from './routes/dashboard.staff'
@@ -99,6 +100,11 @@ const OnboardingProfessionalRoute = OnboardingProfessionalRouteImport.update({
 const ListingsListingIdRoute = ListingsListingIdRouteImport.update({
   id: '/listings/$listingId',
   path: '/listings/$listingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomeClassicRoute = HomeClassicRouteImport.update({
+  id: '/home/classic',
+  path: '/home/classic',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DueDiligenceRequestRoute = DueDiligenceRequestRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/dashboard/super-admin': typeof DashboardSuperAdminRouteWithChildren
   '/due-diligence/request': typeof DueDiligenceRequestRoute
+  '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/due-diligence/request': typeof DueDiligenceRequestRoute
+  '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
@@ -405,6 +413,7 @@ export interface FileRoutesById {
   '/dashboard/staff': typeof DashboardStaffRouteWithChildren
   '/dashboard/super-admin': typeof DashboardSuperAdminRouteWithChildren
   '/due-diligence/request': typeof DueDiligenceRequestRoute
+  '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
@@ -455,6 +464,7 @@ export interface FileRouteTypes {
     | '/dashboard/staff'
     | '/dashboard/super-admin'
     | '/due-diligence/request'
+    | '/home/classic'
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/activate/$token'
     | '/checkout/$listingId'
     | '/due-diligence/request'
+    | '/home/classic'
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/dashboard/staff'
     | '/dashboard/super-admin'
     | '/due-diligence/request'
+    | '/home/classic'
     | '/listings/$listingId'
     | '/onboarding/professional'
     | '/purchase/$listingId'
@@ -592,6 +604,7 @@ export interface RootRouteChildren {
   DashboardSellerRoute: typeof DashboardSellerRouteWithChildren
   DashboardStaffRoute: typeof DashboardStaffRouteWithChildren
   DashboardSuperAdminRoute: typeof DashboardSuperAdminRouteWithChildren
+  HomeClassicRoute: typeof HomeClassicRoute
   ListingsListingIdRoute: typeof ListingsListingIdRoute
   OnboardingProfessionalRoute: typeof OnboardingProfessionalRoute
   PurchaseListingIdRoute: typeof PurchaseListingIdRoute
@@ -660,6 +673,13 @@ declare module '@tanstack/react-router' {
       path: '/listings/$listingId'
       fullPath: '/listings/$listingId'
       preLoaderRoute: typeof ListingsListingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home/classic': {
+      id: '/home/classic'
+      path: '/home/classic'
+      fullPath: '/home/classic'
+      preLoaderRoute: typeof HomeClassicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/due-diligence/request': {
@@ -1082,6 +1102,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardSellerRoute: DashboardSellerRouteWithChildren,
   DashboardStaffRoute: DashboardStaffRouteWithChildren,
   DashboardSuperAdminRoute: DashboardSuperAdminRouteWithChildren,
+  HomeClassicRoute: HomeClassicRoute,
   ListingsListingIdRoute: ListingsListingIdRoute,
   OnboardingProfessionalRoute: OnboardingProfessionalRoute,
   PurchaseListingIdRoute: PurchaseListingIdRoute,
