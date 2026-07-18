@@ -25,6 +25,7 @@ import { CreateStandaloneDdOrderDto } from "./dto/create-standalone-dd-order.dto
 import { InitiateStandaloneDdPaymentDto } from "./dto/initiate-standalone-dd-payment.dto";
 import { ListStandaloneDdOrdersQueryDto } from "./dto/list-standalone-dd-orders.query";
 import { UpdateStandaloneDdOrderDto } from "./dto/update-standalone-dd-order.dto";
+import { AssignStandaloneDdDto } from "./dto/assign-standalone-dd.dto";
 import { StandaloneDdService } from "./standalone-dd.service";
 
 @Controller("standalone-dd")
@@ -65,6 +66,48 @@ export class StandaloneDdController {
   @UseGuards(JwtAuthGuard)
   listOrders(@CurrentUser() user: JwtPayload, @Query() query: ListStandaloneDdOrdersQueryDto) {
     return this.standaloneDd.listOrders(user, query);
+  }
+
+  @Get("professionals")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  listProfessionals(@CurrentUser() user: JwtPayload) {
+    return this.standaloneDd.listAssignableProfessionals(user);
+  }
+
+  @Get("assignments/mine")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROFESSIONAL)
+  listMyAssignments(@CurrentUser() user: JwtPayload) {
+    return this.standaloneDd.listMyAssignments(user);
+  }
+
+  @Post("orders/:id/assignments")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  assignProfessional(
+    @Param("id") id: string,
+    @Body() dto: AssignStandaloneDdDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.standaloneDd.assignProfessional(id, dto, user);
+  }
+
+  @Post("assignments/:id/report")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.PROFESSIONAL, UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: memoryStorage(),
+      limits: { fileSize: 100 * 1024 * 1024 },
+    }),
+  )
+  uploadAssignmentReport(
+    @Param("id") id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.standaloneDd.uploadAssignmentReport(id, file, user);
   }
 
   @Patch("orders/:id")

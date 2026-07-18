@@ -6,13 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useAssignStandaloneDdMutation,
   useStandaloneDdOrdersQuery,
+  useStandaloneDdProfessionalsQuery,
   useUpdateStandaloneDdOrderMutation,
   useUploadStandaloneDdReportMutation,
   type StandaloneDdOrderDto,
 } from "@/hooks/use-standalone-dd";
 import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
+
+const SCHEDULE_OPTIONS = [
+  { value: "FULL_DD", label: "Full Due Diligence Bundle" },
+  { value: "LEGAL_CHECK", label: "Schedule A — Legal" },
+  { value: "ENVIRONMENTAL_CHECK", label: "Schedule B — Environmental" },
+  { value: "PHYSICAL_CHECK", label: "Schedule C — Physical" },
+  { value: "SECURITY_CHECK", label: "Schedule D — Security" },
+] as const;
 
 export const Route = createFileRoute("/dashboard/staff/due-diligence")({
   validateSearch: (search: Record<string, unknown>): { serviceId?: string } => ({
@@ -147,9 +157,13 @@ function StaffDueDiligenceCard({
 }) {
   const updateOrder = useUpdateStandaloneDdOrderMutation();
   const uploadReport = useUploadStandaloneDdReportMutation();
+  const assignProfessional = useAssignStandaloneDdMutation();
+  const { data: professionals } = useStandaloneDdProfessionalsQuery();
   const [verdict, setVerdict] = useState(row.verdict ?? "");
   const [staffNotes, setStaffNotes] = useState(row.staffNotes ?? "");
   const [file, setFile] = useState<File | null>(null);
+  const [professionalId, setProfessionalId] = useState("");
+  const [scheduleCode, setScheduleCode] = useState<string>("FULL_DD");
 
   const updateStatus = async (status: "IN_PROGRESS" | "COMPLETE") => {
     try {
@@ -178,6 +192,23 @@ function StaffDueDiligenceCard({
       toast.success("Report uploaded.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not upload the report.");
+    }
+  };
+
+  const assign = async () => {
+    if (!professionalId) {
+      toast.error("Select a verified professional.");
+      return;
+    }
+    try {
+      await assignProfessional.mutateAsync({
+        id: row.id,
+        body: { professionalId, scheduleCode },
+      });
+      toast.success("Professional assigned.");
+      setProfessionalId("");
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "Could not assign professional.");
     }
   };
 
@@ -264,6 +295,73 @@ function StaffDueDiligenceCard({
           </Button>
         </div>
       </div>
+
+      {canManage && (
+        <div className="mt-5 rounded-2xl border border-border/60 bg-muted/20 p-4">
+          <p className="text-sm font-medium text-foreground">Assign professional</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Route a schedule (or the full bundle) to a verified lawyer, surveyor, or valuer.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-[1.2fr_1fr_auto]">
+            <select
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={professionalId}
+              onChange={(event) => setProfessionalId(event.target.value)}
+            >
+              <option value="">Select professional…</option>
+              {(professionals ?? []).map((pro) => (
+                <option key={pro.id} value={pro.id}>
+                  {pro.name} ({pro.professionalType ?? "PRO"}) — {pro.email}
+                </option>
+              ))}
+            </select>
+            <select
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={scheduleCode}
+              onChange={(event) => setScheduleCode(event.target.value)}
+            >
+              {SCHEDULE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <Button
+              onClick={() => void assign()}
+              disabled={assignProfessional.isPending || !professionalId}
+            >
+              {assignProfessional.isPending ? "Assigning…" : "Assign"}
+            </Button>
+          </div>
+          {(row.assignments ?? []).length > 0 && (
+            <ul className="mt-4 space-y-2 text-sm">
+              {(row.assignments ?? []).map((assignment) => (
+                <li
+                  key={assignment.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/50 bg-card px-3 py-2"
+                >
+                  <span>
+                    <strong>{assignment.professional?.name ?? "Professional"}</strong>
+                    {" — "}
+                    {assignment.scheduleCode.replace(/_/g, " ")}
+                  </span>
+                  <Badge variant="outline">{assignment.status}</Badge>
+                  {assignment.reportUrl && (
+                    <a
+                      href={assignment.reportUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary underline"
+                    >
+                      View report
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {(row.reports ?? []).length > 0 && (
         <div className="mt-5 flex flex-wrap gap-3">

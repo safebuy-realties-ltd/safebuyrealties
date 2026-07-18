@@ -35,6 +35,34 @@ export type StandaloneDdReport = {
   url: string;
 };
 
+export type StandaloneDdAssignmentDto = {
+  id: string;
+  dueDiligenceOrderId: string;
+  professionalId: string;
+  scheduleCode: string;
+  title: string;
+  status: string;
+  notes?: string | null;
+  reportStorageKey?: string | null;
+  reportUrl?: string | null;
+  professional?: {
+    id: string;
+    email: string;
+    name: string;
+    professionalType?: string | null;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+  order?: StandaloneDdOrderDto;
+};
+
+export type StandaloneDdProfessionalOption = {
+  id: string;
+  email: string;
+  name: string;
+  professionalType?: string | null;
+};
+
 export type StandaloneDdOrderDto = {
   id: string;
   serviceRequestId?: string;
@@ -50,6 +78,8 @@ export type StandaloneDdOrderDto = {
   buyerId?: string | null;
   bundleId?: string | null;
   itemIds: string[];
+  /** Human-readable schedule / catalog labels when available */
+  services?: string[];
   subtotal: string;
   vatAmount: string;
   total: string;
@@ -67,6 +97,7 @@ export type StandaloneDdOrderDto = {
   completedAt?: string | null;
   reportStorageKeys?: string[];
   reports?: StandaloneDdReport[];
+  assignments?: StandaloneDdAssignmentDto[];
   property?: StandaloneDdPropertySummary;
   listing?: StandaloneDdListingSummary;
   externalProperty?: StandaloneExternalProperty;
@@ -105,6 +136,7 @@ export type StandaloneDdPayInitResult = {
   paymentId: string;
   reference: string;
   authorizationUrl: string;
+  accessCode: string;
   transactionPublicId?: string | null;
 };
 
@@ -221,6 +253,79 @@ export function useUploadStandaloneDdReportMutation() {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) => uploadStandaloneDdReport(id, file),
     onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: STANDALONE_DD_QUERY_KEY });
+    },
+  });
+}
+
+export function useStandaloneDdProfessionalsQuery() {
+  const { user, isReady } = useAuth();
+  return useQuery({
+    queryKey: ["standalone-dd", "professionals", user?.id ?? "anon"],
+    queryFn: () => apiRequest<StandaloneDdProfessionalOption[]>("/standalone-dd/professionals"),
+    select: (envelope) => envelope.data,
+    enabled:
+      isReady &&
+      !!user &&
+      (user.role === "staff" || user.role === "admin" || user.role === "super_admin"),
+  });
+}
+
+export function useAssignStandaloneDdMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: { professionalId: string; scheduleCode: string; title?: string; notes?: string };
+    }) =>
+      apiRequest<StandaloneDdOrderDto>(`/standalone-dd/orders/${id}/assignments`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }).then((envelope) => envelope.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: STANDALONE_DD_QUERY_KEY });
+    },
+  });
+}
+
+export function useMyDdAssignmentsQuery() {
+  const { user, isReady } = useAuth();
+  return useQuery({
+    queryKey: ["standalone-dd", "assignments", "mine", user?.id ?? "anon"],
+    queryFn: () => apiRequest<StandaloneDdAssignmentDto[]>("/standalone-dd/assignments/mine"),
+    select: (envelope) => envelope.data,
+    enabled: isReady && !!user && user.role === "professional",
+  });
+}
+
+export async function uploadDdAssignmentReport(assignmentId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/standalone-dd/assignments/${assignmentId}/report`, {
+    method: "POST",
+    body: form,
+    credentials: "include",
+  });
+  const json = (await res.json()) as {
+    data?: StandaloneDdOrderDto;
+    error?: { message?: string };
+  };
+  if (!res.ok) {
+    throw new Error(json.error?.message ?? "Upload failed");
+  }
+  if (!json.data) throw new Error("Upload failed");
+  return json.data;
+}
+
+export function useUploadDdAssignmentReportMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => uploadDdAssignmentReport(id, file),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["standalone-dd", "assignments", "mine"] });
       void qc.invalidateQueries({ queryKey: STANDALONE_DD_QUERY_KEY });
     },
   });

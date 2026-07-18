@@ -10,6 +10,14 @@ Day-to-day building and checklist validation use **local frontend + local backen
 | **API (NestJS)** | http://localhost:3001/api/v1 |
 | **Health** | http://localhost:3001/api/v1/health |
 
+## Paystack (real test mode)
+
+Standalone due diligence and guest checkout call the **live Paystack API** with your test keys (`sk_test_…` / `pk_test_…`). Keep `PAYSTACK_FORCE_MOCK=false` (or unset).
+
+- Checkout uses Paystack inline `accessCode` (same pattern as listed-property checkout).
+- In Paystack’s TEST checkout UI, choose **Success** (or enter card `4084084084084081`, expiry any future date, CVV `408`, PIN `0000`, OTP `123456` as needed). Docs: https://paystack.com/docs/payments/test-payments/
+- Very large test amounts can return “insufficient funds” on sandbox cards; use the Success test option or a smaller schedule for sandbox demos. Live keys are unaffected.
+
 The Vite dev server proxies `/api/v1` → `http://localhost:3001` (`vite.config.ts`). Frontend code must use relative `/api/v1` paths so session cookies work.
 
 ```bash

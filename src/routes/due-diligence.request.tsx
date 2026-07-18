@@ -11,6 +11,7 @@ import {
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { DdCheckSelector, type DdCheckSelection } from "@/components/DdCheckSelector";
+import { DdOrderConfirmation } from "@/components/DdOrderConfirmation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import {
 } from "@/hooks/use-standalone-dd";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/due-diligence/request")({
@@ -296,15 +298,40 @@ function DueDiligenceRequestPage() {
         },
       });
 
-      if (payment.authorizationUrl.includes("mock=1")) {
-        setPaidServiceId(created.serviceId);
-        toast.success("Due diligence order created and paid in demo mode.");
-        return;
+      if (!payment.accessCode) {
+        throw new Error("Paystack did not return an access code. Check API keys and try again.");
       }
 
-      if (typeof window !== "undefined") {
-        window.location.href = payment.authorizationUrl;
-      }
+      // Same inline Paystack model as listed-property guest checkout.
+      await openPaystackCheckout({
+        accessCode: payment.accessCode,
+        onSuccess: (transaction) => {
+          void (async () => {
+            try {
+              const verified = await verifyPayment.mutateAsync({
+                serviceId: created.serviceId,
+                reference: transaction.reference || payment.reference,
+              });
+              setPaidServiceId(verified.serviceId);
+              toast.success("Payment confirmed. Your due diligence case is open.");
+              if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.searchParams.set("serviceId", verified.serviceId);
+                url.searchParams.set("reference", transaction.reference || payment.reference);
+                window.history.replaceState({}, "", url.toString());
+              }
+            } catch (verifyError) {
+              toast.error(
+                verifyError instanceof ApiError
+                  ? verifyError.message
+                  : "Payment received but verification is still pending. Keep your Service ID.",
+              );
+            }
+          })();
+        },
+        onCancel: () => toast.message("Payment window closed. Your Service ID is still available."),
+        onError: (err) => toast.error(err.message || "Paystack checkout failed. Please try again."),
+      });
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Could not create the due diligence order.",
@@ -346,30 +373,32 @@ function DueDiligenceRequestPage() {
                 </div>
               )}
             </div>
-            <div className="mt-8">
-              <div className="mb-3 flex flex-wrap gap-2">
-                {STEPS.map((entry) => (
-                  <span
-                    key={entry}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      step === entry
-                        ? "bg-primary text-primary-foreground"
-                        : STEPS.indexOf(entry) < STEPS.indexOf(step)
-                          ? "bg-primary/15 text-primary"
-                          : "bg-card text-muted-foreground"
-                    }`}
-                  >
-                    {stepLabel(entry)}
-                  </span>
-                ))}
+            {!hasConfirmedPayment && (
+              <div className="mt-8">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {STEPS.map((entry) => (
+                    <span
+                      key={entry}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        step === entry
+                          ? "bg-primary text-primary-foreground"
+                          : STEPS.indexOf(entry) < STEPS.indexOf(step)
+                            ? "bg-primary/15 text-primary"
+                            : "bg-card text-muted-foreground"
+                      }`}
+                    >
+                      {stepLabel(entry)}
+                    </span>
+                  ))}
+                </div>
+                <Progress value={progress} className="h-2" />
               </div>
-              <Progress value={progress} className="h-2" />
-            </div>
+            )}
           </div>
         </section>
 
         <section className="mx-auto max-w-5xl px-6 py-10">
-          {isAuthenticated && user?.role !== "buyer" && (
+          {isAuthenticated && user?.role !== "buyer" && !hasConfirmedPayment && (
             <div className="mb-6 rounded-2xl border border-warning/40 bg-warning/10 px-5 py-4 text-sm text-foreground">
               You are signed in as <strong>{user?.role}</strong>. This flow supports guests or
               signed-in buyers only. Sign out or switch to a buyer account before paying.
@@ -385,58 +414,10 @@ function DueDiligenceRequestPage() {
               </p>
             </div>
           ) : hasConfirmedPayment && paidOrder ? (
-            <div className="rounded-3xl border border-border/60 bg-card p-8 shadow-[var(--shadow-elegant)]">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                  <CheckCircle2 className="h-7 w-7" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-semibold">Payment confirmed</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Your standalone due diligence case is open. SafeBuy staff have been notified and
-                    will progress the checks.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <SummaryTile label="Service ID" value={paidOrder.serviceId} mono />
-                <SummaryTile label="Case ID" value={paidOrder.caseId} mono />
-                <SummaryTile label="Status" value={paidOrder.status.replace(/_/g, " ")} />
-              </div>
-              <div className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Property
-                </p>
-                <p className="mt-2 text-base font-medium text-foreground">
-                  {paidOrder.property?.title ?? "Standalone property due diligence"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">{paidOrder.property?.location}</p>
-              </div>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Save your Service ID. You can reopen this confirmation anytime with that ID — no
-                account required.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild>
-                  <Link to="/due-diligence/request" search={{ serviceId: paidOrder.serviceId }}>
-                    View this case again
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                {isAuthenticated && user?.role === "buyer" ? (
-                  <Button variant="outline" asChild>
-                    <Link to="/dashboard/buyer/due-diligence">Open buyer dashboard</Link>
-                  </Button>
-                ) : (
-                  <Button variant="outline" asChild>
-                    <Link to="/login">Sign in after activation email</Link>
-                  </Button>
-                )}
-                <Button variant="outline" asChild>
-                  <Link to="/due-diligence/request">Start another request</Link>
-                </Button>
-              </div>
-            </div>
+            <DdOrderConfirmation
+              order={paidOrder}
+              isAuthenticatedBuyer={Boolean(isAuthenticated && user?.role === "buyer")}
+            />
           ) : (
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-6">
@@ -937,27 +918,6 @@ function DueDiligenceRequestPage() {
         </section>
       </main>
       <SiteFooter />
-    </div>
-  );
-}
-
-function SummaryTile({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className={`mt-2 text-sm font-medium text-foreground ${mono ? "font-mono" : ""}`}>
-        {value}
-      </p>
     </div>
   );
 }

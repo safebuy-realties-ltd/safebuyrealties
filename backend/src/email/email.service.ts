@@ -11,8 +11,13 @@ export type PaymentReceiptData = {
   services: string[];
   total: string;
   currency: string;
-  activationLink: string;
+  /** Present when the guest still needs to activate a buyer account */
+  activationLink?: string | null;
   guestName: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  subtotal?: string;
+  vatAmount?: string;
 };
 
 export type StaffDdAlertData = {
@@ -117,42 +122,54 @@ export class EmailService {
       "",
       "Thank you for your payment. Your due diligence order is confirmed.",
       "",
+      "IMPORTANT — Keep your Service ID",
       `Service ID: ${data.serviceId}`,
-      `Transaction ID: ${data.transactionPublicId}`,
+      "Use this Service ID on the Due Diligence page to look up your case anytime without logging in.",
+      "",
       `Case ID: ${data.caseId}`,
+      `Transaction ID: ${data.transactionPublicId}`,
       `Buyer ID: ${data.buyerPublicId}`,
       "",
       `Property: ${data.propertyTitle}`,
       `Location: ${data.propertyLocation}`,
       "",
-      "Services:",
+      "Services requested:",
       ...data.services.map((s) => `  - ${s}`),
       "",
+      data.subtotal ? `Subtotal: ${data.currency} ${data.subtotal}` : "",
+      data.vatAmount ? `VAT: ${data.currency} ${data.vatAmount}` : "",
       `Total paid: ${data.currency} ${data.total}`,
       "",
-      "Activate your buyer account to track this order:",
-      data.activationLink,
-    ];
+      data.activationLink
+        ? `Optional — activate your buyer account to track from the dashboard:\n${data.activationLink}`
+        : "You can look up this case anytime with your Service ID (no account required).",
+    ].filter(Boolean);
     return lines.join("\n");
   }
 
   private buildReceiptHtml(data: PaymentReceiptData): string {
     const services = data.services.map((s) => `<li>${s}</li>`).join("");
+    const activation = data.activationLink
+      ? `<p><a href="${data.activationLink}">Activate your buyer account</a> (optional) to track from the dashboard.</p>`
+      : `<p>You can look up this case anytime with your Service ID — no account required.</p>`;
     return `
       <p>Hello ${data.guestName},</p>
       <p>Thank you for your payment. Your due diligence order is confirmed.</p>
+      <p style="padding:12px;border:1px solid #0f766e;background:#ecfdf5;">
+        <strong>Keep your Service ID:</strong> ${data.serviceId}<br/>
+        Use it on the Due Diligence page to look up your case anytime without logging in.
+      </p>
       <ul>
-        <li><strong>Service ID:</strong> ${data.serviceId}</li>
-        <li><strong>Transaction ID:</strong> ${data.transactionPublicId}</li>
         <li><strong>Case ID:</strong> ${data.caseId}</li>
+        <li><strong>Transaction ID:</strong> ${data.transactionPublicId}</li>
         <li><strong>Buyer ID:</strong> ${data.buyerPublicId}</li>
       </ul>
       <p><strong>Property:</strong> ${data.propertyTitle}<br/>
       <strong>Location:</strong> ${data.propertyLocation}</p>
-      <p><strong>Services:</strong></p>
+      <p><strong>Services requested:</strong></p>
       <ul>${services}</ul>
       <p><strong>Total paid:</strong> ${data.currency} ${data.total}</p>
-      <p><a href="${data.activationLink}">Activate your buyer account</a> to track this order.</p>
+      ${activation}
     `;
   }
 }

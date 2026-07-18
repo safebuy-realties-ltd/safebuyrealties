@@ -14,8 +14,15 @@ export class PaystackService {
 
   constructor(private readonly config: ConfigService) {}
 
-  /** True when a secret key is configured (live Paystack, not mock mode). */
+  /**
+   * True when a secret key is configured (live Paystack, not mock mode).
+   * Set PAYSTACK_FORCE_MOCK=true to force the local/demo callback path even when keys exist.
+   */
   isConfigured(): boolean {
+    const forceMock = this.config.get<string>("PAYSTACK_FORCE_MOCK")?.trim().toLowerCase();
+    if (forceMock === "true" || forceMock === "1" || forceMock === "yes") {
+      return false;
+    }
     return Boolean(this.secretKey());
   }
 
