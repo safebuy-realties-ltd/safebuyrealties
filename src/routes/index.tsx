@@ -18,7 +18,7 @@ const paths = [
   },
   {
     id: "buying",
-    label: "I'm a buyer",
+    label: "I'm buying a property",
     icon: ShoppingBag,
     to: "/browse" as const,
   },
