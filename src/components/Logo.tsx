@@ -1,13 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
+import brandLogo from "@/assets/brand/safebuy-logo.svg";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link to="/" className={`flex items-center gap-2 font-semibold text-foreground ${className}`}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ShieldCheck className="h-4.5 w-4.5" strokeWidth={2.5} />
-      </span>
-      <span className="text-base tracking-tight">
+    <Link to="/" className={`flex items-center gap-2.5 font-semibold text-foreground ${className}`}>
+      <img src={brandLogo} alt="" className="h-8 w-8 text-primary" aria-hidden />
+      <span className="font-display text-base tracking-tight">
         SafeBuy<span className="text-primary">Realties</span>
       </span>
     </Link>
