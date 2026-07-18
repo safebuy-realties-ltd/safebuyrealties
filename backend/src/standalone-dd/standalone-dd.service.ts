@@ -447,6 +447,12 @@ export class StandaloneDdService {
     const assignments = await Promise.all(
       (order.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
     );
+    const guestRequest = order.serviceId
+      ? await this.prisma.serviceRequest.findUnique({
+          where: { serviceId: order.serviceId },
+          select: { guestName: true, guestEmail: true, guestPhone: true },
+        })
+      : null;
 
     return {
       id: order.id,
@@ -455,6 +461,9 @@ export class StandaloneDdService {
       source: order.source,
       status: order.status,
       buyerId: order.buyerId,
+      guestName: guestRequest?.guestName ?? "",
+      guestEmail: guestRequest?.guestEmail ?? "",
+      guestPhone: guestRequest?.guestPhone ?? "",
       bundleId: order.bundleId,
       itemIds: order.itemIds,
       services,
