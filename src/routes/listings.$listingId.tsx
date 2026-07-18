@@ -344,7 +344,7 @@ function ListingDetail() {
               </p>
               <p className="mt-2 text-3xl font-semibold text-primary">{priceLabel}</p>
 
-              {isPublicListing && (
+              {(isLive || isUnderOffer) && (
                 <>
                   <Button className="mt-5 w-full" size="lg" asChild>
                     <Link to="/due-diligence/request" search={{ listingId }}>
