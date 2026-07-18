@@ -330,8 +330,7 @@ function DueDiligenceRequestPage() {
           })();
         },
         onCancel: () => toast.message("Payment window closed. Your Service ID is still available."),
-        onError: (err) =>
-          toast.error(err.message || "Paystack checkout failed. Please try again."),
+        onError: (err) => toast.error(err.message || "Paystack checkout failed. Please try again."),
       });
     } catch (error) {
       toast.error(

@@ -117,10 +117,7 @@ function AssignmentCard({ assignment }: { assignment: StandaloneDdAssignmentDto 
         </p>
       ) : (
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
-          <Input
-            type="file"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          />
+          <Input type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
           <Button onClick={() => void submit()} disabled={uploadReport.isPending}>
             {uploadReport.isPending ? "Uploading…" : "Submit report"}
           </Button>

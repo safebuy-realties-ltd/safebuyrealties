@@ -264,7 +264,10 @@ export function useStandaloneDdProfessionalsQuery() {
     queryKey: ["standalone-dd", "professionals", user?.id ?? "anon"],
     queryFn: () => apiRequest<StandaloneDdProfessionalOption[]>("/standalone-dd/professionals"),
     select: (envelope) => envelope.data,
-    enabled: isReady && !!user && (user.role === "staff" || user.role === "admin" || user.role === "super_admin"),
+    enabled:
+      isReady &&
+      !!user &&
+      (user.role === "staff" || user.role === "admin" || user.role === "super_admin"),
   });
 }
 
