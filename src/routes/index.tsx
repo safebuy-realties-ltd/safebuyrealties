@@ -18,8 +18,8 @@ const paths = [
   },
   {
     id: "buying",
-    label: "I'm buying a property",
-    icon: ShoppingBag,
+    label: "Browse Verified Properties",
+    icon: House,
     to: "/browse" as const,
   },
   {
@@ -31,7 +31,7 @@ const paths = [
   },
   {
     id: "professional",
-    label: "I'm a professional",
+    label: "Professional & Allied Services",
     icon: Briefcase,
     to: "/register" as const,
     search: { role: "professional" as const },
