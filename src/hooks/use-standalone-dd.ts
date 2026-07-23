@@ -56,11 +56,25 @@ export type StandaloneDdAssignmentDto = {
   order?: StandaloneDdOrderDto;
 };
 
+export type StandaloneDdChecklistItemSummary = {
+  code: string;
+  label: string;
+};
+
+export type StandaloneDdChecklistScheduleSummary = {
+  code: string;
+  name: string;
+  shortName: string;
+  letter: string;
+  items: StandaloneDdChecklistItemSummary[];
+};
+
 export type StandaloneDdProfessionalOption = {
   id: string;
   email: string;
   name: string;
   professionalType?: string | null;
+  suggested?: boolean;
 };
 
 export type StandaloneDdOrderDto = {
@@ -78,11 +92,15 @@ export type StandaloneDdOrderDto = {
   buyerId?: string | null;
   bundleId?: string | null;
   itemIds: string[];
+  checklistSelections?: Record<string, string[]>;
+  checklistSummary?: StandaloneDdChecklistScheduleSummary[];
   /** Human-readable schedule / catalog labels when available */
   services?: string[];
+  suggestedProfessionals?: StandaloneDdProfessionalOption[];
   subtotal: string;
   vatAmount: string;
   total: string;
+  pricingNote?: string;
   currency: string;
   listingId?: string | null;
   externalPropertyId?: string | null;
@@ -121,8 +139,7 @@ export type CreateStandaloneDdBody = {
   guestName: string;
   guestEmail: string;
   guestPhone: string;
-  itemIds?: string[];
-  bundleId?: string;
+  checklistSelections: Record<string, string[]>;
 };
 
 export type PayStandaloneDdBody = {
@@ -199,14 +216,20 @@ export function useVerifyStandaloneDdPaymentMutation() {
   });
 }
 
-export function isStandaloneDdPaid(order: StandaloneDdOrderDto | null | undefined) {
+export function isStandaloneDdSubmitted(order: StandaloneDdOrderDto | null | undefined) {
   if (!order) return false;
-  const paidStatuses = new Set(["PAID", "IN_PROGRESS", "COMPLETE"]);
+  const openStatuses = new Set(["SUBMITTED", "PAID", "IN_PROGRESS", "COMPLETE"]);
   return (
-    paidStatuses.has(order.status) ||
+    openStatuses.has(order.status) ||
+    order.requestStatus === "SUBMITTED" ||
     order.requestStatus === "PAID" ||
     order.paymentStatus === "SUCCEEDED"
   );
+}
+
+/** @deprecated Prefer isStandaloneDdSubmitted — payment is no longer part of the request flow. */
+export function isStandaloneDdPaid(order: StandaloneDdOrderDto | null | undefined) {
+  return isStandaloneDdSubmitted(order);
 }
 
 export function useUpdateStandaloneDdOrderMutation() {

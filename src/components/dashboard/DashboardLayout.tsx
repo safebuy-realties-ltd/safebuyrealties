@@ -58,6 +58,7 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Overview", to: "/dashboard/admin", icon: LayoutDashboard },
     { label: "Users", to: "/dashboard/admin/users", icon: Users },
     { label: "Listings", to: "/dashboard/admin/listings", icon: Building2 },
+    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
     { label: "Escrow", to: "/dashboard/admin/escrows", icon: Landmark },
     { label: "Settings", to: "/dashboard/admin/settings", icon: Settings },
   ],

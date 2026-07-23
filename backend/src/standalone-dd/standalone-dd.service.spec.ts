@@ -44,11 +44,13 @@ describe("StandaloneDdService", () => {
       serviceRequest: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
       },
       user: {
         findUnique: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn(),
         update: jest.fn(),
       },
@@ -93,7 +95,7 @@ describe("StandaloneDdService", () => {
             }),
           },
         },
-        { provide: EmailService, useValue: { sendPaymentReceipt: jest.fn() } },
+        { provide: EmailService, useValue: { sendPaymentReceipt: jest.fn(), sendStaffDdAlert: jest.fn() } },
         {
           provide: NotificationsService,
           useValue: { create: jest.fn(), createForStaff: jest.fn() },
@@ -144,16 +146,81 @@ describe("StandaloneDdService", () => {
       serviceId: "SBR-SRV-BUY-20260717-001",
       caseId: "SBR-CASE-DD-LOS-20260717-001",
       source: "STANDALONE",
-      status: "PENDING_PAYMENT",
+      status: "SUBMITTED",
       guestName: "Ada Buyer",
       guestEmail: "ada@example.com",
       guestPhone: "08030000000",
-      buyerId: null,
+      buyerId: "buyer-guest-1",
       bundleId: null,
       itemIds: ["item-legal"],
-      subtotal: new Prisma.Decimal(350000),
-      vatAmount: new Prisma.Decimal(26250),
-      total: new Prisma.Decimal(376250),
+      checklistSelections: { LEGAL_CHECK: ["LEGAL_TITLE_SEARCH"] },
+      subtotal: new Prisma.Decimal(0),
+      vatAmount: new Prisma.Decimal(0),
+      total: new Prisma.Decimal(0),
+      listingId: null,
+      externalPropertyId: "external-1",
+      transactionId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listing: null,
+      externalProperty: {
+        id: "external-1",
+        address: "12 Admiralty Way",
+        state: "Lagos",
+        lga: "Eti-Osa",
+        propertyType: "Duplex",
+        approxSize: null,
+        titleRef: "TR-001",
+        sellerName: null,
+        sellerContact: null,
+        notes: null,
+        documentKeys: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdById: null,
+      },
+      transaction: null,
+    });
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.user.create as jest.Mock).mockResolvedValue({
+      id: "buyer-guest-1",
+      email: "ada@example.com",
+      role: UserRole.BUYER,
+    });
+    (prisma.dueDiligenceOrder.create as jest.Mock).mockResolvedValue({
+      id: "dd-order-1",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      status: "SUBMITTED",
+    });
+    (prisma.dueDiligenceOrder.findUnique as jest.Mock).mockResolvedValue({
+      id: "dd-order-1",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      caseId: "SBR-CASE-DD-LOS-20260717-001",
+      status: "SUBMITTED",
+      checklistSelections: { LEGAL_CHECK: ["LEGAL_TITLE_SEARCH"] },
+      reportStorageKeys: [],
+      assignments: [],
+      verdict: null,
+      staffNotes: null,
+      completedAt: null,
+      buyerId: "buyer-guest-1",
+    });
+    (prisma.serviceRequest.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+      id: "service-request-1",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      caseId: "SBR-CASE-DD-LOS-20260717-001",
+      source: "STANDALONE",
+      status: "SUBMITTED",
+      guestName: "Ada Buyer",
+      guestEmail: "ada@example.com",
+      guestPhone: "08030000000",
+      buyerId: "buyer-guest-1",
+      bundleId: null,
+      itemIds: ["item-legal"],
+      checklistSelections: { LEGAL_CHECK: ["LEGAL_TITLE_SEARCH"] },
+      subtotal: new Prisma.Decimal(0),
+      vatAmount: new Prisma.Decimal(0),
+      total: new Prisma.Decimal(0),
       listingId: null,
       externalPropertyId: "external-1",
       transactionId: null,
@@ -190,20 +257,14 @@ describe("StandaloneDdService", () => {
       guestName: "Ada Buyer",
       guestEmail: "ada@example.com",
       guestPhone: "08030000000",
-      itemIds: ["item-legal"],
+      checklistSelections: { LEGAL_CHECK: ["LEGAL_TITLE_SEARCH"] },
     });
 
     expect(prisma.externalProperty.create).toHaveBeenCalled();
-    expect(prisma.serviceRequest.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          source: "STANDALONE",
-          externalPropertyId: "external-1",
-          listingId: null,
-        }),
-      }),
-    );
+    expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.serviceId).toBe("SBR-SRV-BUY-20260717-001");
+    expect(result.status).toBe("SUBMITTED");
+    expect(result.checklistSelections).toEqual({ LEGAL_CHECK: ["LEGAL_TITLE_SEARCH"] });
     expect(result.property?.kind).toBe("EXTERNAL");
   });
 
@@ -261,27 +322,79 @@ describe("StandaloneDdService", () => {
       transaction: null,
     });
 
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      id: buyerActor.sub,
+      email: buyerActor.email,
+      role: UserRole.BUYER,
+    });
+    (prisma.dueDiligenceOrder.create as jest.Mock).mockResolvedValue({
+      id: "dd-order-2",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      status: "SUBMITTED",
+    });
+    (prisma.dueDiligenceOrder.findUnique as jest.Mock).mockResolvedValue({
+      id: "dd-order-2",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      caseId: "SBR-CASE-DD-LOS-20260717-001",
+      status: "SUBMITTED",
+      checklistSelections: { PHYSICAL_CHECK: ["PHYS_BOUNDARY_BEACONS"] },
+      reportStorageKeys: [],
+      assignments: [],
+      verdict: null,
+      staffNotes: null,
+      completedAt: null,
+      buyerId: buyerActor.sub,
+    });
+    (prisma.serviceRequest.findUniqueOrThrow as jest.Mock).mockResolvedValue({
+      id: "service-request-2",
+      serviceId: "SBR-SRV-BUY-20260717-001",
+      caseId: "SBR-CASE-DD-LOS-20260717-001",
+      source: "STANDALONE",
+      status: "SUBMITTED",
+      guestName: "Ada Buyer",
+      guestEmail: "ada@example.com",
+      guestPhone: "08030000000",
+      buyerId: buyerActor.sub,
+      bundleId: null,
+      itemIds: ["item-physical"],
+      checklistSelections: { PHYSICAL_CHECK: ["PHYS_BOUNDARY_BEACONS"] },
+      subtotal: new Prisma.Decimal(0),
+      vatAmount: new Prisma.Decimal(0),
+      total: new Prisma.Decimal(0),
+      listingId: "listing-1",
+      externalPropertyId: null,
+      transactionId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      listing: {
+        id: "listing-1",
+        title: "Lekki Terrace",
+        location: "Lekki, Lagos",
+        propertyId: "SBR-PROP-LOS-2026-00001",
+        currency: "NGN",
+        sellerId: "seller-1",
+        status: ListingStatus.LIVE,
+        isPublished: true,
+      },
+      externalProperty: null,
+      transaction: null,
+    });
+
     const result = await service.createOrder(
       {
         listingId: "listing-1",
         guestName: "Ada Buyer",
         guestEmail: "ada@example.com",
         guestPhone: "08030000000",
-        itemIds: ["item-physical"],
+        checklistSelections: { PHYSICAL_CHECK: ["PHYS_BOUNDARY_BEACONS"] },
       },
       buyerActor,
     );
 
-    expect(prisma.serviceRequest.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          listingId: "listing-1",
-          externalPropertyId: null,
-          buyerId: buyerActor.sub,
-          source: "STANDALONE",
-        }),
-      }),
+    expect(prisma.listing.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "listing-1" } }),
     );
+    expect(result.status).toBe("SUBMITTED");
     expect(result.property?.kind).toBe("LISTING");
   });
 

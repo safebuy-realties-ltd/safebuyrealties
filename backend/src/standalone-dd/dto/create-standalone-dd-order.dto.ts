@@ -1,12 +1,10 @@
 import { Transform, Type } from "class-transformer";
 import {
-  ArrayNotEmpty,
-  IsArray,
   IsEmail,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
-  ValidateIf,
   ValidateNested,
 } from "class-validator";
 
@@ -74,15 +72,10 @@ export class CreateStandaloneDdOrderDto {
   @IsNotEmpty()
   guestPhone!: string;
 
-  @ValidateIf((o: CreateStandaloneDdOrderDto) => !o.bundleId)
-  @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  itemIds?: string[];
-
-  @ValidateIf((o: CreateStandaloneDdOrderDto) => !o.itemIds?.length)
-  @IsOptional()
-  @IsString()
-  bundleId?: string;
+  /**
+   * Map of schedule catalog code → selected checklist item codes.
+   * Example: { "LEGAL_CHECK": ["LEGAL_TITLE_SEARCH", "LEGAL_COF_O"] }
+   */
+  @IsObject()
+  checklistSelections!: Record<string, string[]>;
 }

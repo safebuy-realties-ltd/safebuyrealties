@@ -71,8 +71,11 @@ export class StandaloneDdController {
   @Get("professionals")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  listProfessionals(@CurrentUser() user: JwtPayload) {
-    return this.standaloneDd.listAssignableProfessionals(user);
+  listProfessionals(
+    @CurrentUser() user: JwtPayload,
+    @Query("scheduleCode") scheduleCode?: string,
+  ) {
+    return this.standaloneDd.listAssignableProfessionals(user, scheduleCode);
   }
 
   @Get("assignments/mine")

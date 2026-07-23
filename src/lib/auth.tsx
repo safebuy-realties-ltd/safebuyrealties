@@ -214,5 +214,7 @@ export function dashboardPathForRole(role: Role): string {
 export function canAccessDashboardRole(userRole: Role, layoutRole: Role): boolean {
   if (userRole === layoutRole) return true;
   if (userRole === "super_admin" && (layoutRole === "admin" || layoutRole === "staff")) return true;
+  // Admins manage due diligence / ops queues that live under /dashboard/staff/*
+  if (userRole === "admin" && layoutRole === "staff") return true;
   return false;
 }
