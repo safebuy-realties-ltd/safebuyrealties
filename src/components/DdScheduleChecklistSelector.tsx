@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,27 +19,34 @@ type Props = {
   onChange?: (selection: DdScheduleChecklistSelection) => void;
 };
 
+function toPayload(selections: DdChecklistSelections): DdScheduleChecklistSelection {
+  const scheduleCodes = DD_SCHEDULES.map((s) => s.code).filter(
+    (code) => (selections[code]?.length ?? 0) > 0,
+  ) as DdScheduleCode[];
+  return {
+    checklistSelections: selections,
+    selectedCount: countSelectedItems(selections),
+    scheduleCodes,
+  };
+}
+
 export function DdScheduleChecklistSelector({ value, onChange }: Props) {
   const [selections, setSelections] = useState<DdChecklistSelections>(value ?? {});
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (value) setSelections(value);
+    if (!value) return;
+    setSelections((current) => {
+      const currentJson = JSON.stringify(current);
+      const nextJson = JSON.stringify(value);
+      return currentJson === nextJson ? current : value;
+    });
   }, [value]);
 
-  const payload = useMemo(() => {
-    const scheduleCodes = DD_SCHEDULES.map((s) => s.code).filter(
-      (code) => (selections[code]?.length ?? 0) > 0,
-    ) as DdScheduleCode[];
-    return {
-      checklistSelections: selections,
-      selectedCount: countSelectedItems(selections),
-      scheduleCodes,
-    };
-  }, [selections]);
-
   useEffect(() => {
-    onChange?.(payload);
-  }, [payload, onChange]);
+    onChangeRef.current?.(toPayload(selections));
+  }, [selections]);
 
   const updateSchedule = (code: DdScheduleCode, nextCodes: string[]) => {
     setSelections((prev) => {
@@ -53,10 +60,10 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
     });
   };
 
-  const toggleItem = (scheduleCode: DdScheduleCode, itemCode: string) => {
+  const setItemChecked = (scheduleCode: DdScheduleCode, itemCode: string, checked: boolean) => {
     const current = new Set(selections[scheduleCode] ?? []);
-    if (current.has(itemCode)) current.delete(itemCode);
-    else current.add(itemCode);
+    if (checked) current.add(itemCode);
+    else current.delete(itemCode);
     updateSchedule(scheduleCode, Array.from(current));
   };
 
@@ -110,13 +117,20 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                 const checked = selected.includes(item.code);
                 return (
                   <li key={item.code}>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 px-3 py-3 transition-colors hover:bg-secondary/30">
+                    <div className="flex items-start gap-3 rounded-xl border border-border/50 px-3 py-3 transition-colors hover:bg-secondary/30">
                       <Checkbox
                         checked={checked}
-                        onCheckedChange={() => toggleItem(schedule.code, item.code)}
+                        onCheckedChange={(next) =>
+                          setItemChecked(schedule.code, item.code, next === true)
+                        }
                         className="mt-0.5"
+                        aria-label={item.label}
                       />
-                      <span className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 cursor-pointer text-left"
+                        onClick={() => setItemChecked(schedule.code, item.code, !checked)}
+                      >
                         <span className="block text-sm font-medium text-foreground">
                           {item.label}
                         </span>
@@ -125,8 +139,8 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                             {item.description}
                           </span>
                         ) : null}
-                      </span>
-                    </label>
+                      </button>
+                    </div>
                   </li>
                 );
               })}
