@@ -48,7 +48,10 @@ describe("Auth guard against forged localStorage cache", () => {
     renderProtected("admin");
 
     await waitFor(() => {
-      expect(navigate).toHaveBeenCalledWith({ to: "/login" });
+      expect(navigate).toHaveBeenCalledWith({
+        to: "/login",
+        search: { redirect: "/dashboard/buyer" },
+      });
     });
 
     // Protected outlet must NEVER render.
