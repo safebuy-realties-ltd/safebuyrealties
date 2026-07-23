@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   ClipboardList,
   CalendarDays,
+  Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { VerificationTracker, type VerificationStep } from "@/components/VerificationTracker";
 import {
   useListingQuery,
@@ -117,6 +119,7 @@ function ListingDetail() {
   const canStartGuestCheckout = isPublicListing && isLive;
   const canStartBuyerCheckout = isBuyer && isLive;
   const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [copiedListingId, setCopiedListingId] = useState(false);
   const { data: inspections } = useListingInspectionsQuery(
     isBuyer && canFetchAuthExtras ? listingId : null,
   );
@@ -239,6 +242,33 @@ function ListingDetail() {
                     Property ID: {resolvedListing.propertyId}
                   </p>
                 )}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-xs text-muted-foreground">Listing ID</p>
+                  <code className="rounded-md border border-border/60 bg-muted/40 px-2 py-1 font-mono text-xs text-foreground">
+                    {listingId}
+                  </code>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          await navigator.clipboard.writeText(listingId);
+                          setCopiedListingId(true);
+                          toast.success("Listing ID copied");
+                          window.setTimeout(() => setCopiedListingId(false), 2000);
+                        } catch {
+                          toast.error("Could not copy Listing ID. Please copy it manually.");
+                        }
+                      })();
+                    }}
+                  >
+                    <Copy className="mr-1.5 h-3.5 w-3.5" />
+                    {copiedListingId ? "Copied" : "Copy"}
+                  </Button>
+                </div>
               </div>
               {isLive && (
                 <Badge className="gap-1 border-primary/20 bg-primary-soft text-primary">
@@ -314,18 +344,28 @@ function ListingDetail() {
               </p>
               <p className="mt-2 text-3xl font-semibold text-primary">{priceLabel}</p>
 
-              {canStartGuestCheckout && (
+              {(isLive || isUnderOffer) && (
                 <>
                   <Button className="mt-5 w-full" size="lg" asChild>
-                    <Link to="/checkout/$listingId" params={{ listingId }}>
+                    <Link to="/due-diligence/request" search={{ listingId }}>
                       <ClipboardList className="mr-2 h-4 w-4" />
-                      Start Due Diligence
+                      Request due diligence
                     </Link>
                   </Button>
                   <p className="mt-2 text-center text-xs text-muted-foreground">
-                    Official title, survey, and land checks by licensed professionals — no account
-                    required.
+                    Opens the due diligence request with this listing already selected — no account
+                    required. Listing ID is also shown above if you need to paste it later.
                   </p>
+                </>
+              )}
+
+              {canStartGuestCheckout && (
+                <>
+                  <Button className="mt-3 w-full" variant="secondary" size="lg" asChild>
+                    <Link to="/checkout/$listingId" params={{ listingId }}>
+                      Continue listed checkout
+                    </Link>
+                  </Button>
 
                   <div className="mt-5 rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
                     <p className="text-sm font-medium text-foreground">Schedule inspection</p>

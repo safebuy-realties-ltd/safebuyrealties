@@ -573,7 +573,9 @@ function DueDiligenceRequestPage() {
                           placeholder="Paste a SafeBuyRealties listing ID"
                         />
                         <p className="mt-2 text-xs text-muted-foreground">
-                          You can copy this from a listing detail page. Need one?{" "}
+                          Open any listing and use <strong>Copy</strong> next to Listing ID, or
+                          click <strong>Request due diligence</strong> on that page to fill this
+                          automatically.{" "}
                           <Link to="/browse" className="text-primary underline">
                             Browse live listings
                           </Link>
