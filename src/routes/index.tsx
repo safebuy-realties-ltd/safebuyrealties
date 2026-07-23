@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Briefcase, ClipboardCheck, Home, ShoppingBag } from "lucide-react";
+import { ArrowUpRight, Briefcase, Building2, ClipboardCheck, Home, Search } from "lucide-react";
 import brandLogo from "@/assets/brand/safebuy-logo.svg";
 
 const LANDING_BG =
@@ -9,18 +9,12 @@ export const Route = createFileRoute("/")({
   component: SimpleLanding,
 });
 
-const paths = [
+const primaryPaths = [
   {
     id: "due-diligence",
     label: "Request due diligence",
     icon: ClipboardCheck,
     to: "/due-diligence/request" as const,
-  },
-  {
-    id: "buying",
-    label: "Browse Verified Properties",
-    icon: House,
-    to: "/browse" as const,
   },
   {
     id: "selling",
@@ -31,12 +25,29 @@ const paths = [
   },
   {
     id: "professional",
-    label: "Professional & Allied Services",
+    label: "I'm a professional",
     icon: Briefcase,
     to: "/register" as const,
     search: { role: "professional" as const },
   },
+  {
+    id: "property-listing",
+    label: "Property Listing",
+    icon: Building2,
+    to: "/dashboard/seller/listings" as const,
+  },
 ] as const;
+
+const browsePath = {
+  id: "browse",
+  label: "Browse verified properties",
+  icon: Search,
+  to: "/browse" as const,
+} as const;
+
+function pathCardClassName(extra = "") {
+  return `landing-path group relative flex min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-white/45 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:min-h-[10rem] sm:p-6 ${extra}`;
+}
 
 function SimpleLanding() {
   return (
@@ -59,12 +70,12 @@ function SimpleLanding() {
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
           <section className="landing-paths order-2 lg:order-1">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-              {paths.map((path, index) => (
+              {primaryPaths.map((path, index) => (
                 <Link
                   key={path.id}
                   to={path.to}
                   search={"search" in path ? path.search : undefined}
-                  className="landing-path group relative flex min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-white/45 hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 sm:min-h-[10rem] sm:p-6"
+                  className={pathCardClassName()}
                   style={{ animationDelay: `${120 + index * 80}ms` }}
                 >
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_10px_30px_-12px_oklch(0.35_0.12_22_/_0.9)] transition group-hover:scale-105">
@@ -78,6 +89,22 @@ function SimpleLanding() {
                   </div>
                 </Link>
               ))}
+
+              <Link
+                to={browsePath.to}
+                className={pathCardClassName("sm:col-span-2")}
+                style={{ animationDelay: `${120 + primaryPaths.length * 80}ms` }}
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_10px_30px_-12px_oklch(0.35_0.12_22_/_0.9)] transition group-hover:scale-105">
+                  <browsePath.icon className="h-5 w-5" strokeWidth={2.25} />
+                </span>
+                <div className="mt-6 flex items-end justify-between gap-3">
+                  <h2 className="font-display text-2xl font-semibold tracking-tight text-white sm:text-[1.65rem]">
+                    {browsePath.label}
+                  </h2>
+                  <ArrowUpRight className="mb-1 h-5 w-5 shrink-0 text-white/70 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
+                </div>
+              </Link>
             </div>
           </section>
 

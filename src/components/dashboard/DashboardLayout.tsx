@@ -103,13 +103,16 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
   useEffect(() => {
     if (!isReady) return;
     if (!isAuthenticated) {
-      navigate({ to: "/login" });
+      navigate({
+        to: "/login",
+        search: { redirect: pathname.startsWith("/dashboard") ? pathname : undefined },
+      });
       return;
     }
     if (user && !canAccessDashboardRole(user.role, role)) {
       navigate({ to: dashboardPathForRole(user.role) });
     }
-  }, [isReady, isAuthenticated, user, role, navigate]);
+  }, [isReady, isAuthenticated, user, role, navigate, pathname]);
 
   if (!isReady || !isAuthenticated || !user || !hasAccess) {
     return (
