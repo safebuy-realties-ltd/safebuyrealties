@@ -25,7 +25,7 @@ const primaryPaths = [
   },
   {
     id: "professional",
-    label: "I'm a professional",
+    label: "Professional & Allied Services",
     icon: Briefcase,
     to: "/register" as const,
     search: { role: "professional" as const },
