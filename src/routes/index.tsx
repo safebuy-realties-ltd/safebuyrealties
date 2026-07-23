@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
 const paths = [
   {
     id: "due-diligence",
-    label: "Due diligence",
+    label: "Request due diligence",
     icon: ClipboardCheck,
     to: "/due-diligence/request" as const,
   },
@@ -24,7 +24,7 @@ const paths = [
   },
   {
     id: "selling",
-    label: "Owner or agent",
+    label: "Property Owners/Registered Agents",
     icon: Home,
     to: "/register" as const,
     search: { role: "seller" as const },
