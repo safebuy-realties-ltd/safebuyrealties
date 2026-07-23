@@ -31,7 +31,6 @@ import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import {
   DD_SCHEDULES,
-  countSelectedItems,
   type DdChecklistSelections,
 } from "@/lib/dd-schedule-checklists";
 import { getLgasForState, NIGERIA_STATE_LABELS, NIGERIA_STATES } from "@/lib/nigeria-locations";
@@ -116,12 +115,12 @@ function DueDiligenceRequestPage() {
     sellerContact: "",
     notes: "",
   });
-  const [checklistSelections, setChecklistSelections] = useState<DdChecklistSelections>({});
   const [selectionMeta, setSelectionMeta] = useState<DdScheduleChecklistSelection>({
     checklistSelections: {},
     selectedCount: 0,
     scheduleCodes: [],
   });
+  const checklistSelections = selectionMeta.checklistSelections;
   const [contact, setContact] = useState<ContactForm>({
     guestName: user?.name ?? "",
     guestEmail: user?.email ?? "",
@@ -156,7 +155,7 @@ function DueDiligenceRequestPage() {
     propertySource === "LISTING"
       ? Boolean(listingId.trim() && listing)
       : isExternalPropertyValid(externalProperty);
-  const scheduleStepValid = countSelectedItems(checklistSelections) > 0;
+  const scheduleStepValid = selectionMeta.selectedCount > 0;
   const canSubmit =
     propertyStepValid &&
     scheduleStepValid &&
@@ -285,15 +284,17 @@ function DueDiligenceRequestPage() {
                     </p>
                     <div className="mt-6">
                       <DdScheduleChecklistSelector
-                        value={checklistSelections}
                         onChange={(next) => {
                           setSelectionMeta(next);
-                          setChecklistSelections(next.checklistSelections);
                         }}
                       />
                     </div>
-                    <div className="mt-8 flex justify-end gap-3">
-                      <Button disabled={!scheduleStepValid} onClick={() => setStep("PROPERTY")}>
+                    <div className="sticky bottom-4 z-10 mt-8 flex justify-end gap-3 rounded-2xl border border-border/60 bg-card/95 p-3 shadow-lg backdrop-blur">
+                      <Button
+                        data-testid="dd-continue-property"
+                        disabled={!scheduleStepValid}
+                        onClick={() => setStep("PROPERTY")}
+                      >
                         Continue to property
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>

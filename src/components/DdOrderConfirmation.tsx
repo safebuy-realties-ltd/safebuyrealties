@@ -10,37 +10,84 @@ function formatStatus(status: string) {
   return status.replace(/_/g, " ");
 }
 
-async function downloadSummaryPdf(element: HTMLElement, serviceId: string) {
+async function downloadSummaryPdf(element: HTMLElement, order: StandaloneDdOrderDto) {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import("html2canvas"),
     import("jspdf"),
   ]);
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#f7f1ea",
-  });
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 24;
-  const usableWidth = pageWidth - margin * 2;
-  const imgHeight = (canvas.height * usableWidth) / canvas.width;
-  let heightLeft = imgHeight;
-  let position = margin;
 
-  pdf.addImage(imgData, "PNG", margin, position, usableWidth, imgHeight);
-  heightLeft -= pageHeight - margin * 2;
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#f7f1ea",
+      logging: false,
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 24;
+    const usableWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * usableWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = margin;
 
-  while (heightLeft > 0) {
-    position = margin - (imgHeight - heightLeft);
-    pdf.addPage();
     pdf.addImage(imgData, "PNG", margin, position, usableWidth, imgHeight);
     heightLeft -= pageHeight - margin * 2;
-  }
 
-  pdf.save(`safebuy-dd-request-${serviceId}.pdf`);
+    while (heightLeft > 0) {
+      position = margin - (imgHeight - heightLeft);
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", margin, position, usableWidth, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+    }
+
+    pdf.save(`safebuy-dd-request-${order.serviceId}.pdf`);
+    return;
+  } catch {
+    // Fallback for environments where canvas capture fails (e.g. some headless browsers).
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    let y = 48;
+    const line = (text: string, size = 11, color: [number, number, number] = [43, 26, 22]) => {
+      pdf.setTextColor(...color);
+      pdf.setFontSize(size);
+      const wrapped = pdf.splitTextToSize(text, 520);
+      pdf.text(wrapped, 40, y);
+      y += wrapped.length * (size + 4);
+      if (y > 760) {
+        pdf.addPage();
+        y = 48;
+      }
+    };
+
+    pdf.setFillColor(92, 31, 36);
+    pdf.rect(0, 0, 595, 90, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.text("SafeBuyRealties — Due diligence request", 40, 50);
+    y = 120;
+    line(`Service ID: ${order.serviceId}`, 12);
+    line(`Case ID: ${order.caseId}`, 12);
+    line(`Status: ${formatStatus(order.status)}`, 12);
+    line(`Client: ${order.guestName} · ${order.guestEmail} · ${order.guestPhone}`, 11);
+    line(`Property: ${order.property?.title ?? "Standalone property"}`, 11);
+    line(order.property?.location ?? "", 11);
+    y += 8;
+    for (const schedule of order.checklistSummary ?? []) {
+      line(schedule.name, 13, [139, 58, 63]);
+      for (const item of schedule.items) {
+        line(`  • ${item.label}`, 11);
+      }
+      y += 6;
+    }
+    line(
+      order.pricingNote ??
+        "Quote pending — SafeBuyRealties will confirm pricing based on selected checks.",
+      11,
+    );
+    pdf.save(`safebuy-dd-request-${order.serviceId}.pdf`);
+  }
 }
 
 export function DdOrderConfirmation({
@@ -70,7 +117,7 @@ export function DdOrderConfirmation({
     if (!summaryRef.current) return;
     setDownloading(true);
     try {
-      await downloadSummaryPdf(summaryRef.current, order.serviceId);
+      await downloadSummaryPdf(summaryRef.current, order);
       toast.success("PDF downloaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not generate PDF");
@@ -99,7 +146,11 @@ export function DdOrderConfirmation({
             <Copy className="mr-2 h-4 w-4" />
             {copied ? "Copied" : "Copy Service ID"}
           </Button>
-          <Button onClick={() => void handleDownloadPdf()} disabled={downloading}>
+          <Button
+            data-testid="dd-download-pdf"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
+          >
             <Download className="mr-2 h-4 w-4" />
             {downloading ? "Preparing PDF…" : "Download PDF"}
           </Button>

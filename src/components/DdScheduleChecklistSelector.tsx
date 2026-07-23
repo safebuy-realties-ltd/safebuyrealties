@@ -103,6 +103,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                   type="button"
                   size="sm"
                   variant={allSelected ? "default" : "outline"}
+                  data-testid={`dd-select-all-${schedule.code}`}
                   onClick={() =>
                     allSelected ? clearAll(schedule.code) : selectAll(schedule.code)
                   }

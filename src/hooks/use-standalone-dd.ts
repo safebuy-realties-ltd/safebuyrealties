@@ -182,12 +182,19 @@ export function useStandaloneDdOrdersQuery(status?: string) {
 }
 
 export function useCreateStandaloneDdOrderMutation() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateStandaloneDdBody) =>
       apiRequest<StandaloneDdOrderDto>("/standalone-dd/orders", {
         method: "POST",
         body: JSON.stringify(body),
       }).then((envelope) => envelope.data),
+    onSuccess: (order) => {
+      qc.setQueryData(["standalone-dd", "order", order.serviceId], {
+        data: order,
+      });
+      void qc.invalidateQueries({ queryKey: STANDALONE_DD_QUERY_KEY });
+    },
   });
 }
 
