@@ -384,10 +384,12 @@ model DueDiligenceOrder {
   source             String            @default("LISTING")
   bundleId           String?
   itemIds            Json              @default("[]")
+  /// Map of schedule code → selected checklist item codes, e.g. { "LEGAL_CHECK": ["LEGAL_TITLE_SEARCH"] }
+  checklistSelections Json             @default("{}")
   subtotal           Decimal           @db.Decimal(18, 2)
   vatAmount          Decimal           @db.Decimal(18, 2)
   total              Decimal           @db.Decimal(18, 2)
-  /// PENDING | PAID | IN_PROGRESS | COMPLETE | CANCELLED
+  /// PENDING | SUBMITTED | PAID | IN_PROGRESS | COMPLETE | CANCELLED
   status             String            @default("PENDING")
   /// PROCEED | PROCEED_WITH_CAUTION | DO_NOT_PROCEED
   verdict            String?
@@ -606,6 +608,8 @@ model ServiceRequest {
   guestPhone        String
   bundleId          String?
   itemIds           Json              @default("[]")
+  /// Map of schedule code → selected checklist item codes
+  checklistSelections Json            @default("{}")
   includeInspection Boolean           @default(false)
   inspectionFee     Decimal           @default(0) @db.Decimal(18, 2)
   subtotal          Decimal           @db.Decimal(18, 2)
@@ -617,6 +621,7 @@ model ServiceRequest {
   transaction       Transaction?      @relation(fields: [transactionId], references: [id])
   /// LISTING or STANDALONE
   source            String            @default("LISTING")
+  /// PENDING_PAYMENT | SUBMITTED | PAID | …
   status            String            @default("PENDING_PAYMENT")
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt

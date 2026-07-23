@@ -51,10 +51,10 @@ export class EmailService {
       this.config.get<string>("STAFF_ALERT_EMAIL")?.trim() ||
       this.config.get<string>("SMTP_FROM")?.trim() ||
       "ops@safebuyrealties.com";
-    const subject = `New standalone DD payment — ${data.serviceId}`;
+    const subject = `New standalone DD request — ${data.serviceId}`;
     const services = data.services.map((s) => `  - ${s}`).join("\n");
     const text = [
-      "A guest completed payment for standalone due diligence.",
+      "A customer submitted a standalone due diligence request.",
       "",
       `Service ID: ${data.serviceId}`,
       `Case ID: ${data.caseId}`,
@@ -63,18 +63,18 @@ export class EmailService {
       `Location: ${data.propertyLocation}`,
       "Services:",
       services,
-      `Total: ${data.currency} ${data.total}`,
+      "Pricing: quote pending (team to confirm based on selected checks).",
       "",
       "Open the staff due diligence queue to progress this case.",
     ].join("\n");
-    const html = `<p>A guest completed payment for standalone due diligence.</p>
+    const html = `<p>A customer submitted a standalone due diligence request.</p>
       <ul>
         <li><strong>Service ID:</strong> ${data.serviceId}</li>
         <li><strong>Case ID:</strong> ${data.caseId}</li>
         <li><strong>Client:</strong> ${data.guestName} &lt;${data.guestEmail}&gt; ${data.guestPhone}</li>
         <li><strong>Property:</strong> ${data.propertyTitle}</li>
         <li><strong>Location:</strong> ${data.propertyLocation}</li>
-        <li><strong>Total:</strong> ${data.currency} ${data.total}</li>
+        <li><strong>Pricing:</strong> quote pending</li>
       </ul>
       <p><strong>Services:</strong></p>
       <ul>${data.services.map((s) => `<li>${s}</li>`).join("")}</ul>

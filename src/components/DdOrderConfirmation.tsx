@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, Copy, Download, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,72 +6,88 @@ import { Button } from "@/components/ui/button";
 import type { StandaloneDdOrderDto } from "@/hooks/use-standalone-dd";
 import { toast } from "sonner";
 
-function formatNgn(amount: string | number, currency = "NGN") {
-  const value = typeof amount === "string" ? Number(amount) : amount;
-  if (!Number.isFinite(value)) return `${currency} ${amount}`;
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 function formatStatus(status: string) {
   return status.replace(/_/g, " ");
 }
 
-function buildReceiptText(order: StandaloneDdOrderDto) {
-  const services =
-    order.services && order.services.length > 0
-      ? order.services
-      : order.itemIds.map((id) => String(id));
-  const lines = [
-    "SafeBuyRealties — Due Diligence Payment Confirmation",
-    "====================================================",
-    "",
-    `Service ID: ${order.serviceId}`,
-    `Case ID: ${order.caseId}`,
-    `Status: ${formatStatus(order.status)}`,
-    `Payment reference: ${order.paymentReference ?? "—"}`,
-    `Transaction ID: ${order.transactionPublicId ?? order.transactionId ?? "—"}`,
-    "",
-    "Client",
-    `  Name: ${order.guestName}`,
-    `  Email: ${order.guestEmail}`,
-    `  Phone: ${order.guestPhone}`,
-    "",
-    "Property",
-    `  ${order.property?.title ?? "Standalone property due diligence"}`,
-    `  ${order.property?.location ?? "Location unavailable"}`,
-    "",
-    "Services requested",
-    ...services.map((service) => `  - ${service}`),
-    "",
-    "Amounts",
-    `  Subtotal: ${formatNgn(order.subtotal, order.currency)}`,
-    `  VAT: ${formatNgn(order.vatAmount, order.currency)}`,
-    `  Total paid: ${formatNgn(order.total, order.currency)}`,
-    "",
-    "IMPORTANT — Keep your Service ID",
-    "Use this Service ID on /due-diligence to look up your case anytime",
-    "without creating an account. A confirmation email was also sent to",
-    `${order.guestEmail}.`,
-    "",
-    `Generated: ${new Date().toISOString()}`,
-  ];
-  return lines.join("\n");
-}
+async function downloadSummaryPdf(element: HTMLElement, order: StandaloneDdOrderDto) {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
 
-function downloadReceipt(order: StandaloneDdOrderDto) {
-  const blob = new Blob([buildReceiptText(order)], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `safebuy-dd-receipt-${order.serviceId}.txt`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#f7f1ea",
+      logging: false,
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 24;
+    const usableWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * usableWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    pdf.addImage(imgData, "PNG", margin, position, usableWidth, imgHeight);
+    heightLeft -= pageHeight - margin * 2;
+
+    while (heightLeft > 0) {
+      position = margin - (imgHeight - heightLeft);
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", margin, position, usableWidth, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+    }
+
+    pdf.save(`safebuy-dd-request-${order.serviceId}.pdf`);
+    return;
+  } catch {
+    // Fallback for environments where canvas capture fails (e.g. some headless browsers).
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    let y = 48;
+    const line = (text: string, size = 11, color: [number, number, number] = [43, 26, 22]) => {
+      pdf.setTextColor(...color);
+      pdf.setFontSize(size);
+      const wrapped = pdf.splitTextToSize(text, 520);
+      pdf.text(wrapped, 40, y);
+      y += wrapped.length * (size + 4);
+      if (y > 760) {
+        pdf.addPage();
+        y = 48;
+      }
+    };
+
+    pdf.setFillColor(92, 31, 36);
+    pdf.rect(0, 0, 595, 90, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.text("SafeBuyRealties — Due diligence request", 40, 50);
+    y = 120;
+    line(`Service ID: ${order.serviceId}`, 12);
+    line(`Case ID: ${order.caseId}`, 12);
+    line(`Status: ${formatStatus(order.status)}`, 12);
+    line(`Client: ${order.guestName} · ${order.guestEmail} · ${order.guestPhone}`, 11);
+    line(`Property: ${order.property?.title ?? "Standalone property"}`, 11);
+    line(order.property?.location ?? "", 11);
+    y += 8;
+    for (const schedule of order.checklistSummary ?? []) {
+      line(schedule.name, 13, [139, 58, 63]);
+      for (const item of schedule.items) {
+        line(`  • ${item.label}`, 11);
+      }
+      y += 6;
+    }
+    line(
+      order.pricingNote ??
+        "Quote pending — SafeBuyRealties will confirm pricing based on selected checks.",
+      11,
+    );
+    pdf.save(`safebuy-dd-request-${order.serviceId}.pdf`);
+  }
 }
 
 export function DdOrderConfirmation({
@@ -82,10 +98,9 @@ export function DdOrderConfirmation({
   isAuthenticatedBuyer?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const services =
-    order.services && order.services.length > 0
-      ? order.services
-      : order.itemIds.map((id) => String(id));
+  const [downloading, setDownloading] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const checklist = order.checklistSummary ?? [];
 
   const copyServiceId = async () => {
     try {
@@ -98,184 +113,164 @@ export function DdOrderConfirmation({
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!summaryRef.current) return;
+    setDownloading(true);
+    try {
+      await downloadSummaryPdf(summaryRef.current, order);
+      toast.success("PDF downloaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-border/60 bg-card p-8 shadow-[var(--shadow-elegant)]">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-            <CheckCircle2 className="h-7 w-7" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-foreground">Payment confirmed</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your standalone due diligence case is open. SafeBuy staff have been notified and will
-              progress the checks you requested.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/70 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Keep this Service ID
-          </p>
-          <p className="mt-2 text-sm text-foreground">
-            This is your reference for looking up the case later — no login required. Copy it now,
-            download the receipt, and check your email ({order.guestEmail}).
-          </p>
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <code className="flex-1 rounded-xl border border-primary/20 bg-background px-4 py-3 font-mono text-sm font-semibold text-foreground">
-              {order.serviceId}
-            </code>
-            <Button type="button" variant="outline" onClick={() => void copyServiceId()}>
-              <Copy className="mr-2 h-4 w-4" />
-              {copied ? "Copied" : "Copy Service ID"}
-            </Button>
-            <Button type="button" onClick={() => downloadReceipt(order)}>
-              <Download className="mr-2 h-4 w-4" />
-              Download receipt
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <DetailTile label="Case ID" value={order.caseId} mono />
-          <DetailTile label="Status" value={formatStatus(order.status)} />
-          <DetailTile label="Total paid" value={formatNgn(order.total, order.currency)} />
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <section className="rounded-2xl border border-border/60 bg-muted/30 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Property
-            </p>
-            <p className="mt-2 text-base font-medium text-foreground">
-              {order.property?.title ?? "Standalone property due diligence"}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {order.property?.location ?? "Location unavailable"}
-            </p>
-            {order.externalProperty?.propertyType && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Type: {order.externalProperty.propertyType}
-              </p>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-border/60 bg-muted/30 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Client
-            </p>
-            <p className="mt-2 text-base font-medium text-foreground">{order.guestName}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{order.guestEmail}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{order.guestPhone}</p>
-          </section>
-        </div>
-
-        <section className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Services requested
-          </p>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {services.map((service) => (
-              <li key={service}>
-                <Badge variant="outline" className="bg-background">
-                  {service}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-            <p>Subtotal: {formatNgn(order.subtotal, order.currency)}</p>
-            <p>VAT: {formatNgn(order.vatAmount, order.currency)}</p>
-            <p className="font-medium text-foreground">
-              Total: {formatNgn(order.total, order.currency)}
-            </p>
-          </div>
-        </section>
-
-        {(order.verdict || (order.reports ?? []).length > 0) && (
-          <section className="mt-6 rounded-2xl border border-border/60 bg-muted/30 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Results
-            </p>
-            {order.verdict && (
-              <p className="mt-2 text-base font-medium text-foreground">
-                Verdict: {order.verdict.replace(/_/g, " ")}
-              </p>
-            )}
-            {(order.reports ?? []).length > 0 && (
-              <ul className="mt-3 space-y-2 text-sm">
-                {(order.reports ?? []).map((report, index) => (
-                  <li key={report.key}>
-                    <a
-                      href={report.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary underline"
-                    >
-                      Download report {index + 1}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
-          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <p>
-            A confirmation email with this Service ID and receipt details was sent to{" "}
-            <strong className="text-foreground">{order.guestEmail}</strong>. Keep the downloaded
-            receipt as a backup in case the email is delayed or filtered.
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Badge className="border-success/30 bg-success/15 text-[oklch(0.4_0.12_155)]">
+            Request submitted
+          </Badge>
+          <h2 className="mt-3 text-2xl font-semibold text-foreground">
+            Your due diligence request is with our team
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Pricing is quote-based. SafeBuyRealties will review your selected checks and reach out
+            to confirm the fee before work begins.
           </p>
         </div>
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to="/due-diligence/request" search={{ serviceId: order.serviceId }}>
-              View this case again
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void copyServiceId()}>
+            <Copy className="mr-2 h-4 w-4" />
+            {copied ? "Copied" : "Copy Service ID"}
           </Button>
-          <Button variant="outline" asChild>
-            <Link to="/due-diligence">Look up later on Due Diligence</Link>
-          </Button>
-          {isAuthenticatedBuyer ? (
-            <Button variant="outline" asChild>
-              <Link to="/dashboard/buyer/due-diligence">Open buyer dashboard</Link>
-            </Button>
-          ) : (
-            <Button variant="outline" asChild>
-              <Link to="/login">Sign in after activation email</Link>
-            </Button>
-          )}
-          <Button variant="outline" asChild>
-            <Link to="/due-diligence/request">Start another request</Link>
+          <Button
+            data-testid="dd-download-pdf"
+            onClick={() => void handleDownloadPdf()}
+            disabled={downloading}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {downloading ? "Preparing PDF…" : "Download PDF"}
           </Button>
         </div>
       </div>
-    </div>
-  );
-}
 
-function DetailTile({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className={`mt-2 text-sm font-medium text-foreground ${mono ? "font-mono" : ""}`}>
-        {value}
-      </p>
+      <div
+        ref={summaryRef}
+        className="overflow-hidden rounded-3xl border border-[#5c1f24]/25 bg-[#f7f1ea] shadow-[var(--shadow-card)]"
+      >
+        <div className="bg-[linear-gradient(135deg,#5c1f24_0%,#8b3a3f_55%,#c4784a_100%)] px-8 py-8 text-white">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
+            SafeBuyRealties
+          </p>
+          <h3 className="mt-3 text-3xl font-semibold tracking-tight">Due diligence request</h3>
+          <p className="mt-2 max-w-xl text-sm text-white/85">
+            A designed summary of the schedules and checklist items you selected.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-4 text-sm">
+            <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
+              <p className="text-white/70">Service ID</p>
+              <p className="mt-1 font-mono font-semibold">{order.serviceId}</p>
+            </div>
+            <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
+              <p className="text-white/70">Case ID</p>
+              <p className="mt-1 font-mono font-semibold">{order.caseId}</p>
+            </div>
+            <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
+              <p className="text-white/70">Status</p>
+              <p className="mt-1 font-semibold">{formatStatus(order.status)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 px-8 py-8 md:grid-cols-2">
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b3a3f]">
+              Client
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[#2b1a16]">{order.guestName}</p>
+            <p className="mt-1 text-sm text-[#5c433a]">{order.guestEmail}</p>
+            <p className="text-sm text-[#5c433a]">{order.guestPhone}</p>
+          </section>
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b3a3f]">
+              Property
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[#2b1a16]">
+              {order.property?.title ?? "Standalone property"}
+            </p>
+            <p className="mt-1 text-sm text-[#5c433a]">
+              {order.property?.location ?? "Location unavailable"}
+            </p>
+          </section>
+        </div>
+
+        <div className="space-y-5 px-8 pb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b3a3f]">
+            Selected checks
+          </p>
+          {checklist.length === 0 ? (
+            <p className="text-sm text-[#5c433a]">No checklist details were stored for this case.</p>
+          ) : (
+            checklist.map((schedule) => (
+              <section
+                key={schedule.code}
+                className="rounded-2xl border border-[#5c1f24]/15 bg-white/80 p-5"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#5c1f24] text-sm font-semibold text-white">
+                    {schedule.letter}
+                  </span>
+                  <div>
+                    <h4 className="font-semibold text-[#2b1a16]">{schedule.name}</h4>
+                    <p className="text-xs text-[#8b3a3f]">
+                      {schedule.items.length} item{schedule.items.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                </div>
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {schedule.items.map((item) => (
+                    <li
+                      key={item.code}
+                      className="flex items-start gap-2 rounded-xl bg-[#f7f1ea] px-3 py-2 text-sm text-[#2b1a16]"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#8b3a3f]" />
+                      <span>{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+
+          <div className="rounded-2xl border border-dashed border-[#8b3a3f]/40 bg-[#fff8f1] px-5 py-4 text-sm text-[#5c433a]">
+            <p className="font-medium text-[#2b1a16]">What happens next</p>
+            <p className="mt-1">
+              {order.pricingNote ??
+                "Our team will calculate a tailored quote from your selections and contact you to confirm payment and kick off the review."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <Button asChild variant="outline">
+          <Link to="/due-diligence">
+            <Mail className="mr-2 h-4 w-4" />
+            Look up another case
+          </Link>
+        </Button>
+        {isAuthenticatedBuyer ? (
+          <Button asChild>
+            <Link to="/dashboard/buyer/due-diligence">
+              Open my due diligence
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

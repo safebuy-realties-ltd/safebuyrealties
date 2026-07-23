@@ -34,10 +34,28 @@ import { InitiateStandaloneDdPaymentDto } from "./dto/initiate-standalone-dd-pay
 import { ListStandaloneDdOrdersQueryDto } from "./dto/list-standalone-dd-orders.query";
 import { UpdateStandaloneDdOrderDto } from "./dto/update-standalone-dd-order.dto";
 import { AssignStandaloneDdDto } from "./dto/assign-standalone-dd.dto";
+import {
+  DD_SCHEDULES,
+  getScheduleByCode,
+  suggestedTypesForSchedules,
+  validateChecklistSelections,
+  type DdChecklistSelections,
+  type DdScheduleCode,
+} from "./dd-schedule-checklists";
 
 const REQUEST_STATUS = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
+  SUBMITTED: "SUBMITTED",
   PAID: "PAID",
+} as const;
+
+const ORDER_STATUS = {
+  PENDING: "PENDING",
+  SUBMITTED: "SUBMITTED",
+  PAID: "PAID",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETE: "COMPLETE",
+  CANCELLED: "CANCELLED",
 } as const;
 
 type StandaloneServiceRequest = Prisma.ServiceRequestGetPayload<{
@@ -232,35 +250,87 @@ export class StandaloneDdService {
     return items;
   }
 
-  private async calculateTotals(dto: Pick<CreateStandaloneDdOrderDto, "itemIds" | "bundleId">) {
-    let subtotal = new Prisma.Decimal(0);
-    let resolvedItemIds: string[] = [];
-
-    if (dto.bundleId) {
-      const bundle = await this.prisma.serviceBundle.findUnique({
-        where: { id: dto.bundleId },
-        include: { items: { select: { itemId: true } } },
-      });
-      if (!bundle || !bundle.active) {
-        throw new NotFoundException(`Bundle ${dto.bundleId} not found`);
+  private normalizeChecklistSelections(
+    raw: Record<string, string[]> | null | undefined,
+  ): DdChecklistSelections {
+    const normalized: DdChecklistSelections = {};
+    if (!raw || typeof raw !== "object") return normalized;
+    for (const [key, value] of Object.entries(raw)) {
+      const schedule = getScheduleByCode(key.trim().toUpperCase());
+      if (!schedule || !Array.isArray(value)) continue;
+      const allowed = new Set(schedule.items.map((item) => item.code));
+      const codes = value
+        .map((code) => String(code).trim().toUpperCase())
+        .filter((code) => allowed.has(code));
+      if (codes.length > 0) {
+        normalized[schedule.code] = Array.from(new Set(codes));
       }
-      subtotal = bundle.basePrice;
-      resolvedItemIds = bundle.items.map((item) => item.itemId);
-    } else if (dto.itemIds?.length) {
-      const items = await this.resolveCatalogItems(dto.itemIds);
-      resolvedItemIds = items.map((item) => item.id);
-      for (const item of items) {
-        subtotal = subtotal.add(item.basePrice);
-      }
-    } else {
-      throw new BadRequestException("Provide at least one of itemIds or bundleId");
     }
+    return normalized;
+  }
 
-    const vatRate = await this.platformConfig.getVatRate();
-    const vatAmount = subtotal.mul(new Prisma.Decimal(vatRate));
-    const total = subtotal.add(vatAmount);
+  private async resolveScheduleCatalogItems(scheduleCodes: DdScheduleCode[]) {
+    const items = await this.prisma.serviceCatalogItem.findMany({
+      where: { code: { in: scheduleCodes }, active: true },
+    });
+    if (items.length !== scheduleCodes.length) {
+      const found = new Set(items.map((item) => item.code));
+      const missing = scheduleCodes.filter((code) => !found.has(code));
+      throw new BadRequestException(`Unknown or inactive schedule(s): ${missing.join(", ")}`);
+    }
+    return items;
+  }
 
-    return { subtotal, vatAmount, total, resolvedItemIds };
+  private parseChecklistSelections(value: Prisma.JsonValue): DdChecklistSelections {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return this.normalizeChecklistSelections(value as Record<string, string[]>);
+  }
+
+  private buildChecklistSummary(selections: DdChecklistSelections) {
+    return DD_SCHEDULES.filter((schedule) => (selections[schedule.code]?.length ?? 0) > 0).map(
+      (schedule) => ({
+        code: schedule.code,
+        name: schedule.name,
+        shortName: schedule.shortName,
+        letter: schedule.letter,
+        items: (selections[schedule.code] ?? []).map((itemCode) => {
+          const item = schedule.items.find((entry) => entry.code === itemCode);
+          return {
+            code: itemCode,
+            label: item?.label ?? itemCode,
+          };
+        }),
+      }),
+    );
+  }
+
+  private async buildSuggestedProfessionals(scheduleCodes: string[]) {
+    const suggestedTypes = suggestedTypesForSchedules(scheduleCodes);
+    if (suggestedTypes.length === 0) return [];
+    const rows = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.PROFESSIONAL,
+        isActive: true,
+        professionalType: { in: suggestedTypes as never[] },
+        professionalProfile: { verifiedStatus: "VERIFIED" },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        professionalType: true,
+      },
+      orderBy: [{ professionalType: "asc" }, { lastName: "asc" }],
+      take: 40,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: `${row.firstName} ${row.lastName}`.trim(),
+      professionalType: row.professionalType,
+      suggested: true as const,
+    }));
   }
 
   private async findOrCreateGuestBuyer(email: string, name: string, phone: string) {
@@ -338,7 +408,28 @@ export class StandaloneDdService {
 
   private async serializeServiceRequest(order: StandaloneServiceRequest) {
     const latestPayment = order.transaction?.payments?.[0] ?? null;
-    const ddOrder = order.transaction?.dueDiligenceOrder ?? null;
+    let ddOrder = order.transaction?.dueDiligenceOrder ?? null;
+    if (!ddOrder) {
+      ddOrder = await this.prisma.dueDiligenceOrder.findUnique({
+        where: { serviceId: order.serviceId },
+        include: {
+          assignments: {
+            include: {
+              professional: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                  professionalType: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      });
+    }
     const reportKeys =
       Array.isArray(ddOrder?.reportStorageKeys) && ddOrder?.reportStorageKeys.length > 0
         ? (ddOrder.reportStorageKeys as string[])
@@ -357,6 +448,14 @@ export class StandaloneDdService {
     const assignments = await Promise.all(
       (ddOrder?.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
     );
+    const checklistSelections = this.parseChecklistSelections(
+      (ddOrder?.checklistSelections as Prisma.JsonValue | undefined) ??
+        (order as { checklistSelections?: Prisma.JsonValue }).checklistSelections ??
+        {},
+    );
+    const checklistSummary = this.buildChecklistSummary(checklistSelections);
+    const scheduleCodes = Object.keys(checklistSelections);
+    const suggestedProfessionals = await this.buildSuggestedProfessionals(scheduleCodes);
 
     return {
       id: ddOrder?.id ?? order.id,
@@ -373,10 +472,14 @@ export class StandaloneDdService {
       buyerId: order.buyerId ?? ddOrder?.buyerId ?? null,
       bundleId: order.bundleId,
       itemIds: order.itemIds,
+      checklistSelections,
+      checklistSummary,
       services,
+      suggestedProfessionals,
       subtotal: order.subtotal.toFixed(2),
       vatAmount: order.vatAmount.toFixed(2),
       total: order.total.toFixed(2),
+      pricingNote: "Quote pending — SafeBuyRealties will confirm pricing based on your selected checks.",
       currency: order.listing?.currency ?? "NGN",
       listingId: order.listingId,
       externalPropertyId: order.externalPropertyId,
@@ -453,6 +556,11 @@ export class StandaloneDdService {
           select: { guestName: true, guestEmail: true, guestPhone: true },
         })
       : null;
+    const checklistSelections = this.parseChecklistSelections(order.checklistSelections);
+    const checklistSummary = this.buildChecklistSummary(checklistSelections);
+    const suggestedProfessionals = await this.buildSuggestedProfessionals(
+      Object.keys(checklistSelections),
+    );
 
     return {
       id: order.id,
@@ -466,10 +574,14 @@ export class StandaloneDdService {
       guestPhone: guestRequest?.guestPhone ?? "",
       bundleId: order.bundleId,
       itemIds: order.itemIds,
+      checklistSelections,
+      checklistSummary,
       services,
+      suggestedProfessionals,
       subtotal: order.subtotal.toFixed(2),
       vatAmount: order.vatAmount.toFixed(2),
       total: order.total.toFixed(2),
+      pricingNote: "Quote pending — SafeBuyRealties will confirm pricing based on selected checks.",
       currency: order.listing?.currency ?? "NGN",
       listingId: order.listingId,
       externalPropertyId: order.externalPropertyId,
@@ -541,6 +653,15 @@ export class StandaloneDdService {
       throw new BadRequestException("Provide exactly one of listingId or externalProperty");
     }
 
+    const checklistSelections = this.normalizeChecklistSelections(dto.checklistSelections);
+    const validation = validateChecklistSelections(checklistSelections);
+    if (!validation.ok) {
+      throw new BadRequestException(validation.message);
+    }
+    const scheduleCodes = validation.scheduleCodes;
+    const catalogItems = await this.resolveScheduleCatalogItems(scheduleCodes);
+    const storedItemIds = catalogItems.map((item) => item.id);
+
     let listing: StandaloneServiceRequest["listing"] | null = null;
     let externalPropertyId: string | null = null;
 
@@ -581,34 +702,105 @@ export class StandaloneDdService {
       externalPropertyId = created.id;
     }
 
-    const totals = await this.calculateTotals(dto);
+    const zero = new Prisma.Decimal(0);
     const serviceId = await this.sbrId.nextServiceId();
     const locationHint =
       listing?.location ??
       [dto.externalProperty?.lga, dto.externalProperty?.state].filter(Boolean).join(", ") ??
       "Lagos";
     const caseId = await this.sbrId.nextCaseId(locationHint);
-    const storedItemIds = dto.bundleId ? totals.resolvedItemIds : (dto.itemIds ?? []);
 
-    const created = await this.prisma.serviceRequest.create({
-      data: {
-        serviceId,
-        caseId,
-        listingId: listing?.id ?? null,
-        externalPropertyId,
-        buyerId: actor?.sub ?? null,
-        guestName: dto.guestName.trim(),
-        guestEmail: dto.guestEmail.trim().toLowerCase(),
-        guestPhone: dto.guestPhone.trim(),
-        bundleId: dto.bundleId ?? null,
-        itemIds: storedItemIds as Prisma.InputJsonValue,
-        subtotal: totals.subtotal,
-        vatAmount: totals.vatAmount,
-        total: totals.total,
-        source: "STANDALONE",
-        status: REQUEST_STATUS.PENDING_PAYMENT,
-      },
-      include: this.orderInclude(),
+    const buyer = actor?.sub
+      ? await this.prisma.user.findUnique({ where: { id: actor.sub } })
+      : await this.findOrCreateGuestBuyer(
+          dto.guestEmail.trim().toLowerCase(),
+          dto.guestName.trim(),
+          dto.guestPhone.trim(),
+        );
+    if (!buyer) {
+      throw new NotFoundException("Buyer account could not be resolved");
+    }
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const serviceRequest = await tx.serviceRequest.create({
+        data: {
+          serviceId,
+          caseId,
+          listingId: listing?.id ?? null,
+          externalPropertyId,
+          buyerId: buyer.id,
+          guestName: dto.guestName.trim(),
+          guestEmail: dto.guestEmail.trim().toLowerCase(),
+          guestPhone: dto.guestPhone.trim(),
+          bundleId: null,
+          itemIds: storedItemIds as Prisma.InputJsonValue,
+          checklistSelections: checklistSelections as Prisma.InputJsonValue,
+          subtotal: zero,
+          vatAmount: zero,
+          total: zero,
+          source: "STANDALONE",
+          status: REQUEST_STATUS.SUBMITTED,
+        },
+      });
+
+      await tx.dueDiligenceOrder.create({
+        data: {
+          buyerId: buyer.id,
+          listingId: listing?.id ?? null,
+          externalPropertyId,
+          serviceId,
+          caseId,
+          source: "STANDALONE",
+          bundleId: null,
+          itemIds: storedItemIds as Prisma.InputJsonValue,
+          checklistSelections: checklistSelections as Prisma.InputJsonValue,
+          subtotal: zero,
+          vatAmount: zero,
+          total: zero,
+          status: ORDER_STATUS.SUBMITTED,
+        },
+      });
+
+      return tx.serviceRequest.findUniqueOrThrow({
+        where: { id: serviceRequest.id },
+        include: this.orderInclude(),
+      });
+    });
+
+    const property = this.buildPropertySummary({
+      listing: created.listing,
+      externalProperty: created.externalProperty,
+    });
+    const services = await this.resolveServiceLabels(null, storedItemIds);
+    const propertyTitle = property?.title ?? "Standalone due diligence";
+    const propertyLocation = property?.location ?? locationHint;
+
+    void this.notifications.create({
+      userId: buyer.id,
+      type: NotificationType.DD_PAYMENT_SUCCEEDED,
+      title: "Due diligence request submitted",
+      body: `Your due diligence request for "${propertyTitle}" was received. Our team will confirm pricing and next steps.`,
+      entityId: serviceId,
+      entityType: NotificationEntityType.DueDiligenceOrder,
+    });
+    void this.notifications.createForStaff({
+      type: NotificationType.DD_PAYMENT_SUCCEEDED,
+      title: "New due diligence request",
+      body: `${dto.guestName.trim()} submitted a standalone due diligence request for "${propertyTitle}" (${serviceId}).`,
+      entityId: serviceId,
+      entityType: NotificationEntityType.DueDiligenceOrder,
+    });
+    void this.email.sendStaffDdAlert({
+      serviceId,
+      caseId,
+      guestName: dto.guestName.trim(),
+      guestEmail: dto.guestEmail.trim().toLowerCase(),
+      guestPhone: dto.guestPhone.trim(),
+      propertyTitle,
+      propertyLocation,
+      services,
+      total: "0.00",
+      currency: listing?.currency ?? "NGN",
     });
 
     return this.serializeServiceRequest(created);
@@ -932,8 +1124,10 @@ export class StandaloneDdService {
     return this.serializeDueDiligenceOrder(updated);
   }
 
-  async listAssignableProfessionals(actor: JwtPayload) {
+  async listAssignableProfessionals(actor: JwtPayload, scheduleCode?: string) {
     this.assertStaffActor(actor);
+    const schedule = scheduleCode ? getScheduleByCode(scheduleCode.trim().toUpperCase()) : undefined;
+    const suggestedTypeSet = new Set(schedule?.suggestedProfessionalTypes ?? []);
     const rows = await this.prisma.user.findMany({
       where: {
         role: UserRole.PROFESSIONAL,
@@ -949,12 +1143,18 @@ export class StandaloneDdService {
       },
       orderBy: [{ professionalType: "asc" }, { lastName: "asc" }],
     });
-    return rows.map((row) => ({
-      id: row.id,
-      email: row.email,
-      name: `${row.firstName} ${row.lastName}`.trim(),
-      professionalType: row.professionalType,
-    }));
+    const mapped = rows.map((row) => {
+      const type = row.professionalType ?? "";
+      const suggested = suggestedTypeSet.size === 0 ? false : suggestedTypeSet.has(type);
+      return {
+        id: row.id,
+        email: row.email,
+        name: `${row.firstName} ${row.lastName}`.trim(),
+        professionalType: row.professionalType,
+        suggested,
+      };
+    });
+    return mapped.sort((a, b) => Number(b.suggested) - Number(a.suggested));
   }
 
   async assignProfessional(orderId: string, dto: AssignStandaloneDdDto, actor: JwtPayload) {
@@ -964,8 +1164,8 @@ export class StandaloneDdService {
       include: ddOrderInclude,
     });
     if (!order) throw new NotFoundException("Due diligence order not found");
-    if (order.status === "PENDING" || order.status === "CANCELLED") {
-      throw new BadRequestException("Only paid due diligence cases can be assigned");
+    if (order.status === ORDER_STATUS.PENDING || order.status === ORDER_STATUS.CANCELLED) {
+      throw new BadRequestException("Only submitted or paid due diligence cases can be assigned");
     }
 
     const professional = await this.prisma.user.findUnique({
@@ -995,10 +1195,10 @@ export class StandaloneDdService {
       },
     });
 
-    if (order.status === "PAID") {
+    if (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.SUBMITTED) {
       await this.prisma.dueDiligenceOrder.update({
         where: { id: order.id },
-        data: { status: "IN_PROGRESS" },
+        data: { status: ORDER_STATUS.IN_PROGRESS },
       });
       if (order.transactionId) {
         await this.prisma.transaction.update({
@@ -1229,6 +1429,8 @@ export class StandaloneDdService {
             source: "STANDALONE",
             bundleId: serviceRequest.bundleId,
             itemIds: serviceRequest.itemIds as Prisma.InputJsonValue,
+            checklistSelections: (serviceRequest as { checklistSelections?: Prisma.JsonValue })
+              .checklistSelections as Prisma.InputJsonValue,
             subtotal: serviceRequest.subtotal,
             vatAmount: serviceRequest.vatAmount,
             total: serviceRequest.total,
@@ -1243,6 +1445,8 @@ export class StandaloneDdService {
             source: "STANDALONE",
             bundleId: serviceRequest.bundleId,
             itemIds: serviceRequest.itemIds as Prisma.InputJsonValue,
+            checklistSelections: (serviceRequest as { checklistSelections?: Prisma.JsonValue })
+              .checklistSelections as Prisma.InputJsonValue,
             subtotal: serviceRequest.subtotal,
             vatAmount: serviceRequest.vatAmount,
             total: serviceRequest.total,
