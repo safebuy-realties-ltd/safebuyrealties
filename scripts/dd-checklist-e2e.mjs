@@ -71,6 +71,9 @@ try {
   const pdfPath = `${outDir}/request-summary.pdf`;
   await download.saveAs(pdfPath);
   log('PDF_BYTES', fs.statSync(pdfPath).size);
+  if (fs.statSync(pdfPath).size < 40000) {
+    throw new Error('PDF looks like a text fallback, expected visual page capture');
+  }
 
   // Staff login + queue
   await page.goto('http://localhost:8080/login', { waitUntil: 'networkidle' });
