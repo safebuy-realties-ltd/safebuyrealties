@@ -8,10 +8,7 @@ import {
   type DdScheduleCode,
   type DdScheduleDefinition,
 } from "@/lib/dd-schedule-checklists";
-import {
-  toScheduleDefinitions,
-  usePublicDdChecklistsQuery,
-} from "@/hooks/use-dd-checklists";
+import { toScheduleDefinitions, usePublicDdChecklistsQuery } from "@/hooks/use-dd-checklists";
 
 export type DdScheduleChecklistSelection = {
   checklistSelections: DdChecklistSelections;
@@ -100,9 +97,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
         <p className="text-sm text-muted-foreground">Loading checklist catalog…</p>
       )}
       {isError && !data && (
-        <p className="text-sm text-amber-700">
-          Using default checklists (could not reach server).
-        </p>
+        <p className="text-sm text-amber-700">Using default checklists (could not reach server).</p>
       )}
       {schedules.map((schedule) => {
         const code = schedule.code as DdScheduleCode;
@@ -142,9 +137,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                     <div className="flex items-start gap-3 rounded-xl border border-border/50 px-3 py-3 transition-colors hover:bg-secondary/30">
                       <Checkbox
                         checked={checked}
-                        onCheckedChange={(next) =>
-                          setItemChecked(code, item.code, next === true)
-                        }
+                        onCheckedChange={(next) => setItemChecked(code, item.code, next === true)}
                         className="mt-0.5"
                         aria-label={item.label}
                       />

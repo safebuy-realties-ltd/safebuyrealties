@@ -27,8 +27,7 @@ export function useUserPermissionsQuery(userId: string | null, enabled = true) {
   const canManage = canManageUserPermissions(user?.role, user?.permissions);
   return useQuery({
     queryKey: ["admin-permissions", "user", userId],
-    queryFn: () =>
-      apiRequest<UserPermissionsDto>(`/admin/permissions/users/${userId}`),
+    queryFn: () => apiRequest<UserPermissionsDto>(`/admin/permissions/users/${userId}`),
     select: (env) => env.data,
     enabled: isReady && canManage && enabled && !!userId,
   });

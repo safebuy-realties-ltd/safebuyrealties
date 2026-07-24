@@ -163,10 +163,7 @@ function filterNavItems(items: NavItem[], userPermissions: string[] | undefined)
   });
 }
 
-function displayRoleLabel(user: {
-  role: Role;
-  adminRole?: { name: string } | null;
-}): string {
+function displayRoleLabel(user: { role: Role; adminRole?: { name: string } | null }): string {
   if (user.adminRole?.name) return user.adminRole.name;
   if (user.role === "super_admin") return "Super Administrator";
   if (user.role === "admin") return "Administrator";
@@ -180,10 +177,7 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
   const navigate = useNavigate();
 
   // Internal operators always use the unified admin nav, regardless of layout role.
-  const navRole: Role =
-    user && isInternalPortalRole(user.role)
-      ? "admin"
-      : role;
+  const navRole: Role = user && isInternalPortalRole(user.role) ? "admin" : role;
   const items = useMemo(
     () => filterNavItems(navByRole[navRole], user?.permissions),
     [navRole, user?.permissions],

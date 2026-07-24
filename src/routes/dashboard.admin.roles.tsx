@@ -215,7 +215,11 @@ function EditRoleDialog({ role }: { role: AdminRoleDto }) {
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} disabled={role.isSystem} />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={role.isSystem}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>

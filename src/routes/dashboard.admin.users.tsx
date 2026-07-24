@@ -44,9 +44,7 @@ import {
   type ProfessionalType,
 } from "@/lib/role-hierarchy";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  useAdminRolesQuery,
-} from "@/hooks/use-admin-roles";
+import { useAdminRolesQuery } from "@/hooks/use-admin-roles";
 import {
   canManageUserPermissions,
   isInternalPortalRole,
@@ -586,9 +584,7 @@ function AdminUsers() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            setPermTarget({ id: u.id, name: u.name, role: u.role })
-                          }
+                          onClick={() => setPermTarget({ id: u.id, name: u.name, role: u.role })}
                         >
                           <Shield className="mr-1 h-3.5 w-3.5" />
                           Permissions

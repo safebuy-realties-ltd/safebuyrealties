@@ -53,10 +53,7 @@ export function usePublicDdChecklistsQuery() {
 
 export function useAdminDdChecklistsQuery() {
   const { user, isReady } = useAuth();
-  const allowed =
-    user?.role === "admin" ||
-    user?.role === "super_admin" ||
-    user?.role === "staff";
+  const allowed = user?.role === "admin" || user?.role === "super_admin" || user?.role === "staff";
   return useQuery({
     queryKey: ["dd-checklists", "admin"],
     queryFn: () => apiRequest<DdScheduleDto[]>("/admin/dd-checklists"),
@@ -76,9 +73,7 @@ export type CreateScheduleBody = {
   active?: boolean;
 };
 
-export type UpdateScheduleBody = Partial<
-  Omit<CreateScheduleBody, "code"> & { active: boolean }
->;
+export type UpdateScheduleBody = Partial<Omit<CreateScheduleBody, "code"> & { active: boolean }>;
 
 export type CreateItemBody = {
   code: string;
@@ -127,13 +122,10 @@ export function useCreateDdItemMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (args: { scheduleId: string; body: CreateItemBody }) =>
-      apiRequest<DdChecklistItemDto>(
-        `/admin/dd-checklists/schedules/${args.scheduleId}/items`,
-        {
-          method: "POST",
-          body: JSON.stringify(args.body),
-        },
-      ),
+      apiRequest<DdChecklistItemDto>(`/admin/dd-checklists/schedules/${args.scheduleId}/items`, {
+        method: "POST",
+        body: JSON.stringify(args.body),
+      }),
     onSuccess: () => invalidateDdChecklists(qc),
   });
 }
@@ -154,13 +146,10 @@ export function useReorderDdItemsMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (args: { scheduleId: string; orderedIds: string[] }) =>
-      apiRequest<DdScheduleDto[]>(
-        `/admin/dd-checklists/schedules/${args.scheduleId}/reorder`,
-        {
-          method: "POST",
-          body: JSON.stringify({ orderedIds: args.orderedIds }),
-        },
-      ),
+      apiRequest<DdScheduleDto[]>(`/admin/dd-checklists/schedules/${args.scheduleId}/reorder`, {
+        method: "POST",
+        body: JSON.stringify({ orderedIds: args.orderedIds }),
+      }),
     onSuccess: () => invalidateDdChecklists(qc),
   });
 }

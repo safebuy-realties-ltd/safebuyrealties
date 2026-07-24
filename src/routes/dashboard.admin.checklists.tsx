@@ -140,11 +140,7 @@ function ScheduleEditor({ schedule }: { schedule: DdScheduleDto }) {
           <Label htmlFor={`active-${schedule.id}`} className="text-sm text-muted-foreground">
             Active
           </Label>
-          <Switch
-            id={`active-${schedule.id}`}
-            checked={active}
-            onCheckedChange={setActive}
-          />
+          <Switch id={`active-${schedule.id}`} checked={active} onCheckedChange={setActive} />
         </div>
       </div>
 
@@ -344,13 +340,19 @@ function CreateScheduleDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create schedule</DialogTitle>
-          <DialogDescription>Add a new due diligence schedule with a unique code.</DialogDescription>
+          <DialogDescription>
+            Add a new due diligence schedule with a unique code.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Code</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="CUSTOM_CHECK" />
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="CUSTOM_CHECK"
+              />
             </div>
             <div className="space-y-2">
               <Label>Letter</Label>
@@ -367,7 +369,11 @@ function CreateScheduleDialog() {
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
           </div>
         </div>
         <DialogFooter>

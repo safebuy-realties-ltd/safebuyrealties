@@ -209,10 +209,7 @@ export function checklistLabel(scheduleCode: string, itemCode: string): string {
 }
 
 export function countSelectedItems(selections: DdChecklistSelections): number {
-  return DD_SCHEDULE_CODES.reduce(
-    (total, code) => total + (selections[code]?.length ?? 0),
-    0,
-  );
+  return DD_SCHEDULE_CODES.reduce((total, code) => total + (selections[code]?.length ?? 0), 0);
 }
 
 export function selectedScheduleCodes(selections: DdChecklistSelections): DdScheduleCode[] {
