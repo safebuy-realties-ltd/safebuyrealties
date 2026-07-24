@@ -15,6 +15,7 @@ import { ShoppingBag, Home, Briefcase } from "lucide-react";
 import {
   useAuth,
   dashboardPathForRole,
+  loginPathForRole,
   navigateAfterAuth,
   postAuthPath,
   type ProfessionalTypeOption,
@@ -144,6 +145,7 @@ function RegisterPage() {
   };
 
   const loginSearch = redirect ? { redirect } : undefined;
+  const loginPath = loginPathForRole(role);
   const selectedRole = roles.find((r) => r.id === role);
 
   return (
@@ -272,7 +274,7 @@ function RegisterPage() {
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              to="/login"
+              to={loginPath}
               search={loginSearch}
               className="font-medium text-primary hover:underline"
             >

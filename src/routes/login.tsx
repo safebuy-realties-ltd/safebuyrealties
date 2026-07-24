@@ -1,11 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Briefcase, Home, Shield, ShoppingBag } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth, dashboardPathForRole, navigateAfterAuth, postAuthPath } from "@/lib/auth";
-import { ApiError } from "@/lib/api";
 
 type LoginSearch = {
   redirect?: string;
@@ -15,94 +10,78 @@ export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): LoginSearch => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
-  component: LoginPage,
+  component: LoginHubPage,
 });
 
-function LoginPage() {
-  const { login, isReady } = useAuth();
-  const navigate = useNavigate();
+const portals = [
+  {
+    to: "/login/buyer" as const,
+    label: "Buyer",
+    description: "Browse listings, due diligence, and purchases",
+    icon: ShoppingBag,
+  },
+  {
+    to: "/login/seller" as const,
+    label: "Property owner / agent",
+    description: "List properties and manage seller documents",
+    icon: Home,
+  },
+  {
+    to: "/login/professional" as const,
+    label: "Professional",
+    description: "Lawyers, surveyors, and licensed experts",
+    icon: Briefcase,
+  },
+  {
+    to: "/login/admin" as const,
+    label: "Platform staff",
+    description: "SafeBuyRealties staff and administrators",
+    icon: Shield,
+  },
+] as const;
+
+function LoginHubPage() {
   const { redirect } = Route.useSearch();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Enter your email and password.");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      const user = await login(email, password);
-      const target = postAuthPath(redirect, dashboardPathForRole(user.role));
-      navigateAfterAuth(navigate, target);
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Could not sign in.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const registerSearch = redirect ? { redirect } : undefined;
+  const search = redirect ? { redirect } : undefined;
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="flex flex-col justify-between p-8 lg:p-12">
         <Logo />
-        <div className="mx-auto w-full max-w-sm">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
+        <div className="mx-auto w-full max-w-md">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Sign in</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Log in to your SafeBuyRealties account.
+            Choose the portal that matches your account type.
           </p>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <a className="text-xs text-primary hover:underline" href="#">
-                  Forgot?
-                </a>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" size="lg" disabled={loading || !isReady}>
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
+          <div className="mt-8 grid gap-3">
+            {portals.map((portal) => (
+              <Link
+                key={portal.to}
+                to={portal.to}
+                search={search}
+                className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary-soft/30"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                  <portal.icon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">
+                    {portal.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {portal.description}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             New here?{" "}
             <Link
               to="/register"
-              search={registerSearch}
+              search={search}
               className="font-medium text-primary hover:underline"
             >
               Create an account
@@ -119,7 +98,8 @@ function LoginPage() {
             Verified listings. Safer transactions.
           </h2>
           <p className="mt-4 max-w-md text-white/80">
-            Sign in to continue due diligence, manage listings, and collaborate with professionals.
+            Each portal is tailored to your role — buyers, sellers, professionals, and platform
+            staff sign in separately for the right experience.
           </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader, StatCard } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, UserPlus, Shield } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAdminUsersQuery,
   useCreateUserMutation,
   usePatchUserMutation,
 } from "@/hooks/use-admin-users";
+import {
+  usePermissionsCatalogQuery,
+  useSetUserPermissionsMutation,
+  useUserPermissionsQuery,
+} from "@/hooks/use-admin-permissions";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import {
@@ -38,6 +43,12 @@ import {
   type ManageableRole,
   type ProfessionalType,
 } from "@/lib/role-hierarchy";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  canManageUserPermissions,
+  PERMISSION_LABELS,
+  type PermissionCode,
+} from "@/lib/permissions";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
   component: AdminUsers,
@@ -212,12 +223,135 @@ function CreateUserDialog() {
   );
 }
 
+function PermissionsDialog({
+  userId,
+  userName,
+  userRole,
+  open,
+  onOpenChange,
+}: {
+  userId: string;
+  userName: string;
+  userRole: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data: catalog } = usePermissionsCatalogQuery(open);
+  const { data: perms, isLoading } = useUserPermissionsQuery(userId, open);
+  const setPerms = useSetUserPermissionsMutation();
+  const [selected, setSelected] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (perms) setSelected(perms.grants);
+  }, [perms]);
+
+  const toggle = (code: string, checked: boolean) => {
+    setSelected((prev) =>
+      checked ? [...new Set([...prev, code])] : prev.filter((p) => p !== code),
+    );
+  };
+
+  const save = () => {
+    setPerms.mutate(
+      { userId, permissions: selected },
+      {
+        onSuccess: () => {
+          toast.success("Permissions updated.");
+          onOpenChange(false);
+        },
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Save failed."),
+      },
+    );
+  };
+
+  const resetToRoleDefaults = () => {
+    setPerms.mutate(
+      { userId, permissions: [] },
+      {
+        onSuccess: () => {
+          toast.success("Custom permissions cleared (role defaults apply).");
+          onOpenChange(false);
+        },
+        onError: (e) => toast.error(e instanceof ApiError ? e.message : "Reset failed."),
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Permissions — {userName}</DialogTitle>
+          <DialogDescription>
+            Role: {userRole}. Custom grants override role defaults when any are set.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+
+        {!isLoading && perms && (
+          <>
+            <div className="rounded-lg border border-border/60 bg-secondary/30 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Effective permissions
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {perms.effective.map((code) => (
+                  <Badge key={code} variant="secondary" className="text-[10px]">
+                    {PERMISSION_LABELS[code as PermissionCode] ?? code}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 py-2">
+              {(catalog ?? []).map((entry) => (
+                <label
+                  key={entry.code}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/50 px-3 py-2 hover:bg-secondary/30"
+                >
+                  <Checkbox
+                    checked={selected.includes(entry.code)}
+                    onCheckedChange={(v) => toggle(entry.code, v === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    <span className="font-medium">
+                      {PERMISSION_LABELS[entry.code as PermissionCode] ?? entry.code}
+                    </span>
+                    <span className="mt-0.5 block font-mono text-xs text-muted-foreground">
+                      {entry.code}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button variant="outline" onClick={resetToRoleDefaults} disabled={setPerms.isPending}>
+            Use role defaults
+          </Button>
+          <Button onClick={save} disabled={setPerms.isPending}>
+            {setPerms.isPending ? "Saving…" : "Save permissions"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AdminUsers() {
   const { user: actor } = useAuth();
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState<ManageableRole | "all">("all");
   const [page, setPage] = useState(1);
+  const [permTarget, setPermTarget] = useState<{ id: string; name: string; role: string } | null>(
+    null,
+  );
   const assignable = useMemo(() => assignableRoles(actor?.role), [actor?.role]);
+  const canEditPermissions = canManageUserPermissions(actor?.role, actor?.permissions);
 
   const { data, isLoading, isError, error, refetch } = useAdminUsersQuery({
     role: roleFilter === "all" ? undefined : toApiRole(roleFilter),
@@ -410,6 +544,20 @@ function AdminUsers() {
                         {u.isActive === false ? "Activate" : "Deactivate"}
                       </Button>
                     )}
+                    {canEditPermissions &&
+                      actor?.id !== u.id &&
+                      (userRole === "staff" || userRole === "admin") && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setPermTarget({ id: u.id, name: u.name, role: u.role })
+                          }
+                        >
+                          <Shield className="mr-1 h-3.5 w-3.5" />
+                          Permissions
+                        </Button>
+                      )}
                   </div>
                 </li>
               );
@@ -439,6 +587,18 @@ function AdminUsers() {
           </div>
         </div>
       </div>
+
+      {permTarget && (
+        <PermissionsDialog
+          userId={permTarget.id}
+          userName={permTarget.name}
+          userRole={permTarget.role}
+          open={!!permTarget}
+          onOpenChange={(open) => {
+            if (!open) setPermTarget(null);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ import { PaystackModule } from "../payments/paystack.module";
 import { EmailModule } from "../email/email.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { StorageModule } from "../storage/storage.module";
+import { DdCmsModule } from "../dd-cms/dd-cms.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { StorageModule } from "../storage/storage.module";
     EmailModule,
     NotificationsModule,
     StorageModule,
+    DdCmsModule,
   ],
   controllers: [StandaloneDdController],
   providers: [StandaloneDdService],

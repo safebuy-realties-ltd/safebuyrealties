@@ -127,6 +127,7 @@ model User {
   externalProperties ExternalProperty[]  @relation("ExternalPropertyOwner")
   standaloneDdOrders DueDiligenceOrder[] @relation("DdOrderBuyer")
   ddAssignments      DueDiligenceAssignment[] @relation("DdAssignmentProfessional")
+  permissionGrants   PermissionGrant[]
 }
 
 model Listing {
@@ -643,4 +644,54 @@ model AccountActivationToken {
 
   @@index([userId])
   @@map("account_activation_tokens")
+}
+
+/// Fine-grained admin/staff capability. When a user has any grants, those
+/// replace role defaults (SUPER_ADMIN always has every permission).
+model PermissionGrant {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, permission])
+  @@index([userId])
+  @@map("permission_grants")
+}
+
+/// Admin-customizable due diligence schedule (A–D) definition.
+model DdScheduleConfig {
+  id                         String                  @id @default(uuid())
+  code                       String                  @unique
+  letter                     String
+  name                       String
+  shortName                  String
+  description                String
+  suggestedProfessionalTypes String[]                @default([])
+  sortOrder                  Int                     @default(0)
+  active                     Boolean                 @default(true)
+  items                      DdChecklistItemConfig[]
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  @@map("dd_schedule_configs")
+}
+
+/// Admin-customizable checklist item under a DD schedule.
+model DdChecklistItemConfig {
+  id          String           @id @default(uuid())
+  scheduleId  String
+  schedule    DdScheduleConfig @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  code        String
+  label       String
+  description String?
+  sortOrder   Int              @default(0)
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([scheduleId, code])
+  @@index([scheduleId])
+  @@map("dd_checklist_item_configs")
 }

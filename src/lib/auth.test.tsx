@@ -49,7 +49,7 @@ describe("Auth guard against forged localStorage cache", () => {
 
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith({
-        to: "/login",
+        to: "/login/admin",
         search: { redirect: "/dashboard/buyer" },
       });
     });

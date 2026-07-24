@@ -34,14 +34,8 @@ import { InitiateStandaloneDdPaymentDto } from "./dto/initiate-standalone-dd-pay
 import { ListStandaloneDdOrdersQueryDto } from "./dto/list-standalone-dd-orders.query";
 import { UpdateStandaloneDdOrderDto } from "./dto/update-standalone-dd-order.dto";
 import { AssignStandaloneDdDto } from "./dto/assign-standalone-dd.dto";
-import {
-  DD_SCHEDULES,
-  getScheduleByCode,
-  suggestedTypesForSchedules,
-  validateChecklistSelections,
-  type DdChecklistSelections,
-  type DdScheduleCode,
-} from "./dd-schedule-checklists";
+import { type DdChecklistSelections, type DdScheduleCode } from "./dd-schedule-checklists";
+import { DdCmsService } from "../dd-cms/dd-cms.service";
 
 const REQUEST_STATUS = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
@@ -183,6 +177,7 @@ export class StandaloneDdService {
     private readonly config: ConfigService,
     private readonly sbrId: SbrIdService,
     private readonly storage: StorageService,
+    private readonly ddCms: DdCmsService,
   ) {}
 
   private isListingPubliclyVisible(listing: {
@@ -250,26 +245,28 @@ export class StandaloneDdService {
     return items;
   }
 
-  private normalizeChecklistSelections(
+  private async normalizeChecklistSelections(
     raw: Record<string, string[]> | null | undefined,
-  ): DdChecklistSelections {
+  ): Promise<DdChecklistSelections> {
     const normalized: DdChecklistSelections = {};
     if (!raw || typeof raw !== "object") return normalized;
+    const defs = await this.ddCms.getActiveDefinitions();
+    const byCode = new Map(defs.map((d) => [d.code, d]));
     for (const [key, value] of Object.entries(raw)) {
-      const schedule = getScheduleByCode(key.trim().toUpperCase());
+      const schedule = byCode.get(key.trim().toUpperCase());
       if (!schedule || !Array.isArray(value)) continue;
       const allowed = new Set(schedule.items.map((item) => item.code));
       const codes = value
         .map((code) => String(code).trim().toUpperCase())
         .filter((code) => allowed.has(code));
       if (codes.length > 0) {
-        normalized[schedule.code] = Array.from(new Set(codes));
+        normalized[schedule.code as DdScheduleCode] = Array.from(new Set(codes));
       }
     }
     return normalized;
   }
 
-  private async resolveScheduleCatalogItems(scheduleCodes: DdScheduleCode[]) {
+  private async resolveScheduleCatalogItems(scheduleCodes: string[]) {
     const items = await this.prisma.serviceCatalogItem.findMany({
       where: { code: { in: scheduleCodes }, active: true },
     });
@@ -281,31 +278,32 @@ export class StandaloneDdService {
     return items;
   }
 
-  private parseChecklistSelections(value: Prisma.JsonValue): DdChecklistSelections {
+  private async parseChecklistSelections(value: Prisma.JsonValue): Promise<DdChecklistSelections> {
     if (!value || typeof value !== "object" || Array.isArray(value)) return {};
     return this.normalizeChecklistSelections(value as Record<string, string[]>);
   }
 
-  private buildChecklistSummary(selections: DdChecklistSelections) {
-    return DD_SCHEDULES.filter((schedule) => (selections[schedule.code]?.length ?? 0) > 0).map(
-      (schedule) => ({
+  private async buildChecklistSummary(selections: DdChecklistSelections) {
+    const defs = await this.ddCms.getActiveDefinitions();
+    return defs
+      .filter((schedule) => (selections[schedule.code as DdScheduleCode]?.length ?? 0) > 0)
+      .map((schedule) => ({
         code: schedule.code,
         name: schedule.name,
         shortName: schedule.shortName,
         letter: schedule.letter,
-        items: (selections[schedule.code] ?? []).map((itemCode) => {
+        items: (selections[schedule.code as DdScheduleCode] ?? []).map((itemCode) => {
           const item = schedule.items.find((entry) => entry.code === itemCode);
           return {
             code: itemCode,
             label: item?.label ?? itemCode,
           };
         }),
-      }),
-    );
+      }));
   }
 
   private async buildSuggestedProfessionals(scheduleCodes: string[]) {
-    const suggestedTypes = suggestedTypesForSchedules(scheduleCodes);
+    const suggestedTypes = await this.ddCms.suggestedTypesForSchedules(scheduleCodes);
     if (suggestedTypes.length === 0) return [];
     const rows = await this.prisma.user.findMany({
       where: {
@@ -448,12 +446,12 @@ export class StandaloneDdService {
     const assignments = await Promise.all(
       (ddOrder?.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
     );
-    const checklistSelections = this.parseChecklistSelections(
+    const checklistSelections = await this.parseChecklistSelections(
       (ddOrder?.checklistSelections as Prisma.JsonValue | undefined) ??
         (order as { checklistSelections?: Prisma.JsonValue }).checklistSelections ??
         {},
     );
-    const checklistSummary = this.buildChecklistSummary(checklistSelections);
+    const checklistSummary = await this.buildChecklistSummary(checklistSelections);
     const scheduleCodes = Object.keys(checklistSelections);
     const suggestedProfessionals = await this.buildSuggestedProfessionals(scheduleCodes);
 
@@ -556,8 +554,8 @@ export class StandaloneDdService {
           select: { guestName: true, guestEmail: true, guestPhone: true },
         })
       : null;
-    const checklistSelections = this.parseChecklistSelections(order.checklistSelections);
-    const checklistSummary = this.buildChecklistSummary(checklistSelections);
+    const checklistSelections = await this.parseChecklistSelections(order.checklistSelections);
+    const checklistSummary = await this.buildChecklistSummary(checklistSelections);
     const suggestedProfessionals = await this.buildSuggestedProfessionals(
       Object.keys(checklistSelections),
     );
@@ -653,8 +651,8 @@ export class StandaloneDdService {
       throw new BadRequestException("Provide exactly one of listingId or externalProperty");
     }
 
-    const checklistSelections = this.normalizeChecklistSelections(dto.checklistSelections);
-    const validation = validateChecklistSelections(checklistSelections);
+    const checklistSelections = await this.normalizeChecklistSelections(dto.checklistSelections);
+    const validation = await this.ddCms.validateChecklistSelections(checklistSelections);
     if (!validation.ok) {
       throw new BadRequestException(validation.message);
     }
@@ -1126,7 +1124,9 @@ export class StandaloneDdService {
 
   async listAssignableProfessionals(actor: JwtPayload, scheduleCode?: string) {
     this.assertStaffActor(actor);
-    const schedule = scheduleCode ? getScheduleByCode(scheduleCode.trim().toUpperCase()) : undefined;
+    const code = scheduleCode?.trim().toUpperCase();
+    const defs = code ? await this.ddCms.getActiveDefinitions() : [];
+    const schedule = code ? defs.find((d) => d.code === code) : undefined;
     const suggestedTypeSet = new Set(schedule?.suggestedProfessionalTypes ?? []);
     const rows = await this.prisma.user.findMany({
       where: {

@@ -3,12 +3,15 @@ import { apiRequest } from "@/lib/api";
 
 export type Role = "buyer" | "seller" | "professional" | "staff" | "admin" | "super_admin";
 
+export type AuthPortal = "buyer" | "seller" | "professional" | "admin";
+
 export type AuthUser = {
   id: string;
   email: string;
   name: string;
   role: Role;
   professionalType?: string | null;
+  permissions?: string[];
 };
 
 type SelfRegisterRole = "buyer" | "seller" | "professional";
@@ -66,6 +69,7 @@ type ApiUser = {
   name: string;
   role: string;
   professionalType?: string | null;
+  permissions?: string[];
 };
 
 function mapApiUser(u: ApiUser): AuthUser {
@@ -75,6 +79,7 @@ function mapApiUser(u: ApiUser): AuthUser {
     name: u.name,
     role: u.role as Role,
     professionalType: u.professionalType ?? null,
+    permissions: u.permissions,
   };
 }
 
@@ -82,7 +87,7 @@ type AuthState = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isReady: boolean;
-  login: (email: string, password: string) => Promise<AuthUser>;
+  login: (email: string, password: string, portal?: AuthPortal) => Promise<AuthUser>;
   register: (data: {
     firstName: string;
     lastName: string;
@@ -135,10 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, portal?: AuthPortal) => {
     const envelope = await apiRequest<{ user: ApiUser }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(portal ? { portal } : {}),
+      }),
     });
     const next = mapApiUser(envelope.data.user);
     setUser(next);
@@ -208,6 +217,23 @@ export function useAuth() {
 export function dashboardPathForRole(role: Role): string {
   if (role === "super_admin") return "/dashboard/super-admin";
   return `/dashboard/${role}`;
+}
+
+export function loginPathForRole(role: Role): string {
+  switch (role) {
+    case "buyer":
+      return "/login/buyer";
+    case "seller":
+      return "/login/seller";
+    case "professional":
+      return "/login/professional";
+    case "staff":
+    case "admin":
+    case "super_admin":
+      return "/login/admin";
+    default:
+      return "/login";
+  }
 }
 
 /** Whether the signed-in user may use a dashboard layout role (e.g. super_admin on admin routes). */

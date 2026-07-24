@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,7 +6,12 @@ import {
   countSelectedItems,
   type DdChecklistSelections,
   type DdScheduleCode,
+  type DdScheduleDefinition,
 } from "@/lib/dd-schedule-checklists";
+import {
+  toScheduleDefinitions,
+  usePublicDdChecklistsQuery,
+} from "@/hooks/use-dd-checklists";
 
 export type DdScheduleChecklistSelection = {
   checklistSelections: DdChecklistSelections;
@@ -19,10 +24,13 @@ type Props = {
   onChange?: (selection: DdScheduleChecklistSelection) => void;
 };
 
-function toPayload(selections: DdChecklistSelections): DdScheduleChecklistSelection {
-  const scheduleCodes = DD_SCHEDULES.map((s) => s.code).filter(
-    (code) => (selections[code]?.length ?? 0) > 0,
-  ) as DdScheduleCode[];
+function toPayload(
+  selections: DdChecklistSelections,
+  schedules: DdScheduleDefinition[],
+): DdScheduleChecklistSelection {
+  const scheduleCodes = schedules
+    .map((s) => s.code)
+    .filter((code) => (selections[code]?.length ?? 0) > 0) as DdScheduleCode[];
   return {
     checklistSelections: selections,
     selectedCount: countSelectedItems(selections),
@@ -31,6 +39,12 @@ function toPayload(selections: DdChecklistSelections): DdScheduleChecklistSelect
 }
 
 export function DdScheduleChecklistSelector({ value, onChange }: Props) {
+  const { data, isLoading, isError } = usePublicDdChecklistsQuery();
+  const schedules = useMemo(() => {
+    if (data?.length) return toScheduleDefinitions(data);
+    return DD_SCHEDULES;
+  }, [data]);
+
   const [selections, setSelections] = useState<DdChecklistSelections>(value ?? {});
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -45,8 +59,8 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
   }, [value]);
 
   useEffect(() => {
-    onChangeRef.current?.(toPayload(selections));
-  }, [selections]);
+    onChangeRef.current?.(toPayload(selections, schedules));
+  }, [selections, schedules]);
 
   const updateSchedule = (code: DdScheduleCode, nextCodes: string[]) => {
     setSelections((prev) => {
@@ -68,7 +82,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
   };
 
   const selectAll = (scheduleCode: DdScheduleCode) => {
-    const schedule = DD_SCHEDULES.find((entry) => entry.code === scheduleCode);
+    const schedule = schedules.find((entry) => entry.code === scheduleCode);
     if (!schedule) return;
     updateSchedule(
       scheduleCode,
@@ -82,9 +96,18 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
 
   return (
     <div className="space-y-5">
-      {DD_SCHEDULES.map((schedule) => {
-        const selected = selections[schedule.code] ?? [];
-        const allSelected = selected.length === schedule.items.length;
+      {isLoading && !data && (
+        <p className="text-sm text-muted-foreground">Loading checklist catalog…</p>
+      )}
+      {isError && !data && (
+        <p className="text-sm text-amber-700">
+          Using default checklists (could not reach server).
+        </p>
+      )}
+      {schedules.map((schedule) => {
+        const code = schedule.code as DdScheduleCode;
+        const selected = selections[code] ?? [];
+        const allSelected = selected.length === schedule.items.length && schedule.items.length > 0;
         return (
           <section
             key={schedule.code}
@@ -104,9 +127,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                   size="sm"
                   variant={allSelected ? "default" : "outline"}
                   data-testid={`dd-select-all-${schedule.code}`}
-                  onClick={() =>
-                    allSelected ? clearAll(schedule.code) : selectAll(schedule.code)
-                  }
+                  onClick={() => (allSelected ? clearAll(code) : selectAll(code))}
                 >
                   {allSelected ? "Clear all" : "Select all"}
                 </Button>
@@ -122,7 +143,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(next) =>
-                          setItemChecked(schedule.code, item.code, next === true)
+                          setItemChecked(code, item.code, next === true)
                         }
                         className="mt-0.5"
                         aria-label={item.label}
@@ -130,7 +151,7 @@ export function DdScheduleChecklistSelector({ value, onChange }: Props) {
                       <button
                         type="button"
                         className="min-w-0 flex-1 cursor-pointer text-left"
-                        onClick={() => setItemChecked(schedule.code, item.code, !checked)}
+                        onClick={() => setItemChecked(code, item.code, !checked)}
                       >
                         <span className="block text-sm font-medium text-foreground">
                           {item.label}

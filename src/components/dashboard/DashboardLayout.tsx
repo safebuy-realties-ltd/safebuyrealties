@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -14,15 +14,29 @@ import {
   Landmark,
   Heart,
   Calendar,
+  ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useAuth, dashboardPathForRole, canAccessDashboardRole, type Role } from "@/lib/auth";
+import {
+  useAuth,
+  dashboardPathForRole,
+  canAccessDashboardRole,
+  loginPathForRole,
+  type Role,
+} from "@/lib/auth";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 
-export type NavItem = { label: string; to: string; icon: LucideIcon };
+export type NavItem = {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  requiredPermissions?: string[];
+  permissionMode?: "any" | "all";
+};
 
 export const navByRole: Record<Role, NavItem[]> = {
   buyer: [
@@ -56,19 +70,78 @@ export const navByRole: Record<Role, NavItem[]> = {
   ],
   admin: [
     { label: "Overview", to: "/dashboard/admin", icon: LayoutDashboard },
-    { label: "Users", to: "/dashboard/admin/users", icon: Users },
-    { label: "Listings", to: "/dashboard/admin/listings", icon: Building2 },
-    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
-    { label: "Escrow", to: "/dashboard/admin/escrows", icon: Landmark },
-    { label: "Settings", to: "/dashboard/admin/settings", icon: Settings },
+    {
+      label: "Users",
+      to: "/dashboard/admin/users",
+      icon: Users,
+      requiredPermissions: [PERMISSIONS.USERS_READ],
+    },
+    {
+      label: "Listings",
+      to: "/dashboard/admin/listings",
+      icon: Building2,
+      requiredPermissions: [PERMISSIONS.LISTINGS_READ],
+    },
+    {
+      label: "Due Diligence",
+      to: "/dashboard/staff/due-diligence",
+      icon: ClipboardList,
+      requiredPermissions: [PERMISSIONS.DD_ORDERS_READ, PERMISSIONS.STAFF_OPS],
+      permissionMode: "any",
+    },
+    {
+      label: "Escrow",
+      to: "/dashboard/admin/escrows",
+      icon: Landmark,
+      requiredPermissions: [PERMISSIONS.ESCROWS_READ],
+    },
+    {
+      label: "DD Checklists",
+      to: "/dashboard/admin/checklists",
+      icon: ListChecks,
+      requiredPermissions: [PERMISSIONS.DD_CHECKLISTS_MANAGE],
+    },
+    {
+      label: "Settings",
+      to: "/dashboard/admin/settings",
+      icon: Settings,
+      requiredPermissions: [PERMISSIONS.PLATFORM_CONFIG],
+    },
   ],
   super_admin: [
     { label: "Command Center", to: "/dashboard/super-admin", icon: LayoutDashboard },
-    { label: "Users", to: "/dashboard/admin/users", icon: Users },
-    { label: "Platform Settings", to: "/dashboard/admin/settings", icon: Settings },
-    { label: "Escrows", to: "/dashboard/admin/escrows", icon: Landmark },
+    {
+      label: "Users",
+      to: "/dashboard/admin/users",
+      icon: Users,
+      requiredPermissions: [PERMISSIONS.USERS_READ],
+    },
+    {
+      label: "Platform Settings",
+      to: "/dashboard/admin/settings",
+      icon: Settings,
+      requiredPermissions: [PERMISSIONS.PLATFORM_CONFIG],
+    },
+    {
+      label: "Escrows",
+      to: "/dashboard/admin/escrows",
+      icon: Landmark,
+      requiredPermissions: [PERMISSIONS.ESCROWS_READ],
+    },
     { label: "Staff Workflow", to: "/dashboard/staff/workflow", icon: FileText },
-    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
+    {
+      label: "Due Diligence",
+      to: "/dashboard/staff/due-diligence",
+      icon: ClipboardList,
+      requiredPermissions: [PERMISSIONS.DD_ORDERS_READ, PERMISSIONS.STAFF_OPS],
+      permissionMode: "any",
+    },
+    {
+      label: "DD Checklists",
+      to: "/dashboard/admin/checklists",
+      icon: ListChecks,
+      requiredPermissions: [PERMISSIONS.DD_CHECKLISTS_MANAGE],
+    },
   ],
 };
 
@@ -92,20 +165,32 @@ function initialsOf(name: string) {
   );
 }
 
+function filterNavItems(items: NavItem[], userPermissions: string[] | undefined): NavItem[] {
+  // Empty/missing permissions → show full nav (buyers/sellers or legacy sessions).
+  if (!userPermissions || userPermissions.length === 0) return items;
+  return items.filter((item) => {
+    if (!item.requiredPermissions?.length) return true;
+    return hasPermission(userPermissions, item.requiredPermissions, item.permissionMode ?? "all");
+  });
+}
+
 export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAuthenticated, isReady, logout } = useAuth();
   const navigate = useNavigate();
   const navRole =
     user?.role === "super_admin" && (role === "admin" || role === "staff") ? "super_admin" : role;
-  const items = navByRole[navRole];
+  const items = useMemo(
+    () => filterNavItems(navByRole[navRole], user?.permissions),
+    [navRole, user?.permissions],
+  );
   const hasAccess = user ? canAccessDashboardRole(user.role, role) : false;
 
   useEffect(() => {
     if (!isReady) return;
     if (!isAuthenticated) {
       navigate({
-        to: "/login",
+        to: loginPathForRole(role),
         search: { redirect: pathname.startsWith("/dashboard") ? pathname : undefined },
       });
       return;
