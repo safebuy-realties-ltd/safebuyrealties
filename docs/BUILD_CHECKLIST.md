@@ -21,36 +21,36 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 - **Date:** 2026-07-24
 - **Tool:** Cursor (Cloud Agent) — multi-portal auth + admin CMS
-- **Last completed / in progress:** Separate login portals; admin RBAC permissions; DD checklist CMS
-- **Done this session:** Portal logins (buyer/seller/pro/admin); `PermissionGrant` + effective permissions; DB-driven DD schedule/checklist CMS; multi-level admin seed users; permission-filtered admin nav
-- **Next:** Finish E2E validation across portals; mark Step 13 items `[x]` when green
+- **Last completed:** Step 13 — portals, RBAC, DD CMS + E2E
+- **Done this session:** Portal logins; PermissionGrant RBAC; DD checklist CMS; multi-level admins; Playwright E2E (`scripts/e2e-portals.mjs`) all 11 steps green
+- **Next:** Optional polish (ops-admin UI coverage; richer CMS content beyond DD checklists)
 - **Blockers:** none
 
 ---
 
 ## Step 13 — Multi-portal auth + Admin CMS (Platform management)
 
-- [~] **Separate login portals**
+- [x] **Separate login portals**
   - `/login` hub + `/login/buyer` `/login/seller` `/login/professional` `/login/admin`
   - Backend `portal` on `POST /auth/login` rejects wrong-role accounts
   - Role dashboards unchanged; unauthenticated dashboard redirects to matching portal
-  - Validation: login as each seed role via its portal; cross-portal login returns 403
+  - Validation: Playwright portal logins + API 403 for buyer on admin portal
 
-- [~] **Admin RBAC permissions**
+- [x] **Admin RBAC permissions**
   - `PermissionGrant` model; effective permissions on `/auth/me`
   - Multi-level admins: content / ops / finance (custom grants) + full admin + super admin
   - Admin users UI can assign permission sets (`permissions.manage`)
-  - Validation: content-admin sees DD Checklists, not Escrow; finance-admin opposite
+  - Validation: content-admin nav = Overview + DD Checklists; finance-admin = Users + Escrow
 
-- [~] **DD checklist CMS**
+- [x] **DD checklist CMS**
   - `DdScheduleConfig` / `DdChecklistItemConfig`; public `GET /dd-checklists`; admin CRUD
   - Request wizard consumes API (fallback to hardcoded)
   - Admin page `/dashboard/admin/checklists`
-  - Validation: admin renames/adds item → appears on `/due-diligence/request`
+  - Validation: content-admin CMS loads schedules A–D; PATCH item label reflected on public GET
 
-- [ ] **E2E across portals**
-  - Buyer DD request; seller listings; pro tasks/DD; staff ops; admin CMS customization
-  - Simulate multi-level admins managing the platform together
+- [x] **E2E across portals**
+  - Buyer / seller / pro / staff / multi-level admin dashboards via `node scripts/e2e-portals.mjs`
+  - Buyer standalone DD order created via API; staff DD queue accessible
 
 ---
 

@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginIndexRouteImport } from './routes/login.index'
 import { Route as DueDiligenceIndexRouteImport } from './routes/due-diligence.index'
 import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
 import { Route as OnboardingProfessionalRouteImport } from './routes/onboarding.professional'
@@ -86,6 +87,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoginRoute,
 } as any)
 const DueDiligenceIndexRoute = DueDiligenceIndexRouteImport.update({
   id: '/',
@@ -324,11 +330,12 @@ const DashboardAdminEscrowsRoute = DashboardAdminEscrowsRouteImport.update({
   path: '/escrows',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
-const DashboardAdminChecklistsRoute = DashboardAdminChecklistsRouteImport.update({
-  id: '/checklists',
-  path: '/checklists',
-  getParentRoute: () => DashboardAdminRoute,
-} as any)
+const DashboardAdminChecklistsRoute =
+  DashboardAdminChecklistsRouteImport.update({
+    id: '/checklists',
+    path: '/checklists',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardProfessionalTasksTaskIdRoute =
   DashboardProfessionalTasksTaskIdRouteImport.update({
     id: '/$taskId',
@@ -360,8 +367,9 @@ export interface FileRoutesByFullPath {
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence/': typeof DueDiligenceIndexRoute
-  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/login/': typeof LoginIndexRoute
   '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -393,7 +401,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
-  '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -407,8 +414,9 @@ export interface FileRoutesByTo {
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence': typeof DueDiligenceIndexRoute
-  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/login': typeof LoginIndexRoute
   '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -462,8 +470,9 @@ export interface FileRoutesById {
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence/': typeof DueDiligenceIndexRoute
-  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/login/': typeof LoginIndexRoute
   '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
@@ -518,6 +527,8 @@ export interface FileRouteTypes {
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence/'
+    | '/login/'
+    | '/dashboard/admin/checklists'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -550,7 +561,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/browse'
-    | '/login'
     | '/register'
     | '/activate/$token'
     | '/checkout/$listingId'
@@ -564,6 +574,8 @@ export interface FileRouteTypes {
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence'
+    | '/login'
+    | '/dashboard/admin/checklists'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -617,6 +629,8 @@ export interface FileRouteTypes {
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence/'
+    | '/login/'
+    | '/dashboard/admin/checklists'
     | '/dashboard/admin/escrows'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/settings'
@@ -703,6 +717,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/due-diligence/': {
       id: '/due-diligence/'
@@ -1055,6 +1076,7 @@ interface LoginRouteChildren {
   LoginBuyerRoute: typeof LoginBuyerRoute
   LoginProfessionalRoute: typeof LoginProfessionalRoute
   LoginSellerRoute: typeof LoginSellerRoute
+  LoginIndexRoute: typeof LoginIndexRoute
 }
 
 const LoginRouteChildren: LoginRouteChildren = {
@@ -1062,6 +1084,7 @@ const LoginRouteChildren: LoginRouteChildren = {
   LoginBuyerRoute: LoginBuyerRoute,
   LoginProfessionalRoute: LoginProfessionalRoute,
   LoginSellerRoute: LoginSellerRoute,
+  LoginIndexRoute: LoginIndexRoute,
 }
 
 const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
