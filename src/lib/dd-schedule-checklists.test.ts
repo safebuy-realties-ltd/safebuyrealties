@@ -24,10 +24,12 @@ describe("dd-schedule-checklists", () => {
         }),
       );
     }
-    expect(countSelectedItems({
-      LEGAL_CHECK: ["LEGAL_TITLE_SEARCH", "LEGAL_COF_O"],
-      SECURITY_CHECK: ["SEC_OMO_ONILE"],
-    })).toBe(3);
+    expect(
+      countSelectedItems({
+        LEGAL_CHECK: ["LEGAL_TITLE_SEARCH", "LEGAL_COF_O"],
+        SECURITY_CHECK: ["SEC_OMO_ONILE"],
+      }),
+    ).toBe(3);
   });
 
   it("rejects unknown checklist codes", () => {

@@ -16,12 +16,16 @@ const mockJwt = {
   signAsync: jest.fn().mockResolvedValue("token"),
 };
 
+const mockPermissions = {
+  getEffectivePermissions: jest.fn().mockResolvedValue([]),
+};
+
 describe("AuthService", () => {
   let service: AuthService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(mockPrisma as never, mockJwt as never);
+    service = new AuthService(mockPrisma as never, mockJwt as never, mockPermissions as never);
   });
 
   describe("register", () => {

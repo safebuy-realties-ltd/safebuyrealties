@@ -33,10 +33,14 @@ async function wipe() {
   await prisma.payout.deleteMany();
   await prisma.escrow.deleteMany();
   await prisma.powerOfAttorney.deleteMany();
+  await prisma.dueDiligenceAssignment.deleteMany().catch(() => undefined);
   await prisma.dueDiligenceOrder.deleteMany();
   await prisma.serviceRequest.deleteMany();
   await prisma.externalProperty.deleteMany();
   await prisma.accountActivationToken.deleteMany();
+  await prisma.permissionGrant.deleteMany();
+  await prisma.ddChecklistItemConfig.deleteMany();
+  await prisma.ddScheduleConfig.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.task.deleteMany();
   await prisma.verificationStep.deleteMany();
@@ -49,6 +53,14 @@ async function wipe() {
   await prisma.listing.deleteMany();
   await prisma.professionalProfile.deleteMany();
   await prisma.user.deleteMany();
+}
+
+async function grantPermissions(userId: string, permissions: string[]) {
+  if (permissions.length === 0) return;
+  await prisma.permissionGrant.createMany({
+    data: permissions.map((permission) => ({ userId, permission })),
+    skipDuplicates: true,
+  });
 }
 
 async function ensureLiveListingSpecs() {
@@ -194,6 +206,48 @@ async function main() {
     role: UserRole.ADMIN,
     passwordHash,
   });
+  const contentAdmin = await upsertUser({
+    email: "content-admin@safebuyrealties.test",
+    firstName: "Cora",
+    lastName: "Content",
+    role: UserRole.ADMIN,
+    passwordHash,
+  });
+  await grantPermissions(contentAdmin.id, [
+    "content.manage",
+    "dd.checklists.manage",
+    "catalog.manage",
+    "analytics.read",
+  ]);
+  const opsAdmin = await upsertUser({
+    email: "ops-admin@safebuyrealties.test",
+    firstName: "Omar",
+    lastName: "Ops",
+    role: UserRole.ADMIN,
+    passwordHash,
+  });
+  await grantPermissions(opsAdmin.id, [
+    "staff.ops",
+    "dd.orders.read",
+    "dd.orders.write",
+    "listings.read",
+    "listings.write",
+    "users.read",
+    "analytics.read",
+  ]);
+  const financeAdmin = await upsertUser({
+    email: "finance-admin@safebuyrealties.test",
+    firstName: "Fiona",
+    lastName: "Finance",
+    role: UserRole.ADMIN,
+    passwordHash,
+  });
+  await grantPermissions(financeAdmin.id, [
+    "escrows.read",
+    "escrows.write",
+    "analytics.read",
+    "users.read",
+  ]);
   const staff = await upsertUser({
     email: "staff@safebuyrealties.test",
     firstName: "Sam",

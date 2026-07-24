@@ -10,6 +10,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { ConfigService } from "@nestjs/config";
 import { SbrIdService } from "../sbr-id/sbr-id.service";
 import { StorageService } from "../storage/storage.service";
+import { DdCmsService } from "../dd-cms/dd-cms.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -108,6 +109,39 @@ describe("StandaloneDdService", () => {
         {
           provide: StorageService,
           useValue: { getSignedUrl: jest.fn().mockResolvedValue("/uploads/report.pdf"), upload: jest.fn() },
+        },
+        {
+          provide: DdCmsService,
+          useValue: {
+            getActiveDefinitions: jest.fn().mockResolvedValue([
+              {
+                code: "LEGAL_CHECK",
+                letter: "A",
+                name: "Schedule A — Legal Due Diligence",
+                shortName: "Legal",
+                description: "Legal",
+                suggestedProfessionalTypes: ["LAWYER"],
+                items: [{ code: "LEGAL_TITLE_SEARCH", label: "Title search" }],
+              },
+              {
+                code: "PHYSICAL_CHECK",
+                letter: "C",
+                name: "Schedule C — Physical Inspection",
+                shortName: "Physical",
+                description: "Physical",
+                suggestedProfessionalTypes: ["SURVEYOR"],
+                items: [{ code: "PHYS_BOUNDARY_BEACONS", label: "Boundary / beacon verification" }],
+              },
+            ]),
+            validateChecklistSelections: jest.fn().mockImplementation(async (selections: Record<string, string[]>) => {
+              const scheduleCodes = Object.keys(selections).filter((k) => (selections[k]?.length ?? 0) > 0);
+              if (!scheduleCodes.length) {
+                return { ok: false, message: "Select at least one checklist item under a schedule." };
+              }
+              return { ok: true, scheduleCodes };
+            }),
+            suggestedTypesForSchedules: jest.fn().mockResolvedValue(["LAWYER"]),
+          },
         },
       ],
     }).compile();

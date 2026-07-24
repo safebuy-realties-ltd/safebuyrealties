@@ -1,10 +1,8 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/** Legacy super-admin portal — redirected into the unified admin backend. */
 export const Route = createFileRoute("/dashboard/super-admin")({
-  component: () => (
-    <DashboardLayout role="super_admin">
-      <Outlet />
-    </DashboardLayout>
-  ),
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard/admin", replace: true });
+  },
 });

@@ -19,12 +19,29 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 > *(Each session updates this section before stopping)*
 
-- **Date:** 2026-07-17
-- **Tool:** Cursor (Cloud Agent) — homepage DD guest funnel
-- **Last completed:** Homepage flagship DD entry + guest E2E pay/verify/staff notify fixes
-- **Done this session:** Hero/persona DD CTAs; activation URL; public verify; staff DD notification routing + alert email; guest case lookup
-- **Next:** Demo guest flow from `/` → request → pay (mock or Paystack) → staff queue
+- **Date:** 2026-07-24
+- **Tool:** Cursor (Cloud Agent) — unified admin portal
+- **Last completed:** Step 13 corrected — single admin portal + named roles/privileges
+- **Done this session:** Merged staff/admin/super-admin into one `/dashboard/admin` portal; `AdminRole` privilege sets; Roles & Privileges UI; legacy `/dashboard/staff` redirects; E2E 12/12
+- **Next:** Optional — assign AdminRole when editing existing users in UI; remove obsolete staff page files
 - **Blockers:** none
+
+---
+
+## Step 13 — Multi-portal auth + Admin CMS (Platform management)
+
+- [x] **Separate login portals** (buyer / seller / professional / admin)
+- [x] **Unified admin portal** (not separate staff vs admin dashboards)
+  - All company operators (`staff` / `admin` / `super_admin`) land on `/dashboard/admin`
+  - Ops pages moved under `/dashboard/admin/*` (submissions, workflow, KYC, DD, inspections, …)
+  - Legacy `/dashboard/staff/*` and `/dashboard/super-admin` redirect into admin
+  - Sidebar shows operator **name + named AdminRole**
+- [x] **Named AdminRoles + privilege catalog**
+  - `AdminRole` model; privileges unlock specific nav sections
+  - Super admin manages roles at `/dashboard/admin/roles`
+  - Create user can assign portal role + privileges
+  - Seeded: Super Administrator, Platform Administrator, Operations Officer, Due Diligence Lead, Finance Manager, Content Manager
+- [x] **E2E** — `node scripts/e2e-portals.mjs` (buyer/seller/pro + content/finance/ops in unified portal)
 
 ---
 

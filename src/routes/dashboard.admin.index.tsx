@@ -153,7 +153,14 @@ function AdminOverview() {
               </Link>
             </li>
             <li>
-              Staff verification: log in as staff@safebuyrealties.test to use the workflow screens.
+              <Link className="text-primary underline" to="/dashboard/admin/workflow">
+                Verification workflow
+              </Link>
+            </li>
+            <li>
+              <Link className="text-primary underline" to="/dashboard/admin/roles">
+                Roles &amp; privileges
+              </Link>
             </li>
           </ul>
         </div>

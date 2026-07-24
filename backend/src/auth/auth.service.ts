@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
@@ -12,6 +13,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { JwtPayload } from "./jwt.strategy";
+import { portalAcceptsRole } from "../common/auth-portals";
+import { PermissionsService } from "../permissions/permissions.service";
+import type { Permission } from "../common/permissions";
 
 const SELF_REGISTER_ROLES: UserRole[] = [
   UserRole.BUYER,
@@ -24,20 +28,25 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private permissions: PermissionsService,
   ) {}
 
-  private userPublic(user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: UserRole;
-    professionalType: ProfessionalType | null;
-    phone: string | null;
-    isActive: boolean;
-    publicId: string | null;
-    createdAt: Date;
-  }) {
+  private userPublic(
+    user: {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: UserRole;
+      professionalType: ProfessionalType | null;
+      phone: string | null;
+      isActive: boolean;
+      publicId: string | null;
+      createdAt: Date;
+      adminRole?: { id: string; name: string } | null;
+    },
+    permissions: Permission[] = [],
+  ) {
     return {
       id: user.id,
       email: user.email,
@@ -50,7 +59,36 @@ export class AuthService {
       isActive: user.isActive,
       publicId: user.publicId,
       createdAt: user.createdAt.toISOString(),
+      permissions,
+      adminRole: user.adminRole
+        ? { id: user.adminRole.id, name: user.adminRole.name }
+        : null,
     };
+  }
+
+  private async withPermissions(user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    professionalType: ProfessionalType | null;
+    phone: string | null;
+    isActive: boolean;
+    publicId: string | null;
+    createdAt: Date;
+  }) {
+    const [permissions, withRole] = await Promise.all([
+      this.permissions.getEffectivePermissions(user.id, user.role),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { adminRole: { select: { id: true, name: true } } },
+      }),
+    ]);
+    return this.userPublic(
+      { ...user, adminRole: withRole?.adminRole ?? null },
+      permissions,
+    );
   }
 
   async register(dto: RegisterDto) {
@@ -91,7 +129,7 @@ export class AuthService {
     return {
       data: {
         accessToken,
-        user: this.userPublic(user),
+        user: await this.withPermissions(user),
       },
     };
   }
@@ -102,11 +140,16 @@ export class AuthService {
     if (!user.isActive) throw new UnauthorizedException("Account is deactivated");
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException("Invalid email or password");
+    if (dto.portal && !portalAcceptsRole(dto.portal, user.role)) {
+      throw new ForbiddenException(
+        `This account cannot sign in through the ${dto.portal} portal. Use the login page for your role.`,
+      );
+    }
     const accessToken = await this.signToken(user);
     return {
       data: {
         accessToken,
-        user: this.userPublic(user),
+        user: await this.withPermissions(user),
       },
     };
   }
@@ -114,7 +157,7 @@ export class AuthService {
   async me(payload: JwtPayload) {
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user) throw new UnauthorizedException();
-    return { data: this.userPublic(user) };
+    return { data: await this.withPermissions(user) };
   }
 
   async getActivationPreview(token: string) {
@@ -161,7 +204,7 @@ export class AuthService {
     return {
       data: {
         accessToken,
-        user: this.userPublic(user),
+        user: await this.withPermissions(user),
       },
     };
   }

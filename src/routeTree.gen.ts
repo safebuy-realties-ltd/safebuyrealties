@@ -14,9 +14,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginIndexRouteImport } from './routes/login.index'
 import { Route as DueDiligenceIndexRouteImport } from './routes/due-diligence.index'
 import { Route as PurchaseListingIdRouteImport } from './routes/purchase.$listingId'
 import { Route as OnboardingProfessionalRouteImport } from './routes/onboarding.professional'
+import { Route as LoginSellerRouteImport } from './routes/login.seller'
+import { Route as LoginProfessionalRouteImport } from './routes/login.professional'
+import { Route as LoginBuyerRouteImport } from './routes/login.buyer'
+import { Route as LoginAdminRouteImport } from './routes/login.admin'
 import { Route as ListingsListingIdRouteImport } from './routes/listings.$listingId'
 import { Route as HomeClassicRouteImport } from './routes/home.classic'
 import { Route as DueDiligenceRequestRouteImport } from './routes/due-diligence.request'
@@ -51,10 +56,18 @@ import { Route as DashboardBuyerSavedRouteImport } from './routes/dashboard.buye
 import { Route as DashboardBuyerListingsRouteImport } from './routes/dashboard.buyer.listings'
 import { Route as DashboardBuyerKycRouteImport } from './routes/dashboard.buyer.kyc'
 import { Route as DashboardBuyerDueDiligenceRouteImport } from './routes/dashboard.buyer.due-diligence'
+import { Route as DashboardAdminWorkflowRouteImport } from './routes/dashboard.admin.workflow'
 import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
+import { Route as DashboardAdminSubmissionsRouteImport } from './routes/dashboard.admin.submissions'
 import { Route as DashboardAdminSettingsRouteImport } from './routes/dashboard.admin.settings'
+import { Route as DashboardAdminRolesRouteImport } from './routes/dashboard.admin.roles'
 import { Route as DashboardAdminListingsRouteImport } from './routes/dashboard.admin.listings'
+import { Route as DashboardAdminKycRouteImport } from './routes/dashboard.admin.kyc'
+import { Route as DashboardAdminInspectionsRouteImport } from './routes/dashboard.admin.inspections'
 import { Route as DashboardAdminEscrowsRouteImport } from './routes/dashboard.admin.escrows'
+import { Route as DashboardAdminDueDiligenceRouteImport } from './routes/dashboard.admin.due-diligence'
+import { Route as DashboardAdminCredentialsRouteImport } from './routes/dashboard.admin.credentials'
+import { Route as DashboardAdminChecklistsRouteImport } from './routes/dashboard.admin.checklists'
 import { Route as DashboardProfessionalTasksTaskIdRouteImport } from './routes/dashboard.professional.tasks.$taskId'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -82,6 +95,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LoginRoute,
+} as any)
 const DueDiligenceIndexRoute = DueDiligenceIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -96,6 +114,26 @@ const OnboardingProfessionalRoute = OnboardingProfessionalRouteImport.update({
   id: '/onboarding/professional',
   path: '/onboarding/professional',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LoginSellerRoute = LoginSellerRouteImport.update({
+  id: '/seller',
+  path: '/seller',
+  getParentRoute: () => LoginRoute,
+} as any)
+const LoginProfessionalRoute = LoginProfessionalRouteImport.update({
+  id: '/professional',
+  path: '/professional',
+  getParentRoute: () => LoginRoute,
+} as any)
+const LoginBuyerRoute = LoginBuyerRouteImport.update({
+  id: '/buyer',
+  path: '/buyer',
+  getParentRoute: () => LoginRoute,
+} as any)
+const LoginAdminRoute = LoginAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => LoginRoute,
 } as any)
 const ListingsListingIdRoute = ListingsListingIdRouteImport.update({
   id: '/listings/$listingId',
@@ -279,14 +317,30 @@ const DashboardBuyerDueDiligenceRoute =
     path: '/due-diligence',
     getParentRoute: () => DashboardBuyerRoute,
   } as any)
+const DashboardAdminWorkflowRoute = DashboardAdminWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
 const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminSubmissionsRoute =
+  DashboardAdminSubmissionsRouteImport.update({
+    id: '/submissions',
+    path: '/submissions',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardAdminSettingsRoute = DashboardAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminRolesRoute = DashboardAdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
 const DashboardAdminListingsRoute = DashboardAdminListingsRouteImport.update({
@@ -294,11 +348,40 @@ const DashboardAdminListingsRoute = DashboardAdminListingsRouteImport.update({
   path: '/listings',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminKycRoute = DashboardAdminKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminInspectionsRoute =
+  DashboardAdminInspectionsRouteImport.update({
+    id: '/inspections',
+    path: '/inspections',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardAdminEscrowsRoute = DashboardAdminEscrowsRouteImport.update({
   id: '/escrows',
   path: '/escrows',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminDueDiligenceRoute =
+  DashboardAdminDueDiligenceRouteImport.update({
+    id: '/due-diligence',
+    path: '/due-diligence',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminCredentialsRoute =
+  DashboardAdminCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminChecklistsRoute =
+  DashboardAdminChecklistsRouteImport.update({
+    id: '/checklists',
+    path: '/checklists',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardProfessionalTasksTaskIdRoute =
   DashboardProfessionalTasksTaskIdRouteImport.update({
     id: '/$taskId',
@@ -310,7 +393,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
   '/due-diligence': typeof DueDiligenceRouteWithChildren
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -323,13 +406,26 @@ export interface FileRoutesByFullPath {
   '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/login/admin': typeof LoginAdminRoute
+  '/login/buyer': typeof LoginBuyerRoute
+  '/login/professional': typeof LoginProfessionalRoute
+  '/login/seller': typeof LoginSellerRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence/': typeof DueDiligenceIndexRoute
+  '/login/': typeof LoginIndexRoute
+  '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/credentials': typeof DashboardAdminCredentialsRoute
+  '/dashboard/admin/due-diligence': typeof DashboardAdminDueDiligenceRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/dashboard/admin/inspections': typeof DashboardAdminInspectionsRoute
+  '/dashboard/admin/kyc': typeof DashboardAdminKycRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/roles': typeof DashboardAdminRolesRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/submissions': typeof DashboardAdminSubmissionsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/admin/workflow': typeof DashboardAdminWorkflowRoute
   '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
@@ -358,20 +454,32 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
-  '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/login/admin': typeof LoginAdminRoute
+  '/login/buyer': typeof LoginBuyerRoute
+  '/login/professional': typeof LoginProfessionalRoute
+  '/login/seller': typeof LoginSellerRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence': typeof DueDiligenceIndexRoute
+  '/login': typeof LoginIndexRoute
+  '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/credentials': typeof DashboardAdminCredentialsRoute
+  '/dashboard/admin/due-diligence': typeof DashboardAdminDueDiligenceRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/dashboard/admin/inspections': typeof DashboardAdminInspectionsRoute
+  '/dashboard/admin/kyc': typeof DashboardAdminKycRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/roles': typeof DashboardAdminRolesRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/submissions': typeof DashboardAdminSubmissionsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/admin/workflow': typeof DashboardAdminWorkflowRoute
   '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
@@ -402,7 +510,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
   '/due-diligence': typeof DueDiligenceRouteWithChildren
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -415,13 +523,26 @@ export interface FileRoutesById {
   '/due-diligence/request': typeof DueDiligenceRequestRoute
   '/home/classic': typeof HomeClassicRoute
   '/listings/$listingId': typeof ListingsListingIdRoute
+  '/login/admin': typeof LoginAdminRoute
+  '/login/buyer': typeof LoginBuyerRoute
+  '/login/professional': typeof LoginProfessionalRoute
+  '/login/seller': typeof LoginSellerRoute
   '/onboarding/professional': typeof OnboardingProfessionalRoute
   '/purchase/$listingId': typeof PurchaseListingIdRoute
   '/due-diligence/': typeof DueDiligenceIndexRoute
+  '/login/': typeof LoginIndexRoute
+  '/dashboard/admin/checklists': typeof DashboardAdminChecklistsRoute
+  '/dashboard/admin/credentials': typeof DashboardAdminCredentialsRoute
+  '/dashboard/admin/due-diligence': typeof DashboardAdminDueDiligenceRoute
   '/dashboard/admin/escrows': typeof DashboardAdminEscrowsRoute
+  '/dashboard/admin/inspections': typeof DashboardAdminInspectionsRoute
+  '/dashboard/admin/kyc': typeof DashboardAdminKycRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/roles': typeof DashboardAdminRolesRoute
   '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/submissions': typeof DashboardAdminSubmissionsRoute
   '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/admin/workflow': typeof DashboardAdminWorkflowRoute
   '/dashboard/buyer/due-diligence': typeof DashboardBuyerDueDiligenceRoute
   '/dashboard/buyer/kyc': typeof DashboardBuyerKycRoute
   '/dashboard/buyer/listings': typeof DashboardBuyerListingsRoute
@@ -466,13 +587,26 @@ export interface FileRouteTypes {
     | '/due-diligence/request'
     | '/home/classic'
     | '/listings/$listingId'
+    | '/login/admin'
+    | '/login/buyer'
+    | '/login/professional'
+    | '/login/seller'
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence/'
+    | '/login/'
+    | '/dashboard/admin/checklists'
+    | '/dashboard/admin/credentials'
+    | '/dashboard/admin/due-diligence'
     | '/dashboard/admin/escrows'
+    | '/dashboard/admin/inspections'
+    | '/dashboard/admin/kyc'
     | '/dashboard/admin/listings'
+    | '/dashboard/admin/roles'
     | '/dashboard/admin/settings'
+    | '/dashboard/admin/submissions'
     | '/dashboard/admin/users'
+    | '/dashboard/admin/workflow'
     | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
@@ -501,20 +635,32 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/browse'
-    | '/login'
     | '/register'
     | '/activate/$token'
     | '/checkout/$listingId'
     | '/due-diligence/request'
     | '/home/classic'
     | '/listings/$listingId'
+    | '/login/admin'
+    | '/login/buyer'
+    | '/login/professional'
+    | '/login/seller'
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence'
+    | '/login'
+    | '/dashboard/admin/checklists'
+    | '/dashboard/admin/credentials'
+    | '/dashboard/admin/due-diligence'
     | '/dashboard/admin/escrows'
+    | '/dashboard/admin/inspections'
+    | '/dashboard/admin/kyc'
     | '/dashboard/admin/listings'
+    | '/dashboard/admin/roles'
     | '/dashboard/admin/settings'
+    | '/dashboard/admin/submissions'
     | '/dashboard/admin/users'
+    | '/dashboard/admin/workflow'
     | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
@@ -557,13 +703,26 @@ export interface FileRouteTypes {
     | '/due-diligence/request'
     | '/home/classic'
     | '/listings/$listingId'
+    | '/login/admin'
+    | '/login/buyer'
+    | '/login/professional'
+    | '/login/seller'
     | '/onboarding/professional'
     | '/purchase/$listingId'
     | '/due-diligence/'
+    | '/login/'
+    | '/dashboard/admin/checklists'
+    | '/dashboard/admin/credentials'
+    | '/dashboard/admin/due-diligence'
     | '/dashboard/admin/escrows'
+    | '/dashboard/admin/inspections'
+    | '/dashboard/admin/kyc'
     | '/dashboard/admin/listings'
+    | '/dashboard/admin/roles'
     | '/dashboard/admin/settings'
+    | '/dashboard/admin/submissions'
     | '/dashboard/admin/users'
+    | '/dashboard/admin/workflow'
     | '/dashboard/buyer/due-diligence'
     | '/dashboard/buyer/kyc'
     | '/dashboard/buyer/listings'
@@ -594,7 +753,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BrowseRoute: typeof BrowseRoute
   DueDiligenceRoute: typeof DueDiligenceRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  LoginRoute: typeof LoginRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
   CheckoutListingIdRoute: typeof CheckoutListingIdRoute
@@ -647,6 +806,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login/': {
+      id: '/login/'
+      path: '/'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof LoginRoute
+    }
     '/due-diligence/': {
       id: '/due-diligence/'
       path: '/'
@@ -667,6 +833,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding/professional'
       preLoaderRoute: typeof OnboardingProfessionalRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/login/seller': {
+      id: '/login/seller'
+      path: '/seller'
+      fullPath: '/login/seller'
+      preLoaderRoute: typeof LoginSellerRouteImport
+      parentRoute: typeof LoginRoute
+    }
+    '/login/professional': {
+      id: '/login/professional'
+      path: '/professional'
+      fullPath: '/login/professional'
+      preLoaderRoute: typeof LoginProfessionalRouteImport
+      parentRoute: typeof LoginRoute
+    }
+    '/login/buyer': {
+      id: '/login/buyer'
+      path: '/buyer'
+      fullPath: '/login/buyer'
+      preLoaderRoute: typeof LoginBuyerRouteImport
+      parentRoute: typeof LoginRoute
+    }
+    '/login/admin': {
+      id: '/login/admin'
+      path: '/admin'
+      fullPath: '/login/admin'
+      preLoaderRoute: typeof LoginAdminRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/listings/$listingId': {
       id: '/listings/$listingId'
@@ -906,11 +1100,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBuyerDueDiligenceRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
+    '/dashboard/admin/workflow': {
+      id: '/dashboard/admin/workflow'
+      path: '/workflow'
+      fullPath: '/dashboard/admin/workflow'
+      preLoaderRoute: typeof DashboardAdminWorkflowRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/users': {
       id: '/dashboard/admin/users'
       path: '/users'
       fullPath: '/dashboard/admin/users'
       preLoaderRoute: typeof DashboardAdminUsersRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/submissions': {
+      id: '/dashboard/admin/submissions'
+      path: '/submissions'
+      fullPath: '/dashboard/admin/submissions'
+      preLoaderRoute: typeof DashboardAdminSubmissionsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
     '/dashboard/admin/settings': {
@@ -920,6 +1128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminSettingsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/roles': {
+      id: '/dashboard/admin/roles'
+      path: '/roles'
+      fullPath: '/dashboard/admin/roles'
+      preLoaderRoute: typeof DashboardAdminRolesRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/listings': {
       id: '/dashboard/admin/listings'
       path: '/listings'
@@ -927,11 +1142,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminListingsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/kyc': {
+      id: '/dashboard/admin/kyc'
+      path: '/kyc'
+      fullPath: '/dashboard/admin/kyc'
+      preLoaderRoute: typeof DashboardAdminKycRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/inspections': {
+      id: '/dashboard/admin/inspections'
+      path: '/inspections'
+      fullPath: '/dashboard/admin/inspections'
+      preLoaderRoute: typeof DashboardAdminInspectionsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/escrows': {
       id: '/dashboard/admin/escrows'
       path: '/escrows'
       fullPath: '/dashboard/admin/escrows'
       preLoaderRoute: typeof DashboardAdminEscrowsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/due-diligence': {
+      id: '/dashboard/admin/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/dashboard/admin/due-diligence'
+      preLoaderRoute: typeof DashboardAdminDueDiligenceRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/credentials': {
+      id: '/dashboard/admin/credentials'
+      path: '/credentials'
+      fullPath: '/dashboard/admin/credentials'
+      preLoaderRoute: typeof DashboardAdminCredentialsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/checklists': {
+      id: '/dashboard/admin/checklists'
+      path: '/checklists'
+      fullPath: '/dashboard/admin/checklists'
+      preLoaderRoute: typeof DashboardAdminChecklistsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
     '/dashboard/professional/tasks/$taskId': {
@@ -958,19 +1208,53 @@ const DueDiligenceRouteWithChildren = DueDiligenceRoute._addFileChildren(
   DueDiligenceRouteChildren,
 )
 
+interface LoginRouteChildren {
+  LoginAdminRoute: typeof LoginAdminRoute
+  LoginBuyerRoute: typeof LoginBuyerRoute
+  LoginProfessionalRoute: typeof LoginProfessionalRoute
+  LoginSellerRoute: typeof LoginSellerRoute
+  LoginIndexRoute: typeof LoginIndexRoute
+}
+
+const LoginRouteChildren: LoginRouteChildren = {
+  LoginAdminRoute: LoginAdminRoute,
+  LoginBuyerRoute: LoginBuyerRoute,
+  LoginProfessionalRoute: LoginProfessionalRoute,
+  LoginSellerRoute: LoginSellerRoute,
+  LoginIndexRoute: LoginIndexRoute,
+}
+
+const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
+
 interface DashboardAdminRouteChildren {
+  DashboardAdminChecklistsRoute: typeof DashboardAdminChecklistsRoute
+  DashboardAdminCredentialsRoute: typeof DashboardAdminCredentialsRoute
+  DashboardAdminDueDiligenceRoute: typeof DashboardAdminDueDiligenceRoute
   DashboardAdminEscrowsRoute: typeof DashboardAdminEscrowsRoute
+  DashboardAdminInspectionsRoute: typeof DashboardAdminInspectionsRoute
+  DashboardAdminKycRoute: typeof DashboardAdminKycRoute
   DashboardAdminListingsRoute: typeof DashboardAdminListingsRoute
+  DashboardAdminRolesRoute: typeof DashboardAdminRolesRoute
   DashboardAdminSettingsRoute: typeof DashboardAdminSettingsRoute
+  DashboardAdminSubmissionsRoute: typeof DashboardAdminSubmissionsRoute
   DashboardAdminUsersRoute: typeof DashboardAdminUsersRoute
+  DashboardAdminWorkflowRoute: typeof DashboardAdminWorkflowRoute
   DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
 }
 
 const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminChecklistsRoute: DashboardAdminChecklistsRoute,
+  DashboardAdminCredentialsRoute: DashboardAdminCredentialsRoute,
+  DashboardAdminDueDiligenceRoute: DashboardAdminDueDiligenceRoute,
   DashboardAdminEscrowsRoute: DashboardAdminEscrowsRoute,
+  DashboardAdminInspectionsRoute: DashboardAdminInspectionsRoute,
+  DashboardAdminKycRoute: DashboardAdminKycRoute,
   DashboardAdminListingsRoute: DashboardAdminListingsRoute,
+  DashboardAdminRolesRoute: DashboardAdminRolesRoute,
   DashboardAdminSettingsRoute: DashboardAdminSettingsRoute,
+  DashboardAdminSubmissionsRoute: DashboardAdminSubmissionsRoute,
   DashboardAdminUsersRoute: DashboardAdminUsersRoute,
+  DashboardAdminWorkflowRoute: DashboardAdminWorkflowRoute,
   DashboardAdminIndexRoute: DashboardAdminIndexRoute,
 }
 
@@ -1092,7 +1376,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrowseRoute: BrowseRoute,
   DueDiligenceRoute: DueDiligenceRouteWithChildren,
-  LoginRoute: LoginRoute,
+  LoginRoute: LoginRouteWithChildren,
   RegisterRoute: RegisterRoute,
   ActivateTokenRoute: ActivateTokenRoute,
   CheckoutListingIdRoute: CheckoutListingIdRoute,

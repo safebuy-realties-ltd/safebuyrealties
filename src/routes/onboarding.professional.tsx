@@ -73,7 +73,7 @@ function ProfessionalOnboardingRoute() {
   useEffect(() => {
     if (!isReady) return;
     if (!isAuthenticated) {
-      navigate({ to: "/login", search: { redirect: "/onboarding/professional" } });
+      navigate({ to: "/login/professional", search: { redirect: "/onboarding/professional" } });
       return;
     }
     if (user && user.role !== "professional") {

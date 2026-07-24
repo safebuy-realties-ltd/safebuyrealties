@@ -154,9 +154,7 @@ function StaffDueDiligenceCard({
   const [file, setFile] = useState<File | null>(null);
   const [professionalId, setProfessionalId] = useState("");
   const selectedSchedules = Object.keys(row.checklistSelections ?? {});
-  const defaultSchedule =
-    selectedSchedules[0] ??
-    SCHEDULE_OPTIONS[0].value;
+  const defaultSchedule = selectedSchedules[0] ?? SCHEDULE_OPTIONS[0].value;
   const [scheduleCode, setScheduleCode] = useState<string>(defaultSchedule);
 
   const suggestedIds = useMemo(() => {

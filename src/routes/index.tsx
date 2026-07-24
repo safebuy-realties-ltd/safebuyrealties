@@ -20,15 +20,13 @@ const primaryPaths = [
     id: "selling",
     label: "Property Owners/Registered Agents",
     icon: Home,
-    to: "/register" as const,
-    search: { role: "seller" as const },
+    to: "/login/seller" as const,
   },
   {
     id: "professional",
     label: "Professional & Allied Services",
     icon: Briefcase,
-    to: "/register" as const,
-    search: { role: "professional" as const },
+    to: "/login/professional" as const,
   },
   {
     id: "property-listing",
@@ -74,7 +72,6 @@ function SimpleLanding() {
                 <Link
                   key={path.id}
                   to={path.to}
-                  search={"search" in path ? path.search : undefined}
                   className={pathCardClassName()}
                   style={{ animationDelay: `${120 + index * 80}ms` }}
                 >

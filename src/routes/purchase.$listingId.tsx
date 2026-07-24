@@ -110,7 +110,7 @@ function PurchaseWizardPage() {
     if (!isReady) return;
     if (!isAuthenticated) {
       void navigate({
-        to: "/login",
+        to: "/login/buyer",
         search: { redirect: `/purchase/${listingId}` },
       });
       return;

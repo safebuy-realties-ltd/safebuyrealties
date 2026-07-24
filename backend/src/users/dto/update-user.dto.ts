@@ -29,4 +29,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Assign/clear named admin portal role (STAFF/ADMIN only). */
+  @IsOptional()
+  @IsString()
+  adminRoleId?: string | null;
 }

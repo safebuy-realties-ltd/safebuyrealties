@@ -30,13 +30,17 @@ See **`docs/LOCAL_DEVELOPMENT.md`** for full setup.
 
 All accounts use password: `password123`
 
-| Role | Email |
-|------|-------|
-| ADMIN | admin@safebuyrealties.test |
-| STAFF | staff@safebuyrealties.test |
-| SELLER | seller@safebuyrealties.test |
-| BUYER | buyer@safebuyrealties.test |
-| PRO (lawyer) | lawyer@safebuyrealties.test |
+| Role | Email | Portal |
+|------|-------|--------|
+| SUPER_ADMIN | superadmin@safebuyrealties.test | `/login/admin` → AdminRole: Super Administrator |
+| ADMIN (platform) | admin@safebuyrealties.test | `/login/admin` → Platform Administrator |
+| ADMIN (content) | content-admin@safebuyrealties.test | `/login/admin` → Content Manager |
+| ADMIN (ops) | ops-admin@safebuyrealties.test | `/login/admin` → Operations Officer |
+| ADMIN (finance) | finance-admin@safebuyrealties.test | `/login/admin` → Finance Manager |
+| STAFF (ops) | staff@safebuyrealties.test | `/login/admin` → Operations Officer (unified portal) |
+| SELLER | seller@safebuyrealties.test | `/login/seller` |
+| BUYER | buyer@safebuyrealties.test | `/login/buyer` |
+| PRO (lawyer) | lawyer@safebuyrealties.test | `/login/professional` |
 
 ### Commands reference
 

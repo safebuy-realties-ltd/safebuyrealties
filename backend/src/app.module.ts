@@ -27,6 +27,9 @@ import { InspectionsModule } from "./inspections/inspections.module";
 import { GuestCheckoutModule } from "./guest-checkout/guest-checkout.module";
 import { EmailModule } from "./email/email.module";
 import { StandaloneDdModule } from "./standalone-dd/standalone-dd.module";
+import { PermissionsModule } from "./permissions/permissions.module";
+import { DdCmsModule } from "./dd-cms/dd-cms.module";
+import { AdminRolesModule } from "./admin-roles/admin-roles.module";
 
 @Module({
   imports: [
@@ -35,6 +38,9 @@ import { StandaloneDdModule } from "./standalone-dd/standalone-dd.module";
     SbrIdModule,
     AuditModule,
     NotificationsModule,
+    PermissionsModule,
+    DdCmsModule,
+    AdminRolesModule,
     AuthModule,
     UsersModule,
     ListingsModule,

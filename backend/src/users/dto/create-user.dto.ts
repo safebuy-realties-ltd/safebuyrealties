@@ -27,4 +27,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(ProfessionalType)
   professionalType?: ProfessionalType;
+
+  /** Named org role inside the unified admin portal (for STAFF/ADMIN). */
+  @IsOptional()
+  @IsString()
+  adminRoleId?: string;
 }

@@ -1,11 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DdScheduleChecklistSelector } from "@/components/DdScheduleChecklistSelector";
+
+vi.mock("@/hooks/use-dd-checklists", async () => {
+  const actual = await vi.importActual<typeof import("@/hooks/use-dd-checklists")>(
+    "@/hooks/use-dd-checklists",
+  );
+  return {
+    ...actual,
+    usePublicDdChecklistsQuery: () => ({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    }),
+  };
+});
+
+function renderWithQuery(ui: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 describe("DdScheduleChecklistSelector", () => {
   it("selects all legal items and reports count via onChange", () => {
     const onChange = vi.fn();
-    render(<DdScheduleChecklistSelector onChange={onChange} />);
+    renderWithQuery(<DdScheduleChecklistSelector onChange={onChange} />);
 
     fireEvent.click(screen.getByTestId("dd-select-all-LEGAL_CHECK"));
 
@@ -18,7 +40,7 @@ describe("DdScheduleChecklistSelector", () => {
 
   it("toggles an individual security item from the label button", () => {
     const onChange = vi.fn();
-    render(<DdScheduleChecklistSelector onChange={onChange} />);
+    renderWithQuery(<DdScheduleChecklistSelector onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Omo-onile/i }));
 

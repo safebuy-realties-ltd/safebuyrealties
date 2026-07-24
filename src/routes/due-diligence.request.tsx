@@ -29,10 +29,7 @@ import {
 } from "@/hooks/use-standalone-dd";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
-import {
-  DD_SCHEDULES,
-  type DdChecklistSelections,
-} from "@/lib/dd-schedule-checklists";
+import { DD_SCHEDULES, type DdChecklistSelections } from "@/lib/dd-schedule-checklists";
 import { getLgasForState, NIGERIA_STATE_LABELS, NIGERIA_STATES } from "@/lib/nigeria-locations";
 import { toast } from "sonner";
 

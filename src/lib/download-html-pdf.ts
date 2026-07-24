@@ -117,10 +117,7 @@ function sanitizeCssValue(prop: string, value: string): string | null {
   if (!COLOR_PROPS.has(prop)) return null;
 
   // Replace each modern color function token inside gradients/shadows with rgba().
-  return value.replace(
-    /(?:oklch|oklab|color-mix)\([^)]+\)/gi,
-    (token) => toRgbColor(token),
-  );
+  return value.replace(/(?:oklch|oklab|color-mix)\([^)]+\)/gi, (token) => toRgbColor(token));
 }
 
 function inlineComputedStyles(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
@@ -135,7 +132,7 @@ function inlineComputedStyles(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
     for (const prop of STYLE_PROPS) {
       const raw = computed.getPropertyValue(prop);
       const value = sanitizeCssValue(prop, raw);
-      if (!value || value === "none" && prop !== "background-image") {
+      if (!value || (value === "none" && prop !== "background-image")) {
         if (prop === "background-image" && raw === "none") continue;
         if (!value) continue;
       }
@@ -153,7 +150,8 @@ function inlineComputedStyles(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
     css += `border-bottom-color:${toRgbColor(computed.borderBottomColor)};`;
     css += `border-left-color:${toRgbColor(computed.borderLeftColor)};`;
     if (computed.fill && computed.fill !== "none") css += `fill:${toRgbColor(computed.fill)};`;
-    if (computed.stroke && computed.stroke !== "none") css += `stroke:${toRgbColor(computed.stroke)};`;
+    if (computed.stroke && computed.stroke !== "none")
+      css += `stroke:${toRgbColor(computed.stroke)};`;
 
     clone.setAttribute("style", css);
     clone.removeAttribute("class");
@@ -161,7 +159,9 @@ function inlineComputedStyles(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
 }
 
 function waitFrame() {
-  return new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  return new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 }
 
 /**
