@@ -10,6 +10,7 @@ export type CreateUserBody = {
   lastName: string;
   role: string;
   professionalType?: string;
+  adminRoleId?: string;
 };
 
 export function useAdminUsersQuery(opts?: { role?: string; page?: number; pageSize?: number }) {
@@ -37,7 +38,12 @@ export function usePatchUserMutation() {
   return useMutation({
     mutationFn: (args: {
       id: string;
-      body: { role?: string; professionalType?: string | null; isActive?: boolean };
+      body: {
+        role?: string;
+        professionalType?: string | null;
+        isActive?: boolean;
+        adminRoleId?: string | null;
+      };
     }) =>
       apiRequest<UserListItemDto>(`/users/${args.id}`, {
         method: "PATCH",

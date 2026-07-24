@@ -22,7 +22,7 @@ async function login(page, portal, email, password = "password123") {
     page.getByRole("button", { name: /sign in/i }).click(),
   ]);
   // Auth gate can briefly bounce; wait until workspace chrome is visible.
-  await page.getByText(/WORKSPACE|Command Center|dashboard/i).first().waitFor({
+  await page.getByText(/ADMIN PORTAL|WORKSPACE|dashboard/i).first().waitFor({
     timeout: 20000,
   });
 }
@@ -109,8 +109,15 @@ async function run() {
   results.push({
     step: "content-admin-nav",
     ok: contentOk,
-    detail: nav.slice(0, 300),
+    detail: nav.slice(0, 400),
     shot: await shot(page, "e2e-content-admin"),
+  });
+  // Role title should show named admin role
+  const roleShown = /Content Manager/i.test(nav);
+  results.push({
+    step: "content-admin-role-label",
+    ok: roleShown,
+    detail: nav.slice(0, 400),
   });
   await page.goto(`${APP}/dashboard/admin/checklists`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
@@ -135,15 +142,15 @@ async function run() {
   });
   await logout(page);
 
-  // 7 Staff
+  // 7 Staff — lands on unified admin portal
   await login(page, "admin", "staff@safebuyrealties.test");
-  await page.waitForURL(/\/dashboard\/staff/, { timeout: 20000 });
+  await page.waitForURL(/\/dashboard\/admin/, { timeout: 20000 });
   results.push({
     step: "staff-login",
-    ok: page.url().includes("/dashboard/staff"),
+    ok: page.url().includes("/dashboard/admin"),
     shot: await shot(page, "e2e-staff-dashboard"),
   });
-  await page.goto(`${APP}/dashboard/staff/due-diligence`, { waitUntil: "networkidle" });
+  await page.goto(`${APP}/dashboard/admin/due-diligence`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   results.push({
     step: "staff-dd-queue",

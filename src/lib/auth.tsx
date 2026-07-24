@@ -12,6 +12,7 @@ export type AuthUser = {
   role: Role;
   professionalType?: string | null;
   permissions?: string[];
+  adminRole?: { id: string; name: string } | null;
 };
 
 type SelfRegisterRole = "buyer" | "seller" | "professional";
@@ -70,6 +71,7 @@ type ApiUser = {
   role: string;
   professionalType?: string | null;
   permissions?: string[];
+  adminRole?: { id: string; name: string } | null;
 };
 
 function mapApiUser(u: ApiUser): AuthUser {
@@ -80,6 +82,7 @@ function mapApiUser(u: ApiUser): AuthUser {
     role: u.role as Role,
     professionalType: u.professionalType ?? null,
     permissions: u.permissions,
+    adminRole: u.adminRole ?? null,
   };
 }
 
@@ -215,7 +218,10 @@ export function useAuth() {
 }
 
 export function dashboardPathForRole(role: Role): string {
-  if (role === "super_admin") return "/dashboard/super-admin";
+  // Unified company admin portal for all internal operators.
+  if (role === "staff" || role === "admin" || role === "super_admin") {
+    return "/dashboard/admin";
+  }
   return `/dashboard/${role}`;
 }
 
@@ -236,11 +242,11 @@ export function loginPathForRole(role: Role): string {
   }
 }
 
-/** Whether the signed-in user may use a dashboard layout role (e.g. super_admin on admin routes). */
+/** Whether the signed-in user may use a dashboard layout role. */
 export function canAccessDashboardRole(userRole: Role, layoutRole: Role): boolean {
   if (userRole === layoutRole) return true;
-  if (userRole === "super_admin" && (layoutRole === "admin" || layoutRole === "staff")) return true;
-  // Admins manage due diligence / ops queues that live under /dashboard/staff/*
-  if (userRole === "admin" && layoutRole === "staff") return true;
+  // All internal operators share the unified /dashboard/admin layout.
+  const internal = new Set(["staff", "admin", "super_admin"]);
+  if (internal.has(userRole) && layoutRole === "admin") return true;
   return false;
 }

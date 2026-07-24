@@ -29,6 +29,7 @@ import { EmailModule } from "./email/email.module";
 import { StandaloneDdModule } from "./standalone-dd/standalone-dd.module";
 import { PermissionsModule } from "./permissions/permissions.module";
 import { DdCmsModule } from "./dd-cms/dd-cms.module";
+import { AdminRolesModule } from "./admin-roles/admin-roles.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { DdCmsModule } from "./dd-cms/dd-cms.module";
     NotificationsModule,
     PermissionsModule,
     DdCmsModule,
+    AdminRolesModule,
     AuthModule,
     UsersModule,
     ListingsModule,

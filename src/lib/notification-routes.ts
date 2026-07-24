@@ -5,6 +5,10 @@ export type NotificationNavigationTarget = {
   search?: Record<string, string>;
 };
 
+function isInternal(role: Role) {
+  return role === "staff" || role === "admin" || role === "super_admin";
+}
+
 export function notificationEntityTarget(
   role: Role,
   entityType: string | null | undefined,
@@ -14,8 +18,8 @@ export function notificationEntityTarget(
 
   switch (entityType) {
     case "Listing":
-      if (role === "staff" || role === "admin") {
-        return { to: "/dashboard/staff/workflow", search: { listing: entityId } };
+      if (isInternal(role)) {
+        return { to: "/dashboard/admin/workflow", search: { listing: entityId } };
       }
       if (role === "seller") {
         return { to: "/dashboard/seller/listings" };
@@ -25,17 +29,17 @@ export function notificationEntityTarget(
       if (role === "buyer") {
         return { to: "/dashboard/buyer/transactions" };
       }
-      if (role === "staff" || role === "admin") {
-        return { to: "/dashboard/staff/workflow" };
+      if (isInternal(role)) {
+        return { to: "/dashboard/admin/workflow" };
       }
       return null;
     case "DueDiligenceOrder":
       if (role === "buyer") {
         return { to: "/dashboard/buyer/due-diligence" };
       }
-      if (role === "staff" || role === "admin") {
+      if (isInternal(role)) {
         return {
-          to: "/dashboard/staff/due-diligence",
+          to: "/dashboard/admin/due-diligence",
           search: { serviceId: entityId },
         };
       }
@@ -46,16 +50,16 @@ export function notificationEntityTarget(
       }
       return null;
     case "VerificationStep":
-      if (role === "staff" || role === "admin") {
-        return { to: "/dashboard/staff/workflow" };
+      if (isInternal(role)) {
+        return { to: "/dashboard/admin/workflow" };
       }
       return null;
     case "KycRecord":
       if (role === "buyer") {
         return { to: "/dashboard/buyer/kyc" };
       }
-      if (role === "staff" || role === "admin") {
-        return { to: "/dashboard/staff/kyc" };
+      if (isInternal(role)) {
+        return { to: "/dashboard/admin/kyc" };
       }
       return null;
     default:

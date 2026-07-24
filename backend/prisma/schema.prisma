@@ -128,6 +128,9 @@ model User {
   standaloneDdOrders DueDiligenceOrder[] @relation("DdOrderBuyer")
   ddAssignments      DueDiligenceAssignment[] @relation("DdAssignmentProfessional")
   permissionGrants   PermissionGrant[]
+  /// Named org role inside the unified admin portal (e.g. Finance Manager).
+  adminRoleId        String?
+  adminRole          AdminRole?          @relation(fields: [adminRoleId], references: [id], onDelete: SetNull)
 }
 
 model Listing {
@@ -646,8 +649,27 @@ model AccountActivationToken {
   @@map("account_activation_tokens")
 }
 
+/// Named role inside the company admin portal (Finance, Ops, Content, …).
+/// Privileges on the role determine which admin dashboard sections are visible.
+model AdminRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  /// Privilege codes from the platform permission catalog
+  permissions String[] @default([])
+  /// System roles (e.g. Super Administrator) cannot be deleted
+  isSystem    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admin_roles")
+}
+
 /// Fine-grained admin/staff capability. When a user has any grants, those
 /// replace role defaults (SUPER_ADMIN always has every permission).
+/// Prefer assigning an AdminRole; grants remain as per-user overrides.
 model PermissionGrant {
   id         String   @id @default(uuid())
   userId     String

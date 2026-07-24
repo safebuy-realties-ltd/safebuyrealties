@@ -38,6 +38,8 @@ const USER_SELECT = {
   isActive: true,
   createdAt: true,
   updatedAt: true,
+  adminRoleId: true,
+  adminRole: { select: { id: true, name: true } },
 } as const;
 
 @Injectable()
@@ -55,6 +57,8 @@ export class UsersService {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    adminRoleId?: string | null;
+    adminRole?: { id: string; name: string } | null;
   }) {
     return {
       id: user.id,
@@ -68,6 +72,10 @@ export class UsersService {
       isActive: user.isActive,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+      adminRoleId: user.adminRoleId ?? null,
+      adminRole: user.adminRole
+        ? { id: user.adminRole.id, name: user.adminRole.name }
+        : null,
     };
   }
 
@@ -128,6 +136,14 @@ export class UsersService {
       throw new BadRequestException("professionalType is required for professional users");
     }
 
+    if (dto.adminRoleId) {
+      if (dto.role !== UserRole.STAFF && dto.role !== UserRole.ADMIN) {
+        throw new BadRequestException("Admin portal roles apply only to staff/admin accounts");
+      }
+      const adminRole = await this.prisma.adminRole.findUnique({ where: { id: dto.adminRoleId } });
+      if (!adminRole) throw new BadRequestException("Admin role not found");
+    }
+
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException("Email already registered");
 
@@ -140,6 +156,7 @@ export class UsersService {
         lastName: dto.lastName,
         role: dto.role,
         ...(dto.professionalType ? { professionalType: dto.professionalType } : {}),
+        ...(dto.adminRoleId ? { adminRoleId: dto.adminRoleId } : {}),
       },
       select: USER_SELECT,
     });
@@ -218,6 +235,19 @@ export class UsersService {
       }
     }
 
+    if (dto.adminRoleId !== undefined && isStaffActor) {
+      if (dto.adminRoleId) {
+        const targetRole = dto.role ?? existing.role;
+        if (targetRole !== UserRole.STAFF && targetRole !== UserRole.ADMIN) {
+          throw new BadRequestException("Admin portal roles apply only to staff/admin accounts");
+        }
+        const adminRole = await this.prisma.adminRole.findUnique({
+          where: { id: dto.adminRoleId },
+        });
+        if (!adminRole) throw new BadRequestException("Admin role not found");
+      }
+    }
+
     const user = await this.prisma.user.update({
       where: { id },
       data: {
@@ -229,6 +259,9 @@ export class UsersService {
           ? { professionalType: dto.professionalType }
           : {}),
         ...(dto.isActive !== undefined && isStaffActor ? { isActive: dto.isActive } : {}),
+        ...(dto.adminRoleId !== undefined && isStaffActor
+          ? { adminRoleId: dto.adminRoleId || null }
+          : {}),
       },
       select: USER_SELECT,
     });

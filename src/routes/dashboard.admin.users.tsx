@@ -45,7 +45,11 @@ import {
 } from "@/lib/role-hierarchy";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  useAdminRolesQuery,
+} from "@/hooks/use-admin-roles";
+import {
   canManageUserPermissions,
+  isInternalPortalRole,
   PERMISSION_LABELS,
   type PermissionCode,
 } from "@/lib/permissions";
@@ -84,21 +88,28 @@ function roleLabel(role: ManageableRole): string {
 function CreateUserDialog() {
   const { user } = useAuth();
   const createUser = useCreateUserMutation();
+  const rolesQuery = useAdminRolesQuery(true);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<ManageableRole>("buyer");
+  const [role, setRole] = useState<ManageableRole>("staff");
   const [professionalType, setProfessionalType] = useState<ProfessionalType>("LAWYER");
+  const [adminRoleId, setAdminRoleId] = useState<string>("");
 
   const allowedRoles = useMemo(() => assignableRoles(user?.role), [user?.role]);
+  const companyRoles = useMemo(
+    () => (rolesQuery.data ?? []).filter((r) => r.name !== "Super Administrator"),
+    [rolesQuery.data],
+  );
 
   const reset = () => {
     setEmail("");
     setName("");
     setPassword("");
-    setRole("buyer");
+    setRole("staff");
     setProfessionalType("LAWYER");
+    setAdminRoleId("");
   };
 
   const handleCreate = () => {
@@ -111,6 +122,10 @@ function CreateUserDialog() {
       toast.error("You cannot assign that role.");
       return;
     }
+    if (isInternalPortalRole(role) && !adminRoleId) {
+      toast.error("Select an admin portal role (privileges) for company users.");
+      return;
+    }
     const body = {
       email: email.trim(),
       password,
@@ -118,6 +133,7 @@ function CreateUserDialog() {
       lastName,
       role: toApiRole(role),
       ...(role === "professional" ? { professionalType } : {}),
+      ...(isInternalPortalRole(role) && adminRoleId ? { adminRoleId } : {}),
     };
     createUser.mutate(body, {
       onSuccess: () => {
@@ -207,6 +223,26 @@ function CreateUserDialog() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+          {isInternalPortalRole(role) && (
+            <div className="grid gap-2">
+              <Label>Admin portal role</Label>
+              <Select value={adminRoleId || undefined} onValueChange={setAdminRoleId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select privileges set" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companyRoles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Determines which sections of the admin portal this person can access.
+              </p>
             </div>
           )}
         </div>

@@ -22,6 +22,15 @@ describe("resolvePermissions", () => {
     const admin = resolvePermissions(UserRole.ADMIN, []);
     expect(admin).toContain(PERMISSIONS.DD_CHECKLISTS_MANAGE);
     expect(admin).not.toContain(PERMISSIONS.PERMISSIONS_MANAGE);
+    expect(admin).not.toContain(PERMISSIONS.ROLES_MANAGE);
+  });
+
+  it("prefers admin role permissions when no grants", () => {
+    const custom = resolvePermissions(UserRole.STAFF, [], [
+      PERMISSIONS.ESCROWS_READ,
+      PERMISSIONS.ANALYTICS_READ,
+    ]);
+    expect(custom).toEqual([PERMISSIONS.ESCROWS_READ, PERMISSIONS.ANALYTICS_READ]);
   });
 
   it("uses custom grants when present for admin", () => {

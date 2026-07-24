@@ -43,6 +43,7 @@ export class AuthService {
       isActive: boolean;
       publicId: string | null;
       createdAt: Date;
+      adminRole?: { id: string; name: string } | null;
     },
     permissions: Permission[] = [],
   ) {
@@ -59,6 +60,9 @@ export class AuthService {
       publicId: user.publicId,
       createdAt: user.createdAt.toISOString(),
       permissions,
+      adminRole: user.adminRole
+        ? { id: user.adminRole.id, name: user.adminRole.name }
+        : null,
     };
   }
 
@@ -74,8 +78,17 @@ export class AuthService {
     publicId: string | null;
     createdAt: Date;
   }) {
-    const permissions = await this.permissions.getEffectivePermissions(user.id, user.role);
-    return this.userPublic(user, permissions);
+    const [permissions, withRole] = await Promise.all([
+      this.permissions.getEffectivePermissions(user.id, user.role),
+      this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { adminRole: { select: { id: true, name: true } } },
+      }),
+    ]);
+    return this.userPublic(
+      { ...user, adminRole: withRole?.adminRole ?? null },
+      permissions,
+    );
   }
 
   async register(dto: RegisterDto) {

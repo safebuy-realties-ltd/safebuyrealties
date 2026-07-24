@@ -1,4 +1,4 @@
-/** Frontend permission codes (mirror backend `common/permissions.ts`). */
+/** Frontend privilege catalog for the unified admin portal. */
 export const PERMISSIONS = {
   USERS_READ: "users.read",
   USERS_WRITE: "users.write",
@@ -15,6 +15,7 @@ export const PERMISSIONS = {
   CONTENT_MANAGE: "content.manage",
   STAFF_OPS: "staff.ops",
   PERMISSIONS_MANAGE: "permissions.manage",
+  ROLES_MANAGE: "roles.manage",
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -33,11 +34,40 @@ export const PERMISSION_LABELS: Record<PermissionCode, string> = {
   [PERMISSIONS.ESCROWS_WRITE]: "Manage escrows",
   [PERMISSIONS.ANALYTICS_READ]: "View analytics",
   [PERMISSIONS.CONTENT_MANAGE]: "Manage content",
-  [PERMISSIONS.STAFF_OPS]: "Staff operations",
-  [PERMISSIONS.PERMISSIONS_MANAGE]: "Assign permissions",
+  [PERMISSIONS.STAFF_OPS]: "Operations queues (submissions, KYC, workflow, inspections)",
+  [PERMISSIONS.PERMISSIONS_MANAGE]: "Assign user privileges",
+  [PERMISSIONS.ROLES_MANAGE]: "Manage admin roles",
 };
 
-/** Backward compatible: empty/undefined permissions → allow (legacy full access). */
+/** Dashboard areas unlocked by each privilege. */
+export const PERMISSION_NAV_UNLOCKS: Record<PermissionCode, string[]> = {
+  [PERMISSIONS.USERS_READ]: ["Users"],
+  [PERMISSIONS.USERS_WRITE]: ["Users (create / edit)"],
+  [PERMISSIONS.LISTINGS_READ]: ["Listings"],
+  [PERMISSIONS.LISTINGS_WRITE]: ["Listings (moderate)"],
+  [PERMISSIONS.DD_ORDERS_READ]: ["Due Diligence queue"],
+  [PERMISSIONS.DD_ORDERS_WRITE]: ["Due Diligence (assign / complete)"],
+  [PERMISSIONS.DD_CHECKLISTS_MANAGE]: ["DD Checklists CMS"],
+  [PERMISSIONS.CATALOG_MANAGE]: ["Service catalog pricing"],
+  [PERMISSIONS.PLATFORM_CONFIG]: ["Platform Settings"],
+  [PERMISSIONS.ESCROWS_READ]: ["Escrow"],
+  [PERMISSIONS.ESCROWS_WRITE]: ["Escrow (actions)"],
+  [PERMISSIONS.ANALYTICS_READ]: ["Overview analytics"],
+  [PERMISSIONS.CONTENT_MANAGE]: ["Content tools"],
+  [PERMISSIONS.STAFF_OPS]: [
+    "Submissions",
+    "Credentials review",
+    "KYC Reviews",
+    "Verification Workflow",
+    "Inspections",
+  ],
+  [PERMISSIONS.PERMISSIONS_MANAGE]: ["Assign user privileges"],
+  [PERMISSIONS.ROLES_MANAGE]: ["Admin Roles"],
+};
+
+export const ALL_PERMISSION_CODES = Object.values(PERMISSIONS);
+
+/** Empty/undefined permissions → allow (legacy sessions). Non-empty → enforce. */
 export function hasPermission(
   userPermissions: string[] | undefined,
   required: string | string[],
@@ -54,6 +84,17 @@ export function canManageUserPermissions(
   actorPermissions: string[] | undefined,
 ): boolean {
   if (actorRole === "super_admin") return true;
-  if (actorRole !== "admin") return false;
   return hasPermission(actorPermissions, PERMISSIONS.PERMISSIONS_MANAGE);
+}
+
+export function canManageAdminRoles(
+  actorRole: string | undefined,
+  actorPermissions: string[] | undefined,
+): boolean {
+  if (actorRole === "super_admin") return true;
+  return hasPermission(actorPermissions, PERMISSIONS.ROLES_MANAGE);
+}
+
+export function isInternalPortalRole(role: string | undefined): boolean {
+  return role === "staff" || role === "admin" || role === "super_admin";
 }

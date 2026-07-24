@@ -15,6 +15,7 @@ import {
   Heart,
   Calendar,
   ListChecks,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -28,7 +29,7 @@ import {
   type Role,
 } from "@/lib/auth";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
-import { hasPermission, PERMISSIONS } from "@/lib/permissions";
+import { hasPermission, isInternalPortalRole, PERMISSIONS } from "@/lib/permissions";
 
 export type NavItem = {
   label: string;
@@ -37,6 +38,84 @@ export type NavItem = {
   requiredPermissions?: string[];
   permissionMode?: "any" | "all";
 };
+
+/** Unified company admin portal nav — visibility is privilege-driven. */
+export const adminPortalNav: NavItem[] = [
+  { label: "Overview", to: "/dashboard/admin", icon: LayoutDashboard },
+  {
+    label: "Users",
+    to: "/dashboard/admin/users",
+    icon: Users,
+    requiredPermissions: [PERMISSIONS.USERS_READ],
+  },
+  {
+    label: "Roles & Privileges",
+    to: "/dashboard/admin/roles",
+    icon: Shield,
+    requiredPermissions: [PERMISSIONS.ROLES_MANAGE],
+  },
+  {
+    label: "Submissions",
+    to: "/dashboard/admin/submissions",
+    icon: ClipboardList,
+    requiredPermissions: [PERMISSIONS.STAFF_OPS],
+  },
+  {
+    label: "Credentials",
+    to: "/dashboard/admin/credentials",
+    icon: BadgeCheck,
+    requiredPermissions: [PERMISSIONS.STAFF_OPS],
+  },
+  {
+    label: "KYC Reviews",
+    to: "/dashboard/admin/kyc",
+    icon: Users,
+    requiredPermissions: [PERMISSIONS.STAFF_OPS],
+  },
+  {
+    label: "Workflow",
+    to: "/dashboard/admin/workflow",
+    icon: FileText,
+    requiredPermissions: [PERMISSIONS.STAFF_OPS],
+  },
+  {
+    label: "Due Diligence",
+    to: "/dashboard/admin/due-diligence",
+    icon: ClipboardList,
+    requiredPermissions: [PERMISSIONS.DD_ORDERS_READ, PERMISSIONS.STAFF_OPS],
+    permissionMode: "any",
+  },
+  {
+    label: "Inspections",
+    to: "/dashboard/admin/inspections",
+    icon: Calendar,
+    requiredPermissions: [PERMISSIONS.STAFF_OPS],
+  },
+  {
+    label: "Listings",
+    to: "/dashboard/admin/listings",
+    icon: Building2,
+    requiredPermissions: [PERMISSIONS.LISTINGS_READ],
+  },
+  {
+    label: "Escrow",
+    to: "/dashboard/admin/escrows",
+    icon: Landmark,
+    requiredPermissions: [PERMISSIONS.ESCROWS_READ],
+  },
+  {
+    label: "DD Checklists",
+    to: "/dashboard/admin/checklists",
+    icon: ListChecks,
+    requiredPermissions: [PERMISSIONS.DD_CHECKLISTS_MANAGE],
+  },
+  {
+    label: "Settings",
+    to: "/dashboard/admin/settings",
+    icon: Settings,
+    requiredPermissions: [PERMISSIONS.PLATFORM_CONFIG],
+  },
+];
 
 export const navByRole: Record<Role, NavItem[]> = {
   buyer: [
@@ -59,99 +138,10 @@ export const navByRole: Record<Role, NavItem[]> = {
     { label: "Due Diligence", to: "/dashboard/professional/due-diligence", icon: FileText },
     { label: "Credentials", to: "/dashboard/professional/credentials", icon: BadgeCheck },
   ],
-  staff: [
-    { label: "Overview", to: "/dashboard/staff", icon: LayoutDashboard },
-    { label: "Submissions", to: "/dashboard/staff/submissions", icon: ClipboardList },
-    { label: "Credentials", to: "/dashboard/staff/credentials", icon: BadgeCheck },
-    { label: "KYC Reviews", to: "/dashboard/staff/kyc", icon: Users },
-    { label: "Workflow", to: "/dashboard/staff/workflow", icon: FileText },
-    { label: "Due Diligence", to: "/dashboard/staff/due-diligence", icon: ClipboardList },
-    { label: "Inspections", to: "/dashboard/staff/inspections", icon: Calendar },
-  ],
-  admin: [
-    { label: "Overview", to: "/dashboard/admin", icon: LayoutDashboard },
-    {
-      label: "Users",
-      to: "/dashboard/admin/users",
-      icon: Users,
-      requiredPermissions: [PERMISSIONS.USERS_READ],
-    },
-    {
-      label: "Listings",
-      to: "/dashboard/admin/listings",
-      icon: Building2,
-      requiredPermissions: [PERMISSIONS.LISTINGS_READ],
-    },
-    {
-      label: "Due Diligence",
-      to: "/dashboard/staff/due-diligence",
-      icon: ClipboardList,
-      requiredPermissions: [PERMISSIONS.DD_ORDERS_READ, PERMISSIONS.STAFF_OPS],
-      permissionMode: "any",
-    },
-    {
-      label: "Escrow",
-      to: "/dashboard/admin/escrows",
-      icon: Landmark,
-      requiredPermissions: [PERMISSIONS.ESCROWS_READ],
-    },
-    {
-      label: "DD Checklists",
-      to: "/dashboard/admin/checklists",
-      icon: ListChecks,
-      requiredPermissions: [PERMISSIONS.DD_CHECKLISTS_MANAGE],
-    },
-    {
-      label: "Settings",
-      to: "/dashboard/admin/settings",
-      icon: Settings,
-      requiredPermissions: [PERMISSIONS.PLATFORM_CONFIG],
-    },
-  ],
-  super_admin: [
-    { label: "Command Center", to: "/dashboard/super-admin", icon: LayoutDashboard },
-    {
-      label: "Users",
-      to: "/dashboard/admin/users",
-      icon: Users,
-      requiredPermissions: [PERMISSIONS.USERS_READ],
-    },
-    {
-      label: "Platform Settings",
-      to: "/dashboard/admin/settings",
-      icon: Settings,
-      requiredPermissions: [PERMISSIONS.PLATFORM_CONFIG],
-    },
-    {
-      label: "Escrows",
-      to: "/dashboard/admin/escrows",
-      icon: Landmark,
-      requiredPermissions: [PERMISSIONS.ESCROWS_READ],
-    },
-    { label: "Staff Workflow", to: "/dashboard/staff/workflow", icon: FileText },
-    {
-      label: "Due Diligence",
-      to: "/dashboard/staff/due-diligence",
-      icon: ClipboardList,
-      requiredPermissions: [PERMISSIONS.DD_ORDERS_READ, PERMISSIONS.STAFF_OPS],
-      permissionMode: "any",
-    },
-    {
-      label: "DD Checklists",
-      to: "/dashboard/admin/checklists",
-      icon: ListChecks,
-      requiredPermissions: [PERMISSIONS.DD_CHECKLISTS_MANAGE],
-    },
-  ],
-};
-
-const roleLabels: Record<Role, string> = {
-  buyer: "Buyer",
-  seller: "Seller",
-  professional: "Professional",
-  staff: "Staff",
-  admin: "Administrator",
-  super_admin: "Super Administrator",
+  // All company operators share the unified admin portal nav.
+  staff: adminPortalNav,
+  admin: adminPortalNav,
+  super_admin: adminPortalNav,
 };
 
 function initialsOf(name: string) {
@@ -166,7 +156,6 @@ function initialsOf(name: string) {
 }
 
 function filterNavItems(items: NavItem[], userPermissions: string[] | undefined): NavItem[] {
-  // Empty/missing permissions → show full nav (buyers/sellers or legacy sessions).
   if (!userPermissions || userPermissions.length === 0) return items;
   return items.filter((item) => {
     if (!item.requiredPermissions?.length) return true;
@@ -174,17 +163,35 @@ function filterNavItems(items: NavItem[], userPermissions: string[] | undefined)
   });
 }
 
+function displayRoleLabel(user: {
+  role: Role;
+  adminRole?: { name: string } | null;
+}): string {
+  if (user.adminRole?.name) return user.adminRole.name;
+  if (user.role === "super_admin") return "Super Administrator";
+  if (user.role === "admin") return "Administrator";
+  if (user.role === "staff") return "Operations";
+  return user.role.replace(/_/g, " ");
+}
+
 export function DashboardLayout({ role, children }: { role: Role; children?: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isAuthenticated, isReady, logout } = useAuth();
   const navigate = useNavigate();
-  const navRole =
-    user?.role === "super_admin" && (role === "admin" || role === "staff") ? "super_admin" : role;
+
+  // Internal operators always use the unified admin nav, regardless of layout role.
+  const navRole: Role =
+    user && isInternalPortalRole(user.role)
+      ? "admin"
+      : role;
   const items = useMemo(
     () => filterNavItems(navByRole[navRole], user?.permissions),
     [navRole, user?.permissions],
   );
   const hasAccess = user ? canAccessDashboardRole(user.role, role) : false;
+  const workspaceLabel = isInternalPortalRole(role)
+    ? "ADMIN PORTAL"
+    : `${role.replace(/_/g, " ").toUpperCase()} WORKSPACE`;
 
   useEffect(() => {
     if (!isReady) return;
@@ -213,53 +220,56 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
     navigate({ to: "/" });
   };
 
+  const roleTitle = displayRoleLabel(user);
+
   return (
-    <div className="flex min-h-screen bg-secondary/30">
-      <aside className="hidden w-64 shrink-0 border-r border-border/60 bg-background md:flex md:flex-col">
-        <div className="flex h-16 items-center border-b border-border/60 px-6">
+    <div className="flex min-h-screen bg-secondary/20">
+      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-card">
+        <div className="border-b border-border p-4">
           <Logo />
-        </div>
-        <div className="px-4 py-4">
-          <p className="px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {roleLabels[navRole]} workspace
+          <p className="mt-3 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground">
+            {workspaceLabel}
           </p>
         </div>
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
           {items.map((item) => {
             const active =
               pathname === item.to ||
-              (item.to !== "/dashboard/super-admin" && pathname.startsWith(`${item.to}/`));
+              (item.to !== "/dashboard/admin" &&
+                item.to !== "/dashboard/buyer" &&
+                item.to !== "/dashboard/seller" &&
+                item.to !== "/dashboard/professional" &&
+                pathname.startsWith(`${item.to}/`)) ||
+              (item.to === "/dashboard/admin" && pathname === "/dashboard/admin/");
             return (
               <Link
-                key={item.to}
+                key={item.to + item.label}
                 to={item.to}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
                   active
-                    ? "bg-primary-soft text-primary font-medium"
+                    ? "bg-primary-soft font-medium text-primary"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4 shrink-0" />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="border-t border-border/60 p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary-soft text-primary text-xs font-semibold">
-                {initialsOf(user.name)}
-              </AvatarFallback>
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">{initialsOf(user.name)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{roleLabels[navRole]}</p>
+              <p className="truncate text-xs text-muted-foreground">{roleTitle}</p>
             </div>
             <button
-              onClick={handleLogout}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-              title="Log out"
+              type="button"
+              onClick={() => void handleLogout()}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
               aria-label="Log out"
             >
               <LogOut className="h-4 w-4" />
@@ -269,24 +279,17 @@ export function DashboardLayout({ role, children }: { role: Role; children?: Rea
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur-xl">
-          <div className="flex flex-1 items-center gap-3">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search listings, tasks, documents…"
-                className="h-9 pl-9 bg-secondary/50 border-transparent"
-              />
-            </div>
+        <header className="flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:px-6">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="h-9 pl-9"
+              placeholder="Search listings, tasks, documents..."
+              aria-label="Search"
+            />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto">
             <NotificationBell />
-            <button
-              onClick={handleLogout}
-              className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
-            >
-              <LogOut className="h-4 w-4" /> Log out
-            </button>
           </div>
         </header>
         <main className="flex-1 p-6 md:p-8">{children ?? <Outlet />}</main>
@@ -305,22 +308,34 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          {title}
+        </h1>
+        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }
 
-export function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+export function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+}) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    <div className="rounded-xl border border-border bg-card p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 font-display text-2xl font-semibold text-foreground">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }

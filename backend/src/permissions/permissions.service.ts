@@ -20,25 +20,32 @@ export class PermissionsService {
 
   async getEffectivePermissions(userId: string, role: UserRole): Promise<Permission[]> {
     if (role === UserRole.SUPER_ADMIN) return [...ALL_PERMISSIONS];
-    const grants = await this.prisma.permissionGrant.findMany({
-      where: { userId },
-      select: { permission: true },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        adminRole: { select: { permissions: true } },
+        permissionGrants: { select: { permission: true } },
+      },
     });
-    return resolvePermissions(
-      role,
-      grants.map((g) => g.permission),
-    );
+    const grants = user?.permissionGrants.map((g) => g.permission) ?? [];
+    return resolvePermissions(role, grants, user?.adminRole?.permissions ?? null);
   }
 
   async listCatalog() {
     return {
-      data: ALL_PERMISSIONS.map((code) => ({ code })),
+      data: ALL_PERMISSIONS.map((code) => ({
+        code,
+        label: undefined as string | undefined,
+      })),
     };
   }
 
   async getUserPermissions(actorId: string, actorRole: UserRole, targetUserId: string) {
     await this.assertCanManage(actorId, actorRole, targetUserId);
-    const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: { adminRole: true },
+    });
     if (!target) throw new NotFoundException("User not found");
     const grants = await this.prisma.permissionGrant.findMany({
       where: { userId: targetUserId },
@@ -49,8 +56,11 @@ export class PermissionsService {
       data: {
         userId: targetUserId,
         role: target.role.toLowerCase(),
+        adminRoleId: target.adminRoleId,
+        adminRoleName: target.adminRole?.name ?? null,
         custom: grants.length > 0,
         grants: grants.map((g) => g.permission),
+        rolePermissions: target.adminRole?.permissions ?? [],
         effective,
       },
     };
