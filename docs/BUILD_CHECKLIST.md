@@ -20,37 +20,28 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-07-24
-- **Tool:** Cursor (Cloud Agent) — multi-portal auth + admin CMS
-- **Last completed:** Step 13 — portals, RBAC, DD CMS + E2E
-- **Done this session:** Portal logins; PermissionGrant RBAC; DD checklist CMS; multi-level admins; Playwright E2E (`scripts/e2e-portals.mjs`) all 11 steps green
-- **Next:** Optional polish (ops-admin UI coverage; richer CMS content beyond DD checklists)
+- **Tool:** Cursor (Cloud Agent) — unified admin portal
+- **Last completed:** Step 13 corrected — single admin portal + named roles/privileges
+- **Done this session:** Merged staff/admin/super-admin into one `/dashboard/admin` portal; `AdminRole` privilege sets; Roles & Privileges UI; legacy `/dashboard/staff` redirects; E2E 12/12
+- **Next:** Optional — assign AdminRole when editing existing users in UI; remove obsolete staff page files
 - **Blockers:** none
 
 ---
 
 ## Step 13 — Multi-portal auth + Admin CMS (Platform management)
 
-- [x] **Separate login portals**
-  - `/login` hub + `/login/buyer` `/login/seller` `/login/professional` `/login/admin`
-  - Backend `portal` on `POST /auth/login` rejects wrong-role accounts
-  - Role dashboards unchanged; unauthenticated dashboard redirects to matching portal
-  - Validation: Playwright portal logins + API 403 for buyer on admin portal
-
-- [x] **Admin RBAC permissions**
-  - `PermissionGrant` model; effective permissions on `/auth/me`
-  - Multi-level admins: content / ops / finance (custom grants) + full admin + super admin
-  - Admin users UI can assign permission sets (`permissions.manage`)
-  - Validation: content-admin nav = Overview + DD Checklists; finance-admin = Users + Escrow
-
-- [x] **DD checklist CMS**
-  - `DdScheduleConfig` / `DdChecklistItemConfig`; public `GET /dd-checklists`; admin CRUD
-  - Request wizard consumes API (fallback to hardcoded)
-  - Admin page `/dashboard/admin/checklists`
-  - Validation: content-admin CMS loads schedules A–D; PATCH item label reflected on public GET
-
-- [x] **E2E across portals**
-  - Buyer / seller / pro / staff / multi-level admin dashboards via `node scripts/e2e-portals.mjs`
-  - Buyer standalone DD order created via API; staff DD queue accessible
+- [x] **Separate login portals** (buyer / seller / professional / admin)
+- [x] **Unified admin portal** (not separate staff vs admin dashboards)
+  - All company operators (`staff` / `admin` / `super_admin`) land on `/dashboard/admin`
+  - Ops pages moved under `/dashboard/admin/*` (submissions, workflow, KYC, DD, inspections, …)
+  - Legacy `/dashboard/staff/*` and `/dashboard/super-admin` redirect into admin
+  - Sidebar shows operator **name + named AdminRole**
+- [x] **Named AdminRoles + privilege catalog**
+  - `AdminRole` model; privileges unlock specific nav sections
+  - Super admin manages roles at `/dashboard/admin/roles`
+  - Create user can assign portal role + privileges
+  - Seeded: Super Administrator, Platform Administrator, Operations Officer, Due Diligence Lead, Finance Manager, Content Manager
+- [x] **E2E** — `node scripts/e2e-portals.mjs` (buyer/seller/pro + content/finance/ops in unified portal)
 
 ---
 

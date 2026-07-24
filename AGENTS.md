@@ -32,12 +32,12 @@ All accounts use password: `password123`
 
 | Role | Email | Portal |
 |------|-------|--------|
-| SUPER_ADMIN | superadmin@safebuyrealties.test | `/login/admin` |
-| ADMIN (full) | admin@safebuyrealties.test | `/login/admin` |
-| ADMIN (content) | content-admin@safebuyrealties.test | `/login/admin` |
-| ADMIN (ops) | ops-admin@safebuyrealties.test | `/login/admin` |
-| ADMIN (finance) | finance-admin@safebuyrealties.test | `/login/admin` |
-| STAFF | staff@safebuyrealties.test | `/login/admin` |
+| SUPER_ADMIN | superadmin@safebuyrealties.test | `/login/admin` → AdminRole: Super Administrator |
+| ADMIN (platform) | admin@safebuyrealties.test | `/login/admin` → Platform Administrator |
+| ADMIN (content) | content-admin@safebuyrealties.test | `/login/admin` → Content Manager |
+| ADMIN (ops) | ops-admin@safebuyrealties.test | `/login/admin` → Operations Officer |
+| ADMIN (finance) | finance-admin@safebuyrealties.test | `/login/admin` → Finance Manager |
+| STAFF (ops) | staff@safebuyrealties.test | `/login/admin` → Operations Officer (unified portal) |
 | SELLER | seller@safebuyrealties.test | `/login/seller` |
 | BUYER | buyer@safebuyrealties.test | `/login/buyer` |
 | PRO (lawyer) | lawyer@safebuyrealties.test | `/login/professional` |

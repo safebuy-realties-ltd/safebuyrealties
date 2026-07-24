@@ -15,7 +15,11 @@ export type CreateUserBody = {
 
 export function useAdminUsersQuery(opts?: { role?: string; page?: number; pageSize?: number }) {
   const { user, isReady } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const canReadUsers =
+    user?.role === "super_admin" ||
+    user?.role === "admin" ||
+    user?.role === "staff" ||
+    (user?.permissions?.includes("users.read") ?? false);
   const page = opts?.page ?? 1;
   const pageSize = opts?.pageSize ?? 50;
   const qs = new URLSearchParams();
@@ -25,7 +29,7 @@ export function useAdminUsersQuery(opts?: { role?: string; page?: number; pageSi
   return useQuery({
     queryKey: ["users", "admin", opts?.role ?? "all", page, pageSize],
     queryFn: () => apiRequest<UserListItemDto[]>(`/users?${qs.toString()}`),
-    enabled: isReady && isAdmin,
+    enabled: isReady && !!user && canReadUsers,
     select: (env) => ({
       users: env.data,
       meta: env.meta as { page: number; pageSize: number; total: number } | undefined,
