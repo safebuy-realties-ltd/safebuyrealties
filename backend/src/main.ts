@@ -9,8 +9,10 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 import { assertSafeDatabaseUrl } from "./config/database-guard";
+import { assertCorsConfigured, buildCorsOptions } from "./config/cors-config";
 
 assertSafeDatabaseUrl();
+assertCorsConfigured();
 
 function resolveUploadRoot(): string {
   const configured =
@@ -40,13 +42,7 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.enableCors({
-    origin: true,
-    credentials: true,
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-    allowedHeaders: "*",
-    exposedHeaders: "*",
-  });
+  app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api/v1");
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
