@@ -1,3 +1,5 @@
+> **⚠️ STALE, do not act on this file.** Dated 2026-05-23. Its three crashing screens were fixed in Step 1, and the entire "missing trust layer" it describes (PoA, escrow, separated payments, audit, notifications, KYC, service catalog) has since been built. Its method and structure remain a good model; its findings do not hold. Current state: [`../HANDOVER.md`](../HANDOVER.md). (Banner added 2026-07-29.)
+
 # 03 — Current State Audit
 
 **SafeBuyRealties · Strategic Definition Engagement · Phase 3 of 5**

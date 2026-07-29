@@ -1,3 +1,5 @@
+> **Still the right frame, statuses stale.** Dated 2026-05-23. Its Core MVP / Launch-Ready / Phase 2 bucketing (§1) remains the scope model and was carried into the current backlog. Individual gap statuses are out of date. See [`../MVP_OUTSTANDING_BACKLOG.md`](../MVP_OUTSTANDING_BACKLOG.md) §7 for what stayed out of scope. (Banner added 2026-07-29.)
+
 # 05 — Strategic Recommendations & Proposed Phasing
 
 **SafeBuyRealties · Strategic Definition Engagement · Phase 5 of 5 (final)**

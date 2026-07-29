@@ -1,6 +1,18 @@
 # SafeBuyRealties — Build Checklist
 
-This is the single source of truth for development progress.
+> **⚠️ ACCURACY NOTICE, added 2026-07-29 during handover.**
+> This file previously read `[x]` on every item, including work that is **not** in the code. A line-by-line
+> audit against `main` @ `fc05e1e` corrected the items marked **`[!]`** below. The corrected items are not
+> failures of the build, they are gaps between two similar features (standalone due diligence is complete,
+> listing-based due diligence is not).
+>
+> **Do not treat this file as the work queue any more.** The current queue is
+> **[`docs/MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md)**, which carries acceptance criteria and a
+> file-and-line citation behind every claimed gap. This file is retained as the history of what was built and when.
+>
+> New legend entry: `[!]` = **claimed done, audit found otherwise** — see the note on the item and the linked story.
+
+This is the historical record of development progress. For what remains, read `MVP_OUTSTANDING_BACKLOG.md`.
 
 **Legend:**
 - `[ ]` = Not started
@@ -15,9 +27,45 @@ Any AI tool working on this project reads this file first, finds the first `[ ]`
 
 ---
 
+## Audit corrections (2026-07-29)
+
+Seven items below are checked `[x]` and were genuinely built, but a reader reasonably infers something from them
+that is not true. Each is listed with what the code actually does and the story that closes it. **None of these
+are regressions.** They are places where the checklist item was satisfied literally and the user-facing outcome
+was not reached.
+
+| Step | Item | What the code actually does | Story |
+| --- | --- | --- | --- |
+| 2 | Object storage service | Built and correct, but `STORAGE_DRIVER` defaults to `local` (`storage.service.ts:40`) and production sets no S3 config, so on Vercel uploads write to ephemeral `/tmp` (`storage.service.ts:22`) and do not survive the request | E3-S2 |
+| 6 | PoA QR encodes `safebuyrealties.com/verify?hash=` | Backend is complete and `GET /poa/verify` works. **There is no `/verify` route in `src/routes/`**, so every QR ever generated points at a 404 | E3-S4 |
+| 7 | `initiatePayout` calls Paystack Transfer API | It does, but the destination is `PAYSTACK_PAYOUT_BANK_CODE` / `PAYSTACK_PAYOUT_ACCOUNT_NUMBER`, defaulting to Paystack's test account `057 / 0000000000` (`paystack.service.ts:119`). **Every seller payout goes to the same account.** No seller bank account exists in the schema | E2-S1 |
+| 7 | `refund()` transitions to REFUNDED | Ledger only. It updates the row, resets the listing and notifies, and **never calls the gateway**, so the buyer is not repaid | E2-S3 |
+| 8 | Notifications triggered from events | In-app rows only. `EmailService.dispatch()` returns early when `SMTP_HOST` is unset, and no environment defines it, so the guest DD receipt carrying the Service ID is silently dropped | E6-S1, E6-S2 |
+| 9 | KYC model, submission, staff review | All built. **Nothing reads it.** Outside `src/kyc/` the only reference in the backend is a dashboard count (`admin.service.ts:38`). No action is gated on KYC status | E4-S2 |
+| 10 | DD purchase wizard, 7 steps | The wizard is complete and takes payment. The `DueDiligenceOrder` it creates has **no lifecycle**: `DueDiligenceService` has one method, `create()`. No queue, no assignment, no report, no completion, so the transaction never reaches `DD_COMPLETE` and the buyer is never offered the property purchase | E1-S1 to E1-S4 |
+
+### Never on this checklist, and needed before real users
+
+Rate limiting, CORS allow-list (the API currently reflects any origin with credentials), password reset, email
+verification on self-registration, session revocation, payment webhook replay protection, privilege enforcement on
+the API (privileges gate menus, not endpoints), authorized document access (`/uploads` is served unauthenticated),
+upload type validation, structured logging, coverage thresholds, end-to-end tests in CI, and NDPR consent and
+erasure. All are stories in `MVP_OUTSTANDING_BACKLOG.md` with acceptance criteria.
+
+---
+
 ## Last Session Notes
 
 > *(Each session updates this section before stopping)*
+
+- **Date:** 2026-07-29
+- **Tool:** Claude (Cowork) — handover audit
+- **Last completed:** Full code audit of `main` @ `fc05e1e`; this checklist reconciled against it
+- **Done this session:** Produced `MVP_OUTSTANDING_BACKLOG.md` (36 stories, cited evidence) and `HANDOVER.md`; corrected the `[!]` items below; bannered the stale analysis documents
+- **Next:** Work `MVP_OUTSTANDING_BACKLOG.md`, not this file. Start with DOCS-1, E2-S4, E5-S2, E3-S4
+- **Blockers:** decisions D1 and D2 in the backlog gate epics E1 and E2
+
+### Prior session
 
 - **Date:** 2026-07-24
 - **Tool:** Cursor (Cloud Agent) — unified admin portal
