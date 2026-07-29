@@ -1,3 +1,5 @@
+> **Mostly closed, two items still open.** Dated 2026-05-26. QA-001 to QA-014 are fixed. **QA-015 remains open** (seeded documents reference storage keys with no files, so demos show placeholders — story E7-S4) and **QA-016 remains partial** (Paystack never validated end to end locally). QA-017 (DD wizard) was built. Current gaps: [`MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md). (Banner added 2026-07-29.)
+
 # QA / stabilization findings log
 
 > **Goal:** Fix everything here before new PRD/checklist features. One agent owns this file per sprint.

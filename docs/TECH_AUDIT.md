@@ -1,3 +1,5 @@
+> **⚠️ STALE, do not act on this file.** Dated 2026-05-02. It predates HttpOnly-cookie auth, transactions, escrow, object storage, PoA, KYC, notifications and the standalone due diligence flow. Several "missing" items here are now built. Current state: [`HANDOVER.md`](HANDOVER.md); current gaps: [`MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md). Retained as history. (Banner added 2026-07-29.)
+
 # Technical Audit — SafeBuyRealties (MVP PoC)
 
 Date: 2026-05-02

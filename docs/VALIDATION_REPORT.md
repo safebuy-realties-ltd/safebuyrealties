@@ -1,3 +1,5 @@
+> **⚠️ STALE, do not act on this file.** A production snapshot dated 2026-05-25, two months before the last commit on `main`. Its "Not built" list is largely built now. Current state: [`HANDOVER.md`](HANDOVER.md). Retained as history. (Banner added 2026-07-29.)
+
 # Validation report (snapshot)
 
 > **Current workflow:** validate on **local** stack — see [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md). This file is a historical production snapshot (2026-05-25); re-run checks on localhost after major changes.

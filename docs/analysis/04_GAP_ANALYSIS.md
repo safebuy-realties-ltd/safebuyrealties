@@ -1,3 +1,5 @@
+> **⚠️ PARTLY STALE.** Dated 2026-05-23. Most Core MVP gaps (G13 to G41) are now closed. The gap *categories* and dependency reasoning still hold and were reused; the *status* of each gap did not. Current gap list, re-derived from the code: [`../MVP_OUTSTANDING_BACKLOG.md`](../MVP_OUTSTANDING_BACKLOG.md). (Banner added 2026-07-29.)
+
 # 04 — Gap Analysis
 
 **SafeBuyRealties · Strategic Definition Engagement · Phase 4 of 5**
