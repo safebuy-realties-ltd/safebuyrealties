@@ -26,6 +26,7 @@ import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
+import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
 
 @Injectable()
 export class PaymentsService {
@@ -113,6 +114,9 @@ export class PaymentsService {
       status: p.status,
       intent: p.intent,
       metadata: p.metadata,
+      // Derived from the reference prefix rather than a stored column: mock mode is a
+      // property of how the record was created, and there is no schema field for it.
+      isMock: isMockReference(p.providerReference),
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
     };
@@ -177,7 +181,7 @@ export class PaymentsService {
     const amountMinor = Math.round(Number(dto.amount) * 100);
 
     if (!this.paystack.isConfigured()) {
-      const mockRef = `mock_${payment.id}`;
+      const mockRef = `${MOCK_REFERENCE_PREFIX}${payment.id}`;
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { providerReference: mockRef, status: PaymentStatus.PROCESSING },

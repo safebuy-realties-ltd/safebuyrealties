@@ -36,6 +36,8 @@ export type PayoutDto = {
   netAmount: string;
   status: string;
   gatewayReference: string | null;
+  /** True when the payout was recorded by mock mode — COMPLETED with no money moved. */
+  isMock: boolean;
   initiatedAt: string | null;
   completedAt: string | null;
 };

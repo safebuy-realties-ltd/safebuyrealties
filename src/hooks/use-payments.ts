@@ -21,9 +21,29 @@ export type PaymentDto = {
   status: "PENDING" | "PROCESSING" | "SUCCEEDED" | "FAILED";
   intent: "DD_SERVICE" | "PROPERTY_PURCHASE";
   metadata: unknown;
+  /** True when the payment was settled by mock mode rather than by Paystack. */
+  isMock: boolean;
   createdAt: string;
   updatedAt: string;
 };
+
+export type PaymentConfigDto = {
+  enabled: boolean;
+  publicKey: string | null;
+  mockMode: boolean;
+};
+
+/** Reports whether the API is running against live Paystack or in mock mode. */
+export function usePaymentConfigQuery() {
+  const { user, isReady } = useAuth();
+  return useQuery({
+    queryKey: ["payments", "config"],
+    queryFn: () => apiRequest<PaymentConfigDto>("/payments/config"),
+    select: (envelope) => envelope.data,
+    enabled: isReady && !!user,
+    staleTime: 5 * 60_000,
+  });
+}
 
 export function usePaymentQuery(id: string | null) {
   const { user, isReady } = useAuth();
