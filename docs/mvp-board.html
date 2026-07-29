@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeBuyRealties, MVP board and handover week</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --chip-bg: rgba(11,11,11,0.05);
+    --wash: rgba(42,120,214,0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff;
+      --text-secondary: #c3c2b7; --text-muted: #898781; --grid: #2c2c2a;
+      --border: rgba(255,255,255,0.10); --series-1: #3987e5;
+      --chip-bg: rgba(255,255,255,0.07); --wash: rgba(57,135,229,0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff;
+    --text-secondary: #c3c2b7; --text-muted: #898781; --grid: #2c2c2a;
+    --border: rgba(255,255,255,0.10); --series-1: #3987e5;
+    --chip-bg: rgba(255,255,255,0.07); --wash: rgba(57,135,229,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-size:14px; line-height:1.55; }
+  .wrap { max-width:1180px; margin:0 auto; padding:32px 20px 72px; }
+
+  header.top { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+  h1 { font-size:24px; margin:0 0 4px; letter-spacing:-0.01em; }
+  .sub { color:var(--text-secondary); margin:0; }
+  .meta { color:var(--text-muted); font-size:12.5px; margin-top:6px; }
+  button.theme { background:var(--surface-1); color:var(--text-secondary); border:1px solid var(--border);
+    border-radius:8px; padding:7px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  button.theme:hover { color:var(--text-primary); }
+
+  section { margin-top:32px; }
+  h2 { font-size:15px; margin:0 0 12px; font-weight:650; }
+  h2 .note { font-weight:400; color:var(--text-muted); font-size:13px; margin-left:8px; }
+
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .tile { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .tile .label { font-size:12px; color:var(--text-secondary); }
+  .tile .value { font-size:28px; font-weight:620; letter-spacing:-0.02em; margin-top:2px; }
+  .tile .foot { font-size:12px; color:var(--text-muted); }
+
+  .card { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+
+  .bars { display:grid; gap:10px; }
+  .barrow { display:grid; grid-template-columns:190px 1fr 58px; align-items:center; gap:12px; }
+  .barrow .name { font-size:13px; color:var(--text-secondary); }
+  .track { height:14px; background:var(--grid); border-radius:4px; overflow:hidden; }
+  .fill { height:100%; background:var(--series-1); border-radius:0 4px 4px 0; }
+  .barrow .val { font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
+
+  .days { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .day { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .day.done { background:var(--wash); }
+  .day .hd { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .day .n { font-size:13px; font-weight:650; }
+  .day .cnt { font-size:12px; color:var(--text-muted); }
+  .day .theme-l { font-size:12.5px; color:var(--text-secondary); margin:4px 0 8px; }
+  .day ul { margin:0; padding-left:16px; }
+  .day li { font-size:12.5px; color:var(--text-secondary); margin-bottom:3px; }
+  .day li b { color:var(--text-primary); font-weight:600; }
+
+  .filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  select, input[type=search] { background:var(--surface-1); color:var(--text-primary);
+    border:1px solid var(--border); border-radius:8px; padding:7px 10px; font:inherit; font-size:13px; }
+  label.cp { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary); }
+
+  table { width:100%; border-collapse:collapse; background:var(--surface-1);
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--grid); vertical-align:top; }
+  th { font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+  tr.wk { background:var(--wash); }
+  td.id { font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+  td.story .what { color:var(--text-secondary); font-size:12.5px; margin-top:3px; }
+  code { background:var(--chip-bg); border-radius:4px; padding:1px 5px; font-size:12px; }
+
+  .chip { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:2px 8px;
+    border-radius:999px; background:var(--chip-bg); color:var(--text-secondary); white-space:nowrap; }
+  .dot { width:8px; height:8px; border-radius:50%; flex:none; }
+  .dot.crit { background:var(--critical); } .dot.warn { background:var(--warning); }
+  .dot.ok { background:var(--good); } .dot.ser { background:var(--serious); }
+  .cp-mark { color:var(--critical); font-weight:700; }
+  .daytag { font-size:11.5px; font-weight:650; color:var(--series-1); }
+  .daytag.def { color:var(--text-muted); font-weight:400; }
+
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; }
+  ul.tight { margin:0; padding-left:18px; }
+  ul.tight li { margin-bottom:6px; color:var(--text-secondary); }
+  ul.tight li b { color:var(--text-primary); font-weight:600; }
+  ol.tight { margin:0; padding-left:20px; }
+  ol.tight li { margin-bottom:6px; color:var(--text-secondary); }
+  ol.tight li b { color:var(--text-primary); font-weight:600; }
+  .empty { padding:20px; color:var(--text-muted); }
+  footer { margin-top:40px; color:var(--text-muted); font-size:12.5px;
+    border-top:1px solid var(--grid); padding-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>SafeBuyRealties, MVP board and handover week</h1>
+    <p class="sub">Verified against <code>main</code> @ <code>fc05e1e</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-29 &middot; one-week handover, one reviewer plus agents &middot; day 1 complete</p>
+  </div>
+  <button class="theme" id="themeBtn" type="button">Dark mode</button>
+</header>
+
+<section>
+  <h2>The week</h2>
+  <div class="tiles">
+    <div class="tile"><div class="label">PRs planned this week</div><div class="value">14</div><div class="foot">ceiling is 12 to 15</div></div>
+    <div class="tile"><div class="label">Day 1</div><div class="value">Done</div><div class="foot">3 of 14 landed</div></div>
+    <div class="tile"><div class="label">Deferred, documented</div><div class="value">26</div><div class="foot">of 40 rows</div></div>
+    <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
+    <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
+    <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
+  </div>
+  <p class="meta" style="margin-top:10px">The limit this week is not developer-days, it is <b>review hours</b>. A small PR costs 30 to 45 minutes to review properly, which caps one reviewer at 12 to 15 PRs across five days. The plan is sized to that, not to agent throughput.</p>
+</section>
+
+<section>
+  <h2>Day by day <span class="note">truth over features</span></h2>
+  <div class="days" id="days"></div>
+</section>
+
+<section>
+  <h2>Not doing this week, and why <span class="note">say it out loud, silence reads as oversight</span></h2>
+  <div class="card">
+    <ul class="tight" style="margin:0">
+      <li><b>E1, the DD case lifecycle.</b> An L story. Half-built and unreviewed is worse to inherit than absent and precisely documented</li>
+      <li><b>E2-S1, seller payout accounts.</b> Blocked on ADR-0002. Whether the platform holds client funds decides if this is a bank-details form or a regulated flow, and those are not refactors of each other</li>
+      <li><b>E5-S5, session management.</b> L, and it touches every authenticated request. Not something to land in a week you are leaving</li>
+      <li><b>E8-S1, NDPR.</b> L, and needs the client's retention policy first</li>
+      <li><b>E6-S2 and E6-S3, email channel and templates.</b> Depend on E6-S1, which needs a mail domain the client owns</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Board <span class="note">week assignment in the Day column</span></h2>
+  <div class="filters">
+    <select id="fEpic"><option value="">All epics</option></select>
+    <select id="fDay">
+      <option value="">All rows</option>
+      <option value="week">This week only</option>
+      <option value="D1">Day 1</option><option value="D2">Day 2</option>
+      <option value="D3">Day 3</option><option value="D4">Day 4</option>
+      <option value="D5">Day 5</option>
+      <option value="def">Deferred</option>
+    </select>
+    <select id="fSize"><option value="">All sizes</option>
+      <option value="S">S, about a day</option><option value="M">M, two to four days</option><option value="L">L, about a week</option>
+    </select>
+    <label class="cp"><input type="checkbox" id="fCp" /> Critical path only</label>
+    <input type="search" id="fText" placeholder="Search stories" style="flex:1;min-width:180px" />
+  </div>
+  <table>
+    <thead><tr>
+      <th style="width:92px">ID</th><th>Story</th><th style="width:52px">Day</th>
+      <th style="width:112px">Flag</th><th style="width:48px">Size</th>
+      <th style="width:112px">Depends on</th><th style="width:100px">Status</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="meta" id="count"></p>
+</section>
+
+<section>
+  <h2>Agent working agreement <span class="note">hand this to every agent alongside the story</span></h2>
+  <div class="card">
+    <ol class="tight">
+      <li>One story, one PR, single purpose. Never combine two stories to save a round trip</li>
+      <li><b>Copy the acceptance criteria verbatim into the PR description and tick them individually.</b> Untickable criteria mean the story was not understood, which is a signal worth having early</li>
+      <li>No story is done without pasted output from <code>npm run validate:tsc</code>, <code>npm test</code>, and <code>cd backend &amp;&amp; npm test</code></li>
+      <li>Cite a file and line for every behavioural claim, matching the backlog's own standard</li>
+      <li>If a story turns out bigger than its size, <b>stop and say so</b> rather than expanding scope</li>
+      <li>Never run <code>prisma migrate reset</code>. The database is shared across local, preview and production</li>
+      <li>If the change is user-facing and there is still no feature-flag system, say so rather than inventing one</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2>The three launch blockers <span class="note">none are fixable this week, all are now documented</span></h2>
+  <div class="grid2">
+    <div class="card">
+      <div class="chip"><span class="dot crit"></span>Critical</div>
+      <h3 style="font-size:14px;margin:10px 0 6px">The on-platform journey does not finish</h3>
+      <p style="margin:0;color:var(--text-secondary)"><code>DueDiligenceService</code> has one method, <code>create()</code>. Orders raised against a platform listing have no queue, no assignment, no report, no completion, so no transaction reaches <code>DD_COMPLETE</code>, the buyer is never offered the property purchase, escrow is never funded and the seller is never paid.</p>
+    </div>
+    <div class="card">
+      <div class="chip"><span class="dot crit"></span>Critical</div>
+      <h3 style="font-size:14px;margin:10px 0 6px">The money cannot safely move</h3>
+      <p style="margin:0;color:var(--text-secondary)">Payouts resolve the destination from two environment variables defaulting to Paystack's test account, so every seller is paid to the same place. Refunds change a status and never call the gateway. The webhook has no replay guard. <b>E2-S4 on day 2 removes the worst of it</b> by refusing to start in production without a key.</p>
+    </div>
+    <div class="card">
+      <div class="chip"><span class="dot crit"></span>Critical</div>
+      <h3 style="font-size:14px;margin:10px 0 6px">Private documents are publicly readable</h3>
+      <p style="margin:0;color:var(--text-secondary)">Uploads are served by an unauthenticated static route, so any storage key fetches a title deed, a government ID or a KYC selfie with no session. <b>Day 3 attempts the fix and ships the failing probe test either way</b>, so the hole is executable knowledge, not a paragraph.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Full backlog effort by epic <span class="note">upper-bound estimate, developer-days, beyond this week</span></h2>
+  <div class="card"><div class="bars" id="bars"></div></div>
+</section>
+
+<section>
+  <h2>Open decisions, now ADRs</h2>
+  <div class="card">
+    <ul class="tight" style="margin:0">
+      <li><b>ADR-0001 (D1)</b> is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? Answering "standalone only" removes most of E1 and E2 and about 20 days</li>
+      <li><b>ADR-0002 (D2)</b> does SafeBuyRealties hold client funds? Decides whether E2-S1 is a form or a regulated flow with CBN and AML duties</li>
+      <li><b>ADR-0003 (D3)</b> fail startup rather than silently mock payments in production. Recommended for immediate adoption, shipped as E2-S4</li>
+      <li><b>ADR-0004 (D4)</b> private documents behind authorization, plus the storage provider and region choice</li>
+      <li><b>ADR-0005 (D5)</b> raise the quality bar as a ratchet on new code, not retroactively</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Go-live gates and external inputs</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="font-size:13px;margin:0 0 10px;color:var(--text-secondary)">Gates</h3>
+      <ul class="tight">
+        <li><b>G1</b> a buyer completes the on-platform journey on staging unaided <span class="chip"><span class="dot warn"></span>E1</span></li>
+        <li><b>G2</b> a test payout reaches a distinct seller account and a test refund is repaid <span class="chip"><span class="dot warn"></span>E2</span></li>
+        <li><b>G3</b> no private document reachable without authorization <span class="chip"><span class="dot warn"></span>E3, E4-S3</span></li>
+        <li><b>G4</b> PoA instrument and terms approved by counsel <span class="chip"><span class="dot ser"></span>external</span></li>
+        <li><b>G5</b> independent security review closed <span class="chip"><span class="dot ser"></span>external</span></li>
+        <li><b>G6</b> escrow model confirmed against CBN and AML duties <span class="chip"><span class="dot ser"></span>external</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="font-size:13px;margin:0 0 10px;color:var(--text-secondary)">External inputs</h3>
+      <ul class="tight">
+        <li><b>EXT-1</b> production Paystack live keys and a settlement account</li>
+        <li><b>EXT-2</b> S3-compatible bucket, credentials, region decision</li>
+        <li><b>EXT-3</b> email domain with SPF, DKIM, DMARC, and SMTP credentials</li>
+        <li><b>EXT-4</b> counsel-approved PoA instrument and terms of service</li>
+        <li><b>EXT-5</b> NDPR privacy notice and retention policy</li>
+        <li><b>EXT-6</b> penetration test vendor and window</li>
+        <li><b>EXT-7</b> confirmation of ADR-0001 and ADR-0002</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Companion documents in <code>docs/</code>: <b>HANDOVER.md</b> (read first), <b>HANDOVER_WEEK.md</b> (this plan in full), <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story), <b>adr/0001</b> to <b>0005</b>.
+</footer>
+
+</div>
+
+<script>
+const EPICS = [
+  { key:"Chore", name:"Chores and handover", days:7 },
+  { key:"Loop", name:"E1 Close the loop", days:14 },
+  { key:"Money", name:"E2 Money integrity", days:15 },
+  { key:"Trust", name:"E3 Document trust", days:10 },
+  { key:"Access", name:"E4 Access correctness", days:9 },
+  { key:"Security", name:"E5 Account security", days:15 },
+  { key:"Comms", name:"E6 Communications", days:7 },
+  { key:"Ops", name:"E7 Operability", days:14 },
+  { key:"Compliance", name:"E8 Compliance and go-live", days:12 }
+];
+
+const DAYS = [
+  { n:"Day 1", theme:"Truth", count:3, done:true, items:[
+    "<b>DOCS-1</b> checklist reconciled, audit corrections table added",
+    "<b>DOCS-2</b> HANDOVER.md written, six stale docs bannered",
+    "<b>DOCS-3</b> ADRs 0001 to 0005 recording the open decisions" ]},
+  { n:"Day 2", theme:"Landmines", count:4, done:false, items:[
+    "<b>E2-S4</b> production guard on payment mock mode",
+    "<b>E5-S2</b> CORS allow-list",
+    "<b>E3-S4</b> public /verify page",
+    "<b>E7-S6</b> health and readiness probes" ]},
+  { n:"Day 3", theme:"The exposure", count:2, done:false, items:[
+    "<b>E3-S1a</b> failing probe test, merge it red",
+    "<b>E3-S1</b> authorized document access, stop rule applies" ]},
+  { n:"Day 4", theme:"Make it runnable", count:3, done:false, items:[
+    "<b>E7-S2</b> coverage floor measured and recorded",
+    "<b>E7-S4</b> demo seed that resolves",
+    "<b>E7-S3</b> ephemeral-database spike, timeboxed" ]},
+  { n:"Day 5", theme:"Package and freeze", count:2, done:false, items:[
+    "<b>E7-S5</b> runbook, environment matrix, secrets",
+    "<b>DOCS-4</b> re-audit against HEAD, tag handover commit" ]}
+];
+
+// [id, epic, title, what, day, flag, size, deps, status, criticalPath]
+const STORIES = [
+  ["DOCS-1","Chore","Reconcile the checklist against the code","Accuracy notice, audit corrections table, queue repointed at the backlog.","D1","—","S","none","done",false],
+  ["DOCS-2","Chore","HANDOVER.md and stale-doc banners","One-page truth doc; banners on TECH_AUDIT, VALIDATION_REPORT, QA_FINDINGS, analysis 03/04/05.","D1","—","S","none","done",false],
+  ["DOCS-3","Chore","ADRs 0001 to 0005 for the open decisions","The next team inherits the questions rather than discovering them.","D1","—","S","none","done",false],
+  ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit.","D5","—","S","week's PRs","planned",false],
+  ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
+
+  ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
+  ["E1-S2","Loop","Transaction state machine, DD_PURCHASED to DD_COMPLETE","Only the standalone path sets these statuses, so listing transactions stop dead.","","dd_case_lifecycle","M","E1-S1","planned",true],
+  ["E1-S3","Loop","Buyer DD report delivery, access controlled","reportStorageKeys is never written or read for listing orders.","","dd_case_lifecycle","M","E1-S1, E3-S1","planned",true],
+  ["E1-S4","Loop","Property purchase step wired to the state machine","The buyer UI gates on a status nothing reaches, so the branch is dead code.","","property_purchase","M","E1-S2","planned",true],
+
+  ["E2-S1","Money","Seller payout destination, per-seller bank account","Payouts go to one env-configured account defaulting to a Paystack test account.","","payouts","L","E1-S4, ADR-0002","blocked",true],
+  ["E2-S2","Money","Webhook idempotency, replay and freshness guard","A replayed callback re-fires notifications and escrow holds.","","—","M","none","planned",true],
+  ["E2-S3","Money","Gateway refunds, not ledger-only","Refund updates a status and never calls the gateway, so the buyer is not repaid.","","payouts","M","E2-S1","planned",false],
+  ["E2-S4","Money","Production guard on payment mock mode","A missing key records every payout as completed with a mock reference. Highest harm per line in the repo.","D2","—","S","none","planned",true],
+  ["E2-S5","Money","Finance reconciliation view","The Finance Manager role has no finance screen; the admin chart is a placeholder generator.","","—","M","E2-S1, E4-S1","planned",false],
+
+  ["E3-S1a","Trust","Failing probe test for document exposure","Merge it red with a linked story. Executable proof beats a paragraph, and it becomes the regression test.","D3","—","S","none","planned",false],
+  ["E3-S1","Trust","Authorized document access, retire the public static route","/uploads is mounted before any guard, so any key fetches any document.","D3","secure_docs","M","none","planned",true],
+  ["E3-S2","Trust","Durable object storage in production","On Vercel uploads land in ephemeral /tmp and do not survive.","","—","M","ADR-0004","planned",true],
+  ["E3-S3","Trust","Upload hardening: type allow-list, magic bytes, AV hook","Multer has no fileFilter and the stored MIME type is whatever the client claimed.","","secure_docs","M","E3-S2","planned",false],
+  ["E3-S4","Trust","Public PoA verification page","Every generated QR points at /verify, a route that does not exist.","D2","—","S","none","planned",false],
+
+  ["E4-S1","Access","Enforce PermissionsGuard on every privileged endpoint","Privileges gate menus. Only two controllers check them, so a content manager can release escrow.","","—","M","none","planned",true],
+  ["E4-S2","Access","KYC gate on money-moving actions","KycRecord is never read outside its own module and a dashboard count.","","kyc_gate","M","E1-S4","planned",false],
+  ["E4-S3","Access","Cross-role authorization test suite","Ownership checks are per service with no systematic proof they all exist.","","—","M","E4-S1","planned",false],
+
+  ["E5-S1","Security","Rate limiting and lockout on auth and payments","No throttling dependency, no lockout. Login and guest checkout are unlimited.","","—","M","none","planned",true],
+  ["E5-S2","Security","CORS allow-list from configuration","origin: true with credentials reflects any origin. The allow-list was documented, never built.","D2","—","S","none","planned",true],
+  ["E5-S3","Security","Password reset","No forgot or reset route exists. A locked-out user needs an administrator.","","auth_recovery","M","E6-S1","planned",false],
+  ["E5-S4","Security","Email verification on self-registration","Self-signup skips the activation mechanism admin-created accounts already use.","","auth_signup","M","E6-S1","planned",false],
+  ["E5-S5","Security","Session management: refresh rotation and revocation","One seven-day JWT, no refresh, no server-side session, no revocation.","","auth_sessions","L","none","planned",false],
+
+  ["E6-S1","Comms","SMTP configuration and delivery observability","dispatch() returns early with no SMTP_HOST, and no environment defines one.","","—","S","EXT-3","blocked",true],
+  ["E6-S2","Comms","Email channel for notification types","Notifications write rows only. A rejected seller finds out by logging in.","","email_notifications","M","E6-S1","planned",false],
+  ["E6-S3","Comms","Transactional email templates","Two templates are built inline with unescaped interpolation into HTML.","","email_notifications","M","E6-S2","planned",false],
+
+  ["E7-S1","Ops","Structured logging, correlation id, error tracking","No logging, tracing, or error-tracking dependency in either package.","","—","M","none","planned",false],
+  ["E7-S2","Ops","Coverage thresholds and a CI coverage gate","No coverageThreshold anywhere and CI never measures coverage. Record today's real number.","D4","—","S","none","planned",false],
+  ["E7-S3","Ops","End-to-end journeys in CI, ephemeral database","Six E2E scripts exist and CI runs none; they need the shared cloud database. Spike is timeboxed.","D4","—","L","E7-S2","planned",true],
+  ["E7-S4","Ops","Deterministic demo seed and reset","Seeded documents point at keys with no files, so demos show stock photography. QA-015.","D4","—","M","E3-S2","planned",false],
+  ["E7-S5","Ops","Runbook, environment matrix, secrets checklist","No runbook, and the environment variable set is undocumented per environment.","D5","—","S","none","planned",false],
+  ["E7-S6","Ops","Health and readiness probes with dependency checks","/health returns ok without touching the database, storage, or the gateway.","D2","—","S","none","planned",false],
+
+  ["E8-S1","Compliance","NDPR consent, retention, and erasure","No consent model, retention policy, or erasure path, while storing IDs and selfies.","","privacy_centre","L","E5-S5, EXT-5","planned",false],
+  ["E8-S2","Compliance","Legal review of the PoA instrument and terms","The instrument clauses were written in a build checklist, not by counsel.","","—","S","external","blocked",false],
+  ["E8-S3","Compliance","Pre-launch security review","The client's own legal comments ask for one; none has been run.","","—","S","external, E4-S3","blocked",false],
+  ["E8-S4","Compliance","Public web surface: robots, sitemap, per-route metadata","No public directory exists, so no robots.txt, no sitemap, no per-route metadata.","","—","M","none","planned",false]
+];
+
+const STATUS = {
+  planned:  { dot:"warn", label:"Planned" },
+  blocked:  { dot:"ser",  label:"Blocked" },
+  done:     { dot:"ok",   label:"Done" }
+};
+
+document.getElementById("days").innerHTML = DAYS.map(d => `
+  <div class="day${d.done ? " done" : ""}">
+    <div class="hd"><span class="n">${d.n}</span><span class="cnt">${d.count} PR${d.count > 1 ? "s" : ""}${d.done ? " &middot; done" : ""}</span></div>
+    <div class="theme-l">${d.theme}</div>
+    <ul>${d.items.map(i => `<li>${i}</li>`).join("")}</ul>
+  </div>`).join("");
+
+const maxDays = Math.max(...EPICS.map(e => e.days));
+document.getElementById("bars").innerHTML = EPICS.map(e => `
+  <div class="barrow">
+    <div class="name">${e.name}</div>
+    <div class="track"><div class="fill" style="width:${(e.days / maxDays * 100).toFixed(1)}%"></div></div>
+    <div class="val">${e.days}d</div>
+  </div>`).join("");
+
+const fEpic = document.getElementById("fEpic");
+EPICS.forEach(e => { const o = document.createElement("option"); o.value = e.key; o.textContent = e.name; fEpic.appendChild(o); });
+
+function render() {
+  const epic = fEpic.value;
+  const day  = document.getElementById("fDay").value;
+  const size = document.getElementById("fSize").value;
+  const cpOnly = document.getElementById("fCp").checked;
+  const q = document.getElementById("fText").value.trim().toLowerCase();
+
+  const dayOk = s => !day
+    || (day === "week" && s[4] !== "")
+    || (day === "def"  && s[4] === "")
+    || s[4] === day;
+
+  const rows = STORIES.filter(s =>
+    (!epic || s[1] === epic) && dayOk(s) && (!size || s[6] === size) &&
+    (!cpOnly || s[9]) &&
+    (!q || (s[0]+" "+s[2]+" "+s[3]+" "+s[5]).toLowerCase().includes(q))
+  );
+
+  document.getElementById("rows").innerHTML = rows.length ? rows.map(s => {
+    const st = STATUS[s[8]];
+    return `<tr class="${s[4] ? "wk" : ""}">
+      <td class="id">${s[9] ? '<span class="cp-mark" title="Critical path">CP</span> ' : ""}${s[0]}</td>
+      <td class="story"><div>${s[2]}</div><div class="what">${s[3]}</div></td>
+      <td><span class="daytag${s[4] ? "" : " def"}">${s[4] || "—"}</span></td>
+      <td>${s[5] === "—" ? '<span style="color:var(--text-muted)">&mdash;</span>' : "<code>"+s[5]+"</code>"}</td>
+      <td>${s[6]}</td>
+      <td style="color:var(--text-secondary);font-size:12.5px">${s[7]}</td>
+      <td><span class="chip"><span class="dot ${st.dot}"></span>${st.label}</span></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty">No stories match these filters.</td></tr>`;
+
+  const inWeek = rows.filter(s => s[4] !== "").length;
+  document.getElementById("count").textContent =
+    `Showing ${rows.length} of ${STORIES.length} rows, ${inWeek} scheduled this week. Shaded rows are in the week. CP marks the critical path.`;
+}
+
+["fEpic","fDay","fSize","fCp","fText"].forEach(id =>
+  document.getElementById(id).addEventListener("input", render));
+render();
+
+const btn = document.getElementById("themeBtn");
+function syncBtn() { btn.textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "Light mode" : "Dark mode"; }
+btn.addEventListener("click", () => {
+  document.documentElement.setAttribute("data-theme",
+    document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  syncBtn();
+});
+syncBtn();
+</script>
+</body>
+</html>
