@@ -11,11 +11,10 @@ import PDFDocument from "pdfkit";
 import * as QRCode from "qrcode";
 import * as path from "path";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { resolveVerifyBaseUrl } from "../config/poa-verify-config";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { ExecutePoaDto } from "./dto/execute-poa.dto";
-
-const VERIFY_BASE_URL = "https://safebuyrealties.com/verify";
 
 export type PoaConsentFlags = {
   legalCapacity: boolean;
@@ -38,14 +37,17 @@ export type PowerOfAttorneyResponse = {
   executedAt: string;
 };
 
+/**
+ * Public verification payload. Deliberately minimal: /poa/verify is unauthenticated,
+ * so it exposes only the property, the execution date and the document hash. Never
+ * the buyer, their contact details, or the transaction price.
+ */
 export type PoaVerifyResponse = {
   verified: true;
   documentHash: string;
-  buyerName: string;
   listingTitle: string;
   listingAddress: string;
   executedAt: string;
-  signatureMethod: string;
 };
 
 @Injectable()
@@ -60,7 +62,7 @@ export class PoaService {
   }
 
   buildVerifyUrl(hash: string): string {
-    return `${VERIFY_BASE_URL}?hash=${hash}`;
+    return `${resolveVerifyBaseUrl()}?hash=${encodeURIComponent(hash)}`;
   }
 
   async generate(
@@ -253,8 +255,7 @@ export class PoaService {
     const record = await this.prisma.powerOfAttorney.findUnique({
       where: { documentHash: normalized },
       include: {
-        buyer: true,
-        listing: true,
+        listing: { select: { title: true, location: true } },
       },
     });
     if (!record) {
@@ -264,11 +265,9 @@ export class PoaService {
     return {
       verified: true,
       documentHash: record.documentHash,
-      buyerName: `${record.buyer.firstName} ${record.buyer.lastName}`.trim(),
       listingTitle: record.listing.title,
       listingAddress: record.listing.location,
       executedAt: record.executedAt.toISOString(),
-      signatureMethod: record.signatureMethod,
     };
   }
 
