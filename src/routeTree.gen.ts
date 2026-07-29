@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
@@ -70,6 +71,11 @@ import { Route as DashboardAdminCredentialsRouteImport } from './routes/dashboar
 import { Route as DashboardAdminChecklistsRouteImport } from './routes/dashboard.admin.checklists'
 import { Route as DashboardProfessionalTasksTaskIdRouteImport } from './routes/dashboard.professional.tasks.$taskId'
 
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -395,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
+  '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
   '/register': typeof RegisterRoute
+  '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/due-diligence/request': typeof DueDiligenceRequestRoute
@@ -512,6 +520,7 @@ export interface FileRoutesById {
   '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
+  '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -576,6 +585,7 @@ export interface FileRouteTypes {
     | '/due-diligence'
     | '/login'
     | '/register'
+    | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
     | '/dashboard/admin'
@@ -636,6 +646,7 @@ export interface FileRouteTypes {
     | '/'
     | '/browse'
     | '/register'
+    | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
     | '/due-diligence/request'
@@ -692,6 +703,7 @@ export interface FileRouteTypes {
     | '/due-diligence'
     | '/login'
     | '/register'
+    | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
     | '/dashboard/admin'
@@ -755,6 +767,7 @@ export interface RootRouteChildren {
   DueDiligenceRoute: typeof DueDiligenceRouteWithChildren
   LoginRoute: typeof LoginRouteWithChildren
   RegisterRoute: typeof RegisterRoute
+  VerifyRoute: typeof VerifyRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
   CheckoutListingIdRoute: typeof CheckoutListingIdRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
@@ -771,6 +784,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -1378,6 +1398,7 @@ const rootRouteChildren: RootRouteChildren = {
   DueDiligenceRoute: DueDiligenceRouteWithChildren,
   LoginRoute: LoginRouteWithChildren,
   RegisterRoute: RegisterRoute,
+  VerifyRoute: VerifyRoute,
   ActivateTokenRoute: ActivateTokenRoute,
   CheckoutListingIdRoute: CheckoutListingIdRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,

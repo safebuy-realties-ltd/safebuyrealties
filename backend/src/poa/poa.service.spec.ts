@@ -2,10 +2,19 @@ import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { UserRole } from "@prisma/client";
 import { createHash } from "crypto";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { PoaService } from "./poa.service";
+
+const hash64 = "a".repeat(64);
+
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}
 
 const buyer: JwtPayload = {
   sub: "buyer-1",
@@ -58,9 +67,61 @@ describe("PoaService", () => {
     expect(service.computeDocumentHash(buffer)).toHaveLength(64);
   });
 
-  it("buildVerifyUrl encodes the safebuyrealties verify endpoint", () => {
-    const hash = "abc123";
-    expect(service.buildVerifyUrl(hash)).toBe(`https://safebuyrealties.com/verify?hash=${hash}`);
+  describe("buildVerifyUrl", () => {
+    const saved = {
+      base: process.env.POA_VERIFY_BASE_URL,
+      frontend: process.env.FRONTEND_URL,
+    };
+
+    afterEach(() => {
+      restoreEnv("POA_VERIFY_BASE_URL", saved.base);
+      restoreEnv("FRONTEND_URL", saved.frontend);
+    });
+
+    it("falls back to the safebuyrealties verify endpoint when nothing is configured", () => {
+      delete process.env.POA_VERIFY_BASE_URL;
+      delete process.env.FRONTEND_URL;
+
+      const hash = "abc123";
+      expect(service.buildVerifyUrl(hash)).toBe(`https://safebuyrealties.com/verify?hash=${hash}`);
+    });
+
+    it("honours POA_VERIFY_BASE_URL ahead of FRONTEND_URL", () => {
+      process.env.POA_VERIFY_BASE_URL = "https://staging.safebuyrealties.com/verify";
+      process.env.FRONTEND_URL = "https://ignored.example.com";
+
+      expect(service.buildVerifyUrl(hash64)).toBe(
+        `https://staging.safebuyrealties.com/verify?hash=${hash64}`,
+      );
+    });
+
+    it("derives the base from the first FRONTEND_URL origin", () => {
+      delete process.env.POA_VERIFY_BASE_URL;
+      process.env.FRONTEND_URL = "https://safebuyrealties-app.vercel.app,http://localhost:8080";
+
+      expect(service.buildVerifyUrl(hash64)).toBe(
+        `https://safebuyrealties-app.vercel.app/verify?hash=${hash64}`,
+      );
+    });
+
+    it("produces a QR target that resolves to a live frontend route", () => {
+      delete process.env.POA_VERIFY_BASE_URL;
+      delete process.env.FRONTEND_URL;
+
+      // buildVerifyUrl is the exact string handed to QRCode.toBuffer in execute()
+      // (poa.service.ts, `const verifyUrl = this.buildVerifyUrl(documentHash)`).
+      const url = new URL(service.buildVerifyUrl(hash64));
+      expect(url.pathname).toBe("/verify");
+      expect(url.searchParams.get("hash")).toBe(hash64);
+
+      // The generated route tree is what the frontend actually mounts, so matching
+      // against it proves the QR target is a real page rather than a 404.
+      const routeTree = readFileSync(
+        join(__dirname, "..", "..", "..", "src", "routeTree.gen.ts"),
+        "utf8",
+      );
+      expect(routeTree).toContain(`path: '${url.pathname}'`);
+    });
   });
 
   it("generate produces a non-empty PDF buffer", async () => {
@@ -160,16 +221,52 @@ describe("PoaService", () => {
 
   it("verifyByHash returns confirmation for a known hash", async () => {
     prisma.powerOfAttorney.findUnique.mockResolvedValue({
-      documentHash: "a".repeat(64),
+      documentHash: hash64,
       signatureMethod: "DRAWN",
       executedAt: new Date("2026-05-26T12:00:00.000Z"),
-      buyer: { firstName: "Ada", lastName: "Obi" },
       listing: { title: "4-Bed Duplex", location: "Lekki Phase 1, Lagos" },
     });
 
-    const result = await service.verifyByHash("a".repeat(64));
-    expect(result.verified).toBe(true);
-    expect(result.buyerName).toBe("Ada Obi");
-    expect(result.listingTitle).toBe("4-Bed Duplex");
+    const result = await service.verifyByHash(hash64);
+    expect(result).toEqual({
+      verified: true,
+      documentHash: hash64,
+      listingTitle: "4-Bed Duplex",
+      listingAddress: "Lekki Phase 1, Lagos",
+      executedAt: "2026-05-26T12:00:00.000Z",
+    });
+  });
+
+  it("verifyByHash discloses nothing beyond the property, date and hash", async () => {
+    prisma.powerOfAttorney.findUnique.mockResolvedValue({
+      documentHash: hash64,
+      signatureMethod: "DRAWN",
+      signatureName: "Ada Obi",
+      buyerId: "buyer-1",
+      transactionId: "txn-1",
+      pdfStorageKey: "poa/txn-1/deed.pdf",
+      executedAt: new Date("2026-05-26T12:00:00.000Z"),
+      buyer: { firstName: "Ada", lastName: "Obi", email: "ada@example.test" },
+      listing: { title: "4-Bed Duplex", location: "Lekki Phase 1, Lagos", price: "250000000" },
+    });
+
+    const result = await service.verifyByHash(hash64);
+
+    expect(Object.keys(result).sort()).toEqual([
+      "documentHash",
+      "executedAt",
+      "listingAddress",
+      "listingTitle",
+      "verified",
+    ]);
+    expect(JSON.stringify(result)).not.toContain("Ada");
+    expect(JSON.stringify(result)).not.toContain("ada@example.test");
+    expect(JSON.stringify(result)).not.toContain("250000000");
+
+    // The buyer relation is not even loaded, so it cannot leak by accident.
+    expect(prisma.powerOfAttorney.findUnique).toHaveBeenCalledWith({
+      where: { documentHash: hash64 },
+      include: { listing: { select: { title: true, location: true } } },
+    });
   });
 });
