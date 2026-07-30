@@ -16,14 +16,13 @@ export type PowerOfAttorneyDto = {
   executedAt: string;
 };
 
+/** Public verification payload — property, execution date and hash only. */
 export type PoaVerifyDto = {
   verified: true;
   documentHash: string;
-  buyerName: string;
   listingTitle: string;
   listingAddress: string;
   executedAt: string;
-  signatureMethod: string;
 };
 
 export function useExecutePoaMutation() {
