@@ -9,8 +9,10 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 import { assertSafeDatabaseUrl } from "./config/database-guard";
+import { assertPaymentsConfigured } from "./config/payments-guard";
 
 assertSafeDatabaseUrl();
+assertPaymentsConfigured();
 
 function resolveUploadRoot(): string {
   const configured =

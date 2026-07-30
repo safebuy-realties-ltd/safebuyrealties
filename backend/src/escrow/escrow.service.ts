@@ -20,6 +20,7 @@ import {
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
 import { PaystackService } from "../payments/paystack.service";
+import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
 import {
   DEFAULT_RELEASE_CONDITIONS,
   ESCROW_STATUS,
@@ -117,6 +118,9 @@ export class EscrowService {
       netAmount: p.netAmount.toString(),
       status: p.status,
       gatewayReference: p.gatewayReference,
+      // Derived from the reference prefix rather than a stored column. A mock payout is
+      // recorded as COMPLETED without money moving, so operators must be able to see it.
+      isMock: isMockReference(p.gatewayReference),
       initiatedAt: p.initiatedAt?.toISOString() ?? null,
       completedAt: p.completedAt?.toISOString() ?? null,
     };
@@ -380,7 +384,7 @@ export class EscrowService {
 
     if (!this.paystack.isConfigured()) {
       status = PAYOUT_STATUS.COMPLETED;
-      gatewayReference = `mock_transfer_${transactionId.slice(0, 8)}`;
+      gatewayReference = `${MOCK_REFERENCE_PREFIX}transfer_${transactionId.slice(0, 8)}`;
       initiatedAt = now;
       completedAt = now;
     } else {
