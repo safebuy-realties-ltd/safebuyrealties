@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { assertOk, createPaystack, Webhooks, type Paystack } from "@alexasomba/paystack-node";
+import { isForceMockHonoured } from "../config/payments-guard";
 
 export type PaystackInitializeResult = {
   authorizationUrl: string;
@@ -17,13 +18,23 @@ export class PaystackService {
   /**
    * True when a secret key is configured (live Paystack, not mock mode).
    * Set PAYSTACK_FORCE_MOCK=true to force the local/demo callback path even when keys exist.
+   * That override is honoured in development and test only — see config/payments-guard.ts.
    */
   isConfigured(): boolean {
-    const forceMock = this.config.get<string>("PAYSTACK_FORCE_MOCK")?.trim().toLowerCase();
-    if (forceMock === "true" || forceMock === "1" || forceMock === "yes") {
-      return false;
-    }
+    if (isForceMockHonoured(this.guardEnv())) return false;
     return Boolean(this.secretKey());
+  }
+
+  /**
+   * The subset of the environment the payments guard reads, sourced through
+   * ConfigService so this service keeps a single source of truth for configuration.
+   */
+  private guardEnv(): NodeJS.ProcessEnv {
+    return {
+      NODE_ENV: this.config.get<string>("NODE_ENV"),
+      VERCEL_ENV: this.config.get<string>("VERCEL_ENV"),
+      PAYSTACK_FORCE_MOCK: this.config.get<string>("PAYSTACK_FORCE_MOCK"),
+    };
   }
 
   publicKey(): string | undefined {

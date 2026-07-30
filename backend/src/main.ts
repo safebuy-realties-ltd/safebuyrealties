@@ -10,9 +10,11 @@ import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 import { assertSafeDatabaseUrl } from "./config/database-guard";
 import { assertCorsConfigured, buildCorsOptions } from "./config/cors-config";
+import { assertPaymentsConfigured } from "./config/payments-guard";
 
 assertSafeDatabaseUrl();
 assertCorsConfigured();
+assertPaymentsConfigured();
 
 function resolveUploadRoot(): string {
   const configured =

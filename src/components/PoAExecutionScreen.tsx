@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -180,10 +181,14 @@ export function PoAExecutionScreen({
           <p className="mt-2 break-all font-mono text-sm">{result.documentHash}</p>
         </div>
         <p className="text-center text-sm text-muted-foreground">
-          Verify at{" "}
-          <span className="font-mono">
-            safebuyrealties.com/verify?hash={result.documentHash.slice(0, 12)}…
-          </span>
+          Anyone can check this document, no account needed.{" "}
+          <Link
+            to="/verify"
+            search={{ hash: result.documentHash }}
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Open the verification page
+          </Link>
         </p>
       </div>
     );

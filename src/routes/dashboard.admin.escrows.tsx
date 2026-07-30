@@ -7,13 +7,18 @@ import {
   useRefundEscrowMutation,
   escrowStatusLabel,
 } from "@/hooks/use-escrow";
+import { usePaymentConfigQuery } from "@/hooks/use-payments";
+import { MockPaymentModeBanner, PayoutSummary } from "@/components/PaymentModeNotice";
 function AdminEscrowsPage() {
   const { data } = useHeldEscrowsQuery();
   const release = useReleaseEscrowMutation();
   const refund = useRefundEscrowMutation();
+  const { data: paymentConfig } = usePaymentConfigQuery();
   return (
     <>
       <PageHeader title="Escrow management" description="Held escrows" />
+      {paymentConfig?.mockMode && <MockPaymentModeBanner />}
+      {release.data?.payout && <PayoutSummary payout={release.data.payout} />}
       {(data ?? []).map((r) => (
         <div key={r.id} className="mb-2 flex justify-between rounded border p-3">
           <div>

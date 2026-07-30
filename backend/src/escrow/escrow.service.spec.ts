@@ -44,14 +44,17 @@ describe("EscrowService", () => {
   let service: EscrowService;
   let prisma: Record<string, unknown>;
   let notifications: { create: jest.Mock };
+  let paystack: { isConfigured: jest.Mock; createTransfer: jest.Mock };
 
   beforeEach(async () => {
     notifications = { create: jest.fn() };
+    paystack = { isConfigured: jest.fn().mockReturnValue(false), createTransfer: jest.fn() };
     prisma = {
       transaction: { findUnique: jest.fn(), update: jest.fn() },
       escrow: { upsert: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
       listing: { update: jest.fn(), updateMany: jest.fn() },
       payout: { findFirst: jest.fn(), create: jest.fn() },
+      user: { findUnique: jest.fn() },
       $transaction: jest.fn(async (fn: (tx: typeof prisma) => Promise<unknown>) => fn(prisma)),
     };
 
@@ -61,10 +64,7 @@ describe("EscrowService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: { log: jest.fn() } },
         { provide: NotificationsService, useValue: notifications },
-        {
-          provide: PaystackService,
-          useValue: { isConfigured: () => false, createTransfer: jest.fn() },
-        },
+        { provide: PaystackService, useValue: paystack },
       ],
     }).compile();
 
@@ -129,6 +129,59 @@ describe("EscrowService", () => {
         type: NotificationType.ESCROW_RELEASED,
       }),
     );
+  });
+
+  describe("payouts are identifiable as mock", () => {
+    beforeEach(() => {
+      (prisma.escrow as { findUnique: jest.Mock }).findUnique.mockResolvedValue({
+        ...makeEscrow(),
+        transaction: { ...makeEscrow().transaction, listing: { id: listingId, sellerId } },
+      });
+      (prisma.payout as { findFirst: jest.Mock }).findFirst.mockResolvedValue(null);
+      // Echo the row back so the assertion sees what the service actually wrote.
+      (prisma.payout as { create: jest.Mock }).create.mockImplementation(
+        ({ data }: { data: Record<string, unknown> }) => ({ id: "payout-1", ...data }),
+      );
+      (prisma.user as { findUnique: jest.Mock }).findUnique.mockResolvedValue({
+        firstName: "Sam",
+        lastName: "Seller",
+      });
+    });
+
+    it("flags a mock payout, which is COMPLETED without money moving", async () => {
+      paystack.isConfigured.mockReturnValue(false);
+
+      const payout = await service.initiatePayout(transactionId);
+
+      expect(payout.status).toBe(PAYOUT_STATUS.COMPLETED);
+      expect(payout.gatewayReference).toMatch(/^mock_/);
+      expect(payout.isMock).toBe(true);
+      expect(paystack.createTransfer).not.toHaveBeenCalled();
+    });
+
+    it("does not flag a live Paystack payout", async () => {
+      paystack.isConfigured.mockReturnValue(true);
+      paystack.createTransfer.mockResolvedValue({
+        transferCode: "TRF_1",
+        reference: "sbr_payout_tx-1",
+        status: "success",
+      });
+
+      const payout = await service.initiatePayout(transactionId);
+
+      expect(payout.gatewayReference).toBe("sbr_payout_tx-1");
+      expect(payout.isMock).toBe(false);
+    });
+
+    it("does not flag a failed live transfer as mock", async () => {
+      paystack.isConfigured.mockReturnValue(true);
+      paystack.createTransfer.mockRejectedValue(new Error("gateway down"));
+
+      const payout = await service.initiatePayout(transactionId);
+
+      expect(payout.status).toBe(PAYOUT_STATUS.FAILED);
+      expect(payout.isMock).toBe(false);
+    });
   });
 
   it("release rejects when conditions unmet", async () => {
