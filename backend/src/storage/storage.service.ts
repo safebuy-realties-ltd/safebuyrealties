@@ -12,6 +12,11 @@ import * as path from "path";
 
 type StorageDriver = "local" | "s3";
 
+/** Outcome of StorageService.configStatus(). Reasons are fixed literals, never config values. */
+export type StorageConfigStatus =
+  | { ok: true }
+  | { ok: false; reason: "s3_missing_region_or_bucket" | "s3_partial_credentials" };
+
 function resolveLocalRoot(config: ConfigService): string {
   const configured =
     config.get<string>("STORAGE_LOCAL_PATH")?.trim() ||
@@ -43,6 +48,32 @@ export class StorageService {
     }
     this.driver = raw;
     this.localRoot = resolveLocalRoot(this.config);
+  }
+
+  /**
+   * Configuration-only inspection of the driver, for the readiness probe.
+   *
+   * Reads configuration and contacts nothing, so it cannot hang and cannot be used as an
+   * unauthenticated probe of the bucket. The reasons are fixed literals rather than the
+   * offending values: a caller that forwards one still cannot learn the bucket or endpoint.
+   */
+  configStatus(): StorageConfigStatus {
+    if (this.driver !== "s3") return { ok: true };
+
+    // Same requirement getS3() enforces at :109, checked before a request depends on it.
+    const region = this.config.get<string>("AWS_REGION");
+    const bucket = this.config.get<string>("AWS_S3_BUCKET");
+    if (!region || !bucket) return { ok: false, reason: "s3_missing_region_or_bucket" };
+
+    // Half a credential pair is dropped by getS3(), silently falling back to ambient
+    // credentials. That is a misconfiguration whichever half is missing.
+    const accessKeyId = this.config.get<string>("AWS_ACCESS_KEY_ID");
+    const secretAccessKey = this.config.get<string>("AWS_SECRET_ACCESS_KEY");
+    if (Boolean(accessKeyId) !== Boolean(secretAccessKey)) {
+      return { ok: false, reason: "s3_partial_credentials" };
+    }
+
+    return { ok: true };
   }
 
   async upload(buffer: Buffer, key: string, mimeType: string): Promise<string> {
