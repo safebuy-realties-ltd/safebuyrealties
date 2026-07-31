@@ -11,6 +11,7 @@ import { PlatformConfigService } from "../platform-config/platform-config.servic
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
 import { isPubliclyVisible } from "../listings/listings-public.helper";
+import { isPublicListingAssetCategory } from "./document-categories";
 import * as path from "path";
 
 const PUBLIC_DOCUMENT_CATEGORIES: Record<string, string> = {
@@ -56,11 +57,7 @@ export class DocumentsService {
       sizeBytes: doc.sizeBytes,
       createdAt: doc.createdAt.toISOString(),
     };
-    if (
-      actor.role === UserRole.BUYER &&
-      doc.category !== "listing_hero" &&
-      doc.category !== "listing_gallery"
-    ) {
+    if (actor.role === UserRole.BUYER && !isPublicListingAssetCategory(doc.category)) {
       return base;
     }
     return { ...base, storageKey: doc.storageKey };

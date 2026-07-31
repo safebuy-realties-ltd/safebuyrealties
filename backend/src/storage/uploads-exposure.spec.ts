@@ -15,22 +15,26 @@ import * as os from "os";
 import * as path from "path";
 import request from "supertest";
 import { configureApp } from "../app-bootstrap";
+import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "./storage.service";
 
 /**
  * E3-S1a, executable proof of the document exposure.
  *
- * configureApp() mounts `/uploads` as Express static middleware ahead of the Nest router
- * (app-bootstrap.ts:31). Guards only run once the Nest router has matched a route, so nothing
- * a controller declares can protect that path: any storage key fetches a title deed, a
- * government ID, a KYC selfie or a due diligence report with no session at all.
+ * configureApp() mounts `/uploads` as Express static middleware ahead of the Nest router.
+ * Guards only run once the Nest router has matched a route, so nothing a controller declares can
+ * protect that path: before E3-S1b, any storage key fetched a title deed, a government ID, a KYC
+ * selfie or a due diligence report with no session at all.
  *
  * The app under test uses the real configureApp() rather than a hand-copied replica, so the
  * middleware order being probed is production's. Its module denies *every* Nest request, which
  * is what makes the result unambiguous — see the control case.
  *
- * Both probes are `it.failing`, so CI stays green today and turns red the moment E3-S1 closes
- * the hole. They then become the regression test: drop `.failing`.
+ * E3-S1b closed the delivery half: a gate in front of the mount now resolves each key to its
+ * Document row and serves only public listing imagery, so probe two has lost `.failing` and is a
+ * regression test. Probe one stays `.failing` — private documents are no longer *served*, but
+ * they still have no authorized path, and 404 is not the 401 it asks for. It turns red when
+ * E3-S1 gives them one.
  */
 
 /** A private document. The point of the story is that this needs a session and does not get one. */
@@ -52,10 +56,21 @@ class ProbeController {
   }
 }
 
+/**
+ * The KYC key under probe has no Document row — nothing outside listing documents does. Stubbed
+ * rather than connected because this suite must not need the shared cloud Postgres, and because
+ * "no row" is exactly what the real database would answer for it.
+ */
+const noPublicDocuments = { document: { findFirst: () => Promise.resolve(null) } };
+
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true })],
   controllers: [ProbeController],
-  providers: [StorageService, { provide: APP_GUARD, useClass: DenyEveryRequestGuard }],
+  providers: [
+    StorageService,
+    { provide: PrismaService, useValue: noPublicDocuments },
+    { provide: APP_GUARD, useClass: DenyEveryRequestGuard },
+  ],
 })
 class DenyEverythingModule {}
 
@@ -136,20 +151,19 @@ describe("unauthenticated /uploads exposure (E3-S1)", () => {
   );
 
   /**
-   * Probe two, the static mount itself.
+   * Probe two, the static mount itself. **Closed by E3-S1b** — `.failing` dropped, this is now
+   * the regression test, and it fails if the gate in front of the mount is ever removed or
+   * widened to serve a key with no public Document row.
    *
-   * Probe one alone cannot see a fix that retires `/uploads` without replacing it, because an
-   * unmatched Nest path answers 404 and 404 is not 401 — the assertion would keep failing for a
-   * new reason and the `.failing` marker would stay green. This one closes that gap by asserting
-   * on delivery instead: the bytes must not come back, whether the mount is guarded or removed.
+   * Probe one alone could not have seen this fix, because an unmatched or gated path answers 404
+   * and 404 is not 401 — that assertion keeps failing for a new reason and `.failing` would have
+   * stayed green through the whole story. This one asserts on delivery instead: the bytes must
+   * not come back, however the mount is closed.
    */
-  it.failing(
-    "does not serve the document bytes from the unauthenticated static mount",
-    async () => {
-      const response = await request(app.getHttpServer()).get(`/uploads/${STORAGE_KEY}`);
+  it("does not serve the document bytes from the unauthenticated static mount", async () => {
+    const response = await request(app.getHttpServer()).get(`/uploads/${STORAGE_KEY}`);
 
-      expect(response.status).not.toBe(200);
-      expect(response.text).not.toContain(DOCUMENT_BYTES);
-    },
-  );
+    expect(response.status).not.toBe(200);
+    expect(response.text).not.toContain(DOCUMENT_BYTES);
+  });
 });
