@@ -118,3 +118,58 @@ describe("StorageService (s3 driver)", () => {
     );
   });
 });
+
+describe("StorageService.configStatus", () => {
+  function make(env: Record<string, string | undefined>): StorageService {
+    return new StorageService({ get: (key: string) => env[key] } as unknown as ConfigService);
+  }
+
+  it("is ok for the local driver", () => {
+    expect(make({ STORAGE_DRIVER: "local" }).configStatus()).toEqual({ ok: true });
+  });
+
+  it("is ok for a fully configured s3 driver", () => {
+    const status = make({
+      STORAGE_DRIVER: "s3",
+      AWS_REGION: "eu-central-1",
+      AWS_S3_BUCKET: "sbr-documents",
+      AWS_ACCESS_KEY_ID: "AKIA_EXAMPLE",
+      AWS_SECRET_ACCESS_KEY: "secret",
+    }).configStatus();
+
+    expect(status).toEqual({ ok: true });
+  });
+
+  it("fails when the s3 driver has no bucket", () => {
+    expect(make({ STORAGE_DRIVER: "s3", AWS_REGION: "eu-central-1" }).configStatus()).toEqual({
+      ok: false,
+      reason: "s3_missing_region_or_bucket",
+    });
+  });
+
+  it("fails when the s3 driver has no region", () => {
+    expect(make({ STORAGE_DRIVER: "s3", AWS_S3_BUCKET: "sbr-documents" }).configStatus()).toEqual({
+      ok: false,
+      reason: "s3_missing_region_or_bucket",
+    });
+  });
+
+  it("fails on half a credential pair, which getS3 would silently drop", () => {
+    expect(
+      make({
+        STORAGE_DRIVER: "s3",
+        AWS_REGION: "eu-central-1",
+        AWS_S3_BUCKET: "sbr-documents",
+        AWS_ACCESS_KEY_ID: "AKIA_EXAMPLE",
+      }).configStatus(),
+    ).toEqual({ ok: false, reason: "s3_partial_credentials" });
+  });
+
+  it("reports no configuration values, only a fixed reason", () => {
+    const serialized = JSON.stringify(
+      make({ STORAGE_DRIVER: "s3", AWS_S3_BUCKET: "sbr-secret-bucket" }).configStatus(),
+    );
+
+    expect(serialized).not.toContain("sbr-secret-bucket");
+  });
+});
