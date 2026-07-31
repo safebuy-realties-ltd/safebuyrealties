@@ -105,6 +105,43 @@ Give this to every agent alongside the story.
    mis-estimate costs an hour; a sprawling PR costs the reviewer an afternoon.
 6. Never run `prisma migrate reset`. The database is shared.
 7. If the change is user-facing and there is no feature-flag system yet, say so in the PR rather than inventing one.
+8. **Update `docs/mvp-board.html` in the same diff as the work.** Not afterwards, not in a follow-up.
+   This one is enforced rather than trusted — see below.
+
+### Rule 8, and why it is a gate rather than a habit
+
+The board is the only place a reader can see the whole week at once, which makes it the first thing
+that goes stale and the last thing anyone re-reads. It has now been wrong twice: two different
+commit hashes in two adjacent header lines, and a day marked complete above three unfinished rows
+of its own. A person caught both. That is one person's attention spent on something a check does in
+under a second.
+
+**What the rule requires of a story PR:**
+
+| | |
+| --- | --- |
+| A new story | Add its row: id, epic, title, what, **Day**, flag, size, depends-on, status |
+| Work that merged | Set the row to `done` **and put the PR number in it**. A done row with no PR is a claim nobody can trace to a diff |
+| Work that slipped | Move the **Day** column to the day it will now land, and fix the day card that listed it |
+| A parent whose children are still open | Status `part`. Not `done`, which erases the open half; not `planned`, which erases the merged half |
+| Scope you discovered | A new row, not a wider one. That is rule 5 written down where the next person will see it |
+
+**The Day column means the day the work landed, or the day it is now scheduled to land.** It is not
+a record of where it was first planned; the day cards carry that history in prose.
+
+**How it is enforced:**
+
+- `npm run validate:board` checks the board against itself: no duplicate ids, no dead dependency
+  references, every done row traceable to a PR, day cards agreeing with the Day column, the header
+  naming one commit that exists, and — the check that would have caught the failure above — no day
+  marked done while a row assigned to it is not.
+- CI runs the same script on every pull request, and **fails a PR that changes `src/`, `backend/`,
+  `scripts/`, `docs/` or the workflows without touching `docs/mvp-board.html`.**
+- The escape hatch is a line in the PR description reading `no-board-update: <reason>`. It is
+  deliberately visible: a waiver the reviewer reads is a decision, a waiver nobody sees is a hole.
+
+A gate that blocks honest work gets disabled within a week, so if the check is wrong, say so in the
+PR and fix `scripts/check-board.mjs`. What it must never become is a step people route around.
 
 ## What good looks like on Friday
 
