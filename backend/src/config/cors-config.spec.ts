@@ -51,12 +51,62 @@ describe("isOriginAllowed", () => {
     expect(isOriginAllowed("https://attacker.example.com", env())).toBe(false);
   });
 
-  it("allows a Vercel preview matching the documented project pattern", () => {
-    expect(isOriginAllowed("https://safebuyrealties-app-git-fix-abc.vercel.app", env())).toBe(true);
+  // Was "allows a Vercel preview matching the documented project pattern". The project prefix is
+  // squattable (E5-S2a), so production no longer accepts it; outside production it still holds.
+  it("allows a Vercel preview matching the project pattern outside production", () => {
+    const dev = env({ nodeEnv: "development", vercelEnv: "preview" });
+    expect(isOriginAllowed("https://safebuyrealties-app-git-fix-abc.vercel.app", dev)).toBe(true);
   });
 
   it("allows a Vercel preview matching the team-slug pattern", () => {
     expect(isOriginAllowed(`https://sbr-frontend-${TEAM_SLUG}.vercel.app`, env())).toBe(true);
+  });
+
+  // E5-S2a. .vercel.app subdomains are first-come-first-served, so anyone can register a
+  // project called safebuyrealties-evil and own safebuyrealties-evil.vercel.app. The team-slug
+  // rule below is not squattable, because Vercel team slugs are owned.
+  describe("squattable project-prefix hostnames", () => {
+    const SQUATTED = "https://safebuyrealties-evil.vercel.app";
+
+    it("rejects a squatted project-prefix host in production", () => {
+      expect(isOriginAllowed(SQUATTED, env())).toBe(false);
+    });
+
+    it("rejects it in production even with VERCEL_TEAM_SLUG unset", () => {
+      expect(isOriginAllowed(SQUATTED, env({ vercelTeamSlug: undefined }))).toBe(false);
+    });
+
+    it.each(["development", "test"])("still accepts it in %s", (nodeEnv) => {
+      expect(isOriginAllowed(SQUATTED, env({ nodeEnv, vercelEnv: undefined }))).toBe(true);
+    });
+
+    it("accepts any project-prefix host in production once it carries the team slug", () => {
+      expect(isOriginAllowed(`https://anything-${TEAM_SLUG}.vercel.app`, env())).toBe(true);
+      expect(isOriginAllowed(`https://safebuyrealties-evil-${TEAM_SLUG}.vercel.app`, env())).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("production with no VERCEL_TEAM_SLUG", () => {
+    const noSlug = () => env({ vercelTeamSlug: undefined });
+
+    it("accepts the FRONTEND_URL entries", () => {
+      expect(isOriginAllowed(PROD_ORIGIN, noSlug())).toBe(true);
+    });
+
+    it.each([
+      "https://safebuyrealties-app-git-fix-abc.vercel.app",
+      `https://sbr-frontend-${TEAM_SLUG}.vercel.app`,
+      "https://safebuyrealties.vercel.app",
+    ])("accepts no preview origin, including %s", (origin) => {
+      expect(isOriginAllowed(origin, noSlug())).toBe(false);
+    });
+
+    it.each(["", "   "])("treats a blank slug the same as unset", (vercelTeamSlug) => {
+      expect(isOriginAllowed(`https://sbr-frontend-${TEAM_SLUG}.vercel.app`, env({ vercelTeamSlug })))
+        .toBe(false);
+    });
   });
 
   // The reason the preview check is structural rather than a substring test.
