@@ -50,6 +50,7 @@ All accounts use password: `password123`
 | Frontend tests | `npm test` (from root, Vitest) |
 | Backend tests | `cd backend && npm test` (Jest) |
 | TypeScript check | `npm run validate:tsc` |
+| Board check (required by CI) | `npm run validate:board` |
 | Prisma generate | `cd backend && npx prisma generate` |
 | Prisma migrate (cloud DB) | `cd backend && npx prisma migrate deploy` |
 | DB seed (optional) | `cd backend && npx prisma db seed` |

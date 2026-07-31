@@ -14,9 +14,12 @@ Read `docs/DEVELOPMENT_GUIDE.md` for TDD, PR/CI, and full-stack validation layer
 2. Create a feature branch from `main` (never commit on `main`)
 3. **TDD:** write failing tests first, then implement (backend + frontend as needed)
 4. Validate: `npm run validate:tsc`, `npm test`, local API smoke + browser on localhost (see `docs/LOCAL_DEVELOPMENT.md`)
-5. Push branch, open PR, ensure **CI is green** before marking done
-6. After merge: mark item `[x]`, update Last Session Notes
-7. Repeat until context limit; hand off per Handoff Protocol
+5. **Update `docs/mvp-board.html` in the same commit range** — the row's status, PR number and Day
+   column — then `npm run validate:board`. CI fails a PR that changes the work without it
+   (`docs/HANDOVER_WEEK.md`, rule 8, has the full table and the `no-board-update:` escape hatch)
+6. Push branch, open PR, ensure **CI is green** before marking done
+7. After merge: mark item `[x]`, update Last Session Notes
+8. Repeat until context limit; hand off per Handoff Protocol
 
 ## Validation Rules
 
@@ -76,7 +79,10 @@ The next tool or session picks up by reading the checklist, finding `[~]` or the
 ## Rules You Must Not Break
 
 - Never mark an item done without running validation
-- Never modify files outside the scope of the current checklist item
+- Never land work without its row on `docs/mvp-board.html` — status, PR number, Day column. CI
+  enforces this; the only way past it is a `no-board-update: <reason>` line the reviewer reads
+- Never modify files outside the scope of the current checklist item, **except the board**, which
+  every story PR updates by rule
 - Never invent a new pattern when an existing one is in the codebase — match what is already there
 - Never install a new package without noting it explicitly in the commit message
 - Never run `prisma migrate reset` or any destructive database command
