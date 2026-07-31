@@ -454,20 +454,49 @@ Do not copy `standalone-dd.service.ts`. Extract the shared case machinery into a
 
 > **As** a seller who uploaded a title deed, **I want** only permitted people to open it, **so that** listing a property does not publish my documents.
 
-**Size** M · **Flag** `secure_docs` · **Deps** none
+**Size** M · **Status** 🔨 in progress, split into four · **Flag** `secure_docs`, see criterion 6 · **Deps** none
 
-**Evidence of the gap**
+**Evidence of the gap** (as found on `main` @ `fc05e1e`, retained as the record)
 
 `backend/src/main.ts:23` mounts `app.use("/uploads", express.static(resolveUploadRoot()))` before any guard. `backend/src/storage/storage.service.ts:58` to `:63` returns `/uploads/{key}` for the local driver, which is the default (`STORAGE_DRIVER` defaults to `local` at `storage.service.ts:40`). `vite.config.ts` proxies `/uploads` straight through in development. Every KYC document (`kyc.service.ts:77`, `:133`), professional credential (`professionals.service.ts:263`), listing document, and DD report resolves to a public path. Anyone who obtains a storage key can fetch the file with no session.
 
+The mount now lives at `backend/src/app-bootstrap.ts:39` behind the E3-S1b gate. Express middleware still runs ahead of the Nest router, so a guard on a controller can never protect that path. That is why the authorized read path had to be a Nest route rather than a signed URL.
+
+**The split.** One PR could not carry this once the middleware order was understood, so the story was cut into four. Each landed with a probe or a regression test that fails if the fix is reverted.
+
+| Sub-story | Scope | Status |
+| --- | --- | --- |
+| E3-S1a | Executable probe proving private documents were served with no session | ✅ merged, PR #103 |
+| E3-S1b | Category gate in front of the static mount, so it serves only public listing imagery | ✅ merged, PR #104 |
+| E3-S1c | Authorized read path for `kyc/` and `professionals/` on both storage drivers | ✅ merged, PR #106 |
+| E3-S1d | DD reports, POA documents, private listing documents, then remove the mount | 📋 planned, see the scope note below |
+
 **Acceptance criteria**
 
-1. `GET /documents/:id/content` streams a document after an ownership and privilege check, and is the only path by which private files are reachable.
-2. The unauthenticated static `/uploads` mount is removed. Public listing imagery, if it must stay public, moves to a separate public prefix that only ever holds listing media.
-3. Direct requests to a private key without a session return 404.
-4. Every access writes an audit row with actor, document, and outcome.
-5. A probe test walks every document category as an anonymous client and as a wrong-role client, and asserts 404 on all of them.
-6. Behind `secure_docs`, with a documented rollback that re-enables the old path for one release only.
+1. ✅ **for `kyc/` and `professionals/`** (E3-S1c), 📋 for the rest (E3-S1d). `StorageService.getSignedUrl()` resolves a private key to `GET /api/v1/documents/file?key=<storage key>`, a Nest route that authorizes each request against the live session. **Route shape deviates from the wording and the deviation is load-bearing:** neither family has a document id to route by. `Document` rows are listing-scoped (`schema.prisma:188`, `listingId` non-null), KYC keys live in `kyc_records.documentKeys` as a JSON array with no per-document row (`schema.prisma:543`), and credential keys are two columns on `ProfessionalProfile` (`schema.prisma:321` to `:323`). The route keys on the thing that exists.
+2. 📋 **not done, and the second sentence is superseded.** Moving public imagery to a separate prefix would need a data migration against the shared cloud Postgres, which the handover working agreement forbids. E3-S1b reached the same guarantee without one: the gate resolves each requested key to its `Document` row and serves it only when the category is public listing media, so the mount can no longer return a title deed or a government ID whatever prefix it sits under. Removing the mount outright stays open and belongs to E3-S1d, once no family still resolves to it.
+3. ✅ **for the families that have landed, with a deliberate status-code deviation.** 401 with no session, 403 for a caller who may not read this owner's documents, 404 for a key that names nothing readable. Authorization is decided before storage is touched, so a real key and an imaginary one are indistinguishable to a refused caller and there is no existence oracle. A blanket 404 would also mean answering 404 to a caller who supplied the key themselves, which conceals nothing and makes a genuine permissions problem unreportable in the UI.
+4. ✅ **for the families that have landed.** `PRIVATE_DOCUMENT_READ` and `PRIVATE_DOCUMENT_READ_DENIED` carry actor, key, owner, role and IP.
+5. 📋 **partial.** The walk covers `kyc/` and `professionals/` (anonymous, wrong buyer, wrong seller, wrong professional) plus the deny-everything probe in `uploads-exposure.spec.ts`. The every-category walk lands with E3-S1d, when there is a policy for every category to walk.
+6. 🚫 **not implementable as written.** There is no feature-flag mechanism anywhere in this repository: no flag table, no config lookup, no `featureFlag` helper. Building one is a story of its own, not a line item inside this one. Every story in this document carrying a **Flag** field inherits the same problem. Recorded rather than silently dropped.
+
+**Scope note for E3-S1d, from a read of the remaining families**
+
+The three remaining families cannot reuse E3-S1c's authorization model. That model derives the owner from a key segment, because `kyc/<userId>/…` and `professionals/<userId>/…` both put the owner's id in the key and both key builders take it from the uploader's own JWT subject. **None of the remaining families contains a user id.** Each needs a database lookup over a different relation graph:
+
+| Family | Key shape | Who may read | Lookup |
+| --- | --- | --- | --- |
+| DD reports | `due-diligence/<orderId>/reports/…` and `…/assignments/<assignmentId>/…` | ordering buyer, assigned professional, operators | `DueDiligenceOrder.buyerId` (`schema.prisma:375`) plus `DueDiligenceAssignment.professionalId` (`:418`) |
+| POA | `poa/<transactionId>/…` | POA buyer, transaction counterparty, operators | `PowerOfAttorney.buyerId` (`:464`) to `Transaction` (`:244`) to `Listing.sellerId` (`:138`) |
+| Listing documents | `listings/<listingId>/…`, non-media categories | seller, counterparty in an active transaction, assigned professionals, operators | `Document.listingId` (`:188`) and `uploadedById` (`:190`), and it must not fight the E3-S1b public gate |
+
+So `private-documents.ts` is the extension point for the **routing** table only. The **policy** record needs a new async, Prisma-backed authorize step, and `StorageModule` needs a Prisma dependency it does not have today. PR #106's review note called the addition pure; that is true of routing and not of authorization, and this table is the correction.
+
+E3-S1d also loses the property that kept E3-S1c small. C changed no frontend code because both its families already flowed through `getSignedUrl()`, so the emitted field changed value and not shape. Of the remaining three, only DD reports do the same (`standalone-dd.service.ts:438`, `:517`, `:540`). POA emits `pdfStorageKey` and `qrCodeStorageKey` raw and never calls `getSignedUrl()` at all (`poa.service.ts:280`, `:282`), and listing documents emit `storageKey` raw (`documents.service.ts:63`), with the frontend building `/uploads/${storageKey}` itself at `src/routes/purchase.$listingId.tsx:54` and `src/routes/listings.$listingId.tsx:34`. Those two need API response-shape changes and matching frontend edits.
+
+**Suggested further split.** E3-S1d-1, DD reports: introduces the Prisma-backed policy shape with one family using it, and needs no frontend change. E3-S1d-2, POA and listing documents, then remove the mount and complete the criterion 5 walk: response-shape and frontend work, and it is the last thing standing between the mount and deletion.
+
+**Carried debt.** `Document.storageKey` has no index (`schema.prisma:196`). The E3-S1b gate resolves every public image request by storage key, so each one is a sequential scan. Harmless at MVP volume, but `@@index([storageKey])` belongs in the next migration this project is allowed to run.
 
 ---
 
@@ -484,7 +513,7 @@ Do not copy `standalone-dd.service.ts`. Extract the shared case machinery into a
 **Acceptance criteria**
 
 1. `STORAGE_DRIVER=s3` is required in production. The application refuses to start on a serverless platform with the local driver.
-2. Bucket policy denies public reads. All access is through pre-signed URLs from E3-S1.
+2. Bucket policy denies public reads. **Reworded after E3-S1c**: this used to read "all access is through pre-signed URLs from E3-S1", which is now wrong for private families. A pre-signed URL is a bearer capability, an hour of access to whoever holds it with no session and no role check, so it cannot express "the owner and platform operators only". Private keys are read through `PrivateDocumentController`, which authorizes each request and only then asks the driver for the bytes. Pre-signed URLs remain correct for public listing media. `storage.service.spec.ts` configures the s3 driver with no credentials at all and asserts a private key still resolves to the authorized reader, so a future change that presigns one fails the suite.
 3. Server-side encryption is enabled and object versioning is on, so an accidental overwrite is recoverable.
 4. A one-off migration copies any recoverable existing objects and reports the keys it could not find, rather than failing silently.
 5. `docs/LOCAL_DEVELOPMENT.md` documents the local driver as development only.
