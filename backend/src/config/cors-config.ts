@@ -8,7 +8,9 @@ import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-option
  * calls against this API using a visitor's session cookie.
  *
  * Allowed origins come from FRONTEND_URL as a comma-separated list, plus the Vercel preview
- * hostnames documented in backend/.env.example.
+ * hostnames documented in backend/.env.example. In production the preview set narrows to the
+ * team-slug form only — see matchesVercelPreview below for why the project-prefix form is
+ * not safe there.
  */
 
 /** Vercel project hostnames start with this, e.g. safebuyrealties-app.vercel.app. */
@@ -71,21 +73,41 @@ export function parseAllowedOrigins(frontendUrl?: string): string[] {
 }
 
 /**
- * Matches the preview patterns documented in .env.example: safebuyrealties*.vercel.app and
- * *-${VERCEL_TEAM_SLUG}.vercel.app.
+ * Matches this project's Vercel preview hostnames.
+ *
+ * Two patterns exist, and only one of them is safe in production:
+ *
+ * - `*-${VERCEL_TEAM_SLUG}.vercel.app` — the team-slug suffix. A Vercel team slug is owned by
+ *   the team that registered it, so this form cannot be obtained by an outsider. Accepted
+ *   everywhere.
+ * - `safebuyrealties*.vercel.app` — the bare project-name prefix. `.vercel.app` subdomains are
+ *   globally first-come-first-served, so anyone may create a project named `safebuyrealties-evil`
+ *   and own `safebuyrealties-evil.vercel.app`. Accepted **outside production only**, where it
+ *   keeps local and preview workflows working; in production it would let a squatted hostname
+ *   make credentialed cross-origin calls against the live API.
+ *
+ * In production the accepted set is therefore exactly: the FRONTEND_URL origins (checked by the
+ * caller) plus the team-slug suffix form. With VERCEL_TEAM_SLUG unset in production no preview
+ * origin is accepted at all — previews simply are not allowed, which is not a startup failure.
  *
  * Deliberately structural rather than a substring test. The hostname must be exactly three
  * labels ending in vercel.app, so evil-safebuyrealties.vercel.app.attacker.com (five labels)
  * and safebuyrealties.evil.vercel.app (four labels) are both rejected.
  */
-function matchesVercelPreview(hostname: string, teamSlug?: string): boolean {
+function matchesVercelPreview(
+  hostname: string,
+  teamSlug: string | undefined,
+  productionLike: boolean,
+): boolean {
   const labels = hostname.split(".");
   if (labels.length !== 3) return false;
   if (labels[1] !== "vercel" || labels[2] !== "app") return false;
 
   const subdomain = labels[0];
   if (subdomain.length === 0) return false;
-  if (subdomain.startsWith(VERCEL_PROJECT_PREFIX)) return true;
+
+  // Squattable, so production never accepts it on the project prefix alone.
+  if (!productionLike && subdomain.startsWith(VERCEL_PROJECT_PREFIX)) return true;
 
   const slug = teamSlug?.trim().toLowerCase();
   if (slug && subdomain.length > slug.length + 1 && subdomain.endsWith(`-${slug}`)) return true;
@@ -105,12 +127,18 @@ export function isOriginAllowed(origin: string | undefined, env: CorsEnvironment
 
   const url = new URL(normalized);
   const hostname = url.hostname.toLowerCase();
+  const productionLike = isProductionLike(env);
 
   // Local dev and the test suite run the frontend on assorted ports.
-  if (!isProductionLike(env) && LOCAL_HOSTNAMES.has(hostname)) return true;
+  if (!productionLike && LOCAL_HOSTNAMES.has(hostname)) return true;
 
   // Vercel previews are always served over https.
-  if (url.protocol === "https:" && matchesVercelPreview(hostname, env.vercelTeamSlug)) return true;
+  if (
+    url.protocol === "https:" &&
+    matchesVercelPreview(hostname, env.vercelTeamSlug, productionLike)
+  ) {
+    return true;
+  }
 
   return false;
 }
