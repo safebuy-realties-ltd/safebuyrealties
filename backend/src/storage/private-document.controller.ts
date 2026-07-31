@@ -12,9 +12,9 @@ import type { Request, Response } from "express";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
-import { isInternalRole } from "../common/user-roles";
 import { AuditService } from "../audit/audit.service";
 import { AuditAction } from "../audit/audit-actions.constants";
+import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { StorageService } from "./storage.service";
 import {
   PRIVATE_DOCUMENT_ROUTE,
@@ -23,7 +23,7 @@ import {
 } from "./private-documents";
 
 /**
- * The authorized read path for private documents (E3-S1c).
+ * The authorized read path for private documents (E3-S1c, E3-S1d).
  *
  * Every private key StorageService hands out resolves here, on both drivers, and the decision is
  * made per request from the live session rather than baked into a URL. Reachable because it is a
@@ -32,25 +32,31 @@ import {
  *
  * Who may read what:
  *
- * | Family                   | Readers                                        |
- * | ------------------------ | ---------------------------------------------- |
- * | `kyc/`                   | the subject user, plus STAFF/ADMIN/SUPER_ADMIN  |
- * | `professionals/`         | the professional, plus STAFF/ADMIN/SUPER_ADMIN  |
+ * | Family            | Readers                                                         |
+ * | ----------------- | --------------------------------------------------------------- |
+ * | `kyc/`            | the subject user, plus STAFF/ADMIN/SUPER_ADMIN                   |
+ * | `professionals/`  | the professional, plus STAFF/ADMIN/SUPER_ADMIN                   |
+ * | `due-diligence/`  | the ordering buyer and any assigned professional, plus operators |
  *
- * Operators are included because both families exist to be reviewed by them, and both review
+ * Operators are included because these families exist to be reviewed by them, and the review
  * screens already sit behind `@Roles(STAFF, ADMIN, …)` — `kyc.controller.ts:queue` and
  * `professionals.controller.ts:listPending`. Narrowing to ADMIN alone would close the staff KYC
  * queue, not secure it.
  *
- * Status codes: 401 with no session (the guard), 403 for a caller who may not read this owner's
- * documents, 404 for a key that names nothing readable. Authorization is decided before storage
- * is touched, so a caller who is refused never learns whether the object exists.
+ * The reader set itself is `private-document-authorizer.ts`, because the due diligence family
+ * needs a database lookup to answer and `private-documents.ts` is deliberately Prisma-free.
+ *
+ * Status codes: 401 with no session (the guard), 403 for a caller who may not read this document,
+ * 404 for a key that names nothing readable. Authorization is decided before storage is touched,
+ * so a caller who is refused never learns whether the object exists — and a refusal is 403 even
+ * when the subject entity does not exist, so the endpoint is not an id oracle either.
  */
 @Controller(PRIVATE_DOCUMENT_ROUTE)
 @UseGuards(JwtAuthGuard)
 export class PrivateDocumentController {
   constructor(
     private storage: StorageService,
+    private authorizer: PrivateDocumentAuthorizer,
     private audit: AuditService,
   ) {}
 
@@ -64,14 +70,14 @@ export class PrivateDocumentController {
     const target = resolvePrivateDocumentTarget(key);
     if (!target) throw new NotFoundException("Document not found");
 
-    const isOwner = target.ownerId === user.sub;
-    if (!isOwner && !isInternalRole(user.role)) {
+    const access = await this.authorizer.decide(target, user);
+    if (!access.allowed) {
       void this.audit.log({
         actorId: user.sub,
         action: AuditAction.PRIVATE_DOCUMENT_READ_DENIED,
         entity: target.policy.auditEntity,
         entityId: target.key,
-        after: { ownerId: target.ownerId, role: user.role },
+        after: { ownerId: access.ownerId, role: user.role, reason: access.reason },
         ipAddress: req.ip ?? null,
       });
       throw new ForbiddenException("You do not have access to this document");
@@ -87,7 +93,12 @@ export class PrivateDocumentController {
       action: AuditAction.PRIVATE_DOCUMENT_READ,
       entity: target.policy.auditEntity,
       entityId: target.key,
-      after: { ownerId: target.ownerId, self: isOwner, role: user.role },
+      after: {
+        ownerId: access.ownerId,
+        self: access.reason === "owner",
+        role: user.role,
+        reason: access.reason,
+      },
       ipAddress: req.ip ?? null,
     });
 

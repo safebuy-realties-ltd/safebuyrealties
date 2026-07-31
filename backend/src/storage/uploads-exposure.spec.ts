@@ -17,6 +17,7 @@ import request from "supertest";
 import { configureApp } from "../app-bootstrap";
 import { AuditService } from "../audit/audit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { PrivateDocumentController } from "./private-document.controller";
 import { StorageService } from "./storage.service";
 
@@ -67,8 +68,14 @@ class ProbeController {
  * The KYC key under probe has no Document row — nothing outside listing documents does. Stubbed
  * rather than connected because this suite must not need the shared cloud Postgres, and because
  * "no row" is exactly what the real database would answer for it.
+ *
+ * The order lookup is never reached: every request here is refused by the guard, which is the
+ * whole point of the probe. It is present so the authorizer can be constructed.
  */
-const noPublicDocuments = { document: { findFirst: () => Promise.resolve(null) } };
+const noPublicDocuments = {
+  document: { findFirst: () => Promise.resolve(null) },
+  dueDiligenceOrder: { findUnique: () => Promise.resolve(null) },
+};
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true })],
@@ -76,6 +83,7 @@ const noPublicDocuments = { document: { findFirst: () => Promise.resolve(null) }
   controllers: [ProbeController, PrivateDocumentController],
   providers: [
     StorageService,
+    PrivateDocumentAuthorizer,
     { provide: PrismaService, useValue: noPublicDocuments },
     { provide: AuditService, useValue: { log: () => Promise.resolve() } },
     { provide: APP_GUARD, useClass: DenyEveryRequestGuard },

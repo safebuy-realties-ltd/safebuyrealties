@@ -62,6 +62,21 @@ describe("StorageService (local driver)", () => {
     expect(url).toBe("/api/v1/documents/file?key=kyc%2Fuser-1%2F1700_government-id.pdf");
   });
 
+  /**
+   * E3-S1d-1. Both due diligence key shapes route to the reader, and a key predating the
+   * `<orderId>` layout does not: it names no order to authorize against, so it fails closed to
+   * the static path, where the E3-S1b gate answers 404.
+   */
+  it.each([
+    ["due-diligence/order-1/reports/1700-report.pdf", true],
+    ["due-diligence/order-1/assignments/assign-1/1700-survey.pdf", true],
+    ["due-diligence/legacy-report.pdf", false],
+  ])("routes %s to the authorized reader: %s", async (key, routed) => {
+    const url = await service.getSignedUrl(key);
+
+    expect(url.startsWith("/api/v1/documents/file?key=")).toBe(routed);
+  });
+
   it("readObject returns the bytes and the length for a stored key", async () => {
     const key = "kyc/user-1/1700_government-id.pdf";
     await service.upload(Buffer.from("private bytes"), key, "application/pdf");
@@ -163,6 +178,11 @@ describe("StorageService (s3 driver)", () => {
       service.getSignedUrl("professionals/user-1/license/1700_licence.jpg"),
     ).resolves.toBe(
       "/api/v1/documents/file?key=professionals%2Fuser-1%2Flicense%2F1700_licence.jpg",
+    );
+    await expect(
+      service.getSignedUrl("due-diligence/order-1/reports/1700-report.pdf"),
+    ).resolves.toBe(
+      "/api/v1/documents/file?key=due-diligence%2Forder-1%2Freports%2F1700-report.pdf",
     );
   });
 

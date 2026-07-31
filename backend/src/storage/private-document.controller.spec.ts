@@ -19,6 +19,7 @@ import { AuditAction } from "../audit/audit-actions.constants";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { PrismaService } from "../prisma/prisma.service";
+import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { PrivateDocumentController } from "./private-document.controller";
 import { StorageService } from "./storage.service";
 import {
@@ -28,7 +29,7 @@ import {
 } from "./private-documents";
 
 /**
- * E3-S1c: what the authorized reader actually decides.
+ * E3-S1c and E3-S1d-1: what the authorized reader actually decides.
  *
  * `uploads-exposure.spec.ts` proves the private document URL is a Nest route rather than a static
  * path, which is the structural half. This is the other half — with a real session, who gets the
@@ -39,11 +40,22 @@ import {
 const OWNER = "11111111-1111-1111-1111-111111111111";
 const OTHER = "22222222-2222-2222-2222-222222222222";
 const PROFESSIONAL = "33333333-3333-3333-3333-333333333333";
+const DD_BUYER = "44444444-4444-4444-4444-444444444444";
+const ASSIGNED_PROFESSIONAL = "55555555-5555-5555-5555-555555555555";
+const DD_ORDER = "66666666-6666-6666-6666-666666666666";
+const ASSIGNMENT = "77777777-7777-7777-7777-777777777777";
+/** Never in the stub, so it stands in for both a deleted order and a guessed id. */
+const UNKNOWN_ORDER = "88888888-8888-8888-8888-888888888888";
 
 const KYC_KEY = `kyc/${OWNER}/1700000000000_government-id.pdf`;
 const KYC_BYTES = "government ID scan";
 const LICENSE_KEY = `professionals/${PROFESSIONAL}/license/1700000000000_licence.jpg`;
 const LICENSE_BYTES = "surveyor licence";
+/** Both due diligence key shapes, exactly as standalone-dd.service.ts:1107 and :1275 build them. */
+const DD_REPORT_KEY = `due-diligence/${DD_ORDER}/reports/1700000000000-report.pdf`;
+const DD_REPORT_BYTES = "due diligence report";
+const DD_ASSIGNMENT_KEY = `due-diligence/${DD_ORDER}/assignments/${ASSIGNMENT}/1700000000000-survey.pdf`;
+const DD_ASSIGNMENT_BYTES = "surveyor findings";
 /** No upload path validates a MIME type yet (that is E3-S3), so this is reachable today. */
 const SMUGGLED_KEY = `kyc/${OWNER}/1700000000001_selfie.html`;
 const SMUGGLED_BYTES = "<script>fetch('/api/v1/users/me')</script>";
@@ -66,11 +78,32 @@ class StubSessionGuard implements CanActivate {
 
 const auditRows: AuditLogInput[] = [];
 
+/**
+ * One order, bought by DD_BUYER, worked by ASSIGNED_PROFESSIONAL. Stubbed rather than connected
+ * because this suite must not need the shared cloud Postgres; the shape is exactly the `select`
+ * the authorizer issues.
+ */
+const dueDiligenceOrders: Readonly<
+  Record<string, { buyerId: string; assignments: { professionalId: string }[] }>
+> = {
+  [DD_ORDER]: { buyerId: DD_BUYER, assignments: [{ professionalId: ASSIGNED_PROFESSIONAL }] },
+};
+
+const prismaStub = {
+  // Only the /uploads gate reaches for this, and it never resolves a private key.
+  document: { findFirst: () => Promise.resolve(null) },
+  dueDiligenceOrder: {
+    findUnique: ({ where }: { where: { id: string } }) =>
+      Promise.resolve(dueDiligenceOrders[where.id] ?? null),
+  },
+};
+
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true })],
   controllers: [PrivateDocumentController],
   providers: [
     StorageService,
+    PrivateDocumentAuthorizer,
     {
       provide: AuditService,
       useValue: {
@@ -80,13 +113,12 @@ const auditRows: AuditLogInput[] = [];
         },
       },
     },
-    // Only the /uploads gate reaches for this, and it never resolves a private key.
-    { provide: PrismaService, useValue: { document: { findFirst: () => Promise.resolve(null) } } },
+    { provide: PrismaService, useValue: prismaStub },
   ],
 })
 class PrivateDocumentTestModule {}
 
-describe("authorized private document access (E3-S1c)", () => {
+describe("authorized private document access (E3-S1c, E3-S1d-1)", () => {
   let app: NestExpressApplication;
   let uploadRoot: string;
   const originalEnv = {
@@ -114,6 +146,8 @@ describe("authorized private document access (E3-S1c)", () => {
     };
     write(KYC_KEY, KYC_BYTES);
     write(LICENSE_KEY, LICENSE_BYTES);
+    write(DD_REPORT_KEY, DD_REPORT_BYTES);
+    write(DD_ASSIGNMENT_KEY, DD_ASSIGNMENT_BYTES);
     write(SMUGGLED_KEY, SMUGGLED_BYTES);
     fs.writeFileSync(path.join(os.tmpdir(), "sbr-private-docs-outside.txt"), "outside the root");
 
@@ -232,6 +266,93 @@ describe("authorized private document access (E3-S1c)", () => {
     });
   });
 
+  /**
+   * The families above are decided from the key. These are decided from the database, because the
+   * id in the key names an order and not a person. Every refusal below is a 403, including the one
+   * for an order that does not exist.
+   */
+  describe("who gets due diligence bytes (E3-S1d-1)", () => {
+    it("serves a report to the buyer who ordered it", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+
+      const response = await download(DD_REPORT_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_REPORT_BYTES);
+    });
+
+    it("serves a report to a professional assigned to that order", async () => {
+      currentUser = session(ASSIGNED_PROFESSIONAL, UserRole.PROFESSIONAL);
+
+      const response = await download(DD_REPORT_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_REPORT_BYTES);
+    });
+
+    it("serves an assignment attachment to the assigned professional too", async () => {
+      currentUser = session(ASSIGNED_PROFESSIONAL, UserRole.PROFESSIONAL);
+
+      const response = await download(DD_ASSIGNMENT_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_ASSIGNMENT_BYTES);
+    });
+
+    it("refuses a professional who is not assigned to that order", async () => {
+      currentUser = session(PROFESSIONAL, UserRole.PROFESSIONAL);
+
+      const response = await request(app.getHttpServer()).get(url(DD_REPORT_KEY));
+
+      expect(response.status).toBe(403);
+      expect(response.text).not.toContain(DD_REPORT_BYTES);
+    });
+
+    it("refuses a buyer who did not order it", async () => {
+      currentUser = session(OTHER, UserRole.BUYER);
+
+      const response = await request(app.getHttpServer()).get(url(DD_REPORT_KEY));
+
+      expect(response.status).toBe(403);
+    });
+
+    it("serves a report to STAFF, who has to support the order", async () => {
+      currentUser = session(OTHER, UserRole.STAFF);
+
+      const response = await download(DD_REPORT_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_REPORT_BYTES);
+    });
+
+    /**
+     * The endpoint must not tell a logged-in caller which order ids are real. A well-formed key
+     * naming an order that does not exist has to be indistinguishable from one naming an order
+     * that does and is not theirs — hence 403 on both, decided before storage is touched.
+     */
+    it("403s rather than 404s on an order that does not exist, so ids cannot be walked", async () => {
+      currentUser = session(OTHER, UserRole.BUYER);
+
+      const real = await request(app.getHttpServer()).get(url(DD_REPORT_KEY));
+      const invented = await request(app.getHttpServer()).get(
+        url(`due-diligence/${UNKNOWN_ORDER}/reports/1700000000000-report.pdf`),
+      );
+
+      expect(real.status).toBe(403);
+      expect(invented.status).toBe(403);
+    });
+
+    it("lets an operator through to a plain 404 when the order does not exist", async () => {
+      currentUser = session(OTHER, UserRole.ADMIN);
+
+      const response = await request(app.getHttpServer()).get(
+        url(`due-diligence/${UNKNOWN_ORDER}/reports/1700000000000-report.pdf`),
+      );
+
+      expect(response.status).toBe(404);
+    });
+  });
+
   describe("keys that name nothing readable", () => {
     it.each([
       ["no key at all", ""],
@@ -333,7 +454,32 @@ describe("authorized private document access (E3-S1c)", () => {
           action: AuditAction.PRIVATE_DOCUMENT_READ,
           entity: "KycDocument",
           entityId: KYC_KEY,
-          after: expect.objectContaining({ ownerId: OWNER, self: false }),
+          after: expect.objectContaining({ ownerId: OWNER, self: false, reason: "operator" }),
+        }),
+      ]);
+    });
+
+    /**
+     * The reason matters most for this family: "who is this person to this document" is no longer
+     * visible in the key, so without it the trail cannot distinguish a buyer reading their own
+     * report from a professional reading a client's.
+     */
+    it("records why a due diligence reader was allowed", async () => {
+      currentUser = session(ASSIGNED_PROFESSIONAL, UserRole.PROFESSIONAL);
+
+      await request(app.getHttpServer()).get(url(DD_REPORT_KEY));
+
+      expect(auditRows).toEqual([
+        expect.objectContaining({
+          actorId: ASSIGNED_PROFESSIONAL,
+          action: AuditAction.PRIVATE_DOCUMENT_READ,
+          entity: "DueDiligenceReport",
+          entityId: DD_REPORT_KEY,
+          after: expect.objectContaining({
+            ownerId: DD_BUYER,
+            self: false,
+            reason: "assigned-professional",
+          }),
         }),
       ]);
     });
@@ -367,16 +513,34 @@ describe("private document key parsing", () => {
   it("reads the owner out of a KYC key", () => {
     expect(resolvePrivateDocumentTarget(`kyc/${OWNER}/1700_id.pdf`)).toEqual({
       key: `kyc/${OWNER}/1700_id.pdf`,
-      ownerId: OWNER,
-      policy: expect.objectContaining({ auditEntity: "KycDocument" }),
+      subjectId: OWNER,
+      policy: expect.objectContaining({ subject: "user", auditEntity: "KycDocument" }),
     });
   });
 
   it("reads the owner out of a credential key, past the kind segment", () => {
     expect(resolvePrivateDocumentTarget(`professionals/${OWNER}/id/1700_passport.png`)).toEqual({
       key: `professionals/${OWNER}/id/1700_passport.png`,
-      ownerId: OWNER,
-      policy: expect.objectContaining({ auditEntity: "ProfessionalDocument" }),
+      subjectId: OWNER,
+      policy: expect.objectContaining({ subject: "user", auditEntity: "ProfessionalDocument" }),
+    });
+  });
+
+  /**
+   * The subject id here is an order, not a person, which is why the policy carries `subject`:
+   * comparing this value to a session subject would be an authorization bug, not a stricter check.
+   */
+  it.each([
+    ["a report", `due-diligence/${DD_ORDER}/reports/1700-report.pdf`],
+    ["an assignment attachment", `due-diligence/${DD_ORDER}/assignments/${ASSIGNMENT}/1700-s.pdf`],
+  ])("reads the order id out of %s key", (_label, key) => {
+    expect(resolvePrivateDocumentTarget(key)).toEqual({
+      key,
+      subjectId: DD_ORDER,
+      policy: expect.objectContaining({
+        subject: "due-diligence-order",
+        auditEntity: "DueDiligenceReport",
+      }),
     });
   });
 
@@ -394,7 +558,9 @@ describe("private document key parsing", () => {
     ["a double slash", `kyc//${OWNER}/id.pdf`],
     ["a null byte", `kyc/${OWNER}/id.pdf\0`],
     ["a public family", "listings/abc/hero.jpg"],
-    ["a family E3-S1d still owns", "due-diligence/abc/report.pdf"],
+    // Fails closed: a due diligence key that is not `due-diligence/<orderId>/…` names no order to
+    // authorize against, so it keeps its /uploads URL and stays 404 behind the E3-S1b gate.
+    ["a due diligence key one segment short", "due-diligence/abc/report.pdf"],
   ])("rejects %s", (_label, key) => {
     expect(resolvePrivateDocumentTarget(key)).toBeNull();
   });
