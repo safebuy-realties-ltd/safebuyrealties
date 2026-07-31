@@ -28,9 +28,11 @@ export type PowerOfAttorneyResponse = {
   transactionId: string;
   buyerId: string;
   listingId: string;
-  pdfStorageKey: string;
+  /** Authorized-reader URL, not a storage key. See serialize(). */
+  pdfUrl: string;
   documentHash: string;
-  qrCodeStorageKey: string;
+  /** Authorized-reader URL, not a storage key. See serialize(). */
+  qrCodeUrl: string;
   signatureMethod: string;
   signatureName: string;
   consentFlags: PoaConsentFlags;
@@ -271,15 +273,31 @@ export class PoaService {
     };
   }
 
-  private serialize(record: PowerOfAttorney): PowerOfAttorneyResponse {
+  /**
+   * The response carries URLs, never storage keys (E3-S1d-2).
+   *
+   * Handing the raw key to the client was the leak: `poa/<transactionId>/…` resolves under the
+   * `/uploads` static mount, so anyone who saw one could fetch an executed deed with no session at
+   * all, and the QR image alongside it verifies that deed to whoever holds it. Routing both through
+   * `getSignedUrl()` sends them to PrivateDocumentController instead, which authorizes every
+   * request (`storage.service.ts:113`, `private-documents.ts`). The field names say `Url` because
+   * that is what they now hold; a field called `pdfStorageKey` containing a URL is how the next
+   * caller reintroduces the bug.
+   */
+  private async serialize(record: PowerOfAttorney): Promise<PowerOfAttorneyResponse> {
+    const [pdfUrl, qrCodeUrl] = await Promise.all([
+      this.storage.getSignedUrl(record.pdfStorageKey),
+      this.storage.getSignedUrl(record.qrCodeStorageKey),
+    ]);
+
     return {
       id: record.id,
       transactionId: record.transactionId,
       buyerId: record.buyerId,
       listingId: record.listingId,
-      pdfStorageKey: record.pdfStorageKey,
+      pdfUrl,
       documentHash: record.documentHash,
-      qrCodeStorageKey: record.qrCodeStorageKey,
+      qrCodeUrl,
       signatureMethod: record.signatureMethod,
       signatureName: record.signatureName,
       consentFlags: record.consentFlags as PoaConsentFlags,
