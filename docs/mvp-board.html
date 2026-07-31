@@ -74,6 +74,28 @@
   .days { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
   .day { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
   .day.done { background:var(--wash); }
+  .day.review { border-color:var(--series-1); box-shadow:inset 0 0 0 1px var(--series-1); }
+  .day.later { background:transparent; border-style:dashed; }
+  .day.later .n, .day.later li b { color:var(--text-secondary); }
+  .day.later li { color:var(--text-muted); }
+  .day .lrow { display:flex; justify-content:space-between; gap:10px; font-size:12.5px;
+    color:var(--text-secondary); padding:2px 0; }
+  .day .lrow span:last-child { font-variant-numeric:tabular-nums; color:var(--text-muted); }
+  a.pr { color:var(--series-1); text-decoration:none; font-variant-numeric:tabular-nums; }
+  a.pr:hover { text-decoration:underline; }
+  .ord { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
+    border-radius:50%; background:var(--series-1); color:#fff; font-size:11.5px; font-weight:700; flex:none; }
+  .qrow { display:grid; grid-template-columns:24px 1fr; gap:12px; align-items:start; padding:12px 0;
+    border-bottom:1px solid var(--grid); }
+  .qrow:last-child { border-bottom:none; padding-bottom:0; }
+  .qrow .t { font-size:13.5px; font-weight:600; }
+  .qrow .why { font-size:12.5px; color:var(--text-secondary); margin-top:3px; }
+  .qrow .look { font-size:12.5px; color:var(--text-muted); margin-top:4px; }
+  .flagbox { background:var(--wash); border:1px solid var(--border); border-radius:10px;
+    padding:12px 14px; margin-bottom:14px; }
+  .flagbox p { margin:0 0 6px; font-size:13px; color:var(--text-secondary); }
+  .flagbox p:last-child { margin-bottom:0; }
+  .flagbox b { color:var(--text-primary); }
   .day .hd { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
   .day .n { font-size:13px; font-weight:650; }
   .day .cnt { font-size:12px; color:var(--text-muted); }
@@ -102,6 +124,7 @@
   .dot { width:8px; height:8px; border-radius:50%; flex:none; }
   .dot.crit { background:var(--critical); } .dot.warn { background:var(--warning); }
   .dot.ok { background:var(--good); } .dot.ser { background:var(--serious); }
+  .dot.acc { background:var(--series-1); }
   .cp-mark { color:var(--critical); font-weight:700; }
   .daytag { font-size:11.5px; font-weight:650; color:var(--series-1); }
   .daytag.def { color:var(--text-muted); font-weight:400; }
@@ -124,8 +147,8 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>fc05e1e</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-07-29 &middot; one-week handover, one reviewer plus agents &middot; day 1 complete</p>
+    <p class="sub">Verified against <code>main</code> @ <code>bde6f7a</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 3 complete, main at bde6f7a</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
@@ -133,9 +156,9 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs planned this week</div><div class="value">14</div><div class="foot">ceiling is 12 to 15</div></div>
-    <div class="tile"><div class="label">Day 1</div><div class="value">Done</div><div class="foot">3 of 14 landed</div></div>
-    <div class="tile"><div class="label">Deferred, documented</div><div class="value">26</div><div class="foot">of 40 rows</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">14</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">Day 3</div><div class="value">Open</div><div class="foot">7 PRs in, the mount is still mounted</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">9</div><div class="foot">days 4 and 5, plus 4 day-3 follow-ups</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
@@ -144,7 +167,20 @@
 </section>
 
 <section>
-  <h2>Day by day <span class="note">truth over features</span></h2>
+  <h2>Up next <span class="note">finish day 3, then day 4</span></h2>
+
+  <div class="flagbox">
+    <p><b>Day 3 is not closed.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and the day's actual deliverable is still open. E3-S1 says <i>retire the public static route</i>. The route is still mounted at <code>app-bootstrap.ts:39</code>. Seven merged PRs is not the same fact as a closed day, and this board said "done" until someone checked.</p>
+    <p><b>Two of those seven do less than their titles claimed.</b> #105 widened <code>backend/.gitignore</code> only: the <b>root</b> <code>.gitignore</code> still has no env pattern, so <code>.env</code> and <code>.env.production</code> at the repository root remain committable, and a root <code>.env.example</code> says a root <code>.env</code> is expected &mdash; now <b>CH-3</b>. #107's reconcile is sound, but its suggested split for E3-S1d has since been shown wrong, and it predates #108 so the backlog still calls E3-S1d planned &mdash; now <b>DOCS-6</b>. Neither is a regression; both are the gap between what shipped and what the row said.</p>
+    <p><b>What is left of E3-S1 is not what the row said.</b> Retiring the static mount is not blocked by private documents — it is blocked by <i>public</i> listing imagery, the only thing on the frontend that still builds an <code>/uploads/</code> URL (<code>uploadAssetUrl()</code> in <code>listings.$listingId.tsx:36</code> and <code>purchase.$listingId.tsx:56</code>). That needs a replacement public-delivery route and frontend edits, so it is split out as E3-S1d-3 rather than bolted onto E3-S1d-2, which is backend-only.</p>
+    <p><b>Carry this rule into days 4 and 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately.</p>
+  </div>
+
+  <div class="card" id="queue"></div>
+</section>
+
+<section>
+  <h2>Day by day <span class="note">truth over features &middot; all 50 rows accounted for</span></h2>
   <div class="days" id="days"></div>
 </section>
 
@@ -297,14 +333,20 @@ const DAYS = [
     "<b>DOCS-1</b> checklist reconciled, audit corrections table added",
     "<b>DOCS-2</b> HANDOVER.md written, six stale docs bannered",
     "<b>DOCS-3</b> ADRs 0001 to 0005 recording the open decisions" ]},
-  { n:"Day 2", theme:"Landmines", count:4, done:false, items:[
-    "<b>E2-S4</b> production guard on payment mock mode",
-    "<b>E5-S2</b> CORS allow-list",
-    "<b>E3-S4</b> public /verify page",
-    "<b>E7-S6</b> health and readiness probes" ]},
-  { n:"Day 3", theme:"The exposure", count:2, done:false, items:[
-    "<b>E3-S1a</b> failing probe test, merge it red",
-    "<b>E3-S1</b> authorized document access, stop rule applies" ]},
+  { n:"Day 2", theme:"Landmines, all four landed", count:4, done:true, review:false, items:[
+    "<b>E3-S4</b> /verify page &middot; PR 98 merged",
+    "<b>E2-S4</b> payment mock guard &middot; PR 99 merged",
+    "<b>E7-S6</b> health probes &middot; PR 101 merged",
+    "<b>E5-S2</b> CORS allow-list &middot; PR 97 merged" ]},
+  { n:"Day 3", theme:"The exposure, 7 PRs in, not closed", count:7, done:false, review:true, items:[
+    "<b>E5-S2a</b> squattable preview origins &middot; PR 102 merged",
+    "<b>E3-S1a</b> failing probe, merged red &middot; PR 103 merged",
+    "<b>E3-S1b</b> only public imagery from /uploads &middot; PR 104 merged",
+    "<b>E3-S1c</b> KYC and credential reads &middot; PR 106 merged",
+    "<b>E3-S1d-1</b> due diligence report reads &middot; PR 108 merged",
+    "<b>CH-2</b> backend env files ignored, snapshot untracked &middot; PR 105 merged",
+    "<b>DOCS-5</b> E3-S1 reconciled against what shipped &middot; PR 107 merged",
+    "&mdash; still open: <b>E3-S1d-2</b>, <b>E3-S1d-3</b>, <b>CH-3</b>, <b>DOCS-6</b>" ]},
   { n:"Day 4", theme:"Make it runnable", count:3, done:false, items:[
     "<b>E7-S2</b> coverage floor measured and recorded",
     "<b>E7-S4</b> demo seed that resolves",
@@ -314,13 +356,31 @@ const DAYS = [
     "<b>DOCS-4</b> re-audit against HEAD, tag handover commit" ]}
 ];
 
-// [id, epic, title, what, day, flag, size, deps, status, criticalPath]
+const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
+
+const QUEUE = [
+  { pr:null, t:"E3-S1d-2, power of attorney documents through the authorized reader",
+    why:"The last private family that is small. POA keys are poa/&lt;transactionId&gt;/…, the readers are the POA buyer, the listing seller and operators, and nothing on the frontend renders pdfStorageKey or qrCodeStorageKey — so this is backend-only, unlike what the backlog row claimed.",
+    look:"poa.service.ts serialize() hands out the raw storage keys and never calls getSignedUrl(), so routing the family is not enough on its own. Check the reader set is resolved from PowerOfAttorney to Transaction to Listing.sellerId, and that a missing POA refuses with the same 403 as a real one." },
+  { pr:null, t:"E3-S1d-3, private listing documents, then retire the static mount",
+    why:"Split out of E3-S1d-2 because it is not the same size. listings/&lt;listingId&gt;/ holds public photos and title deeds under one prefix, so the key alone cannot decide privacy — it needs the Document.category row, which private-documents.ts is deliberately Prisma-free to avoid. Removing the mount then forces a replacement public-delivery route and the frontend edits behind it.",
+    look:"Whether the authorized reader absorbs the E3-S1b gate rather than sitting beside it: one route deciding per Document row, public categories marked @Public(). Two gates for one prefix is how the next leak gets in. Criterion 5, the probe walk over every category, closes here or not at all." },
+  { pr:null, t:"Day 4 next — E7-S2, E7-S4, then the E7-S3 spike",
+    why:"Make it runnable. Coverage floor measured and recorded first, because it is the cheapest and it sizes the other two honestly.",
+    look:"E7-S3 is timeboxed on purpose: six E2E scripts exist, CI runs none, and they all want the shared cloud database. A spike that overruns should come back as a written finding, not a half-built harness." }
+];
+
+// [id, epic, title, what, day, flag, size, deps, status, criticalPath, pr]
 const STORIES = [
   ["DOCS-1","Chore","Reconcile the checklist against the code","Accuracy notice, audit corrections table, queue repointed at the backlog.","D1","—","S","none","done",false],
   ["DOCS-2","Chore","HANDOVER.md and stale-doc banners","One-page truth doc; banners on TECH_AUDIT, VALIDATION_REPORT, QA_FINDINGS, analysis 03/04/05.","D1","—","S","none","done",false],
   ["DOCS-3","Chore","ADRs 0001 to 0005 for the open decisions","The next team inherits the questions rather than discovering them.","D1","—","S","none","done",false],
   ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit.","D5","—","S","week's PRs","planned",false],
+  ["DOCS-5","Chore","Reconcile E3-S1 with what shipped","The row described one M story; three sub-stories had already landed under it against criteria nobody had re-read.","D3","—","S","none","done",false,107],
+  ["DOCS-6","Chore","Re-reconcile E3-S1d: record #108, correct the split","The backlog still calls E3-S1d planned after #108 merged, and its suggested split puts POA, listing documents and the mount removal in one sub-story, which does not hold.","D3","—","S","E3-S1d-2","planned",false],
   ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
+  ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
+  ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore has no env pattern at all, so a root .env or .env.production is still committable, and root .env.example says one is expected.","D3","—","S","none","planned",false],
 
   ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
   ["E1-S2","Loop","Transaction state machine, DD_PURCHASED to DD_COMPLETE","Only the standalone path sets these statuses, so listing transactions stop dead.","","dd_case_lifecycle","M","E1-S1","planned",true],
@@ -330,21 +390,27 @@ const STORIES = [
   ["E2-S1","Money","Seller payout destination, per-seller bank account","Payouts go to one env-configured account defaulting to a Paystack test account.","","payouts","L","E1-S4, ADR-0002","blocked",true],
   ["E2-S2","Money","Webhook idempotency, replay and freshness guard","A replayed callback re-fires notifications and escrow holds.","","—","M","none","planned",true],
   ["E2-S3","Money","Gateway refunds, not ledger-only","Refund updates a status and never calls the gateway, so the buyer is not repaid.","","payouts","M","E2-S1","planned",false],
-  ["E2-S4","Money","Production guard on payment mock mode","A missing key records every payout as completed with a mock reference. Highest harm per line in the repo.","D2","—","S","none","planned",true],
+  ["E2-S4","Money","Production guard on payment mock mode","A missing key records every payout as completed with a mock reference. Highest harm per line in the repo.","D2","—","S","none","done",true,99],
   ["E2-S5","Money","Finance reconciliation view","The Finance Manager role has no finance screen; the admin chart is a placeholder generator.","","—","M","E2-S1, E4-S1","planned",false],
 
-  ["E3-S1a","Trust","Failing probe test for document exposure","Merge it red with a linked story. Executable proof beats a paragraph, and it becomes the regression test.","D3","—","S","none","planned",false],
-  ["E3-S1","Trust","Authorized document access, retire the public static route","/uploads is mounted before any guard, so any key fetches any document.","D3","secure_docs","M","none","planned",true],
+  ["E3-S1","Trust","Authorized document access, retire the public static route","/uploads is mounted before any guard, so any key fetches any document. One M row on paper; six sub-stories in practice, four of them merged.","D3","secure_docs","M","none","part",true],
+  ["E3-S1a","Trust","Failing probe test for document exposure","Merged red with a linked story. Executable proof beats a paragraph, and it is now the regression test.","D3","—","S","none","done",false,103],
+  ["E3-S1b","Trust","Serve only public listing imagery from /uploads","A gate ahead of the static mount resolves each key to its Document row and 404s everything that is not a published listing asset.","D3","—","S","E3-S1a","done",false,104],
+  ["E3-S1c","Trust","Authorized reads for KYC and credential documents","Both key builders take the id from the uploader's own JWT subject, so the key is the ownership record and needs no lookup.","D3","—","M","E3-S1b","done",false,106],
+  ["E3-S1d-1","Trust","Authorized reads for due diligence reports","The id in the key names an order, not a user, so the reader set comes from the database: the ordering buyer, assigned professionals, operators.","D3","—","M","E3-S1c","done",false,108],
+  ["E3-S1d-2","Trust","Authorized reads for power of attorney documents","poa/&lt;transactionId&gt;/ resolves to buyer, listing seller and operators. serialize() hands out raw keys today and never signs them. Backend only.","D3","—","S","E3-S1d-1","planned",false],
+  ["E3-S1d-3","Trust","Private listing documents, then retire the static mount","listings/ mixes public photos with title deeds, so privacy needs the Document row. Removing the mount forces a replacement public-delivery route and frontend edits.","D3","secure_docs","M","E3-S1b, E3-S1d-2","planned",true],
   ["E3-S2","Trust","Durable object storage in production","On Vercel uploads land in ephemeral /tmp and do not survive.","","—","M","ADR-0004","planned",true],
   ["E3-S3","Trust","Upload hardening: type allow-list, magic bytes, AV hook","Multer has no fileFilter and the stored MIME type is whatever the client claimed.","","secure_docs","M","E3-S2","planned",false],
-  ["E3-S4","Trust","Public PoA verification page","Every generated QR points at /verify, a route that does not exist.","D2","—","S","none","planned",false],
+  ["E3-S4","Trust","Public PoA verification page","Every generated QR points at /verify, a route that does not exist.","D2","—","S","none","done",false,98],
 
   ["E4-S1","Access","Enforce PermissionsGuard on every privileged endpoint","Privileges gate menus. Only two controllers check them, so a content manager can release escrow.","","—","M","none","planned",true],
   ["E4-S2","Access","KYC gate on money-moving actions","KycRecord is never read outside its own module and a dashboard count.","","kyc_gate","M","E1-S4","planned",false],
   ["E4-S3","Access","Cross-role authorization test suite","Ownership checks are per service with no systematic proof they all exist.","","—","M","E4-S1","planned",false],
 
   ["E5-S1","Security","Rate limiting and lockout on auth and payments","No throttling dependency, no lockout. Login and guest checkout are unlimited.","","—","M","none","planned",true],
-  ["E5-S2","Security","CORS allow-list from configuration","origin: true with credentials reflects any origin. The allow-list was documented, never built.","D2","—","S","none","planned",true],
+  ["E5-S2","Security","CORS allow-list from configuration","origin: true with credentials reflects any origin. The allow-list was documented, never built.","D2","—","S","none","done",true,97],
+  ["E5-S2a","Security","Tighten the Vercel preview origin rule","subdomain.startsWith(\"safebuyrealties\") accepted any first-come .vercel.app project with that prefix. The team-slug suffix rule is not squattable; the project-prefix rule was.","D3","—","S","E5-S2","done",false,102],
   ["E5-S3","Security","Password reset","No forgot or reset route exists. A locked-out user needs an administrator.","","auth_recovery","M","E6-S1","planned",false],
   ["E5-S4","Security","Email verification on self-registration","Self-signup skips the activation mechanism admin-created accounts already use.","","auth_signup","M","E6-S1","planned",false],
   ["E5-S5","Security","Session management: refresh rotation and revocation","One seven-day JWT, no refresh, no server-side session, no revocation.","","auth_sessions","L","none","planned",false],
@@ -358,7 +424,7 @@ const STORIES = [
   ["E7-S3","Ops","End-to-end journeys in CI, ephemeral database","Six E2E scripts exist and CI runs none; they need the shared cloud database. Spike is timeboxed.","D4","—","L","E7-S2","planned",true],
   ["E7-S4","Ops","Deterministic demo seed and reset","Seeded documents point at keys with no files, so demos show stock photography. QA-015.","D4","—","M","E3-S2","planned",false],
   ["E7-S5","Ops","Runbook, environment matrix, secrets checklist","No runbook, and the environment variable set is undocumented per environment.","D5","—","S","none","planned",false],
-  ["E7-S6","Ops","Health and readiness probes with dependency checks","/health returns ok without touching the database, storage, or the gateway.","D2","—","S","none","planned",false],
+  ["E7-S6","Ops","Health and readiness probes with dependency checks","/health returns ok without touching the database, storage, or the gateway.","D2","—","S","none","done",false,101],
 
   ["E8-S1","Compliance","NDPR consent, retention, and erasure","No consent model, retention policy, or erasure path, while storing IDs and selfies.","","privacy_centre","L","E5-S5, EXT-5","planned",false],
   ["E8-S2","Compliance","Legal review of the PoA instrument and terms","The instrument clauses were written in a build checklist, not by counsel.","","—","S","external","blocked",false],
@@ -369,14 +435,46 @@ const STORIES = [
 const STATUS = {
   planned:  { dot:"warn", label:"Planned" },
   blocked:  { dot:"ser",  label:"Blocked" },
+  review:   { dot:"acc",  label:"In review" },
+  part:     { dot:"acc",  label:"Part done" },
+  lost:     { dot:"crit", label:"Wrong base" },
   done:     { dot:"ok",   label:"Done" }
 };
 
 document.getElementById("days").innerHTML = DAYS.map(d => `
-  <div class="day${d.done ? " done" : ""}">
-    <div class="hd"><span class="n">${d.n}</span><span class="cnt">${d.count} PR${d.count > 1 ? "s" : ""}${d.done ? " &middot; done" : ""}</span></div>
+  <div class="day${d.done ? " done" : ""}${d.review ? " review" : ""}">
+    <div class="hd"><span class="n">${d.n}</span><span class="cnt">${d.count} PR${d.count > 1 ? "s" : ""}${d.done ? " &middot; done" : ""}${d.review ? " &middot; open" : ""}</span></div>
     <div class="theme-l">${d.theme}</div>
     <ul>${d.items.map(i => `<li>${i}</li>`).join("")}</ul>
+  </div>`).join("") + laterCard();
+
+function laterCard() {
+  const later = STORIES.filter(s => s[4] === "");
+  const byEpic = EPICS.map(e => ({
+    name: e.name.replace(/^E\d+ /, "").replace("Chores and handover", "Chores"),
+    key: e.key,
+    n: later.filter(s => s[1] === e.key).length
+  })).filter(e => e.n > 0).sort((a, b) => b.n - a.n);
+  return `
+  <div class="day later">
+    <div class="hd"><span class="n">Not this week</span><span class="cnt">${later.length} stories</span></div>
+    <div class="theme-l">Deferred, and documented</div>
+    ${byEpic.map(e => `<div class="lrow"><span>${e.name}</span><span>${e.n}</span></div>`).join("")}
+    <div class="lrow" style="border-top:1px solid var(--grid);margin-top:6px;padding-top:6px">
+      <span><b>Total</b></span><span><b>${later.length}</b></span></div>
+  </div>`;
+}
+
+
+
+document.getElementById("queue").innerHTML = QUEUE.map((q,i) => `
+  <div class="qrow">
+    <div class="ord">${i+1}</div>
+    <div>
+      <div class="t">${q.pr ? `<a class="pr" href="${REPO}${q.pr}" target="_blank" rel="noopener">#${q.pr}</a> &nbsp;` : ""}${q.t}</div>
+      <div class="why">${q.why}</div>
+      <div class="look"><b>Look hardest at:</b> ${q.look}</div>
+    </div>
   </div>`).join("");
 
 const maxDays = Math.max(...EPICS.map(e => e.days));
@@ -411,7 +509,7 @@ function render() {
   document.getElementById("rows").innerHTML = rows.length ? rows.map(s => {
     const st = STATUS[s[8]];
     return `<tr class="${s[4] ? "wk" : ""}">
-      <td class="id">${s[9] ? '<span class="cp-mark" title="Critical path">CP</span> ' : ""}${s[0]}</td>
+      <td class="id">${s[9] ? '<span class="cp-mark" title="Critical path">CP</span> ' : ""}${s[0]}${s[10] ? `<br><a class="pr" href="${REPO}${s[10]}" target="_blank" rel="noopener">#${s[10]}</a>` : ""}</td>
       <td class="story"><div>${s[2]}</div><div class="what">${s[3]}</div></td>
       <td><span class="daytag${s[4] ? "" : " def"}">${s[4] || "—"}</span></td>
       <td>${s[5] === "—" ? '<span style="color:var(--text-muted)">&mdash;</span>' : "<code>"+s[5]+"</code>"}</td>
