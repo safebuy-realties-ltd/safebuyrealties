@@ -156,9 +156,9 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">Landed</div><div class="value">14</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
-    <div class="tile"><div class="label">Day 3</div><div class="value">Done</div><div class="foot">7 PRs, E3-S1 split into six</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">7</div><div class="foot">days 4 and 5, plus 2 E3-S1 follow-ups</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">14</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">Day 3</div><div class="value">Open</div><div class="foot">7 PRs in, the mount is still mounted</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">9</div><div class="foot">days 4 and 5, plus 4 day-3 follow-ups</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
@@ -167,10 +167,11 @@
 </section>
 
 <section>
-  <h2>Up next <span class="note">two E3-S1 follow-ups, then day 4</span></h2>
+  <h2>Up next <span class="note">finish day 3, then day 4</span></h2>
 
   <div class="flagbox">
-    <p><b>Day 3 closed, seven PRs against two planned.</b> All on <code>main</code> at <code>bde6f7a</code>: E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107). E3-S1 was one <b>M</b> row on this board; it is six sub-stories, four merged.</p>
+    <p><b>Day 3 is not closed.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and the day's actual deliverable is still open. E3-S1 says <i>retire the public static route</i>. The route is still mounted at <code>app-bootstrap.ts:39</code>. Seven merged PRs is not the same fact as a closed day, and this board said "done" until someone checked.</p>
+    <p><b>Two of those seven do less than their titles claimed.</b> #105 widened <code>backend/.gitignore</code> only: the <b>root</b> <code>.gitignore</code> still has no env pattern, so <code>.env</code> and <code>.env.production</code> at the repository root remain committable, and a root <code>.env.example</code> says a root <code>.env</code> is expected &mdash; now <b>CH-3</b>. #107's reconcile is sound, but its suggested split for E3-S1d has since been shown wrong, and it predates #108 so the backlog still calls E3-S1d planned &mdash; now <b>DOCS-6</b>. Neither is a regression; both are the gap between what shipped and what the row said.</p>
     <p><b>What is left of E3-S1 is not what the row said.</b> Retiring the static mount is not blocked by private documents — it is blocked by <i>public</i> listing imagery, the only thing on the frontend that still builds an <code>/uploads/</code> URL (<code>uploadAssetUrl()</code> in <code>listings.$listingId.tsx:36</code> and <code>purchase.$listingId.tsx:56</code>). That needs a replacement public-delivery route and frontend edits, so it is split out as E3-S1d-3 rather than bolted onto E3-S1d-2, which is backend-only.</p>
     <p><b>Carry this rule into days 4 and 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately.</p>
   </div>
@@ -179,7 +180,7 @@
 </section>
 
 <section>
-  <h2>Day by day <span class="note">truth over features &middot; all 48 rows accounted for</span></h2>
+  <h2>Day by day <span class="note">truth over features &middot; all 50 rows accounted for</span></h2>
   <div class="days" id="days"></div>
 </section>
 
@@ -337,14 +338,15 @@ const DAYS = [
     "<b>E2-S4</b> payment mock guard &middot; PR 99 merged",
     "<b>E7-S6</b> health probes &middot; PR 101 merged",
     "<b>E5-S2</b> CORS allow-list &middot; PR 97 merged" ]},
-  { n:"Day 3", theme:"The exposure, E3-S1 split into six", count:7, done:true, review:false, items:[
+  { n:"Day 3", theme:"The exposure, 7 PRs in, not closed", count:7, done:false, review:true, items:[
     "<b>E5-S2a</b> squattable preview origins &middot; PR 102 merged",
     "<b>E3-S1a</b> failing probe, merged red &middot; PR 103 merged",
     "<b>E3-S1b</b> only public imagery from /uploads &middot; PR 104 merged",
     "<b>E3-S1c</b> KYC and credential reads &middot; PR 106 merged",
     "<b>E3-S1d-1</b> due diligence report reads &middot; PR 108 merged",
-    "<b>CH-2</b> every env file ignored and untracked &middot; PR 105 merged",
-    "<b>DOCS-5</b> E3-S1 reconciled, E3-S1d scoped &middot; PR 107 merged" ]},
+    "<b>CH-2</b> backend env files ignored, snapshot untracked &middot; PR 105 merged",
+    "<b>DOCS-5</b> E3-S1 reconciled against what shipped &middot; PR 107 merged",
+    "&mdash; still open: <b>E3-S1d-2</b>, <b>E3-S1d-3</b>, <b>CH-3</b>, <b>DOCS-6</b>" ]},
   { n:"Day 4", theme:"Make it runnable", count:3, done:false, items:[
     "<b>E7-S2</b> coverage floor measured and recorded",
     "<b>E7-S4</b> demo seed that resolves",
@@ -374,9 +376,11 @@ const STORIES = [
   ["DOCS-2","Chore","HANDOVER.md and stale-doc banners","One-page truth doc; banners on TECH_AUDIT, VALIDATION_REPORT, QA_FINDINGS, analysis 03/04/05.","D1","—","S","none","done",false],
   ["DOCS-3","Chore","ADRs 0001 to 0005 for the open decisions","The next team inherits the questions rather than discovering them.","D1","—","S","none","done",false],
   ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit.","D5","—","S","week's PRs","planned",false],
-  ["DOCS-5","Chore","Reconcile E3-S1 with what shipped, and scope E3-S1d","The row described one M story; three sub-stories had already landed under it against criteria nobody had re-read.","D3","—","S","none","done",false,107],
+  ["DOCS-5","Chore","Reconcile E3-S1 with what shipped","The row described one M story; three sub-stories had already landed under it against criteria nobody had re-read.","D3","—","S","none","done",false,107],
+  ["DOCS-6","Chore","Re-reconcile E3-S1d: record #108, correct the split","The backlog still calls E3-S1d planned after #108 merged, and its suggested split puts POA, listing documents and the mount removal in one sub-story, which does not hold.","D3","—","S","E3-S1d-2","planned",false],
   ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
-  ["CH-2","Chore","Ignore every env file, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and .gitignore widened to every env variant.","D3","—","S","none","done",false,105],
+  ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
+  ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore has no env pattern at all, so a root .env or .env.production is still committable, and root .env.example says one is expected.","D3","—","S","none","planned",false],
 
   ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
   ["E1-S2","Loop","Transaction state machine, DD_PURCHASED to DD_COMPLETE","Only the standalone path sets these statuses, so listing transactions stop dead.","","dd_case_lifecycle","M","E1-S1","planned",true],
