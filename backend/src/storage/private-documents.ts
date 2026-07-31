@@ -8,11 +8,16 @@ import * as path from "path";
  * give private documents a way in. This is the other half — the table that sends a private key
  * to an endpoint which checks who is asking, on every request.
  *
- * The routing table and the policy table are deliberately the same table. A key is handed to
- * the private reader exactly when the reader knows who may read it; anything else keeps its
- * `/uploads` URL and stays 404 behind the gate. E3-S1d-2 added `poa/` by adding an entry here,
- * and E3-S1d-3 adds private `listings/` documents the same way — neither can route a family to
- * the reader without also stating its policy.
+ * The routing table and the policy table are deliberately the same table. A family cannot be
+ * routed to the reader without also stating its policy, which is what has kept each of the five
+ * additions honest: `kyc/` and `professionals/` in E3-S1c, `due-diligence/` in E3-S1d-1, `poa/`
+ * in E3-S1d-2, and `listings/` here in E3-S1d-3.
+ *
+ * **Every family the application writes now has an entry.** That is what let E3-S1d-3 delete the
+ * `/uploads` mount rather than keep gating it: with no key resolving to a static path, there is
+ * no static path left to protect. `getSignedUrl()`'s local-driver fallback is now unreachable by
+ * construction, and `private-document.controller.spec.ts` asserts that with a walk over every
+ * key shape the writers produce.
  *
  * This module stays free of Nest and Prisma on purpose: `storage.service.ts` imports it to decide
  * routing, and a database dependency here would put the storage layer behind the ORM. Families
@@ -35,8 +40,15 @@ export const PRIVATE_DOCUMENT_URL = `/${API_PREFIX}/${PRIVATE_DOCUMENT_ROUTE}`;
  * `user` is the E3-S1c case and needs no lookup: the id in the key is the owner's. Anything else
  * names an entity, and the readers are whoever that entity's relations say they are, which only
  * the database knows.
+ *
+ * `listing-document` is the only subject whose lookup also decides *whether the object is private
+ * at all* — see the `listings` entry below.
  */
-export type PrivateDocumentSubject = "user" | "due-diligence-order" | "transaction";
+export type PrivateDocumentSubject =
+  | "user"
+  | "due-diligence-order"
+  | "transaction"
+  | "listing-document";
 
 export type PrivateDocumentPolicy = {
   /** What the id at `subjectSegment` names. */
@@ -71,6 +83,19 @@ export type PrivateDocumentPolicy = {
  * transaction are a buyer and a seller the database holds. Both objects of an executed deed live
  * under the same prefix, so one entry covers the PDF and its QR code — which matters, because the
  * QR code is a picture of the same private instrument and leaking it leaks the verification link.
+ *
+ * `listings` is different in kind from all four, and the difference is why E3-S1d-3 was a story of
+ * its own. `documents.service.ts:101` writes every listing document to the same
+ * `listings/<listingId>/` prefix whatever its category, so a title deed and a gallery photograph
+ * are indistinguishable as keys. Privacy is a property of the `Document` row, not of the path, and
+ * splitting the prefix would need a data migration against the shared cloud Postgres that the
+ * handover working agreement forbids.
+ *
+ * So this family is routed to the reader *unconditionally* — public imagery included — and the
+ * reader decides per row. That is deliberately not the same as calling every listing document
+ * private: `decideListingDocument()` admits anyone, session or not, to a public category on a
+ * publicly visible listing, which is precisely the rule the E3-S1b middleware gate used to apply
+ * in front of the static mount. One route, one decision, one place to get it wrong.
  */
 export const PRIVATE_DOCUMENT_POLICIES: Readonly<Record<string, PrivateDocumentPolicy>> = {
   // kyc/<userId>/<timestamp>_<filename>
@@ -97,6 +122,13 @@ export const PRIVATE_DOCUMENT_POLICIES: Readonly<Record<string, PrivateDocumentP
     subjectSegment: 1,
     minSegments: 3,
     auditEntity: "PowerOfAttorney",
+  },
+  // listings/<listingId>/<uploadedAtMs>_<safeFileName>
+  listings: {
+    subject: "listing-document",
+    subjectSegment: 1,
+    minSegments: 3,
+    auditEntity: "Document",
   },
 };
 
@@ -143,7 +175,14 @@ export function resolvePrivateDocumentTarget(
   return { key: segments.join("/"), subjectId, policy };
 }
 
-/** Whether this key must be served by the authorized reader rather than by a URL. */
+/**
+ * Whether this key must be served by the authorized reader rather than by a URL.
+ *
+ * "Must be served by the reader", not "is private to somebody": since E3-S1d-3 the `listings/`
+ * family routes here whatever its category, because the key cannot say and only the reader can
+ * look it up. A public gallery photograph is still true for this predicate — it is served by the
+ * reader, which then admits everyone.
+ */
 export function isPrivateDocumentKey(key: string): boolean {
   return resolvePrivateDocumentTarget(key) !== null;
 }

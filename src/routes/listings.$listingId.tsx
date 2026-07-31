@@ -31,9 +31,21 @@ import { useListingInspectionsQuery } from "@/hooks/use-inspections";
 
 const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
+/**
+ * Where to fetch a `ListingMedia` row's bytes.
+ *
+ * This used to return `/uploads/<storageKey>`, and E3-S1d-3 deleted that mount: the URL was an
+ * unauthenticated pointer to the object, valid to anyone who came by it. It now names the API's
+ * authorized reader, which re-decides on every request whether these bytes may leave — so the
+ * string this builds confers nothing on whoever holds it, which is the point.
+ *
+ * Still built on the client, unlike `DocumentDto.url`, because `ListingMedia` rows carry a raw
+ * `storageKey` in their DTO (`listings.service.ts`) and no writer in the application populates
+ * that table, so there is nothing to migrate and no rows to serve. Worth flagging rather than
+ * fixing here: the listing endpoint should emit a URL like the documents endpoint does.
+ */
 function uploadAssetUrl(storageKey: string): string {
-  const origin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
-  return `${origin}/uploads/${storageKey}`;
+  return `${API_BASE_URL}/documents/file?key=${encodeURIComponent(storageKey)}`;
 }
 
 export const Route = createFileRoute("/listings/$listingId")({

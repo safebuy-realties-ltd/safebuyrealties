@@ -24,8 +24,8 @@ import { StorageService } from "./storage.service";
 /**
  * E3-S1a, executable proof of the document exposure.
  *
- * configureApp() mounts `/uploads` as Express static middleware ahead of the Nest router.
- * Guards only run once the Nest router has matched a route, so nothing a controller declares can
+ * configureApp() used to mount `/uploads` as Express static middleware ahead of the Nest router.
+ * Guards only run once the Nest router has matched a route, so nothing a controller declared could
  * protect that path: before E3-S1b, any storage key fetched a title deed, a government ID, a KYC
  * selfie or a due diligence report with no session at all.
  *
@@ -33,9 +33,8 @@ import { StorageService } from "./storage.service";
  * middleware order being probed is production's. Its module denies *every* Nest request, which
  * is what makes the result unambiguous — see the control case.
  *
- * E3-S1b closed the delivery half: a gate in front of the mount now resolves each key to its
- * Document row and serves only public listing imagery, so probe two lost `.failing` and is a
- * regression test.
+ * E3-S1b closed the delivery half: a gate in front of the mount resolved each key to its Document
+ * row and served only public listing imagery, so probe two lost `.failing`.
  *
  * E3-S1c closed probe one for the KYC and professional credential families. getSignedUrl() no
  * longer resolves a private key to a static path at all — it resolves to PrivateDocumentController,
@@ -43,6 +42,12 @@ import { StorageService } from "./storage.service";
  * this module proves: it denies every request the router handles, so a private document URL
  * answering 401 here means the URL now passes through the guard layer instead of around it.
  * What the real guard then decides is `private-document.controller.spec.ts`.
+ *
+ * E3-S1d-3 removed the mount, and with it the gate. Both probes still run, and both matter more
+ * for it: probe one because it is now the whole delivery path, and probe two because it is what
+ * fails if a static mount is ever reintroduced. Neither was rewritten to assume the new shape —
+ * a probe that asserted "there is no mount" would pass on an app that had one and served nothing,
+ * and would say nothing at all about the app that has one and serves everything.
  */
 
 /** A private document. The point of the story is that this needs a session and does not get one. */
@@ -69,8 +74,8 @@ class ProbeController {
  * rather than connected because this suite must not need the shared cloud Postgres, and because
  * "no row" is exactly what the real database would answer for it.
  *
- * The order lookup is never reached: every request here is refused by the guard, which is the
- * whole point of the probe. It is present so the authorizer can be constructed.
+ * Neither lookup is reached: every request here is refused by the guard, which is the whole point
+ * of the probe. They are present so the authorizer can be constructed.
  */
 const noPublicDocuments = {
   document: { findFirst: () => Promise.resolve(null) },
@@ -166,11 +171,13 @@ describe("unauthenticated /uploads exposure (E3-S1)", () => {
   });
 
   /**
-   * Probe two, the static mount itself. **Closed by E3-S1b** — `.failing` dropped, this is now
-   * the regression test, and it fails if the gate in front of the mount is ever removed or
-   * widened to serve a key with no public Document row.
+   * Probe two, the static mount itself. **Closed by E3-S1b**, which gated it, and by **E3-S1d-3**,
+   * which deleted it: `/uploads/…` now matches nothing in the app and 404s because there is no
+   * route, rather than because a gate turned it down. That is a strictly stronger reason, and the
+   * assertion is deliberately unchanged — it does not care which of the two is keeping the bytes
+   * in, only that they stay in. Reintroduce a mount and this fails again on the first probe.
    *
-   * Probe one alone could not have seen this fix, because an unmatched or gated path answers 404
+   * Probe one alone could not have seen either fix, because an unmatched or gated path answers 404
    * and 404 is not 401 — that assertion keeps failing for a new reason and `.failing` would have
    * stayed green through the whole story. This one asserts on delivery instead: the bytes must
    * not come back, however the mount is closed.

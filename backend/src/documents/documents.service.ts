@@ -11,7 +11,6 @@ import { PlatformConfigService } from "../platform-config/platform-config.servic
 import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
 import { isPubliclyVisible } from "../listings/listings-public.helper";
-import { isPublicListingAssetCategory } from "./document-categories";
 import * as path from "path";
 
 const PUBLIC_DOCUMENT_CATEGORIES: Record<string, string> = {
@@ -35,20 +34,32 @@ export class DocumentsService {
     return isInternalRole(role);
   }
 
-  private toDocumentDto(
-    doc: {
-      id: string;
-      listingId: string;
-      category: string;
-      fileName: string;
-      mimeType: string;
-      sizeBytes: number;
-      storageKey: string;
-      createdAt: Date;
-    },
-    actor: JwtPayload,
-  ) {
-    const base = {
+  /**
+   * E3-S1d-3: this emits a URL, and no longer a storage key under any condition.
+   *
+   * The old shape handed `storageKey` to every actor except a BUYER looking at a non-public
+   * category, and the frontend pasted it into `/uploads/${storageKey}` itself
+   * (`listings.$listingId.tsx` and `purchase.$listingId.tsx`, both changed by this story). That
+   * made the client the last thing standing between a title deed and the public, and it was not
+   * up to the job: the key was a durable, unauthenticated pointer to the bytes.
+   *
+   * `getSignedUrl()` now resolves every `listings/` key to the authorized reader, so the URL is
+   * safe to hand to anyone — holding it grants nothing, and the reader re-decides on each request
+   * from the live session. Which is why the BUYER special case is gone rather than moved: the
+   * caller no longer decides anything by having or not having the field, so withholding it only
+   * broke the buyer's view of documents they were entitled to see.
+   */
+  private async toDocumentDto(doc: {
+    id: string;
+    listingId: string;
+    category: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    storageKey: string;
+    createdAt: Date;
+  }) {
+    return {
       id: doc.id,
       listingId: doc.listingId,
       category: doc.category,
@@ -56,11 +67,8 @@ export class DocumentsService {
       mimeType: doc.mimeType,
       sizeBytes: doc.sizeBytes,
       createdAt: doc.createdAt.toISOString(),
+      url: await this.storage.getSignedUrl(doc.storageKey),
     };
-    if (actor.role === UserRole.BUYER && !isPublicListingAssetCategory(doc.category)) {
-      return base;
-    }
-    return { ...base, storageKey: doc.storageKey };
   }
 
   async getListingOrThrow(listingId: string, actor: JwtPayload) {
@@ -113,7 +121,7 @@ export class DocumentsService {
         storageKey,
       },
     });
-    return this.toDocumentDto(doc, actor);
+    return this.toDocumentDto(doc);
   }
 
   async listByListing(listingId: string, actor: JwtPayload) {
@@ -122,7 +130,7 @@ export class DocumentsService {
       where: { listingId },
       orderBy: { createdAt: "desc" },
     });
-    return docs.map((d) => this.toDocumentDto(d, actor));
+    return Promise.all(docs.map((d) => this.toDocumentDto(d)));
   }
 
   async listPublicDocumentNames(listingId: string) {

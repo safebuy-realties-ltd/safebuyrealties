@@ -19,7 +19,7 @@ import ServiceSelector from "@/components/ServiceSelector";
 import { useListingQuery } from "@/hooks/use-listings";
 import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useAuth } from "@/lib/auth";
-import { API_BASE_URL, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { formatListingSpecSummary } from "@/lib/listing-spec";
 import {
   clearWizardState,
@@ -50,11 +50,6 @@ const PLACEHOLDER_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a
 export const Route = createFileRoute("/purchase/$listingId")({
   component: PurchaseWizardPage,
 });
-
-function uploadAssetUrl(storageKey: string): string {
-  const origin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
-  return `${origin}/uploads/${storageKey}`;
-}
 
 function formatNgn(amount: number | string) {
   const n = typeof amount === "string" ? Number(amount) : amount;
@@ -229,7 +224,9 @@ function PurchaseWizardPage() {
   }
 
   const heroDoc = documents?.find((d) => d.category === "listing_hero");
-  const heroSrc = heroDoc ? uploadAssetUrl(heroDoc.storageKey) : PLACEHOLDER_IMG;
+  // The API hands out the URL now; the client used to build `/uploads/<storageKey>` from the key
+  // and that mount is gone (E3-S1d-3).
+  const heroSrc = heroDoc?.url ?? PLACEHOLDER_IMG;
   const progress = stepProgressPercent(wizard.step);
   const currentStepNum = stepIndex(wizard.step) + 1;
 

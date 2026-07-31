@@ -104,11 +104,20 @@ export class StorageService {
   /**
    * The URL a caller should be given for this object.
    *
-   * Private families are checked before the driver branch, because no URL can express
+   * Routed families are checked before the driver branch, because no URL can express
    * "the owner and platform operators only". A presigned S3 URL is a bearer capability: an
    * hour of access to whoever holds it, with no session and no role. So both drivers point
-   * private keys at PrivateDocumentController, which authorizes each request instead
+   * those keys at PrivateDocumentController, which authorizes each request instead
    * (E3-S1c, private-documents.ts).
+   *
+   * **As of E3-S1d-3 the two branches below are unreachable for every key this application
+   * writes.** `PRIVATE_DOCUMENT_POLICIES` now covers all five prefixes the upload paths produce,
+   * so `isPrivateDocumentKey()` is true for all of them and nothing falls through. They are kept
+   * rather than deleted because they are also the failure mode: a prefix added later without a
+   * policy entry would land here, and it should be obvious what went wrong. On the local driver
+   * that means a `/uploads/` URL for a mount that no longer exists — a 404, which is the right
+   * way for a missing policy to fail. `private-document.controller.spec.ts` asserts the
+   * invariant over every key shape the writers build, so a new family cannot reach here quietly.
    */
   async getSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
     const normalizedKey = this.normalizeKey(key);

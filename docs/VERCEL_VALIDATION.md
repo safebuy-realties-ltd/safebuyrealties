@@ -24,7 +24,7 @@ The Render backend URL is **not** stored in git. Configure it in **Vercel → Pr
 
 | Variable | Required | Example | Purpose |
 | -------- | -------- | ------- | ------- |
-| `API_PROXY_TARGET` | **Yes** (Production + Preview) | `https://your-service.onrender.com` | Vercel rewrite destination for `/api/v1` and `/uploads` (`vercel.mjs`) |
+| `API_PROXY_TARGET` | **Yes** (Production + Preview) | `https://your-service.onrender.com` | Vercel rewrite destination for `/api/v1` (`vercel.mjs`). The `/uploads` rewrite beside it went with the static mount in E3-S1d-3 — documents are served by `/api/v1/documents/file` |
 | `VITE_API_URL` | Optional | `/api/v1` | Browser API base (default is `/api/v1`; keep relative for cookie auth) |
 
 **Do not** set `VITE_API_URL` to the Render hostname in production — session cookies require same-origin requests. The browser talks to `/api/v1` on the Vercel app; Vercel proxies to Render using `API_PROXY_TARGET`.

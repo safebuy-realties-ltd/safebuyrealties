@@ -47,14 +47,15 @@ describe("StorageService (local driver)", () => {
     expect(fs.readFileSync(abs, "utf8")).toBe("hello");
   });
 
-  it("getSignedUrl returns /uploads/{key} for local driver", async () => {
-    const url = await service.getSignedUrl("listings/abc/photo.jpg");
-    expect(url).toBe("/uploads/listings/abc/photo.jpg");
-  });
-
-  it("getSignedUrl respects custom expiresInSeconds (local ignores it)", async () => {
-    const url = await service.getSignedUrl("a.png", 3600);
-    expect(url).toBe("/uploads/a.png");
+  /**
+   * E3-S1d-3 inverted this one. A listing key used to come back as `/uploads/…` for the frontend
+   * to render directly, which is exactly how a title deed reached the public: the URL was a
+   * durable pointer to the bytes, valid to anyone holding it, and the only thing deciding whether
+   * to hand it over was the client. It now names the authorized reader, like every other family.
+   */
+  it("routes a listing key to the authorized reader, not to a static path", async () => {
+    const url = await service.getSignedUrl("listings/abc/1700_photo.jpg");
+    expect(url).toBe("/api/v1/documents/file?key=listings%2Fabc%2F1700_photo.jpg");
   });
 
   it("routes a private key to the authorized reader instead of the static mount", async () => {
@@ -63,9 +64,21 @@ describe("StorageService (local driver)", () => {
   });
 
   /**
+   * The failure mode, kept deliberately. No prefix this application writes lands here any more —
+   * `private-document.controller.spec.ts` asserts that over every writer's key shape — so a
+   * `/uploads/` URL now means a family was added without a policy entry. It points at a mount
+   * E3-S1d-3 deleted, so it 404s, which is how a missing policy should fail. `expiresInSeconds`
+   * rides along because the local driver has no expiry to respect and never did.
+   */
+  it("hands an unrouted key a /uploads URL for a mount that no longer exists", async () => {
+    const url = await service.getSignedUrl("a.png", 3600);
+    expect(url).toBe("/uploads/a.png");
+  });
+
+  /**
    * E3-S1d-1. Both due diligence key shapes route to the reader, and a key predating the
    * `<orderId>` layout does not: it names no order to authorize against, so it fails closed to
-   * the static path, where the E3-S1b gate answers 404.
+   * the unrouted path above and 404s.
    */
   it.each([
     ["due-diligence/order-1/reports/1700-report.pdf", true],
