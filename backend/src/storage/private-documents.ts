@@ -10,9 +10,14 @@ import * as path from "path";
  *
  * The routing table and the policy table are deliberately the same table. A key is handed to
  * the private reader exactly when the reader knows who may read it; anything else keeps its
- * `/uploads` URL and stays 404 behind the gate. E3-S1d adds `due-diligence/`, `poa/` and
- * private `listings/` documents by adding entries here, and cannot route a family to the reader
- * without also stating its policy.
+ * `/uploads` URL and stays 404 behind the gate. E3-S1d-2 adds `poa/` and private `listings/`
+ * documents by adding entries here, and cannot route a family to the reader without also
+ * stating its policy.
+ *
+ * This module stays free of Nest and Prisma on purpose: `storage.service.ts` imports it to decide
+ * routing, and a database dependency here would put the storage layer behind the ORM. Families
+ * whose readers need a lookup name the lookup and stop; performing it is
+ * `private-document-authorizer.ts`.
  */
 
 /** Must match `app.setGlobalPrefix()` in app-bootstrap.ts. */
@@ -24,9 +29,20 @@ export const PRIVATE_DOCUMENT_ROUTE = "documents/file";
 /** The URL StorageService.getSignedUrl() hands out for a private key. */
 export const PRIVATE_DOCUMENT_URL = `/${API_PREFIX}/${PRIVATE_DOCUMENT_ROUTE}`;
 
+/**
+ * What the id in the key names, and therefore how the readers of the object are worked out.
+ *
+ * `user` is the E3-S1c case and needs no lookup: the id in the key is the owner's. Anything else
+ * names an entity, and the readers are whoever that entity's relations say they are, which only
+ * the database knows.
+ */
+export type PrivateDocumentSubject = "user" | "due-diligence-order";
+
 export type PrivateDocumentPolicy = {
-  /** Index of the path segment carrying the owning user's id. */
-  readonly ownerSegment: number;
+  /** What the id at `subjectSegment` names. */
+  readonly subject: PrivateDocumentSubject;
+  /** Index of the path segment carrying that id. */
+  readonly subjectSegment: number;
   /** Segments a well-formed key of this family has, at minimum. */
   readonly minSegments: number;
   /** Value written to `AuditLog.entity` when an object of this family is read. */
@@ -36,24 +52,51 @@ export type PrivateDocumentPolicy = {
 /**
  * Keyed by the first path segment of the storage key.
  *
- * Ownership is read out of the key rather than the database because the writer puts it there:
- * `kyc.service.ts:74` and `professionals.service.ts:117` both build the key from the uploader's
- * own JWT subject, and `kyc.service.ts:203` already relies on that same invariant to reject a
- * submission naming another user's documents. There is no path by which a `kyc/<a>/…` key holds
- * user `<b>`'s document.
+ * For the two `user` families, ownership is read out of the key rather than the database because
+ * the writer puts it there: `kyc.service.ts:74` and `professionals.service.ts:117` both build the
+ * key from the uploader's own JWT subject, and `kyc.service.ts:203` already relies on that same
+ * invariant to reject a submission naming another user's documents. There is no path by which a
+ * `kyc/<a>/…` key holds user `<b>`'s document.
+ *
+ * `due-diligence` cannot work that way, because the id in the key is an order id and the readers
+ * of an order are a buyer and a set of professionals that only the database knows. Both of its
+ * key shapes carry the same `DueDiligenceOrder.id` in the same position
+ * (`standalone-dd.service.ts:1107` and `:1275`), so one entry covers both. Deliberately no
+ * validation of the third segment: authorization is per order, every object under
+ * `due-diligence/<orderId>/` belongs to that order whatever the subpath, and a key naming a
+ * subpath that was never written simply 404s at the storage layer.
  */
 export const PRIVATE_DOCUMENT_POLICIES: Readonly<Record<string, PrivateDocumentPolicy>> = {
   // kyc/<userId>/<timestamp>_<filename>
-  kyc: { ownerSegment: 1, minSegments: 3, auditEntity: "KycDocument" },
+  kyc: { subject: "user", subjectSegment: 1, minSegments: 3, auditEntity: "KycDocument" },
   // professionals/<userId>/<license|id>/<timestamp>_<filename>
-  professionals: { ownerSegment: 1, minSegments: 4, auditEntity: "ProfessionalDocument" },
+  professionals: {
+    subject: "user",
+    subjectSegment: 1,
+    minSegments: 4,
+    auditEntity: "ProfessionalDocument",
+  },
+  // due-diligence/<orderId>/reports/<timestamp>-<filename>
+  // due-diligence/<orderId>/assignments/<assignmentId>/<timestamp>-<filename>
+  "due-diligence": {
+    subject: "due-diligence-order",
+    subjectSegment: 1,
+    minSegments: 4,
+    auditEntity: "DueDiligenceReport",
+  },
 };
 
 export type PrivateDocumentTarget = {
   /** The normalized key, safe to hand to StorageService. */
   key: string;
-  /** The user whose document this is. */
-  ownerId: string;
+  /**
+   * The id the key carries at the subject segment.
+   *
+   * Only a user id when `policy.subject` is `"user"`. Never compare it to a session subject
+   * without checking that first: for every other family it is an entity id, and a caller whose
+   * own user id happened to collide with one would otherwise be reading someone else's file.
+   */
+  subjectId: string;
   policy: PrivateDocumentPolicy;
 };
 
@@ -80,10 +123,10 @@ export function resolvePrivateDocumentTarget(
   if (!policy) return null;
   if (segments.length < policy.minSegments) return null;
 
-  const ownerId = segments[policy.ownerSegment];
-  if (!ownerId) return null;
+  const subjectId = segments[policy.subjectSegment];
+  if (!subjectId) return null;
 
-  return { key: segments.join("/"), ownerId, policy };
+  return { key: segments.join("/"), subjectId, policy };
 }
 
 /** Whether this key must be served by the authorized reader rather than by a URL. */
