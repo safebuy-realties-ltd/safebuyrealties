@@ -29,7 +29,7 @@ import {
 } from "./private-documents";
 
 /**
- * E3-S1c and E3-S1d-1: what the authorized reader actually decides.
+ * E3-S1c, E3-S1d-1 and E3-S1d-2: what the authorized reader actually decides.
  *
  * `uploads-exposure.spec.ts` proves the private document URL is a Nest route rather than a static
  * path, which is the structural half. This is the other half — with a real session, who gets the
@@ -46,6 +46,12 @@ const DD_ORDER = "66666666-6666-6666-6666-666666666666";
 const ASSIGNMENT = "77777777-7777-7777-7777-777777777777";
 /** Never in the stub, so it stands in for both a deleted order and a guessed id. */
 const UNKNOWN_ORDER = "88888888-8888-8888-8888-888888888888";
+const POA_TX = "99999999-9999-9999-9999-999999999999";
+const POA_BUYER = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const POA_SELLER = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const UNKNOWN_TX = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+/** A standalone transaction: `listingId` is null (schema.prisma:242), so it has no seller side. */
+const STANDALONE_TX = "dddddddd-dddd-dddd-dddd-dddddddddddd";
 
 const KYC_KEY = `kyc/${OWNER}/1700000000000_government-id.pdf`;
 const KYC_BYTES = "government ID scan";
@@ -56,6 +62,11 @@ const DD_REPORT_KEY = `due-diligence/${DD_ORDER}/reports/1700000000000-report.pd
 const DD_REPORT_BYTES = "due diligence report";
 const DD_ASSIGNMENT_KEY = `due-diligence/${DD_ORDER}/assignments/${ASSIGNMENT}/1700000000000-survey.pdf`;
 const DD_ASSIGNMENT_BYTES = "surveyor findings";
+/** Both power of attorney key shapes, exactly as poa.service.ts:217 and :222 build them. */
+const POA_PDF_KEY = `poa/${POA_TX}/1700000000000_abc123def456.pdf`;
+const POA_PDF_BYTES = "executed power of attorney";
+const POA_QR_KEY = `poa/${POA_TX}/abc123def456_qr.png`;
+const POA_QR_BYTES = "verification QR pixels";
 /** No upload path validates a MIME type yet (that is E3-S3), so this is reachable today. */
 const SMUGGLED_KEY = `kyc/${OWNER}/1700000000001_selfie.html`;
 const SMUGGLED_BYTES = "<script>fetch('/api/v1/users/me')</script>";
@@ -89,12 +100,27 @@ const dueDiligenceOrders: Readonly<
   [DD_ORDER]: { buyerId: DD_BUYER, assignments: [{ professionalId: ASSIGNED_PROFESSIONAL }] },
 };
 
+/**
+ * One listing-backed transaction between POA_BUYER and POA_SELLER, and one standalone transaction
+ * with no listing at all. Shape matches the `select` the authorizer issues, nested relation included.
+ */
+const transactions: Readonly<
+  Record<string, { buyerId: string; listing: { sellerId: string } | null }>
+> = {
+  [POA_TX]: { buyerId: POA_BUYER, listing: { sellerId: POA_SELLER } },
+  [STANDALONE_TX]: { buyerId: POA_BUYER, listing: null },
+};
+
 const prismaStub = {
   // Only the /uploads gate reaches for this, and it never resolves a private key.
   document: { findFirst: () => Promise.resolve(null) },
   dueDiligenceOrder: {
     findUnique: ({ where }: { where: { id: string } }) =>
       Promise.resolve(dueDiligenceOrders[where.id] ?? null),
+  },
+  transaction: {
+    findUnique: ({ where }: { where: { id: string } }) =>
+      Promise.resolve(transactions[where.id] ?? null),
   },
 };
 
@@ -118,7 +144,7 @@ const prismaStub = {
 })
 class PrivateDocumentTestModule {}
 
-describe("authorized private document access (E3-S1c, E3-S1d-1)", () => {
+describe("authorized private document access (E3-S1c, E3-S1d-1, E3-S1d-2)", () => {
   let app: NestExpressApplication;
   let uploadRoot: string;
   const originalEnv = {
@@ -148,6 +174,8 @@ describe("authorized private document access (E3-S1c, E3-S1d-1)", () => {
     write(LICENSE_KEY, LICENSE_BYTES);
     write(DD_REPORT_KEY, DD_REPORT_BYTES);
     write(DD_ASSIGNMENT_KEY, DD_ASSIGNMENT_BYTES);
+    write(POA_PDF_KEY, POA_PDF_BYTES);
+    write(POA_QR_KEY, POA_QR_BYTES);
     write(SMUGGLED_KEY, SMUGGLED_BYTES);
     fs.writeFileSync(path.join(os.tmpdir(), "sbr-private-docs-outside.txt"), "outside the root");
 
@@ -353,6 +381,122 @@ describe("authorized private document access (E3-S1c, E3-S1d-1)", () => {
     });
   });
 
+  /**
+   * A power of attorney is an instrument of the transaction rather than of one party, so its reader
+   * set is both sides plus operators. Until E3-S1d-2 these keys resolved under `/uploads`, which
+   * meant an executed deed and the QR code that verifies it were readable with no session at all.
+   */
+  describe("who gets power of attorney bytes (E3-S1d-2)", () => {
+    it("serves the deed to the buyer who executed it", async () => {
+      currentUser = session(POA_BUYER, UserRole.BUYER);
+
+      const response = await download(POA_PDF_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(POA_PDF_BYTES);
+    });
+
+    /**
+     * The QR image is a second object under the same prefix, and it is not incidental: it encodes
+     * the verification link for that deed. One policy has to cover both key shapes or the picture
+     * stays public while the document it verifies is locked.
+     */
+    it("serves the QR code under the same rule as the deed", async () => {
+      currentUser = session(POA_BUYER, UserRole.BUYER);
+
+      const allowed = await download(POA_QR_KEY);
+      currentUser = session(OTHER, UserRole.BUYER);
+      const refused = await request(app.getHttpServer()).get(url(POA_QR_KEY));
+
+      expect(allowed.status).toBe(200);
+      expect(bytesOf(allowed)).toBe(POA_QR_BYTES);
+      expect(refused.status).toBe(403);
+      expect(refused.text).not.toContain(POA_QR_BYTES);
+    });
+
+    it("serves the deed to the seller on the other side of the transaction", async () => {
+      currentUser = session(POA_SELLER, UserRole.SELLER);
+
+      const response = await download(POA_PDF_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(POA_PDF_BYTES);
+    });
+
+    it("refuses a buyer who is not party to the transaction", async () => {
+      currentUser = session(OTHER, UserRole.BUYER);
+
+      const response = await request(app.getHttpServer()).get(url(POA_PDF_KEY));
+
+      expect(response.status).toBe(403);
+      expect(response.text).not.toContain(POA_PDF_BYTES);
+    });
+
+    it("refuses a seller who is not the seller of this listing", async () => {
+      currentUser = session(OTHER, UserRole.SELLER);
+
+      const response = await request(app.getHttpServer()).get(url(POA_PDF_KEY));
+
+      expect(response.status).toBe(403);
+    });
+
+    it("refuses a professional, who is not party to a sale", async () => {
+      currentUser = session(PROFESSIONAL, UserRole.PROFESSIONAL);
+
+      const response = await request(app.getHttpServer()).get(url(POA_PDF_KEY));
+
+      expect(response.status).toBe(403);
+    });
+
+    it.each([UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN])(
+      "serves the deed to %s, who has to support the transaction",
+      async (role) => {
+        currentUser = session(OTHER, role);
+
+        const response = await download(POA_PDF_KEY);
+
+        expect(response.status).toBe(200);
+        expect(bytesOf(response)).toBe(POA_PDF_BYTES);
+      },
+    );
+
+    /**
+     * `Transaction.listingId` is nullable (schema.prisma:242). A transaction with no listing has no
+     * seller to admit, so the counterparty branch must not fall through to admitting everyone.
+     */
+    it("admits no counterparty on a standalone transaction that has no listing", async () => {
+      currentUser = session(POA_SELLER, UserRole.SELLER);
+
+      const response = await request(app.getHttpServer()).get(
+        url(`poa/${STANDALONE_TX}/1700000000000_abc123def456.pdf`),
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it("403s rather than 404s on a transaction that does not exist", async () => {
+      currentUser = session(OTHER, UserRole.BUYER);
+
+      const real = await request(app.getHttpServer()).get(url(POA_PDF_KEY));
+      const invented = await request(app.getHttpServer()).get(
+        url(`poa/${UNKNOWN_TX}/1700000000000_abc123def456.pdf`),
+      );
+
+      expect(real.status).toBe(403);
+      expect(invented.status).toBe(403);
+    });
+
+    it("lets an operator through to a plain 404 when the transaction does not exist", async () => {
+      currentUser = session(OTHER, UserRole.ADMIN);
+
+      const response = await request(app.getHttpServer()).get(
+        url(`poa/${UNKNOWN_TX}/1700000000000_abc123def456.pdf`),
+      );
+
+      expect(response.status).toBe(404);
+    });
+  });
+
   describe("keys that name nothing readable", () => {
     it.each([
       ["no key at all", ""],
@@ -484,6 +628,26 @@ describe("authorized private document access (E3-S1c, E3-S1d-1)", () => {
       ]);
     });
 
+    it("records the seller as a counterparty, not as the owner", async () => {
+      currentUser = session(POA_SELLER, UserRole.SELLER);
+
+      await request(app.getHttpServer()).get(url(POA_PDF_KEY));
+
+      expect(auditRows).toEqual([
+        expect.objectContaining({
+          actorId: POA_SELLER,
+          action: AuditAction.PRIVATE_DOCUMENT_READ,
+          entity: "PowerOfAttorney",
+          entityId: POA_PDF_KEY,
+          after: expect.objectContaining({
+            ownerId: POA_BUYER,
+            self: false,
+            reason: "transaction-counterparty",
+          }),
+        }),
+      ]);
+    });
+
     it("records a refusal too", async () => {
       currentUser = session(OTHER, UserRole.BUYER);
 
@@ -544,6 +708,25 @@ describe("private document key parsing", () => {
     });
   });
 
+  /**
+   * Same reason as the order id above: this names a transaction, not a person. `poa.service.ts`
+   * builds these with `path.join`, so a Windows checkout produces backslashes and the parser has to
+   * normalize them before the segment at index 1 means anything.
+   */
+  it.each([
+    ["the deed", POA_PDF_KEY],
+    ["its QR code", POA_QR_KEY],
+  ])("reads the transaction id out of %s key", (_label, key) => {
+    expect(resolvePrivateDocumentTarget(key)).toEqual({
+      key,
+      subjectId: POA_TX,
+      policy: expect.objectContaining({
+        subject: "transaction",
+        auditEntity: "PowerOfAttorney",
+      }),
+    });
+  });
+
   it("normalizes the backslashes and leading slashes a Windows client might send", () => {
     expect(resolvePrivateDocumentTarget(`/kyc\\${OWNER}\\1700_id.pdf`)?.key).toBe(
       `kyc/${OWNER}/1700_id.pdf`,
@@ -561,6 +744,7 @@ describe("private document key parsing", () => {
     // Fails closed: a due diligence key that is not `due-diligence/<orderId>/…` names no order to
     // authorize against, so it keeps its /uploads URL and stays 404 behind the E3-S1b gate.
     ["a due diligence key one segment short", "due-diligence/abc/report.pdf"],
+    ["a power of attorney key with no filename", `poa/${POA_TX}`],
   ])("rejects %s", (_label, key) => {
     expect(resolvePrivateDocumentTarget(key)).toBeNull();
   });

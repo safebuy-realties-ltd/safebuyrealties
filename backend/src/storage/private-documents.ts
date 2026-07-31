@@ -10,9 +10,9 @@ import * as path from "path";
  *
  * The routing table and the policy table are deliberately the same table. A key is handed to
  * the private reader exactly when the reader knows who may read it; anything else keeps its
- * `/uploads` URL and stays 404 behind the gate. E3-S1d-2 adds `poa/` and private `listings/`
- * documents by adding entries here, and cannot route a family to the reader without also
- * stating its policy.
+ * `/uploads` URL and stays 404 behind the gate. E3-S1d-2 added `poa/` by adding an entry here,
+ * and E3-S1d-3 adds private `listings/` documents the same way — neither can route a family to
+ * the reader without also stating its policy.
  *
  * This module stays free of Nest and Prisma on purpose: `storage.service.ts` imports it to decide
  * routing, and a database dependency here would put the storage layer behind the ORM. Families
@@ -36,7 +36,7 @@ export const PRIVATE_DOCUMENT_URL = `/${API_PREFIX}/${PRIVATE_DOCUMENT_ROUTE}`;
  * names an entity, and the readers are whoever that entity's relations say they are, which only
  * the database knows.
  */
-export type PrivateDocumentSubject = "user" | "due-diligence-order";
+export type PrivateDocumentSubject = "user" | "due-diligence-order" | "transaction";
 
 export type PrivateDocumentPolicy = {
   /** What the id at `subjectSegment` names. */
@@ -65,6 +65,12 @@ export type PrivateDocumentPolicy = {
  * validation of the third segment: authorization is per order, every object under
  * `due-diligence/<orderId>/` belongs to that order whatever the subpath, and a key naming a
  * subpath that was never written simply 404s at the storage layer.
+ *
+ * `poa` is the same shape of problem as `due-diligence`: the id in the key is a transaction id
+ * (`poa.service.ts:217` and `:222` build both keys from `transaction.id`), and the readers of a
+ * transaction are a buyer and a seller the database holds. Both objects of an executed deed live
+ * under the same prefix, so one entry covers the PDF and its QR code — which matters, because the
+ * QR code is a picture of the same private instrument and leaking it leaks the verification link.
  */
 export const PRIVATE_DOCUMENT_POLICIES: Readonly<Record<string, PrivateDocumentPolicy>> = {
   // kyc/<userId>/<timestamp>_<filename>
@@ -83,6 +89,14 @@ export const PRIVATE_DOCUMENT_POLICIES: Readonly<Record<string, PrivateDocumentP
     subjectSegment: 1,
     minSegments: 4,
     auditEntity: "DueDiligenceReport",
+  },
+  // poa/<transactionId>/<executedAtMs>_<hash12>.pdf
+  // poa/<transactionId>/<hash12>_qr.png
+  poa: {
+    subject: "transaction",
+    subjectSegment: 1,
+    minSegments: 3,
+    auditEntity: "PowerOfAttorney",
   },
 };
 

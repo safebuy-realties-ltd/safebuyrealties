@@ -7,9 +7,11 @@ export type PowerOfAttorneyDto = {
   transactionId: string;
   buyerId: string;
   listingId: string;
-  pdfStorageKey: string;
+  /** Authorized-reader URL (`/api/v1/documents/file?key=…`), fetched with the session cookie. */
+  pdfUrl: string;
   documentHash: string;
-  qrCodeStorageKey: string;
+  /** Authorized-reader URL (`/api/v1/documents/file?key=…`), fetched with the session cookie. */
+  qrCodeUrl: string;
   signatureMethod: "DRAWN" | "TYPED";
   signatureName: string;
   consentFlags: PoaConsentFlags;

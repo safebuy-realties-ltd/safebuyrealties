@@ -156,9 +156,9 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">15</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">16</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
     <div class="tile"><div class="label">Day 3</div><div class="value">Open</div><div class="foot">7 PRs in, the mount is still mounted</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">9</div><div class="foot">4 in day 4, 5 in day 5, over the ceiling</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">8</div><div class="foot">3 in day 4, 5 in day 5, over the ceiling</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
@@ -350,7 +350,7 @@ const DAYS = [
     "&mdash; E3-S1 stays here, part done. Its last two sub-stories carried into day 4, and DOCS-6 into day 5" ]},
   { n:"Day 4", theme:"Close the exposure, then make it runnable", count:5, done:false, items:[
     "<b>CH-4</b> the board is a merge gate &middot; PR 110 merged",
-    "<b>E3-S1d-2</b> power of attorney reads",
+    "<b>E3-S1d-2</b> power of attorney reads &middot; PR 111 merged",
     "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes",
     "<b>CH-3</b> env ignore rules at the repository root",
     "<b>E7-S2</b> coverage floor measured and recorded" ]},
@@ -366,7 +366,7 @@ const DAYS = [
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:null, t:"E3-S1d-2, power of attorney documents through the authorized reader",
+  { pr:111, t:"E3-S1d-2, power of attorney documents through the authorized reader",
     why:"The last private family that is small. POA keys are poa/&lt;transactionId&gt;/…, the readers are the POA buyer, the listing seller and operators, and nothing on the frontend renders pdfStorageKey or qrCodeStorageKey — so this is backend-only, unlike what the backlog row claimed.",
     look:"poa.service.ts serialize() hands out the raw storage keys and never calls getSignedUrl(), so routing the family is not enough on its own. Check the reader set is resolved from PowerOfAttorney to Transaction to Listing.sellerId, and that a missing POA refuses with the same 403 as a real one." },
   { pr:null, t:"E3-S1d-3, private listing documents, then retire the static mount",
@@ -409,7 +409,7 @@ const STORIES = [
   ["E3-S1b","Trust","Serve only public listing imagery from /uploads","A gate ahead of the static mount resolves each key to its Document row and 404s everything that is not a published listing asset.","D3","—","S","E3-S1a","done",false,104],
   ["E3-S1c","Trust","Authorized reads for KYC and credential documents","Both key builders take the id from the uploader's own JWT subject, so the key is the ownership record and needs no lookup.","D3","—","M","E3-S1b","done",false,106],
   ["E3-S1d-1","Trust","Authorized reads for due diligence reports","The id in the key names an order, not a user, so the reader set comes from the database: the ordering buyer, assigned professionals, operators.","D3","—","M","E3-S1c","done",false,108],
-  ["E3-S1d-2","Trust","Authorized reads for power of attorney documents","poa/&lt;transactionId&gt;/ resolves to buyer, listing seller and operators. serialize() hands out raw keys today and never signs them. Backend only.","D4","—","S","E3-S1d-1","planned",false],
+  ["E3-S1d-2","Trust","Authorized reads for power of attorney documents","poa/&lt;transactionId&gt;/ resolves to buyer, listing seller and operators. serialize() hands out raw keys today and never signs them. Backend only.","D4","—","S","E3-S1d-1","done",false,111],
   ["E3-S1d-3","Trust","Private listing documents, then retire the static mount","listings/ mixes public photos with title deeds, so privacy needs the Document row. Removing the mount forces a replacement public-delivery route and frontend edits.","D4","secure_docs","M","E3-S1b, E3-S1d-2","planned",true],
   ["E3-S2","Trust","Durable object storage in production","On Vercel uploads land in ephemeral /tmp and do not survive.","","—","M","ADR-0004","planned",true],
   ["E3-S3","Trust","Upload hardening: type allow-list, magic bytes, AV hook","Multer has no fileFilter and the stored MIME type is whatever the client claimed.","","secure_docs","M","E3-S2","planned",false],

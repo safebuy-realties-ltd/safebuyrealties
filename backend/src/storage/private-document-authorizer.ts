@@ -8,14 +8,14 @@ import { PrivateDocumentTarget } from "./private-documents";
  * Who may read a private document, for the families where the key alone cannot say (E3-S1d).
  *
  * E3-S1c could decide `kyc/` and `professionals/` from the key, because the id those keys carry is
- * the owner's own user id. `due-diligence/` carries an order id, and the readers of an order are a
- * buyer and a set of assigned professionals that only the database knows. So the decision moves
+ * the owner's own user id. `due-diligence/` carries an order id, and `poa/` a transaction id; the
+ * readers of either are people the database knows about and the key does not. So the decision moves
  * here, where Prisma is available, and `private-documents.ts` stays a pure routing table.
  *
  * Refusal is always 403, never 404, including when the subject entity does not exist. A logged-in
- * caller must not be able to walk order ids and learn which ones are real; the endpoint only
- * answers 404 for a key that is malformed or belongs to no private family at all, which is a
- * static property of the key and reveals nothing about the data.
+ * caller must not be able to walk order or transaction ids and learn which ones are real; the
+ * endpoint only answers 404 for a key that is malformed or belongs to no private family at all,
+ * which is a static property of the key and reveals nothing about the data.
  */
 
 /** Why a request was allowed or refused. Recorded in the audit trail, never sent to the caller. */
@@ -23,6 +23,7 @@ export type PrivateDocumentAccessReason =
   | "owner"
   | "operator"
   | "assigned-professional"
+  | "transaction-counterparty"
   | "not-a-reader"
   | "subject-unknown";
 
@@ -43,6 +44,8 @@ export class PrivateDocumentAuthorizer {
         return this.decideUserOwned(target, user);
       case "due-diligence-order":
         return this.decideDueDiligenceOrder(target, user);
+      case "transaction":
+        return this.decideTransaction(target, user);
     }
   }
 
@@ -104,5 +107,50 @@ export class PrivateDocumentAuthorizer {
       return { allowed: true, ownerId: order.buyerId, reason: "assigned-professional" };
     }
     return { allowed: false, ownerId: order.buyerId, reason: "not-a-reader" };
+  }
+
+  /**
+   * `poa/<transactionId>/…`, covering the executed deed and the QR code that verifies it.
+   *
+   * A power of attorney is an instrument of the transaction, not of one party, so the reader set is
+   * the transaction's two sides plus the operators who have to support it: the buyer who executed
+   * it, the seller of the listing it is drawn against, and internal staff. That matches how the
+   * backlog describes this family ("POA buyer, transaction counterparty, operators",
+   * `MVP_OUTSTANDING_BACKLOG.md:490`) and how the record is related — `PowerOfAttorney.transactionId`
+   * to `Transaction.listingId` to `Listing.sellerId`.
+   *
+   * The seller is read through the listing rather than from a column on the transaction because
+   * there is no such column: a standalone transaction has `listingId` null (`schema.prisma:242`),
+   * and one with no listing simply has no counterparty to admit. The buyer is checked before the
+   * role, so a staff member reading their own deed is audited as its owner rather than as an
+   * operator, exactly as in the due diligence case above.
+   */
+  private async decideTransaction(
+    target: PrivateDocumentTarget,
+    user: JwtPayload,
+  ): Promise<PrivateDocumentAccess> {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id: target.subjectId },
+      select: { buyerId: true, listing: { select: { sellerId: true } } },
+    });
+
+    if (!transaction) {
+      // Same oracle defence as due diligence: operators fall through to a 404 from the storage
+      // layer, everyone else gets the 403 a real transaction they are not party to would give.
+      return isInternalRole(user.role)
+        ? { allowed: true, ownerId: null, reason: "operator" }
+        : { allowed: false, ownerId: null, reason: "subject-unknown" };
+    }
+
+    if (transaction.buyerId === user.sub) {
+      return { allowed: true, ownerId: transaction.buyerId, reason: "owner" };
+    }
+    if (isInternalRole(user.role)) {
+      return { allowed: true, ownerId: transaction.buyerId, reason: "operator" };
+    }
+    if (transaction.listing?.sellerId === user.sub) {
+      return { allowed: true, ownerId: transaction.buyerId, reason: "transaction-counterparty" };
+    }
+    return { allowed: false, ownerId: transaction.buyerId, reason: "not-a-reader" };
   }
 }

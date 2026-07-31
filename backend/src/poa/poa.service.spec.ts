@@ -6,8 +6,9 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { PrismaService } from "../prisma/prisma.service";
+import { isPrivateDocumentKey, resolvePrivateDocumentTarget } from "../storage/private-documents";
 import { StorageService } from "../storage/storage.service";
-import { PoaService } from "./poa.service";
+import { PoaService, PowerOfAttorneyResponse } from "./poa.service";
 
 const hash64 = "a".repeat(64);
 
@@ -32,7 +33,7 @@ const consentFlags = {
 
 describe("PoaService", () => {
   let service: PoaService;
-  let storage: { upload: jest.Mock };
+  let storage: { upload: jest.Mock; getSignedUrl: jest.Mock };
   let prisma: {
     transaction: { findUnique: jest.Mock };
     powerOfAttorney: { create: jest.Mock; findUnique: jest.Mock };
@@ -43,6 +44,9 @@ describe("PoaService", () => {
       upload: jest
         .fn()
         .mockImplementation((_buf: Buffer, key: string) => Promise.resolve(key.replace(/\\/g, "/"))),
+      // Deliberately not the real URL: the assertions below prove the response carries whatever
+      // StorageService returned, and a separate test proves what it returns for a POA key.
+      getSignedUrl: jest.fn().mockImplementation((key: string) => Promise.resolve(`signed:${key}`)),
     };
     prisma = {
       transaction: { findUnique: jest.fn() },
@@ -187,6 +191,79 @@ describe("PoaService", () => {
         }),
       }),
     );
+  });
+
+  /**
+   * E3-S1d-2. Before this, `execute()` handed back the raw storage keys, and every one of them
+   * resolved under the public `/uploads` mount — an executed power of attorney readable with no
+   * session at all, plus a QR image that verifies it to whoever holds the picture.
+   */
+  describe("what the response discloses about the stored documents", () => {
+    async function executeOnce(): Promise<PowerOfAttorneyResponse> {
+      prisma.transaction.findUnique.mockResolvedValue({
+        id: "tx-1",
+        buyerId: "buyer-1",
+        listingId: "listing-1",
+        powerOfAttorney: null,
+        buyer: { firstName: "Ada", lastName: "Obi" },
+        listing: { title: "4-Bed Duplex", location: "Lekki Phase 1, Lagos" },
+      });
+      prisma.powerOfAttorney.create.mockImplementation(({ data }) =>
+        Promise.resolve({ id: "poa-1", ...data, ipAddress: null, userAgent: null }),
+      );
+
+      return service.execute(
+        { transactionId: "tx-1", signatureMethod: "TYPED", signatureName: "Ada Obi", consentFlags },
+        buyer,
+      );
+    }
+
+    it("returns URLs from StorageService rather than the keys it stored", async () => {
+      const result = await executeOnce();
+
+      const stored = prisma.powerOfAttorney.create.mock.calls[0][0].data;
+      expect(storage.getSignedUrl).toHaveBeenCalledWith(stored.pdfStorageKey);
+      expect(storage.getSignedUrl).toHaveBeenCalledWith(stored.qrCodeStorageKey);
+      expect(result.pdfUrl).toBe(`signed:${stored.pdfStorageKey}`);
+      expect(result.qrCodeUrl).toBe(`signed:${stored.qrCodeStorageKey}`);
+    });
+
+    it("carries no storage key under any field name", async () => {
+      const result = await executeOnce();
+
+      const stored = prisma.powerOfAttorney.create.mock.calls[0][0].data;
+      const body = JSON.stringify(result);
+      expect(Object.keys(result)).not.toContain("pdfStorageKey");
+      expect(Object.keys(result)).not.toContain("qrCodeStorageKey");
+      // `signed:` is the stub's prefix, so a bare key would fail this even under a matching name.
+      expect(body).not.toContain(`"${stored.pdfStorageKey}"`);
+      expect(body).not.toContain(`"${stored.qrCodeStorageKey}"`);
+    });
+
+    /**
+     * The stub above proves the service delegates; this proves the delegation lands somewhere that
+     * checks a session. Both keys are asserted against the real routing table, so adding a segment
+     * to either key shape without adding a policy fails here rather than in production.
+     */
+    it("builds both keys into a family the private reader owns", async () => {
+      await executeOnce();
+
+      const keys = storage.upload.mock.calls.map((call) => call[1].replace(/\\/g, "/"));
+      expect(keys).toHaveLength(2);
+      for (const key of keys) {
+        expect(key.startsWith("poa/tx-1/")).toBe(true);
+        expect(isPrivateDocumentKey(key)).toBe(true);
+        expect(resolvePrivateDocumentTarget(key)).toEqual(
+          expect.objectContaining({
+            subjectId: "tx-1",
+            policy: expect.objectContaining({
+              subject: "transaction",
+              auditEntity: "PowerOfAttorney",
+            }),
+          }),
+        );
+      }
+    });
   });
 
   it("execute rejects when consent flags are incomplete", async () => {
