@@ -20,6 +20,8 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      board: ${{ steps.filter.outputs.board }}
+      story: ${{ steps.filter.outputs.story }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,6 +47,19 @@ jobs:
               - '.github/workflows/ci.yml'
             backend:
               - 'backend/**'
+            board:
+              - 'docs/mvp-board.html'
+            # Work a reader would expect to find on the board. Deliberately broad: the board is the
+            # index of what this repository is doing, and a change nobody can find from it is a
+            # change the next team discovers by accident.
+            story:
+              - 'src/**'
+              - 'backend/**'
+              - 'scripts/**'
+              - 'prisma/**'
+              - '.github/workflows/**'
+              - 'docs/**'
+              - '!docs/mvp-board.html'
 
   frontend-typecheck:
     needs: changes
@@ -91,11 +106,51 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
 
+  # The board is the repository's index of what is done, open and deferred. It went stale twice in
+  # the handover week and a person caught it both times, so it is a check now. Two parts: the board
+  # must not contradict itself, and a pull request that changes the work must say so on the board.
+  board:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check-board.mjs verifies the commit named in the board header actually exists.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # No npm ci: the check is plain Node against one file, and it should stay that cheap.
+      - run: node scripts/check-board.mjs
+
+      - name: Board must record this change
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.changes.outputs.story == 'true' &&
+          needs.changes.outputs.board != 'true'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Escape hatch, on purpose and in the open: some changes genuinely have no board row,
+          # and a gate with no exit turns into a gate people route around. Saying why is the price.
+          if printf '%s' "$PR_BODY" | grep -qiE '^[[:space:]]*no-board-update:[[:space:]]*\S'; then
+            printf '%s\n' "$PR_BODY" | grep -iE '^[[:space:]]*no-board-update:' | head -1
+            exit 0
+          fi
+          echo "::error file=docs/mvp-board.html::This pull request changes the work but not docs/mvp-board.html."
+          echo
+          echo "Add or update the row for this story: status, PR number, and the Day column."
+          echo "Then run: npm run validate:board"
+          echo
+          echo "If this change genuinely has no board row, put a line in the PR description:"
+          echo "  no-board-update: <reason>"
+          exit 1
+
   # Single required status check for branch protection (see docs/BRANCH_PROTECTION.md).
   ci-gate:
     name: CI (required)
     runs-on: ubuntu-latest
-    needs: [changes, frontend-typecheck, frontend-test, backend-check]
+    needs: [changes, frontend-typecheck, frontend-test, backend-check, board]
     if: always()
     steps:
       - name: Changes job must succeed
@@ -123,6 +178,12 @@ jobs:
             echo "backend-check failed or was cancelled: ${{ needs.backend-check.result }}"
             exit 1
           fi
+
+      - name: Board check
+        if: needs.board.result != 'success'
+        run: |
+          echo "board: ${{ needs.board.result }}"
+          exit 1
 
       - name: CI gate passed
         run: echo "All required checks passed."
