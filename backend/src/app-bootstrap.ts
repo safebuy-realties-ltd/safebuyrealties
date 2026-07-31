@@ -7,6 +7,8 @@ import * as path from "path";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 import { buildCorsOptions } from "./config/cors-config";
+import { PrismaService } from "./prisma/prisma.service";
+import { createPublicListingAssetGate } from "./storage/public-listing-asset.gate";
 
 /**
  * Everything bootstrap() applies to the app between NestFactory.create() and listen().
@@ -24,11 +26,18 @@ export function resolveUploadRoot(): string {
 }
 
 export function configureApp(app: NestExpressApplication): void {
-  // E3-S1a: this mount is the document exposure. It is Express-level middleware registered
-  // ahead of the Nest router, so no guard on any controller can intercept it — any storage
-  // key fetches a title deed, a government ID or a KYC selfie with no session. Proven by
-  // src/storage/uploads-exposure.spec.ts and removed by E3-S1.
-  app.use("/uploads", express.static(resolveUploadRoot()));
+  // E3-S1b: this mount is Express-level middleware registered ahead of the Nest router, so no
+  // guard on any controller can reach it — before the gate, any storage key fetched a title
+  // deed, a government ID or a KYC selfie with no session (E3-S1a,
+  // src/storage/uploads-exposure.spec.ts). The gate resolves each key to its Document row and
+  // passes only public listing imagery on a publicly visible listing; everything else is 404.
+  // It closes the exposure, it does not authorize anything: the authorized path for private
+  // documents is still E3-S1.
+  app.use(
+    "/uploads",
+    createPublicListingAssetGate(app.get(PrismaService)),
+    express.static(resolveUploadRoot()),
+  );
   app.use(cookieParser());
   app.use(
     helmet({
