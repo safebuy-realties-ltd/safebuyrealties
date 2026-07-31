@@ -15,7 +15,9 @@ import * as os from "os";
 import * as path from "path";
 import request from "supertest";
 import { configureApp } from "../app-bootstrap";
+import { AuditService } from "../audit/audit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { PrivateDocumentController } from "./private-document.controller";
 import { StorageService } from "./storage.service";
 
 /**
@@ -31,10 +33,15 @@ import { StorageService } from "./storage.service";
  * is what makes the result unambiguous — see the control case.
  *
  * E3-S1b closed the delivery half: a gate in front of the mount now resolves each key to its
- * Document row and serves only public listing imagery, so probe two has lost `.failing` and is a
- * regression test. Probe one stays `.failing` — private documents are no longer *served*, but
- * they still have no authorized path, and 404 is not the 401 it asks for. It turns red when
- * E3-S1 gives them one.
+ * Document row and serves only public listing imagery, so probe two lost `.failing` and is a
+ * regression test.
+ *
+ * E3-S1c closed probe one for the KYC and professional credential families. getSignedUrl() no
+ * longer resolves a private key to a static path at all — it resolves to PrivateDocumentController,
+ * which is a Nest route, which is the side of the router where guards run. That is precisely what
+ * this module proves: it denies every request the router handles, so a private document URL
+ * answering 401 here means the URL now passes through the guard layer instead of around it.
+ * What the real guard then decides is `private-document.controller.spec.ts`.
  */
 
 /** A private document. The point of the story is that this needs a session and does not get one. */
@@ -65,10 +72,12 @@ const noPublicDocuments = { document: { findFirst: () => Promise.resolve(null) }
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true })],
-  controllers: [ProbeController],
+  // The real controller, so probe one asks the application's own route rather than a stand-in.
+  controllers: [ProbeController, PrivateDocumentController],
   providers: [
     StorageService,
     { provide: PrismaService, useValue: noPublicDocuments },
+    { provide: AuditService, useValue: { log: () => Promise.resolve() } },
     { provide: APP_GUARD, useClass: DenyEveryRequestGuard },
   ],
 })
@@ -129,26 +138,24 @@ describe("unauthenticated /uploads exposure (E3-S1)", () => {
   });
 
   /**
-   * Probe one, the authorization decision.
+   * Probe one, the authorization decision. **Closed by E3-S1c** — `.failing` dropped.
    *
-   * Deliberately follows StorageService.getSignedUrl() rather than hardcoding `/uploads`, so it
-   * probes whatever URL the application actually hands out for a private document. That is the
-   * link to E3-S1: the moment getSignedUrl() returns an authorized path for the local driver,
-   * this asks that path for the document with no session, and the answer becomes a refusal.
+   * Deliberately follows StorageService.getSignedUrl() rather than hardcoding a path, so it
+   * probes whatever URL the application actually hands out for a private document. It fails
+   * again the moment any driver starts resolving a private key to something that is served
+   * without a session — a static path, or a presigned URL carrying its own authority.
    *
    * Asserts on the guard, not the payload. Whether the file exists on disk decides only between
-   * 200 and 404, and both mean the request was answered without anyone checking who was asking.
+   * 200 and 404, and both would mean the request was answered without anyone checking who was
+   * asking.
    */
-  it.failing(
-    "refuses an unauthenticated request for the URL a private document resolves to",
-    async () => {
-      const url = await storage.getSignedUrl(STORAGE_KEY);
+  it("refuses an unauthenticated request for the URL a private document resolves to", async () => {
+    const url = await storage.getSignedUrl(STORAGE_KEY);
 
-      const response = await request(app.getHttpServer()).get(url);
+    const response = await request(app.getHttpServer()).get(url);
 
-      expect([401, 403]).toContain(response.status);
-    },
-  );
+    expect([401, 403]).toContain(response.status);
+  });
 
   /**
    * Probe two, the static mount itself. **Closed by E3-S1b** — `.failing` dropped, this is now

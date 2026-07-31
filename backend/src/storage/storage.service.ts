@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   DeleteObjectCommand,
@@ -9,8 +9,17 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as fs from "fs";
 import * as path from "path";
+import { Readable } from "stream";
+import { isPrivateDocumentKey, privateDocumentUrl } from "./private-documents";
 
 type StorageDriver = "local" | "s3";
+
+/** An open object, ready to stream. The caller owns the stream and must consume or destroy it. */
+export type StoredObject = {
+  stream: Readable;
+  /** Byte length when the driver reports one, so the response can set Content-Length. */
+  contentLength: number | null;
+};
 
 /** Outcome of StorageService.configStatus(). Reasons are fixed literals, never config values. */
 export type StorageConfigStatus =
@@ -32,6 +41,12 @@ function resolveLocalRoot(config: ConfigService): string {
     return path.join("/tmp", "safebuyrealties-uploads");
   }
   return path.resolve("./uploads");
+}
+
+/** S3 answers a missing key with NoSuchKey, and a missing key under a HEAD-style call with 404. */
+function isS3NotFound(err: unknown): boolean {
+  const e = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+  return e?.name === "NoSuchKey" || e?.$metadata?.httpStatusCode === 404;
 }
 
 @Injectable()
@@ -86,12 +101,36 @@ export class StorageService {
     return normalizedKey;
   }
 
+  /**
+   * The URL a caller should be given for this object.
+   *
+   * Private families are checked before the driver branch, because no URL can express
+   * "the owner and platform operators only". A presigned S3 URL is a bearer capability: an
+   * hour of access to whoever holds it, with no session and no role. So both drivers point
+   * private keys at PrivateDocumentController, which authorizes each request instead
+   * (E3-S1c, private-documents.ts).
+   */
   async getSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
     const normalizedKey = this.normalizeKey(key);
+    if (isPrivateDocumentKey(normalizedKey)) {
+      return privateDocumentUrl(normalizedKey);
+    }
     if (this.driver === "s3") {
       return this.getSignedUrlS3(normalizedKey, expiresInSeconds);
     }
     return `/uploads/${normalizedKey}`;
+  }
+
+  /**
+   * Open a stored object for reading. Authorization is the caller's job and must happen first —
+   * this method knows nothing about who is asking.
+   */
+  async readObject(key: string): Promise<StoredObject> {
+    const normalizedKey = this.normalizeKey(key);
+    if (this.driver === "s3") {
+      return this.readObjectS3(normalizedKey);
+    }
+    return this.readObjectLocal(normalizedKey);
   }
 
   async delete(key: string): Promise<void> {
@@ -115,6 +154,48 @@ export class StorageService {
     const abs = path.join(this.localRoot, key);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     await fs.promises.writeFile(abs, buffer);
+  }
+
+  private async readObjectLocal(key: string): Promise<StoredObject> {
+    const abs = path.resolve(this.localRoot, key);
+    // normalizeKey() already rejects "..", and resolvePrivateDocumentTarget() rejects it again
+    // before this is ever called. This is the last line: whatever the key was, the file it
+    // resolved to has to sit inside the storage root.
+    if (abs !== this.localRoot && !abs.startsWith(this.localRoot + path.sep)) {
+      throw new NotFoundException("Document not found");
+    }
+
+    let stats: fs.Stats;
+    try {
+      stats = await fs.promises.stat(abs);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new NotFoundException("Document not found");
+      }
+      throw err;
+    }
+    if (!stats.isFile()) throw new NotFoundException("Document not found");
+
+    return { stream: fs.createReadStream(abs), contentLength: stats.size };
+  }
+
+  private async readObjectS3(key: string): Promise<StoredObject> {
+    const { client, bucket } = this.getS3();
+
+    let output;
+    try {
+      output = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    } catch (err) {
+      if (isS3NotFound(err)) throw new NotFoundException("Document not found");
+      throw err;
+    }
+
+    const body = output.Body as Readable | undefined;
+    // The SDK types Body as a union covering browser streams; under Node it is a Readable.
+    if (!body || typeof body.pipe !== "function") {
+      throw new NotFoundException("Document not found");
+    }
+    return { stream: body, contentLength: output.ContentLength ?? null };
   }
 
   private async deleteLocal(key: string): Promise<void> {
