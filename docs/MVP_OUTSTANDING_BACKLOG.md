@@ -479,7 +479,7 @@ Do not copy `standalone-dd.service.ts`. Extract the shared case machinery into a
 
 **Evidence of the gap**
 
-`backend/src/storage/storage.service.ts:22` to `:30`: when running on Vercel with a relative or unset upload directory, the local root becomes `/tmp/safebuyrealties-uploads`. Vercel serverless `/tmp` does not persist between invocations. `backend/.env.example` lists the S3 variables but the production environment snapshot in `backend/.env.vercel.prod` contains no `STORAGE_DRIVER` and no AWS keys. Uploads written in production are effectively write-only.
+`backend/src/storage/storage.service.ts:22` to `:30`: when running on Vercel with a relative or unset upload directory, the local root becomes `/tmp/safebuyrealties-uploads`. Vercel serverless `/tmp` does not persist between invocations. `backend/.env.example` lists the S3 variables. This entry used to cite `backend/.env.vercel.prod` as proof that production sets no `STORAGE_DRIVER` and no AWS keys; that file has since been untracked, and it never supported the claim — it holds `VERCEL_*`/`TURBO_*` build metadata and carries no `DATABASE_URL` either, which production certainly has. **The production storage driver is not knowable from this repository and must be read from the Vercel dashboard.** If it is `local`, uploads written in production are effectively write-only.
 
 **Acceptance criteria**
 

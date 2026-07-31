@@ -1,6 +1,10 @@
 node_modules
 dist
+# Every env file except the checked-in template. The previous list named `.env` and
+# `.env.vercel` individually, which missed `.env.vercel.prod` — `vercel env pull` writes that
+# name, so a production pull landed in the repo (f394bb4). Match the family, not the members.
 .env
-.env.vercel
+.env.*
+!.env.example
 uploads
 .vercel/*
