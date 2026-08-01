@@ -60,9 +60,14 @@ cd backend
 npx prisma migrate deploy
 ```
 
-Optional (empty or dev-only DB): `npx prisma db seed`
+Optional (empty or dev-only DB): `SEED_NO_WIPE=1 npx prisma db seed`
 
 **Never run `prisma migrate reset`** against the shared cloud database.
+
+**Pass `SEED_NO_WIPE=1`.** Without it the seed's first act is `deleteMany()` on 24 tables — users,
+payments, escrow, documents, everything — against whatever `DATABASE_URL` points at, and step 1 above
+points it at the shared cloud Postgres. `backend/prisma/seed.ts:189` is the check; `docs/RUNBOOK.md`
+§4.1 is the longer version.
 
 ## Running the stack
 

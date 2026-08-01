@@ -97,14 +97,16 @@ That is a real product. The remaining work is narrower than the checklist histor
 | **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4 | 4 stories, 11 to 14 days |
 | **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days | E3-S1, E3-S4 | 2 stories, 4 to 7 days |
 | **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | none | 3 stories, 6 to 9 days |
-| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it | 4 stories, 10 to 14 days |
+| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it; E5-S6 found | 5 stories, 11 to 15 days |
 | **M6 Communications** | Email actually leaves the building | E6 (3) | 5 to 7 days | none | 3 stories, 5 to 7 days |
-| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, and E7-S2b found | 5 stories, 10 to 16 days |
+| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5; E7-S2b and E7-S6b found | 5 stories, 10 to 16 days |
 | **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | none | 4 stories, 8 to 12 days plus external lead time |
 
-It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Six milestone stories and DOCS-1 have merged, and E7-S2b was discovered inside E7-S2, so **29 milestone stories plus CH-1, 30 in all, roughly 67 to 97 developer-days remain.** One developer lands that in about 14 to 19 calendar weeks. Two developers working the split in section 6 land it in about 8 to 10 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Seven milestone stories and DOCS-1 have merged, and three more were discovered inside them — E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5 — so **30 milestone stories plus CH-1, 31 in all, roughly 68 to 98 developer-days remain.** One developer lands that in about 14 to 20 calendar weeks. Two developers working the split in section 6 land it in about 8 to 10 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story.
 
-**A week of merging bought five days off the floor and three off the ceiling, and M7 got longer.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the six milestone stories, five were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
+**A week of merging bought four days off the floor and two off the ceiling, and found three stories doing it.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the seven milestone stories, six were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. M5 went up by a day because writing the environment matrix found the one credential in this application that does not fail closed, which is now E5-S6. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
+
+**The week discovered four stories — E5-S2a, E7-S2b, E5-S6 and E7-S6b — and half of them came out of a documentation story that shipped no code.** Worth noticing before the next team decides documentation is the part to skip. Nothing was found by reading a story's title; it was found by reading the code the title described and writing down what it actually did.
 
 **Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 plus E2-S2 is enough, roughly 17 to 25 days, down from 22 to 28 because E2-S4 and the document authorization half of M3 have landed. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
 
@@ -142,6 +144,7 @@ Auth, users, listings, documents, verification, tasks, transactions, payments an
 | `docs/VALIDATION_REPORT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-25 | Snapshot of a production deploy two months old |
 | `docs/QA_FINDINGS.md` | ✅ Bannered, DOCS-2 · mostly closed | QA-015 (seeded documents have no files on disk) and QA-016 (Paystack not validated end to end locally) remain open. QA-015 is E7-S4, which is the first story recommended for the cut |
 | `docs/analysis/05_STRATEGIC_RECOMMENDATIONS.md` | Still the right frame | Its Core MVP and Launch-Ready buckets map onto E1 to E4 and E5 to E8 below |
+| `docs/LOCAL_DEVELOPMENT.md`, `docs/VERCEL_VALIDATION.md` | ✅ Corrected, E7-S5 | Both offered `prisma db seed` as routine housekeeping. The seed's first act is `deleteMany()` on 24 tables against whatever `DATABASE_URL` points at, and both documents point it at the shared cloud Postgres. Neither said so. Both now pass `SEED_NO_WIPE=1` and say why |
 
 **First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the voxdiary paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
 
@@ -181,6 +184,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E5-S3 | Security | Password reset | `auth_recovery` | M | 📋 | E6-S1 |
 | E5-S4 | Security | Email verification on self-registration | `auth_signup` | M | 📋 | E6-S1 |
 | E5-S5 | Security | Session management: refresh rotation and revocation | `auth_sessions` | L | 📋 | none |
+| E5-S6 🔴 | Security | Fail closed when `JWT_SECRET` is unset | — | S | 📋 | none |
 | E6-S1 🔴 | Comms | SMTP configuration and delivery observability | — | S | 📋 | none |
 | E6-S2 | Comms | Email channel for notification types | `email_notifications` | M | 📋 | E6-S1 |
 | E6-S3 | Comms | Transactional email templates for the core journeys | `email_notifications` | M | 📋 | E6-S2 |
@@ -189,8 +193,9 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E7-S2b | Ops | Diff coverage: new and changed files meet the strict bar | — | M | 📋 | E7-S2 |
 | E7-S3 🔴 | Ops | End-to-end journeys in CI against an ephemeral database | — | L | 📋 | E7-S2 |
 | E7-S4 | Ops | Deterministic demo seed and reset | — | M | 📋 | E3-S2 |
-| E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | 📋 | none |
+| E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | ✅ #117 | none |
 | E7-S6 | Ops | Health and readiness probes with dependency checks | — | S | ✅ #101 | none |
+| E7-S6b | Ops | Container healthcheck polls the readiness probe | — | S | 📋 | E7-S6 |
 | E8-S1 | Compliance | NDPR consent, retention, and erasure | `privacy_centre` | L | 📋 | E5-S5 |
 | E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | external |
 | E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | external, E4-S3 |
@@ -751,6 +756,46 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 
 ---
 
+#### E5-S6, fail closed when `JWT_SECRET` is unset
+
+**Size** S · **Status** 📋 planned, unscheduled · **Deps** none
+
+**Why it exists.** Found while writing the environment matrix in E7-S5. Every other credential in this
+application fails closed: `assertSafeDatabaseUrl`, `assertCorsConfigured` and `assertPaymentsConfigured`
+each call `process.exit(1)` before Nest starts rather than let a misconfigured instance serve traffic.
+`JWT_SECRET` does the opposite.
+
+**Evidence of the gap.** `auth.module.ts:17` signs with `config.get<string>("JWT_SECRET") ?? "dev-secret-change-me"`
+and `jwt.strategy.ts:33` verifies against the same expression. With the variable unset the API starts
+normally, logs nothing unusual, and signs every seven-day session token with a string that is public in
+this repository. Anyone who can read the source can mint a token for any user id, including
+`SUPER_ADMIN`, and the forged request is indistinguishable from a real login in the logs. There is no
+guard, no test, and no mention of the fallback in any document — `LOCAL_DEVELOPMENT.md:44` and
+`VISUAL_QA_AGENT_PROMPT.md:43` both say "min 32 characters", which is advice about a value, not
+enforcement of one.
+
+This is the most severe finding of the handover week, and it is severe in a quiet way: the deployment
+either has the variable set, in which case nothing is wrong and nothing ever was, or it does not, in
+which case every session has been forgeable and nothing in the application would have said so.
+
+**Acceptance criteria**
+
+1. `assertJwtSecret()` in `backend/src/config/`, called from `main.ts` alongside the other three guards,
+   exiting non-zero in production when `JWT_SECRET` is unset, empty, shorter than 32 characters, or equal
+   to the development fallback.
+2. The literal `"dev-secret-change-me"` is deleted from `auth.module.ts` and `jwt.strategy.ts`. Outside
+   production a missing secret resolves through one clearly-named development default in a single place.
+3. The exit message names the variable and the fix, and never prints any part of the configured value.
+4. Specs cover unset, empty, too short, the fallback literal, and a good value, in production and out.
+5. The runbook's §7.2 and §9.3 are updated from finding to closed, and `backend/.env.example`'s warning
+   comment is replaced by whatever ends up true.
+
+**Before this is scheduled, someone with the Render dashboard should confirm `JWT_SECRET` is set.**
+That check takes a minute and is not the story; the story is making the answer impossible to get wrong
+next time.
+
+---
+
 ### Epic E6, communications
 
 **Stakeholder value.** Guest buyers are told to keep a Service ID that arrives by email. Email is not configured, so in practice they do not receive it.
@@ -902,6 +947,23 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 3. A secrets checklist naming rotation cadence and holder.
 4. `docs/BUILD_CHECKLIST.md` reconciled against this backlog, closing DOCS-1.
 
+**✅ Merged in #117, day 5.** `docs/RUNBOOK.md` is criteria 1 to 3 in one document; criterion 4 was
+already discharged by DOCS-1 on day 1 and is verified rather than redone, with the re-audit against
+HEAD left to DOCS-4 where it belongs. The story was supposed to write down what is already true, and
+writing it down is what found the two things below.
+
+**`JWT_SECRET` has no boot guard**, and falls back to a string committed to this repository. That is
+now **E5-S6**, and it is the more serious of the two by some distance. **The container healthcheck
+polls the wrong endpoint**, so a container with a dead database passes it — **E7-S6b**. Neither was
+fixed here, because a documentation story that edits `auth.module.ts` and the `Dockerfile` is two
+stories wearing one PR number.
+
+Three claims in the runbook cannot be settled from this repository and are written as open items
+rather than answers: whether `STORAGE_DRIVER` reads `local` in production, whether `JWT_SECRET` is
+set there at all, and whether the superseded Vercel backend project is still connected and therefore
+still migrating the shared database on every backend push. Each names the exact dashboard to look at.
+A runbook that guessed at those and was wrong would be worse than one that says it does not know.
+
 ---
 
 #### E7-S6, health and readiness probes
@@ -918,6 +980,32 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 4. Readiness failure marks the instance unavailable rather than serving errors.
 
 **✅ Merged in #101, day 2.** `health.controller.ts:43` is `/health/live` and `:52` is `/health/ready`; the original bare `@Get()` at `:25` stays for anything already pointed at it. Criterion 4 is the one to re-read on Vercel: readiness is a serverless function's answer about itself, and nothing here is an orchestrator that will stop routing traffic to a failing instance. The probes tell a person which dependency is broken, which is what E7-S5's runbook needs; treating them as an automatic remedy would be reading more into them than they do.
+
+---
+
+#### E7-S6b, point the container healthcheck at the readiness probe
+
+**Size** S · **Status** 📋 planned, unscheduled · **Deps** E7-S6
+
+**Why it exists.** Found while writing the deploy section in E7-S5. E7-S6 built `/health/ready` so that
+a broken dependency is visible; the one automated consumer of a health endpoint in this repository was
+never pointed at it.
+
+**Evidence of the gap.** `backend/Dockerfile`'s `HEALTHCHECK` polls `/api/v1/health`, the original bare
+`@Get()` at `health.controller.ts:25`, which returns 200 from static values and touches nothing. **A
+container whose database is unreachable therefore reports itself healthy.** That is the exact failure
+E7-S6 was written to make visible, on the one path that could act on it.
+
+**Acceptance criteria**
+
+1. The `HEALTHCHECK` polls `/api/v1/health/ready` and treats 503 as unhealthy.
+2. The `--start-period` accommodates `prisma migrate deploy` plus boot, since the container migrates
+   before it serves and readiness cannot pass until it does.
+3. What Render actually does with an unhealthy container is written into `docs/RUNBOOK.md` §2.2 — if it
+   only restarts, the probe is a signal rather than a remedy and the runbook should say which.
+4. The bare `/health` endpoint stays, since other things may already poll it.
+
+Small, but it is a deploy-path change and wants its own verification rather than a ride on a docs PR.
 
 ---
 
