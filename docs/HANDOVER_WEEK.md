@@ -105,8 +105,8 @@ Give this to every agent alongside the story.
    mis-estimate costs an hour; a sprawling PR costs the reviewer an afternoon.
 6. Never run `prisma migrate reset`. The database is shared.
 7. If the change is user-facing and there is no feature-flag system yet, say so in the PR rather than inventing one.
-8. **Update `docs/mvp-board.html` in the same diff as the work.** Not afterwards, not in a follow-up.
-   This one is enforced rather than trusted — see below.
+8. **Bring the whole board up to date in the same diff as the work.** Not afterwards, not in a
+   follow-up, and not the row on its own. This one is enforced rather than trusted — see below.
 
 ### Rule 8, and why it is a gate rather than a habit
 
@@ -116,15 +116,27 @@ commit hashes in two adjacent header lines, and a day marked complete above thre
 of its own. A person caught both. That is one person's attention spent on something a check does in
 under a second.
 
+**The unit of update is the page, not the row.** One story's status is written down in six places —
+the row, the day card, the counter tiles, the header, the review queue and the prose above them —
+and this is by design, because a reader arriving at any one of them should learn where the week
+stands. The cost of that design is that an author who moves only the row leaves five true-looking
+statements behind, each of which reads as current. That is not a smaller update than the rule asks
+for; it is a board that now disagrees with itself in five places instead of being out of date in
+one.
+
 **What the rule requires of a story PR:**
 
-| | |
+| Your change | What the board needs |
 | --- | --- |
-| A new story | Add its row: id, epic, title, what, **Day**, flag, size, depends-on, status |
-| Work that merged | Set the row to `done` **and put the PR number in it**. A done row with no PR is a claim nobody can trace to a diff |
-| Work that slipped | Move the **Day** column to the day it will now land, and fix the day card that listed it |
+| A new story | Add its row: id, epic, title, what, **Day**, flag, size, depends-on, status. Add it to the day card too, and to the `all N rows accounted for` count in the *Day by day* heading |
+| Work that merged | Set the row to `done` **and put the PR number in it**. A done row with no PR is a claim nobody can trace to a diff. Name the same PR on the day-card item |
+| Work that slipped | Move the **Day** column to the day it will now land, and fix both day cards — the one that listed it and the one that gets it |
 | A parent whose children are still open | Status `part`. Not `done`, which erases the open half; not `planned`, which erases the merged half |
 | Scope you discovered | A new row, not a wider one. That is rule 5 written down where the next person will see it |
+| A day that closes or opens | Its card's `done` flag, its `count`, the `Day N` tile above it, and the header's "days 1 to N complete, day M open" |
+| Any count that moved | `PRs merged` and `Remaining` count PR-shaped rows carrying a day, done and not done — counted over rows rather than whole days so both stay true in the middle of a day, not only when one closes. The *Up next* prose quotes both in sentences: a count that changes makes the sentence around it false, so rewrite the sentence, do not just edit the digit |
+| A PR that merged | Take it out of `QUEUE` and put your own in its place. The queue is what the reviewer opens next, so it names exactly one pull request: the newest, which is the one your diff is opening. A queue advertising work that already landed is worse than an empty one |
+| Anything at all | The header's commit and its `Updated` date. You verified against a commit — say which one |
 
 **The Day column means the day the work landed, or the day it is now scheduled to land.** It is not
 a record of where it was first planned; the day cards carry that history in prose.
@@ -135,6 +147,18 @@ a record of where it was first planned; the day cards carry that history in pros
   references, every done row traceable to a PR, day cards agreeing with the Day column, the header
   naming one commit that exists, and — the check that would have caught the failure above — no day
   marked done while a row assigned to it is not.
+- It also checks everything the page states twice against the one place it is data, so the table
+  above is enforced and not merely advice: day-card PR numbers against the row's, the six tiles
+  against the day cards, the header's day claim and `Updated` date, the ADR and gate counts against
+  the lists they summarise, the queue against the newest PR on the board, and the two counts the *Up
+  next* prose quotes. Rows fix the day cards, day cards fix the tiles, and everything else is checked
+  against those — one source, checked outwards. Note that it reads a `done` row as a claim about the
+  diff it sits in rather than about `main`: rows are written as merged because the board lands inside
+  the pull request it describes, so staleness is judged by a newer PR existing, not by status.
+- What it deliberately does not check is the prose itself. Narrative is the reviewer's job, and a
+  check that fired on rewording would be routed around within a week. The numeric claims in *Up
+  next* are verified only where the sentence is still there: reword freely, but do not leave behind
+  a figure the data stopped supporting.
 - CI runs the same script on every pull request, and **fails a PR that changes `src/`, `backend/`,
   `scripts/`, `docs/` or the workflows without touching `docs/mvp-board.html`.**
 - The escape hatch is a line in the PR description reading `no-board-update: <reason>`. It is
