@@ -147,8 +147,8 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>9c9e414</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 3 complete, day 4 open, main at 9c9e414</p>
+    <p class="sub">Verified against <code>main</code> @ <code>7e9db17</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 3 complete, day 4 open, main at 7e9db17</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
@@ -156,9 +156,9 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">17</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
-    <div class="tile"><div class="label">Day 4</div><div class="value">Open</div><div class="foot">3 of 5 in, the mount is out, E3-S1 closed</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">7</div><div class="foot">2 in day 4, 5 in day 5, over the ceiling</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">18</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">Day 4</div><div class="value">Open</div><div class="foot">4 of 5 in, only the coverage floor left</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">6</div><div class="foot">1 in day 4, 5 in day 5, over the ceiling</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
@@ -171,9 +171,9 @@
 
   <div class="flagbox">
     <p><b>Day 3 closed in day 4.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and at the end of all seven the day's actual deliverable was still open: E3-S1 says <i>retire the public static route</i>, and the route was still mounted. It came out in E3-S1d-3 (#112), two days and two sub-stories later. Seven merged PRs was not the same fact as a closed day, and this board said "done" until someone checked.</p>
-    <p><b>Two of those seven do less than their titles claimed.</b> #105 widened <code>backend/.gitignore</code> only: the <b>root</b> <code>.gitignore</code> still has no env pattern, so <code>.env</code> and <code>.env.production</code> at the repository root remain committable, and a root <code>.env.example</code> says a root <code>.env</code> is expected &mdash; now <b>CH-3</b>. #107's reconcile is sound, but its suggested split for E3-S1d has since been shown wrong, and it predates #108 so the backlog still calls E3-S1d planned &mdash; now <b>DOCS-6</b>. Neither is a regression; both are the gap between what shipped and what the row said.</p>
+    <p><b>Two of those seven did less than their titles claimed. Both gaps are now closed or reduced.</b> #105 widened <code>backend/.gitignore</code> only, so a root <code>.env</code> or <code>.env.production</code> stayed committable &mdash; and the root is exactly where env files are expected, since <code>.env.example</code> there tells you to make one and Vite reads the whole family. The one root name that was safe, <code>.env.local</code>, was safe by accident: it matched <code>*.local</code>, a Vite convention line rather than an env rule. <b>CH-3</b> (#113) put the family pattern in the root file, where it covers every directory instead of one. #107's reconcile was sound, but it predated #108 and its suggested two-way split for E3-S1d has since been shown wrong &mdash; the backlog caught up in #112, so <b>DOCS-6</b> is now that one stale paragraph plus a sweep. Neither was a regression; both were the gap between what shipped and what the row said, which is the thing this board exists to make visible.</p>
     <p><b>E3-S1 closed by deleting a route, not by adding one.</b> What was left was not what the row said: the mount was held open by <i>public</i> listing imagery, the last thing on the frontend still building an <code>/uploads/</code> URL. The obvious answer was a second, public delivery route beside the authorized one. E3-S1d-3 did the opposite &mdash; <code>/api/v1/documents/file</code> took optional authentication, so one route now decides per <code>Document</code> row and serves <code>listing_hero</code> and <code>listing_gallery</code> to a visitor with no session while refusing the title deed one row away. That absorbed the E3-S1b gate rather than leaving two gates on one prefix, which is how the next leak would have got in.</p>
-    <p><b>Day 5 still holds 5 PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 17 have merged. The security work is off the list now that both halves of E3-S1d have landed; what is left is two S rows in day 4 and a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
+    <p><b>Day 5 still holds 5 PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 18 have merged. The security work is off the list now that both halves of E3-S1d have landed; what is left is one S row in day 4 &mdash; E7-S2, the coverage floor &mdash; and a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
     <p><b>Carry these two rules into days 4 and 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now updates this board in the same diff: <code>npm run validate:board</code> locally, enforced in CI, because both times this board went stale it was found by a person rather than by a check.</p>
   </div>
 
@@ -352,7 +352,7 @@ const DAYS = [
     "<b>CH-4</b> the board is a merge gate &middot; PR 110 merged",
     "<b>E3-S1d-2</b> power of attorney reads &middot; PR 111 merged",
     "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes &middot; PR 112 merged",
-    "<b>CH-3</b> env ignore rules at the repository root",
+    "<b>CH-3</b> env ignore rules at the repository root &middot; PR 113 merged",
     "<b>E7-S2</b> coverage floor measured and recorded" ]},
   { n:"Day 5", theme:"Package and freeze, oversubscribed", count:5, done:false, items:[
     "<b>E7-S5</b> runbook, environment matrix, secrets",
@@ -366,11 +366,11 @@ const DAYS = [
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:112, t:"E3-S1d-3, private listing documents, then retire the static mount",
-    why:"Split out of E3-S1d-2 because it is not the same size. listings/&lt;listingId&gt;/ holds public photos and title deeds under one prefix, so the key alone cannot decide privacy — it needs the Document.category row, which private-documents.ts is deliberately Prisma-free to avoid. This is the PR that closes E3-S1, so it is the one to read hardest.",
-    look:"The reader absorbed the E3-S1b gate rather than sitting beside it: one route, optional authentication, deciding per Document row. Check the anonymous path specifically — a visitor with no session gets 200 on listing_hero and 401 on the title deed in the same listing, the refusal is audited and the success is not, and the public asset is the only response that carries a public Cache-Control. Criterion 5, the probe walk over every category, is the it.each in private-document.controller.spec.ts." },
-  { pr:null, t:"CH-3, then E7-S2, to close out day 4",
-    why:"Both are S and neither blocks anything, so they are the cheap end of a day whose expensive half is E3-S1d-3. CH-3 is four lines of .gitignore and closes the half of #105 that was overstated.",
+  { pr:113, t:"CH-3, the env ignore rules the root .gitignore never had",
+    why:"#105 was titled &ldquo;ignore every env file&rdquo; and widened one directory. Three lines and a comment, but it is the last unclosed item from the day-3 audit and it is the cheap half of what is left in day 4.",
+    look:"Whether the evidence is the diff or the behaviour. A .gitignore change is untestable by the suite, so the PR pastes `git check-ignore -v` for each name that matters — including the ones that were already covered by accident. `.env.local` matched `*.local`, a Vite convention line, which is not the same fact as being covered by an env rule. Also worth confirming both .env.example files are still tracked: the negation is the only thing keeping them, and adding a pattern would not have untracked them anyway." },
+  { pr:null, t:"E7-S2, the coverage floor, closes day 4",
+    why:"An S that blocks nothing, and the last row standing between day 4 and day 5.",
     look:"E7-S2 needs today's real coverage number recorded in the PR body. A threshold set above the current number breaks CI for whoever merges next; a threshold set at zero ratchets from nothing." },
   { pr:null, t:"Day 5 is oversubscribed — decide what gets cut before it starts",
     why:"Five PRs against a packaging day. E7-S5 and DOCS-4 are the handover itself and cannot move. E7-S4 lists E3-S2, durable object storage, as a dependency and E3-S2 is not scheduled this week.",
@@ -387,7 +387,7 @@ const STORIES = [
   ["DOCS-6","Chore","Re-reconcile E3-S1d: record #108, correct the split","The backlog still calls E3-S1d planned after #108 merged, and its suggested split puts POA, listing documents and the mount removal in one sub-story, which does not hold.","D5","—","S","E3-S1d-2","planned",false],
   ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
   ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
-  ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore has no env pattern at all, so a root .env or .env.production is still committable, and root .env.example says one is expected.","D4","—","S","none","planned",false],
+  ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore had no env pattern at all, so a root .env or .env.production was committable — and root .env.example tells you to make a root env file. Only .env.local was safe, and only because *.local happened to match it. The family pattern now sits in the root file, which covers every directory.","D4","—","S","none","done",false,113],
   ["CH-4","Chore","Make this board a merge gate rather than a habit","The board went stale twice and a person caught it both times. scripts/check-board.mjs validates it against itself, and CI fails a story PR that does not touch it.","D4","—","S","none","done",false,110],
 
   ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
