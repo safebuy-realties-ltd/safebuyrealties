@@ -8,8 +8,9 @@ This is the on-call document: how a deploy happens, how to undo one, what to che
 breaks, and who holds each secret. Every behavioural claim cites a file and line, because a runbook
 that describes what the variable names suggest rather than what the code does is worse than none.
 
-**Two things in here are findings rather than instructions.** Read [§7](#7-known-gaps-this-runbook-cannot-close)
-before you rely on the rest.
+**[§7](#7-known-gaps-this-runbook-cannot-close) is findings rather than instructions** — gaps this
+document can describe but not close. Read it before you rely on the rest. One entry, §7.2, is now
+closed and kept there for the one follow-up the fix cannot do for you.
 
 ---
 
@@ -61,12 +62,12 @@ step to remember and no separate one to forget. Consequences worth holding in mi
 - If `migrate deploy` fails, the container never starts, and the previous one keeps serving. That is
   the correct failure, and it means *a failed deploy is usually a schema problem, not a code problem*.
 
-The image hard-codes `NODE_ENV=production` and `PORT=3001`, which is what arms the three boot guards
+The image hard-codes `NODE_ENV=production` and `PORT=3001`, which is what arms the four boot guards
 below. Nothing else is baked in; all other configuration comes from Render's environment.
 
 ### 2.3 The boot guards, in the order they fire
 
-[`main.ts:9-11`](../backend/src/main.ts#L9-L11) runs three assertions **before** the Nest application
+[`main.ts:10-13`](../backend/src/main.ts#L10-L13) runs four assertions **before** the Nest application
 is created. Each calls `process.exit(1)` rather than throwing, so a misconfigured deploy dies loudly
 at boot instead of serving wrong answers.
 
@@ -75,8 +76,9 @@ at boot instead of serving wrong answers.
 | `assertSafeDatabaseUrl` | *Non-production only:* `DATABASE_URL` is remote and `SBR_CONFIRM_CLOUD_DATABASE_URL` is not `true` | [`database-guard.ts`](../backend/src/config/database-guard.ts) |
 | `assertCorsConfigured` | Production and `FRONTEND_URL` is empty | [`cors-config.ts:150-162`](../backend/src/config/cors-config.ts#L150-L162) |
 | `assertPaymentsConfigured` | Production and no Paystack secret key of either kind | [`payments-guard.ts:77-100`](../backend/src/config/payments-guard.ts#L77-L100) |
+| `assertJwtSecret` | Production and `JWT_SECRET` is unset, empty, under 32 characters, or still the development default | [`jwt-secret.ts`](../backend/src/config/jwt-secret.ts) |
 
-**A restart loop on Render is almost always one of these three.** The exit message names the variable
+**A restart loop on Render is almost always one of these four.** The exit message names the variable
 and the fix; read the container log's first twenty lines before anything else.
 
 Note the asymmetry: `assertSafeDatabaseUrl` returns early when `DATABASE_URL` is *empty*
@@ -194,7 +196,7 @@ bucket name, hostname or key fragment, so **the probe tells you which dependency
 
 | Symptom | First check | Likely cause and fix |
 | --- | --- | --- |
-| API restart-looping, never serves | Container log, first 20 lines | One of the three boot guards (§2.3). The message names the variable |
+| API restart-looping, never serves | Container log, first 20 lines | One of the four boot guards (§2.3). The message names the variable |
 | `/health/ready` → `database: unavailable` | Prisma Data Platform status; `DATABASE_URL` on Render | Wrong or rotated URL, or the platform is down. `timeout` instead means reachable but slow — check pool exhaustion before blaming the network |
 | `/health/ready` → `storage: misconfigured` | `STORAGE_DRIVER` on Render | `s3` with `AWS_REGION`/`AWS_S3_BUCKET` missing, or exactly one of the credential pair set. Half a pair silently falls back to ambient credentials, which is why it is treated as broken ([`storage.service.ts:75-89`](../backend/src/storage/storage.service.ts#L75-L89)) |
 | `/health/ready` → `payments: misconfigured` | Paystack keys on Render | Production with no secret key. The instance should not have booted at all — if it did, `NODE_ENV`/`VERCEL_ENV` do not say production and §7.2 applies |
@@ -263,26 +265,33 @@ bucket and credentials). It is the earliest scheduling decision left in the back
 cannot be read from this repository.** Check it, and if it reads `local`, treat every uploaded
 document as ephemeral until E3-S2 lands.
 
-### 7.2 `JWT_SECRET` has no guard and a hard-coded fallback
+### 7.2 `JWT_SECRET` has a guard — closed in E5-S6
 
-Every other critical variable fails closed. This one does not:
+**The finding.** Every other critical variable failed closed; this one did not. Both call sites read
+`config.get<string>("JWT_SECRET") ?? "dev-secret-change-me"`, so with `JWT_SECRET` unset the API
+started normally and signed every seven-day session token with a fixed string checked into this
+repository. Anyone who could read the source could mint a valid token for any user id, including
+`SUPER_ADMIN`, and nothing in the logs would distinguish it from a real login. Two documents
+described `JWT_SECRET` as "min 32 characters", which was advice, not enforcement.
 
-```ts
-secret: config.get<string>("JWT_SECRET") ?? "dev-secret-change-me",
-```
+**What changed.** [`backend/src/config/jwt-secret.ts`](../backend/src/config/jwt-secret.ts) now
+holds the rule, and `assertJwtSecret()` runs from
+[`main.ts`](../backend/src/main.ts) alongside the database, CORS and payment guards — before Nest is
+created. In production the process exits non-zero when `JWT_SECRET` is unset, empty, shorter than 32
+characters, or equal to the development default. The literal `"dev-secret-change-me"` is gone from
+both call sites; they resolve through `resolveJwtSecret()`, and a missing secret outside production
+falls back to one clearly-named development value in one place.
 
-[`auth.module.ts:17`](../backend/src/auth/auth.module.ts#L17), and identically at
-[`jwt.strategy.ts:33`](../backend/src/auth/jwt.strategy.ts#L33). With `JWT_SECRET` unset the API
-starts normally and signs every seven-day session token with a fixed string that is checked into this
-repository. Anyone who can read the source can mint a valid token for any user id, including
-`SUPER_ADMIN`, and nothing in the logs would distinguish it from a real login.
+The development default is a real 45-character string, not a placeholder, and
+[`backend/.env.example`](../backend/.env.example) ships that exact value. Copying the example into
+production therefore fails at boot rather than passing a length check with a public key — the case a
+"change-me-in-production-min-32-chars-long" placeholder would have sailed through.
 
-There is no boot guard, no test, and no mention of the fallback in any document — two docs list
-`JWT_SECRET` as "min 32 characters", which is advice, not enforcement.
-
-**Whether production is exposed depends on a Render environment variable this repository cannot
-read — and needing the dashboard to answer "are our sessions forgeable" is itself the finding.**
-Recorded as story **E5-S6** in the backlog. Check the dashboard now; do not wait for the story.
+**What still needs the dashboard.** The guard protects every deploy from now on. It cannot tell you
+what production was signing tokens with *before* this shipped. If `JWT_SECRET` was unset on Render at
+any point, tokens minted then are forgeable and remain valid for seven days: **set the variable,
+confirm the service restarts, and rotate the value** — which logs every user out, and is the point.
+See §9.3.
 
 ### 7.3 A second deploy path may still be armed
 
@@ -322,7 +331,11 @@ story, so it is written down rather than slipped in.
 **Owner** uses the vocabulary of the backlog's external-inputs table (§3.3): *Client* holds
 commercial credentials, *Corne Labs* holds infrastructure the team provisions.
 
-Legend: **R** required · **O** optional · **—** not applicable · **!** required but silently defaulted.
+Legend: **R** required · **O** optional · **—** not applicable.
+
+There is no longer a "required but silently defaulted" column value. `JWT_SECRET` was the last
+variable in that state, and E5-S6 closed it — every variable marked **R** for production now fails
+the boot rather than defaulting to something.
 
 ### 8.1 API (Render environment)
 
@@ -331,9 +344,9 @@ Legend: **R** required · **O** optional · **—** not applicable · **!** requ
 | `DATABASE_URL` | R | R | R | Corne Labs | Pooled connection. Empty is **not** caught by a guard ([`database-guard.ts:9`](../backend/src/config/database-guard.ts#L9)) |
 | `DATABASE_POSTGRES_URL` | R | R | R | Corne Labs | Direct connection, preferred by the deploy-time migration scripts |
 | `SBR_CONFIRM_CLOUD_DATABASE_URL` | R | — | — | — | Local opt-in to a remote DB. Ignored in production |
-| `JWT_SECRET` | ! | ! | **!** | Corne Labs | **No guard — falls back to `dev-secret-change-me`. See §7.2** |
+| `JWT_SECRET` | O | O | R | Corne Labs | Min 32 chars, and not the development default. **Production will not boot without it** ([`jwt-secret.ts`](../backend/src/config/jwt-secret.ts)). See §7.2 |
 | `PORT` | O | — | — | — | Defaults to 3001; the image sets it |
-| `NODE_ENV` | O | O | R | — | The image sets `production`. Drives all three boot guards |
+| `NODE_ENV` | O | O | R | — | The image sets `production`. Drives all four boot guards |
 | `FRONTEND_URL` | R | R | R | Corne Labs | Comma-separated origins. **Production will not boot without it** |
 | `VERCEL_TEAM_SLUG` | O | O | O | Corne Labs | The only thing admitting a preview origin in production. Unset = no previews |
 | `VERCEL_ENV` | — | O | O | — | Platform-set. `production` counts as production for every guard |
@@ -394,7 +407,7 @@ so §6.1's audit will not find them. Before go-live, confirm the production key 
 | Secret | Holder | Stored in | Rotation | On rotation you must also |
 | --- | --- | --- | --- | --- |
 | `DATABASE_URL` / `DATABASE_POSTGRES_URL` | Corne Labs | Prisma Data Platform; Render env; each developer's `backend/.env` | On team change, or immediately on suspected exposure | Update Render **and** tell every developer — a stale local URL is a silent failure |
-| `JWT_SECRET` | Corne Labs | Render env only | **90 days**, and immediately if §7.2 finds it unset | Rotation logs every user out — all tokens are seven-day and signed with the old value. Do it deliberately, not during an incident |
+| `JWT_SECRET` | Corne Labs | Render env only | **90 days**, and immediately if §9.3 finds it was ever unset | Rotation logs every user out — all tokens are seven-day and signed with the old value. Do it deliberately, not during an incident |
 | `PAYSTACK_SECRET_KEY` | Client (EXT-1) | Paystack dashboard; Render env | Per Paystack policy; immediately on exposure | Rotate the public key with it and redeploy the frontend |
 | `PAYSTACK_TEST_SECRET_KEY` | Client | Paystack dashboard; Render env; `backend/.env` | Not sensitive — test mode moves no money | Confirm it is not the only key in production (§7.5) |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Client or Corne Labs (EXT-2) | Not yet provisioned | **90 days** once E3-S2 lands | Both halves together — one half alone fails the readiness probe |
@@ -422,7 +435,9 @@ so §6.1's audit will not find them. Before go-live, confirm the production key 
 Four things in this document need a dashboard nobody had during the handover week. Check them in this
 order — the first two are security, the second two are correctness.
 
-1. `JWT_SECRET` is set in Render and is not `dev-secret-change-me` (§7.2).
+1. `JWT_SECRET` is set in Render. The guard from §7.2 now enforces this at boot, so a running
+   production instance proves it — but it cannot tell you whether the variable was missing *before*
+   the guard shipped. If nobody can confirm it was always set, rotate it and accept the logout.
 2. `PAYSTACK_SECRET_KEY` begins `sk_live_` and is not merely a test key (§7.5).
 3. `STORAGE_DRIVER` is `s3`, not `local` (§7.1) — gated on E3-S2.
 4. The Vercel `safebuyrealties` backend project is disconnected, or its second deploy path is

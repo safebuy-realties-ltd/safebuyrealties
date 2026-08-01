@@ -10,6 +10,7 @@ const cookieExtractor: JwtFromRequestFunction = (req: Request) => {
 };
 import { UserRole, ProfessionalType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { resolveJwtSecret } from "../config/jwt-secret";
 
 export interface JwtPayload {
   sub: string;
@@ -30,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>("JWT_SECRET") ?? "dev-secret-change-me",
+      secretOrKey: resolveJwtSecret(config.get<string>("JWT_SECRET")),
     });
   }
 
