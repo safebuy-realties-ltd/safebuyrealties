@@ -4,6 +4,10 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
+import { correlationIdMiddleware } from "./common/logging/correlation-id.middleware";
+import { ErrorTrackerService } from "./common/logging/error-tracker.service";
+import { RequestActorInterceptor } from "./common/logging/request-actor.interceptor";
+import { StructuredLogger } from "./common/logging/structured-logger.service";
 import { buildCorsOptions } from "./config/cors-config";
 
 /**
@@ -24,7 +28,32 @@ import { buildCorsOptions } from "./config/cors-config";
  * `uploads-exposure.spec.ts` fails if a mount reappears.
  */
 
-export function configureApp(app: NestExpressApplication): void {
+/**
+ * The logger and the error tracker, built once and shared.
+ *
+ * They are plain constructions rather than Nest providers because two of the three things that use
+ * them run outside the container: `app.useLogger()` is set before the first module resolves, and the
+ * process-level handlers in `main.ts` must be installed before anything can throw. Sharing one
+ * instance matters — `ErrorTrackerService` counts occurrences per fingerprint, and a second instance
+ * would count the same crash loop twice from zero.
+ */
+export interface AppDependencies {
+  logger: StructuredLogger;
+  errorTracker: ErrorTrackerService;
+}
+
+export function createAppDependencies(): AppDependencies {
+  const logger = new StructuredLogger();
+  return { logger, errorTracker: new ErrorTrackerService(logger) };
+}
+
+export function configureApp(
+  app: NestExpressApplication,
+  deps: AppDependencies = createAppDependencies(),
+): void {
+  // First, and before cookieParser: a request that dies in parsing still deserves an id, and that
+  // is the failure someone will most want to trace. See correlation-id.middleware.ts.
+  app.use(correlationIdMiddleware(deps.logger));
   app.use(cookieParser());
   app.use(
     helmet({
@@ -41,8 +70,10 @@ export function configureApp(app: NestExpressApplication): void {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter(deps.errorTracker));
+  // The actor interceptor runs first so that anything the transform or the handler logs already
+  // knows who is calling.
+  app.useGlobalInterceptors(new RequestActorInterceptor(), new TransformInterceptor());
   app.enableCors(buildCorsOptions());
   app.setGlobalPrefix("api/v1");
 }

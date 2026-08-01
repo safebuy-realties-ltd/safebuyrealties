@@ -1,0 +1,183 @@
+import { Injectable } from "@nestjs/common";
+import { createHash } from "node:crypto";
+import { currentRequestContext } from "./request-context";
+import { StructuredLogger } from "./structured-logger.service";
+import { redact } from "./redact";
+
+/**
+ * E7-S1 criterion 3: unhandled exceptions are captured with the correlation id, the route and the
+ * role — and never the request body.
+ *
+ * No vendor is introduced. The story names no dependency and adding one would mean choosing a
+ * tracker, an account and a data-residency posture on a developer's own authority; the repository
+ * rule is that a story brings no dependency it did not name. What it does instead is the part that
+ * is actually ours: give every capture a stable fingerprint so identical failures collapse into one
+ * group, count occurrences so a crash loop reads as one incident rather than ten thousand lines,
+ * and emit a fixed, redacted field set that a drain can be pointed at. `ERROR_TRACKER_WEBHOOK_URL`
+ * forwards that same event to whatever is eventually chosen, without this file changing.
+ *
+ * The request body is not omitted by convention here — it is structurally absent. `capture` builds
+ * its own field set and has no parameter that could carry one, so a future caller cannot pass it by
+ * accident. `redact` then runs over what is left as a second line of defence.
+ */
+
+export interface CaptureContext {
+  /** Where it happened, in the codebase's terms: `EscrowService.release`, `bootstrap`. */
+  readonly source: string;
+  /** HTTP status the client was given, when the failure became a response. */
+  readonly statusCode?: number;
+  /** Anything already known to be safe. Redacted regardless. */
+  readonly fields?: Record<string, unknown>;
+}
+
+export interface CapturedError {
+  event: "error.captured";
+  fingerprint: string;
+  occurrences: number;
+  source: string;
+  name: string;
+  message: string;
+  stack?: string;
+  statusCode?: number;
+  correlationId?: string;
+  method?: string;
+  path?: string;
+  role?: string;
+  userId?: string;
+  [field: string]: unknown;
+}
+
+/**
+ * Digits, uuids and quoted values are stripped before fingerprinting, so `Record 41 not found` and
+ * `Record 42 not found` are one group rather than two.
+ */
+function fingerprintOf(name: string, message: string, stack?: string): string {
+  const shape = message
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "<uuid>")
+    .replace(/\d+/g, "<n>")
+    .replace(/["'`][^"'`]*["'`]/g, "<str>");
+  // The first frame below the framework is what distinguishes two failures with the same message.
+  const frame =
+    stack
+      ?.split("\n")
+      .find((l) => l.includes("/src/"))
+      ?.trim() ?? "";
+  // The three parts are joined on NUL because it is the one byte none of them can contain, so
+  // no combination of name, message and frame can be made to collide by shifting text across a
+  // join. Written as an escape rather than the byte itself: a raw NUL in the source makes git
+  // treat this file as binary and stop producing a reviewable diff for it.
+  const parts = [name, shape, frame].join("\u0000");
+  return createHash("sha256").update(parts).digest("hex").slice(0, 16);
+}
+
+/** Forward the 1st, 2nd, 5th, 10th, 20th, 50th… occurrence. A crash loop must not become a flood. */
+function shouldForward(occurrences: number): boolean {
+  const magnitude = 10 ** Math.floor(Math.log10(occurrences));
+  return [1, 2, 5].includes(occurrences / magnitude);
+}
+
+@Injectable()
+export class ErrorTrackerService {
+  private readonly counts = new Map<string, number>();
+
+  constructor(private readonly logger: StructuredLogger) {}
+
+  /**
+   * Records a failure. Never throws: an error in the error path would replace a diagnosable fault
+   * with an undiagnosable one.
+   */
+  capture(error: unknown, context: CaptureContext): CapturedError | undefined {
+    try {
+      const event = this.build(error, context);
+      this.logger.write("error", `${event.name}: ${event.message}`, {
+        ...event,
+        context: event.source,
+      });
+      if (shouldForward(event.occurrences)) void this.forward(event);
+      return event;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Occurrence count per fingerprint. Exposed so a health or debug surface can read it. */
+  counters(): ReadonlyMap<string, number> {
+    return new Map(this.counts);
+  }
+
+  private build(error: unknown, context: CaptureContext): CapturedError {
+    const err = error instanceof Error ? error : new Error(String(error));
+    const fingerprint = fingerprintOf(err.name, err.message, err.stack);
+    const occurrences = (this.counts.get(fingerprint) ?? 0) + 1;
+    this.counts.set(fingerprint, occurrences);
+
+    const request = currentRequestContext();
+    return {
+      event: "error.captured",
+      fingerprint,
+      occurrences,
+      source: context.source,
+      name: err.name,
+      message: String(redact(err.message)),
+      stack: err.stack,
+      ...(context.statusCode !== undefined && { statusCode: context.statusCode }),
+      ...(request && {
+        correlationId: request.correlationId,
+        method: request.method,
+        path: request.path,
+        ...(request.userId && { userId: request.userId }),
+        ...(request.role && { role: request.role }),
+      }),
+      ...(redact(context.fields ?? {}) as Record<string, unknown>),
+    };
+  }
+
+  private async forward(event: CapturedError): Promise<void> {
+    const url = process.env.ERROR_TRACKER_WEBHOOK_URL;
+    if (!url) return;
+    try {
+      await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(event),
+        // A slow tracker must not hold a socket open behind a request that already answered.
+        signal: AbortSignal.timeout(3000),
+      });
+    } catch (cause) {
+      // Deliberately a warning, not an error: failing to *report* a fault is not itself a fault
+      // worth recursing on, and capture() has already written the real one.
+      this.logger.write("warn", "error tracker forward failed", {
+        context: ErrorTrackerService.name,
+        fingerprint: event.fingerprint,
+        reason: cause instanceof Error ? cause.message : String(cause),
+      });
+    }
+  }
+}
+
+/**
+ * Catches what never reaches an exception filter: a rejected promise nobody awaited, and a throw
+ * from a timer or an event handler. Without this the process dies with a bare stack on stderr and
+ * no correlation id, which is precisely the production blindness this story exists to remove.
+ *
+ * `uncaughtException` is captured and then re-thrown by exiting: continuing after one leaves the
+ * process in an unknown state, and the platform restarts it. `unhandledRejection` is captured and
+ * survived, because in practice it is usually one request's failure, not the process's.
+ */
+export function installProcessErrorHandlers(tracker: ErrorTrackerService): () => void {
+  const onRejection = (reason: unknown) => {
+    tracker.capture(reason, { source: "process.unhandledRejection" });
+  };
+  const onException = (error: Error) => {
+    tracker.capture(error, { source: "process.uncaughtException", fields: { fatal: true } });
+    process.exitCode = 1;
+  };
+
+  process.on("unhandledRejection", onRejection);
+  process.on("uncaughtException", onException);
+
+  return () => {
+    process.off("unhandledRejection", onRejection);
+    process.off("uncaughtException", onException);
+  };
+}

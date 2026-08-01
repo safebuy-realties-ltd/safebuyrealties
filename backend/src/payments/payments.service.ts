@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   ForbiddenException,
   NotFoundException,
@@ -27,9 +28,16 @@ import { JwtPayload } from "../auth/jwt.strategy";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
 import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
+import { MoneyFields, withMoneyOperation } from "../common/logging/money-operation";
 
 @Injectable()
 export class PaymentsService {
+  /**
+   * Delegates to the structured logger installed in main.ts, so these lines carry the correlation
+   * id of the request that moved the money without this class knowing a request exists.
+   */
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
@@ -122,7 +130,35 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * E7-S1 criterion 5. The public method is the log envelope and nothing else; the work moved into
+   * `initiatePayment` unchanged. Splitting it this way means the outcome line cannot be lost to an
+   * early `return` or a `throw` added later, because no branch of the body is reachable without
+   * passing back through the wrapper.
+   */
   async initiate(dto: InitiatePaymentDto, actor: JwtPayload) {
+    return withMoneyOperation(
+      this.logger,
+      "payment.initialize",
+      {
+        amount: String(dto.amount),
+        amountMinor: Math.round(Number(dto.amount) * 100),
+        currency: dto.currency ?? "NGN",
+        provider: "paystack",
+        intent: dto.intent ?? PaymentIntent.DD_SERVICE,
+        listingId: dto.listingId,
+        transactionId: dto.transactionId,
+        subjectUserId: actor.sub,
+      },
+      (record) => this.initiatePayment(dto, actor, record),
+    );
+  }
+
+  private async initiatePayment(
+    dto: InitiatePaymentDto,
+    actor: JwtPayload,
+    record: (extra: MoneyFields) => void,
+  ) {
     if (actor.role !== UserRole.BUYER && !this.isStaff(actor.role)) {
       throw new ForbiddenException("Only buyers can initiate payments");
     }
@@ -166,6 +202,10 @@ export class PaymentsService {
       },
     });
 
+    // The row id exists only now. Recorded rather than logged separately so both the start and the
+    // outcome line for this operation can be found by the same identifier.
+    record({ paymentId: payment.id });
+
     if (dto.transactionId) {
       await this.prisma.transaction.updateMany({
         where: {
@@ -187,6 +227,7 @@ export class PaymentsService {
         data: { providerReference: mockRef, status: PaymentStatus.PROCESSING },
       });
       await this.applyPaymentChargeSuccess(payment.id);
+      record({ reference: mockRef, mock: true });
       return {
         paymentId: payment.id,
         authorizationUrl: `${dto.callbackUrl}?mock=1&ref=${mockRef}&paymentId=${payment.id}`,
@@ -205,8 +246,7 @@ export class PaymentsService {
         metadata: { paymentId: payment.id },
       });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Paystack initialize failed";
+      const message = err instanceof Error ? err.message : "Paystack initialize failed";
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED, metadata: { error: message } as object },
@@ -230,6 +270,8 @@ export class PaymentsService {
         } as object,
       },
     });
+
+    record({ reference: initialized.reference });
 
     return {
       paymentId: payment.id,
@@ -297,10 +339,7 @@ export class PaymentsService {
             where: {
               id: p.transactionId,
               status: {
-                notIn: [
-                  TransactionStatus.COMPLETED,
-                  TransactionStatus.PURCHASE_IN_ESCROW,
-                ],
+                notIn: [TransactionStatus.COMPLETED, TransactionStatus.PURCHASE_IN_ESCROW],
               },
             },
             data: { status: TransactionStatus.PURCHASE_IN_ESCROW },
@@ -342,16 +381,37 @@ export class PaymentsService {
    * Idempotent: re-verifying a succeeded payment is a no-op.
    */
   async verifyTransaction(paymentId: string, actor: JwtPayload) {
+    return withMoneyOperation(
+      this.logger,
+      "payment.verify",
+      { paymentId, subjectUserId: actor.sub, provider: "paystack" },
+      (record) => this.verifyPayment(paymentId, actor, record),
+    );
+  }
+
+  private async verifyPayment(
+    paymentId: string,
+    actor: JwtPayload,
+    record: (extra: MoneyFields) => void,
+  ) {
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new NotFoundException("Payment not found");
     if (payment.payerId !== actor.sub && !this.isStaff(actor.role)) {
       throw new ForbiddenException();
     }
+    record({
+      amount: payment.amount.toString(),
+      amountMinor: Math.round(Number(payment.amount) * 100),
+      currency: payment.currency,
+      reference: payment.providerReference ?? undefined,
+    });
     if (payment.status === PaymentStatus.SUCCEEDED) {
+      record({ providerStatus: "already-succeeded" });
       return this.serializePayment(payment);
     }
 
     if (!this.paystack.isConfigured()) {
+      record({ providerStatus: "not-configured", mock: true });
       return this.serializePayment(payment);
     }
     if (!payment.providerReference) {
@@ -365,6 +425,8 @@ export class PaymentsService {
       const message = err instanceof Error ? err.message : "Paystack verify failed";
       throw new BadRequestException(message);
     }
+
+    record({ providerStatus: paystackStatus });
 
     if (paystackStatus === "success") {
       await this.applyPaymentChargeSuccess(payment.id);
@@ -387,23 +449,57 @@ export class PaymentsService {
     event?: string;
     data?: { reference?: string; status?: string };
   }) {
+    // The envelope logs the event name, the reference and the provider's own status — the three
+    // fields needed to reconcile against Paystack's dashboard. The payload itself is never logged:
+    // it carries customer and authorization data that has no business in a log line.
+    return withMoneyOperation(
+      this.logger,
+      "payment.webhook",
+      {
+        provider: "paystack",
+        providerEvent: payload.event,
+        providerStatus: payload.data?.status,
+        reference: payload.data?.reference,
+      },
+      (record) => this.applyPaystackWebhook(payload, record),
+    );
+  }
+
+  private async applyPaystackWebhook(
+    payload: { event?: string; data?: { reference?: string; status?: string } },
+    record: (extra: MoneyFields) => void,
+  ) {
     const ref = payload.data?.reference;
     if (!ref) return { received: true };
     const payment = await this.prisma.payment.findFirst({
       where: { providerReference: ref },
     });
-    if (!payment) return { received: true };
+    if (!payment) {
+      record({ outcome: "no-matching-payment" });
+      return { received: true };
+    }
+    record({
+      paymentId: payment.id,
+      amount: payment.amount.toString(),
+      amountMinor: Math.round(Number(payment.amount) * 100),
+      currency: payment.currency,
+      subjectUserId: payment.payerId,
+    });
 
     const success = payload.event === "charge.success" && payload.data?.status === "success";
     const failed = payload.event === "charge.failed" || payload.data?.status === "failed";
 
     if (success) {
+      record({ outcome: "charge-succeeded" });
       await this.applyPaymentChargeSuccess(payment.id);
     } else if (failed) {
+      record({ outcome: "charge-failed" });
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED },
       });
+    } else {
+      record({ outcome: "ignored" });
     }
     return { received: true };
   }

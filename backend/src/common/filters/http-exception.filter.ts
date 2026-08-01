@@ -1,17 +1,24 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from "@nestjs/common";
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
+import { ErrorTrackerService } from "../logging/error-tracker.service";
+import { currentRequestContext } from "../logging/request-context";
 
+/**
+ * The one place an unhandled failure becomes a response, and therefore the one place worth
+ * capturing it (E7-S1 criterion 3).
+ *
+ * What is captured is chosen by whether the failure is ours. A 404 or a 403 is the system working:
+ * capturing those would bury the real faults under expected ones, and after E4-S1 there are a great
+ * many expected 403s. Anything that is not an `HttpException`, and anything that resolves to 5xx,
+ * is a fault and is tracked.
+ *
+ * The response carries the correlation id in its body as well as its header, so that a user who
+ * sees an error screen can quote one string and have it match a log line exactly.
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  constructor(private readonly tracker?: ErrorTrackerService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -53,16 +60,56 @@ export class HttpExceptionFilter implements ExceptionFilter {
         status = HttpStatus.NOT_FOUND;
         code = "NOT_FOUND";
         message = "Record not found";
-      } else {
-        this.logger.error(`${exception.code}: ${exception.message}`, exception.stack);
       }
     } else if (exception instanceof Error) {
-      this.logger.error(exception.message, exception.stack);
+      // Outside production the real message is returned so a developer is not left guessing; in
+      // production it is withheld, because an unhandled message quotes internals. Either way the
+      // capture below has the full text and the correlation id ties the two together.
       message = process.env.NODE_ENV === "production" ? message : exception.message;
     }
 
-    const payload = { error: { code, message, ...(details ? { details } : {}) } };
+    this.track(exception, req, status, code);
+
+    const payload = {
+      error: {
+        code,
+        message,
+        ...(details ? { details } : {}),
+        // Present on every error, including the ones we did not capture: a 403 the caller thinks is
+        // wrong is exactly the case where support needs to find the line.
+        ...(currentRequestContext()?.correlationId
+          ? { correlationId: currentRequestContext()?.correlationId }
+          : {}),
+      },
+    };
     res.status(status).json(payload);
+  }
+
+  /**
+   * Captures the faults and lets the expected outcomes past.
+   *
+   * A deliberate `NotFoundException` is the system answering correctly and must not compete for
+   * attention with a `TypeError`. The test is the status the caller ends up with, not the class
+   * that was thrown, because a Prisma error the mapping does not recognise is a 500 and belongs in
+   * the tracker under its own name.
+   */
+  private track(exception: unknown, req: Request, status: number, code: string): void {
+    const expected =
+      exception instanceof HttpException && status < HttpStatus.INTERNAL_SERVER_ERROR;
+    if (expected || !this.tracker) return;
+
+    this.tracker.capture(exception, {
+      source: `${req.method} ${req.route?.path ?? req.originalUrl.split("?")[0]}`,
+      statusCode: status,
+      // Identifiers only. The request body is not passed, is not a parameter of `capture`, and
+      // would be redacted by field name if it somehow arrived.
+      fields: {
+        code,
+        ...(exception instanceof Prisma.PrismaClientKnownRequestError
+          ? { prismaCode: exception.code }
+          : {}),
+      },
+    });
   }
 
   private codeFromStatus(status: number): string {
