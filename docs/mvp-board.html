@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<!--
+  No data-theme here on purpose. The script at the end of the head sets it before the first paint,
+  and if scripting is off the media query below is the only thing left to honour the reader's
+  operating system. Hardcoding light here made that media query dead code, which is why the board
+  used to open light on a dark machine no matter what.
+-->
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -67,6 +73,8 @@
   .bars { display:grid; gap:10px; }
   .barrow { display:grid; grid-template-columns:190px 1fr 58px; align-items:center; gap:12px; }
   .barrow .name { font-size:13px; color:var(--text-secondary); }
+  .barrow.total { border-top:1px solid var(--grid); padding-top:9px; margin-top:2px; }
+  .barrow.total .name, .barrow.total .val { color:var(--text-primary); font-weight:650; }
   .track { height:14px; background:var(--grid); border-radius:4px; overflow:hidden; }
   .fill { height:100%; background:var(--series-1); border-radius:0 4px 4px 0; }
   .barrow .val { font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
@@ -140,6 +148,26 @@
   footer { margin-top:40px; color:var(--text-muted); font-size:12.5px;
     border-top:1px solid var(--grid); padding-top:14px; }
 </style>
+<script>
+  // Runs before the first paint, so the page does not flash the wrong theme and then correct itself.
+  // A stored choice beats the operating system's, because somebody who has clicked the toggle has
+  // already said what they want. Wrapped in try/catch because localStorage throws on a file:// page
+  // in some browsers, and a board that will not open is worse than one that forgets your theme.
+  (function () {
+    function storedTheme() {
+      try {
+        return localStorage.getItem("sbr-board-theme");
+      } catch (err) {
+        return null; // No storage available, so fall through to whatever the operating system says.
+      }
+    }
+    var stored = storedTheme();
+    var dark = stored
+      ? stored === "dark"
+      : !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+  })();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -163,7 +191,7 @@
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">3 wait on external input</div></div>
   </div>
-  <p class="meta" style="margin-top:10px">The limit was never developer-days, it is <b>review hours</b>, and that did not change when the week ended. A small PR costs 30 to 45 minutes to review properly, which caps one reviewer at 12 to 15 PRs a week however many agents the builder runs. The waves below are sized to that. They are also serialised by this page: every story PR has to bring the whole of it up to date in the same diff, and two PRs both moving the counter tiles conflict on purpose, so they merge one at a time with a rebase between them.</p>
+  <p class="meta" style="margin-top:10px">The limit was never developer-days, it is <b>review hours</b>, and that did not change when the week ended. A small PR costs 30 to 45 minutes to review properly and a deep-review row costs a good deal more, which is why each wave below is sized by its deep-review count and not just its story count. The original figure on this line said one reviewer could take 12 to 15 PRs a week; this repository has since merged 11 in a day, twice, so read it as a good working day rather than a weekly ceiling. The waves are also serialised by this page: every story PR has to bring the whole of it up to date in the same diff, and two PRs both moving the counter tiles conflict on purpose, so they merge one at a time with a rebase between them.</p>
 </section>
 
 <section>
@@ -278,8 +306,9 @@
   <h2>Full backlog effort by epic <span class="note">upper bound, developer-days remaining &middot; sums to the ceiling on the tile above</span></h2>
   <div class="card">
     <div class="bars" id="bars"></div>
-    <p class="meta" style="margin-top:12px">Re-derived in <b>DOCS-6</b> against the week's merges. These are the pre-week estimates with each merged story subtracted <i>at its own published size</i> &mdash; S about a day, M two to four, L about a week &mdash; rather than re-estimated from scratch, so the bars stay comparable with the figures the backlog struck before the week started. Seven milestone stories landed: E2-S4, E3-S1, E3-S4, E5-S2, E7-S2, E7-S6 and E7-S5, taking the total from 72&ndash;100 to <b>68&ndash;98</b>. <b>Chores</b> falls furthest, from 7 to 4, because everything in that bar except <b>CH-1</b> was the week's own work and it has landed; what is left is the feature-flag service, in wave 2.</p>
-    <p class="meta"><b>Two bars went up while their own stories were merging, and those are the honest numbers.</b> <b>Ops</b> went from 14 to 16 with two stories merged, because measuring the coverage floor in E7-S2 found the half of its own criterion no runner here can express &mdash; diff coverage on new and changed files &mdash; and that is now <b>E7-S2b</b>, an M nobody had counted. It then absorbed E7-S5 landing and <b>E7-S6b</b> appearing in the same diff, one S each, and stayed at 16 &mdash; and is back to 15 now that E7-S6b has merged too. <b>Security</b> went from 14 to 15 because writing E7-S5's environment matrix found <b>E5-S6</b>: <code>JWT_SECRET</code> is the one credential here with no boot guard, and the fallback it signs tokens with is printed in this repository. A week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.</p>
+    <p class="meta" style="margin-top:12px">Re-derived in <b>DOCS-6</b> against the week's merges, and kept current with every merge since. These are the pre-week estimates with each merged story subtracted <i>at its own published size</i>, S about a day, M two to four, L about a week, rather than re-estimated from scratch, so the bars stay comparable with the figures the backlog struck before the week started. The pre-week ceiling was 100 developer-days. The week's seven milestone stories, E2-S4, E3-S1, E3-S4, E5-S2, E7-S2, E7-S6 and E7-S5, took it to 98. Wave 1 took it to 90, and E2-S2 has taken it to <b data-total="backlog">87</b>. <b>Chores</b> falls furthest in proportion, from 7 to <b data-epic="Chore">4</b>, because everything in that bar except <b>CH-1</b> was the week's own work and it has landed; what is left is the feature-flag service, in wave 2.</p>
+    <p class="meta"><b>Two bars went up while their own stories were merging, and both have since come back down.</b> <b>Ops</b> went from 14 to 16 with two stories merged, because measuring the coverage floor in E7-S2 found the half of its own criterion no runner here can express, diff coverage on new and changed files, and that is now <b>E7-S2b</b>, an M nobody had counted. It then absorbed E7-S5 landing and <b>E7-S6b</b> appearing in the same diff, one S each, and stayed at 16. It reads <b data-epic="Ops">12</b> today, because E7-S6b and E7-S1 have both merged since. <b>Security</b> went from 14 to 15 because writing E7-S5's environment matrix found <b>E5-S6</b>: <code>JWT_SECRET</code> was the one credential here with no boot guard, and the fallback it signed tokens with is printed in this repository. That story has merged, so the bar is back to <b data-epic="Security">14</b>. A week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.</p>
+    <p class="meta"><b>Read the bars as a sizing ladder, not as a calendar.</b> A developer-day is the unit the backlog was written in, and every merged story is subtracted at the size it was published at. That is the only way the arithmetic on this page stays checkable against the backlog's own figures, and it is why the total above is rendered from the same array the bars are. It is not a forecast of elapsed time, because one builder running many agents in parallel does not spend those days one after another, and a second developer reviewing means a finished story does not sit waiting. The evidence is this repository: 11 PRs merged into <code>main</code> on 31 July and 11 more on 1 August, and wave 1's four stories, 8 published developer-days between them, merged as PRs 119 to 122 inside a single afternoon. On that showing the 28 developer-days still on the schedule are nearer three or four working days than six weeks, and the <b data-total="backlog">87</b> above is a ceiling on scope rather than on time.</p>
   </div>
 </section>
 
@@ -527,13 +556,22 @@ document.getElementById("queue").innerHTML = QUEUE.map((q,i) => `
     </div>
   </div>`).join("");
 
+// The heading above says these bars sum to the ceiling on the Full backlog tile, and until now a
+// reader had to add nine numbers by hand to believe it. The total is rendered from the same array
+// the bars are, so it cannot disagree with them, and validate:board checks it against the tile.
 const maxDays = Math.max(...EPICS.map(e => e.days));
+const backlogDays = EPICS.reduce((total, e) => total + e.days, 0);
 document.getElementById("bars").innerHTML = EPICS.map(e => `
   <div class="barrow">
     <div class="name">${e.name}</div>
     <div class="track"><div class="fill" style="width:${(e.days / maxDays * 100).toFixed(1)}%"></div></div>
     <div class="val">${e.days}d</div>
-  </div>`).join("");
+  </div>`).join("") + `
+  <div class="barrow total">
+    <div class="name">Total, upper bound</div>
+    <div class="track"></div>
+    <div class="val">${backlogDays}d</div>
+  </div>`;
 
 const fEpic = document.getElementById("fEpic");
 EPICS.forEach(e => { const o = document.createElement("option"); o.value = e.key; o.textContent = e.name; fEpic.appendChild(o); });
@@ -582,11 +620,26 @@ function render() {
   document.getElementById(id).addEventListener("input", render));
 render();
 
+// The theme toggle. The head script has already decided which one to open on, so this only has to
+// flip it and remember the flip. Storing the choice is the point: before this, the page reset to
+// light on every reload, which is a small thing that reads as broken to somebody checking the board
+// several times a day.
 const btn = document.getElementById("themeBtn");
-function syncBtn() { btn.textContent = document.documentElement.getAttribute("data-theme") === "dark" ? "Light mode" : "Dark mode"; }
+const themeLabel = { dark: "Light mode", light: "Dark mode" };
+function currentTheme() { return document.documentElement.dataset.theme === "dark" ? "dark" : "light"; }
+function syncBtn() {
+  const theme = currentTheme();
+  btn.textContent = themeLabel[theme];
+  btn.setAttribute("aria-label", `Switch to ${theme === "dark" ? "light" : "dark"} mode`);
+}
 btn.addEventListener("click", () => {
-  document.documentElement.setAttribute("data-theme",
-    document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem("sbr-board-theme", next);
+  } catch (err) {
+    btn.title = `This browser will not remember the choice (${err.name})`;
+  }
   syncBtn();
 });
 syncBtn();
