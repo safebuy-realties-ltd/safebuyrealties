@@ -74,7 +74,12 @@ describe("StructuredLogger", () => {
       logger.error("e");
       logger.fatal("f");
 
-      expect(linesFrom(stdout).map((line) => line.level)).toEqual(["verbose", "debug", "log", "warn"]);
+      expect(linesFrom(stdout).map((line) => line.level)).toEqual([
+        "verbose",
+        "debug",
+        "log",
+        "warn",
+      ]);
       expect(linesFrom(stderr).map((line) => line.level)).toEqual(["error", "fatal"]);
     });
 
@@ -187,7 +192,11 @@ describe("StructuredLogger", () => {
     });
 
     it("unpacks an object message into fields", () => {
-      loggerUnder(JSON_ENV).log({ msg: "money.operation start", operation: "escrow.hold", amountMinor: 5000 });
+      loggerUnder(JSON_ENV).log({
+        msg: "money.operation start",
+        operation: "escrow.hold",
+        amountMinor: 5000,
+      });
       expect(linesFrom(stdout)[0]).toMatchObject({
         msg: "money.operation start",
         operation: "escrow.hold",
@@ -223,7 +232,11 @@ describe("StructuredLogger", () => {
     });
 
     it("chooses JSON and drops debug noise in production", () => {
-      const logger = loggerUnder({ LOG_FORMAT: undefined, LOG_LEVEL: undefined, NODE_ENV: "production" });
+      const logger = loggerUnder({
+        LOG_FORMAT: undefined,
+        LOG_LEVEL: undefined,
+        NODE_ENV: "production",
+      });
       logger.debug("d");
       logger.log("l");
 

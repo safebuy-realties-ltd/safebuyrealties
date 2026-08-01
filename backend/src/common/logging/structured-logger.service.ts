@@ -172,7 +172,8 @@ export class StructuredLogger implements LoggerService {
   }
 
   private print(line: LogFields): void {
-    const stream = line.level === "error" || line.level === "fatal" ? process.stderr : process.stdout;
+    const stream =
+      line.level === "error" || line.level === "fatal" ? process.stderr : process.stdout;
     stream.write(`${this.json ? JSON.stringify(line) : this.humanise(line)}\n`);
   }
 

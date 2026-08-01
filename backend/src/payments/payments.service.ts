@@ -246,8 +246,7 @@ export class PaymentsService {
         metadata: { paymentId: payment.id },
       });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Paystack initialize failed";
+      const message = err instanceof Error ? err.message : "Paystack initialize failed";
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED, metadata: { error: message } as object },
@@ -340,10 +339,7 @@ export class PaymentsService {
             where: {
               id: p.transactionId,
               status: {
-                notIn: [
-                  TransactionStatus.COMPLETED,
-                  TransactionStatus.PURCHASE_IN_ESCROW,
-                ],
+                notIn: [TransactionStatus.COMPLETED, TransactionStatus.PURCHASE_IN_ESCROW],
               },
             },
             data: { status: TransactionStatus.PURCHASE_IN_ESCROW },

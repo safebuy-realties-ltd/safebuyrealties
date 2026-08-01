@@ -17,7 +17,9 @@ import { setRequestActor } from "./request-context";
 export class RequestActorInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() === "http") {
-      const request = context.switchToHttp().getRequest<{ user?: { sub?: string; role?: string } }>();
+      const request = context
+        .switchToHttp()
+        .getRequest<{ user?: { sub?: string; role?: string } }>();
       setRequestActor(request.user?.sub, request.user?.role);
     }
     return next.handle();

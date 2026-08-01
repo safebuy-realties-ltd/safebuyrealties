@@ -1,6 +1,10 @@
 import { EventEmitter } from "node:events";
 import { Request, Response } from "express";
-import { CORRELATION_HEADER, correlationIdMiddleware, readCorrelationId } from "./correlation-id.middleware";
+import {
+  CORRELATION_HEADER,
+  correlationIdMiddleware,
+  readCorrelationId,
+} from "./correlation-id.middleware";
 import { RequestContext, currentRequestContext } from "./request-context";
 import { StructuredLogger } from "./structured-logger.service";
 
@@ -15,7 +19,9 @@ import { StructuredLogger } from "./structured-logger.service";
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function fakeReq(init: { method?: string; url?: string; headers?: Record<string, string | string[]> } = {}): Request {
+function fakeReq(
+  init: { method?: string; url?: string; headers?: Record<string, string | string[]> } = {},
+): Request {
   return {
     method: init.method ?? "GET",
     originalUrl: init.url ?? "/api/v1/listings",
@@ -45,7 +51,9 @@ function fakeRes() {
 
 describe("readCorrelationId", () => {
   it("accepts an id the caller supplied", () => {
-    expect(readCorrelationId(fakeReq({ headers: { "x-request-id": "req-abc-123" } }))).toBe("req-abc-123");
+    expect(readCorrelationId(fakeReq({ headers: { "x-request-id": "req-abc-123" } }))).toBe(
+      "req-abc-123",
+    );
   });
 
   it("prefers x-request-id and falls back to x-correlation-id", () => {
@@ -60,9 +68,9 @@ describe("readCorrelationId", () => {
   });
 
   it("takes the first value when a header arrives repeated", () => {
-    expect(readCorrelationId(fakeReq({ headers: { "x-request-id": ["first-id-x", "second"] } }))).toBe(
-      "first-id-x",
-    );
+    expect(
+      readCorrelationId(fakeReq({ headers: { "x-request-id": ["first-id-x", "second"] } })),
+    ).toBe("first-id-x");
   });
 
   it("generates one when the caller supplies nothing", () => {
@@ -99,7 +107,9 @@ describe("readCorrelationId", () => {
       "AbCdEfGh",
       "x".repeat(128),
     ]) {
-      expect(readCorrelationId(fakeReq({ headers: { "x-request-id": candidate } }))).toBe(candidate);
+      expect(readCorrelationId(fakeReq({ headers: { "x-request-id": candidate } }))).toBe(
+        candidate,
+      );
     }
   });
 });
@@ -115,7 +125,11 @@ describe("correlationIdMiddleware", () => {
 
   it("returns the id in a response header", () => {
     const { res, headers } = fakeRes();
-    correlationIdMiddleware(logger)(fakeReq({ headers: { "x-request-id": "given-id-1" } }), res, jest.fn());
+    correlationIdMiddleware(logger)(
+      fakeReq({ headers: { "x-request-id": "given-id-1" } }),
+      res,
+      jest.fn(),
+    );
 
     expect(headers[CORRELATION_HEADER]).toBe("given-id-1");
   });
@@ -124,7 +138,11 @@ describe("correlationIdMiddleware", () => {
     const { res } = fakeRes();
     let seen: RequestContext | undefined;
     correlationIdMiddleware(logger)(
-      fakeReq({ method: "POST", url: "/api/v1/payments/initiate", headers: { "x-request-id": "given-id-2" } }),
+      fakeReq({
+        method: "POST",
+        url: "/api/v1/payments/initiate",
+        headers: { "x-request-id": "given-id-2" },
+      }),
       res,
       () => {
         seen = currentRequestContext();
@@ -173,9 +191,13 @@ describe("correlationIdMiddleware", () => {
       seen = currentRequestContext();
     });
 
-    correlationIdMiddleware(logger)(fakeReq({ headers: { "x-request-id": "given-id-3" } }), res, () => {
-      process.nextTick(() => finish(200));
-    });
+    correlationIdMiddleware(logger)(
+      fakeReq({ headers: { "x-request-id": "given-id-3" } }),
+      res,
+      () => {
+        process.nextTick(() => finish(200));
+      },
+    );
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(seen?.correlationId).toBe("given-id-3");

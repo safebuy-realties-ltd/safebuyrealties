@@ -94,7 +94,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * the tracker under its own name.
    */
   private track(exception: unknown, req: Request, status: number, code: string): void {
-    const expected = exception instanceof HttpException && status < HttpStatus.INTERNAL_SERVER_ERROR;
+    const expected =
+      exception instanceof HttpException && status < HttpStatus.INTERNAL_SERVER_ERROR;
     if (expected || !this.tracker) return;
 
     this.tracker.capture(exception, {

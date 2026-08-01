@@ -38,7 +38,10 @@ describe("withMoneyOperation", () => {
     const { logger, log } = stubLogger();
     await withMoneyOperation(logger, "escrow.hold", FIELDS, async () => "held");
 
-    const [[start], [outcome]] = log.mock.calls as [[Record<string, unknown>], [Record<string, unknown>]];
+    const [[start], [outcome]] = log.mock.calls as [
+      [Record<string, unknown>],
+      [Record<string, unknown>],
+    ];
     expect(start).toMatchObject({
       msg: "escrow.hold start",
       event: MONEY_EVENT,
@@ -60,21 +63,35 @@ describe("withMoneyOperation", () => {
   it("returns the result of the work untouched", async () => {
     const { logger } = stubLogger();
     const payout = { id: "po-1", status: "COMPLETED" };
-    await expect(withMoneyOperation(logger, "payout.initiate", {}, async () => payout)).resolves.toBe(payout);
+    await expect(
+      withMoneyOperation(logger, "payout.initiate", {}, async () => payout),
+    ).resolves.toBe(payout);
   });
 
   it("adds what only the work could know to the outcome line", async () => {
     // A payment row id and a provider reference exist only once the work has run. `record` is how
     // they reach the outcome line without a second log call to keep in step.
     const { logger, log } = stubLogger();
-    await withMoneyOperation(logger, "payment.initialize", { amountMinor: 500_000 }, async (record) => {
-      record({ paymentId: "pay-9" });
-      record({ reference: "sbr_ref_9", provider: "paystack" });
-      return null;
-    });
+    await withMoneyOperation(
+      logger,
+      "payment.initialize",
+      { amountMinor: 500_000 },
+      async (record) => {
+        record({ paymentId: "pay-9" });
+        record({ reference: "sbr_ref_9", provider: "paystack" });
+        return null;
+      },
+    );
 
-    const [[start], [outcome]] = log.mock.calls as [[Record<string, unknown>], [Record<string, unknown>]];
-    expect(outcome).toMatchObject({ paymentId: "pay-9", reference: "sbr_ref_9", provider: "paystack" });
+    const [[start], [outcome]] = log.mock.calls as [
+      [Record<string, unknown>],
+      [Record<string, unknown>],
+    ];
+    expect(outcome).toMatchObject({
+      paymentId: "pay-9",
+      reference: "sbr_ref_9",
+      provider: "paystack",
+    });
     // The start line was already written and must not be rewritten by a later `record`: the pair is
     // a before-and-after, and a start line that knows the answer is not one.
     expect(start).not.toHaveProperty("paymentId");
@@ -119,7 +136,10 @@ describe("withMoneyOperation", () => {
       }),
     ).rejects.toBe("gateway timeout");
 
-    expect(error.mock.calls[0][0]).toMatchObject({ errorName: "string", reason: "gateway timeout" });
+    expect(error.mock.calls[0][0]).toMatchObject({
+      errorName: "string",
+      reason: "gateway timeout",
+    });
   });
 });
 
@@ -134,14 +154,21 @@ describe("MONEY_OPERATIONS coverage", () => {
     for (const entry of readdirSync(dir)) {
       const path = join(dir, entry);
       if (statSync(path).isDirectory()) collectSources(path, found);
-      else if (entry.endsWith(".ts") && !entry.endsWith(".spec.ts") && entry !== "money-operation.ts") {
+      else if (
+        entry.endsWith(".ts") &&
+        !entry.endsWith(".spec.ts") &&
+        entry !== "money-operation.ts"
+      ) {
         found.push(path);
       }
     }
     return found;
   }
 
-  const sources = collectSources(sourceRoot).map((path) => ({ path, text: readFileSync(path, "utf8") }));
+  const sources = collectSources(sourceRoot).map((path) => ({
+    path,
+    text: readFileSync(path, "utf8"),
+  }));
 
   it.each(MONEY_OPERATIONS)("instruments %s at a real call site", (operation) => {
     const callers = sources.filter(({ text }) => text.includes(`"${operation}"`));
@@ -151,7 +178,9 @@ describe("MONEY_OPERATIONS coverage", () => {
   it("routes every money operation through the wrapper rather than a bare log call", () => {
     const wrapped = sources
       .filter(({ text }) => text.includes("withMoneyOperation("))
-      .flatMap(({ text }) => MONEY_OPERATIONS.filter((operation) => text.includes(`"${operation}"`)));
+      .flatMap(({ text }) =>
+        MONEY_OPERATIONS.filter((operation) => text.includes(`"${operation}"`)),
+      );
 
     expect([...new Set(wrapped)].sort()).toEqual([...MONEY_OPERATIONS].sort());
   });

@@ -32,7 +32,11 @@ describe("ErrorTrackerService", () => {
           userId: "user-3",
           role: "ADMIN",
         },
-        () => tracker.capture(new Error("prisma down"), { source: "EscrowService.release", statusCode: 500 }),
+        () =>
+          tracker.capture(new Error("prisma down"), {
+            source: "EscrowService.release",
+            statusCode: 500,
+          }),
       );
 
       expect(event).toMatchObject({
@@ -63,7 +67,11 @@ describe("ErrorTrackerService", () => {
       });
 
       expect(event?.message).toBe("charge for [redacted:6789] declined");
-      expect(event).toMatchObject({ reference: "sbr_1", authorization: REDACTED, password: REDACTED });
+      expect(event).toMatchObject({
+        reference: "sbr_1",
+        authorization: REDACTED,
+        password: REDACTED,
+      });
     });
 
     it("wraps a thrown non-Error so the shape stays constant", () => {
@@ -110,8 +118,12 @@ describe("ErrorTrackerService", () => {
     it("collapses two uuids into one group", () => {
       // Uuids are substituted before digits are, so an id survives as a single `<uuid>` token rather
       // than being shredded into five `<n>`s that happen to line up.
-      const first = tracker.capture(notFound("550e8400-e29b-41d4-a716-446655440000"), { source: "s" });
-      const second = tracker.capture(notFound("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), { source: "s" });
+      const first = tracker.capture(notFound("550e8400-e29b-41d4-a716-446655440000"), {
+        source: "s",
+      });
+      const second = tracker.capture(notFound("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), {
+        source: "s",
+      });
 
       expect(second?.fingerprint).toBe(first?.fingerprint);
     });
@@ -173,7 +185,9 @@ describe("ErrorTrackerService", () => {
     beforeEach(() => {
       savedUrl = process.env.ERROR_TRACKER_WEBHOOK_URL;
       process.env.ERROR_TRACKER_WEBHOOK_URL = "https://tracker.example/ingest";
-      fetchSpy = jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 202 }));
+      fetchSpy = jest
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(null, { status: 202 }));
     });
 
     afterEach(() => {
@@ -205,7 +219,8 @@ describe("ErrorTrackerService", () => {
 
       expect(fetchSpy).toHaveBeenCalledTimes(6);
       const occurrences = fetchSpy.mock.calls.map(
-        ([, init]) => (JSON.parse(String((init as RequestInit).body)) as { occurrences: number }).occurrences,
+        ([, init]) =>
+          (JSON.parse(String((init as RequestInit).body)) as { occurrences: number }).occurrences,
       );
       expect(occurrences).toEqual([1, 2, 5, 10, 20, 50]);
     });
@@ -255,7 +270,10 @@ describe("ErrorTrackerService", () => {
       try {
         listeners[listeners.length - 1](new Error("thrown from a timer"), "uncaughtException");
 
-        expect(write.mock.calls[0][2]).toMatchObject({ source: "process.uncaughtException", fatal: true });
+        expect(write.mock.calls[0][2]).toMatchObject({
+          source: "process.uncaughtException",
+          fatal: true,
+        });
         expect(process.exitCode).toBe(1);
       } finally {
         process.exitCode = savedExitCode;

@@ -135,7 +135,9 @@ describe("request logging through configureApp (E7-S1)", () => {
     });
 
     it("attaches the id to a line the handler logged and to the access line alike", async () => {
-      await request(app.getHttpServer()).get("/api/v1/probe/work").set(CORRELATION_HEADER, "frontend-trace-02");
+      await request(app.getHttpServer())
+        .get("/api/v1/probe/work")
+        .set(CORRELATION_HEADER, "frontend-trace-02");
 
       const lines = written();
       const handler = lines.find((line) => line.msg === "did some work");
@@ -165,15 +167,22 @@ describe("request logging through configureApp (E7-S1)", () => {
 
     it("keeps two requests apart", async () => {
       const [first, second] = await Promise.all([
-        request(app.getHttpServer()).get("/api/v1/probe/work").set(CORRELATION_HEADER, "trace-alpha-1"),
-        request(app.getHttpServer()).get("/api/v1/probe/work").set(CORRELATION_HEADER, "trace-bravo-1"),
+        request(app.getHttpServer())
+          .get("/api/v1/probe/work")
+          .set(CORRELATION_HEADER, "trace-alpha-1"),
+        request(app.getHttpServer())
+          .get("/api/v1/probe/work")
+          .set(CORRELATION_HEADER, "trace-bravo-1"),
       ]);
 
       expect(first.headers[CORRELATION_HEADER]).toBe("trace-alpha-1");
       expect(second.headers[CORRELATION_HEADER]).toBe("trace-bravo-1");
 
       const handlers = written().filter((line) => line.msg === "did some work");
-      expect(handlers.map((line) => line.correlationId).sort()).toEqual(["trace-alpha-1", "trace-bravo-1"]);
+      expect(handlers.map((line) => line.correlationId).sort()).toEqual([
+        "trace-alpha-1",
+        "trace-bravo-1",
+      ]);
     });
   });
 
@@ -189,14 +198,26 @@ describe("request logging through configureApp (E7-S1)", () => {
 
       const access = written().find((line) => line.msg === "request completed");
       expect(Object.keys(access ?? {}).sort()).toEqual(
-        ["context", "correlationId", "durationMs", "level", "method", "msg", "path", "statusCode", "ts"].sort(),
+        [
+          "context",
+          "correlationId",
+          "durationMs",
+          "level",
+          "method",
+          "msg",
+          "path",
+          "statusCode",
+          "ts",
+        ].sort(),
       );
     });
 
     it("records a fault on stderr and ordinary traffic on stdout", async () => {
       await request(app.getHttpServer()).get("/api/v1/probe/boom");
 
-      const errorLines = stderr.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+      const errorLines = stderr.mock.calls.map(
+        ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+      );
       expect(errorLines.some((line) => line.event === "error.captured")).toBe(true);
       expect(stdout.mock.calls).toHaveLength(0);
     });

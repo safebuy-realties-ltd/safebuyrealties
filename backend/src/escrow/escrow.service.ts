@@ -5,12 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import {
-  ListingStatus,
-  Prisma,
-  TransactionStatus,
-  UserRole,
-} from "@prisma/client";
+import { ListingStatus, Prisma, TransactionStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -271,7 +266,9 @@ export class EscrowService {
       include: this.escrowInclude(),
     });
     return Promise.all(
-      rows.map(async (row) => this.serializeEscrow(row, await this.checkConditions(row.transactionId))),
+      rows.map(async (row) =>
+        this.serializeEscrow(row, await this.checkConditions(row.transactionId)),
+      ),
     );
   }
 
@@ -477,7 +474,10 @@ export class EscrowService {
       { transactionId, sellerId, netAmount, now },
       record,
     );
-    record({ payoutStatus: settlement.status, reference: settlement.gatewayReference ?? undefined });
+    record({
+      payoutStatus: settlement.status,
+      reference: settlement.gatewayReference ?? undefined,
+    });
 
     const payout = await this.prisma.payout.create({
       data: {
@@ -555,9 +555,7 @@ export class EscrowService {
 
   private notifyEscrowParties(
     row: EscrowRow,
-    type:
-      | typeof NotificationType.ESCROW_RELEASED
-      | typeof NotificationType.ESCROW_REFUNDED,
+    type: typeof NotificationType.ESCROW_RELEASED | typeof NotificationType.ESCROW_REFUNDED,
   ) {
     const listing = this.requireListing(row.transaction.listing);
     const listingTitle = listing.title;
