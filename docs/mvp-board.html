@@ -147,8 +147,8 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>e80e24c</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 4 complete, day 5 open, main at e80e24c</p>
+    <p class="sub">Verified against <code>main</code> @ <code>065e8c8</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 4 complete, day 5 open, main at 065e8c8</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
@@ -156,12 +156,12 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">19</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">20</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
     <div class="tile"><div class="label">Day 4</div><div class="value">Done</div><div class="foot">5 of 5 in, closed on the coverage floor</div></div>
     <div class="tile"><div class="label">Remaining</div><div class="value">5</div><div class="foot">all of it in day 5, over the ceiling</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
-    <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
+    <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">3 wait on external input</div></div>
   </div>
   <p class="meta" style="margin-top:10px">The limit this week is not developer-days, it is <b>review hours</b>. A small PR costs 30 to 45 minutes to review properly, which caps one reviewer at 12 to 15 PRs across five days. The plan is sized to that, not to agent throughput.</p>
 </section>
@@ -174,15 +174,16 @@
     <p><b>Two of those seven did less than their titles claimed. Both gaps are now closed or reduced.</b> #105 widened <code>backend/.gitignore</code> only, so a root <code>.env</code> or <code>.env.production</code> stayed committable &mdash; and the root is exactly where env files are expected, since <code>.env.example</code> there tells you to make one and Vite reads the whole family. The one root name that was safe, <code>.env.local</code>, was safe by accident: it matched <code>*.local</code>, a Vite convention line rather than an env rule. <b>CH-3</b> (#113) put the family pattern in the root file, where it covers every directory instead of one. #107's reconcile was sound, but it predated #108 and its suggested two-way split for E3-S1d has since been shown wrong &mdash; the backlog caught up in #112, so <b>DOCS-6</b> is now that one stale paragraph plus a sweep. Neither was a regression; both were the gap between what shipped and what the row said, which is the thing this board exists to make visible.</p>
     <p><b>E3-S1 closed by deleting a route, not by adding one.</b> What was left was not what the row said: the mount was held open by <i>public</i> listing imagery, the last thing on the frontend still building an <code>/uploads/</code> URL. The obvious answer was a second, public delivery route beside the authorized one. E3-S1d-3 did the opposite &mdash; <code>/api/v1/documents/file</code> took optional authentication, so one route now decides per <code>Document</code> row and serves <code>listing_hero</code> and <code>listing_gallery</code> to a visitor with no session while refusing the title deed one row away. That absorbed the E3-S1b gate rather than leaving two gates on one prefix, which is how the next leak would have got in.</p>
     <p><b>The coverage floor was measured, and the measurement was the finding.</b> <b>E7-S2</b> (#114) set thresholds just under today's numbers in both suites and made CI publish the reports. The backend was already measuring all 155 of its files: 41.7% of statements. The frontend was not measuring anything, and its default would have reported 48.06% &mdash; a number computed over the 20 files the tests happen to import, out of 185. Measured the way the backend measures, it is <b>4.91%</b>. Both numbers are now written beside the thresholds that enforce them. The other half of the criterion, a strict bar on new and changed files, is diff coverage: no runner here can express it, so it is <b>E7-S2b</b> rather than a tick.</p>
-    <p><b>Day 5 holds all 5 remaining PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 19 have merged. Days 1 to 4 are closed and every security row is in; what is left is a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
-    <p><b>Carry these two rules into day 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now updates this board in the same diff: <code>npm run validate:board</code> locally, enforced in CI, because both times this board went stale it was found by a person rather than by a check.</p>
+    <p><b>The board rule was updating three fields on a page that states everything six times.</b> <b>CH-5</b> (#115) is the answer to that. Rule 8 asked for the row's status, PR number and Day column, and a story's status also lives in the day card, the counter tiles, the header, the review queue and the prose above them &mdash; so an author who followed the rule exactly left five true-looking statements behind. Two were sitting on this page when the check went in: the go-live tile said 2 gates wait on external input where the list marks 3, and the review queue still led with #114, which had merged. Neither would ever have been caught by a rule that stops at the row. <code>validate:board</code> now checks every restated number against the rows, so the table in rule 8 is enforced rather than advised.</p>
+    <p><b>Day 5 holds all 5 remaining PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 20 have merged. Days 1 to 4 are closed and every security row is in; what is left is a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
+    <p><b>Carry these two rules into day 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now brings the whole of this page up to date in the same diff &mdash; the row, its day card, the tiles, the header, the queue and any count the prose quotes &mdash; with <code>npm run validate:board</code> locally and enforced in CI, because every time this board went stale it was found by a person rather than by a check.</p>
   </div>
 
   <div class="card" id="queue"></div>
 </section>
 
 <section>
-  <h2>Day by day <span class="note">truth over features &middot; all 52 rows accounted for</span></h2>
+  <h2>Day by day <span class="note">truth over features &middot; all 53 rows accounted for</span></h2>
   <div class="days" id="days"></div>
 </section>
 
@@ -355,23 +356,24 @@ const DAYS = [
     "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes &middot; PR 112 merged",
     "<b>CH-3</b> env ignore rules at the repository root &middot; PR 113 merged",
     "<b>E7-S2</b> coverage floor measured and recorded &middot; PR 114 merged" ]},
-  { n:"Day 5", theme:"Package and freeze, oversubscribed", count:5, done:false, items:[
+  { n:"Day 5", theme:"Package and freeze, oversubscribed", count:6, done:false, items:[
+    "<b>CH-5</b> the board rule covers the page, not the row &middot; PR 115 merged",
     "<b>E7-S5</b> runbook, environment matrix, secrets",
     "<b>DOCS-6</b> re-reconcile E3-S1d in the backlog",
     "<b>DOCS-4</b> re-audit against HEAD, tag handover commit",
     "<b>E7-S3</b> ephemeral-database spike, timeboxed",
     "<b>E7-S4</b> demo seed that resolves",
-    "&mdash; five PRs is more than a reviewer can take on a packaging day. E7-S4 is first to cut, E7-S3 second" ]}
+    "&mdash; five still open is more than a reviewer can take on a packaging day. E7-S4 is first to cut, E7-S3 second" ]}
 ];
 
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:114, t:"E7-S2, the coverage floor, closes day 4",
-    why:"The last row between day 4 and day 5. It also names a number this repository had never measured, which turned out to be the whole story.",
-    look:"Two judgement calls, both in the diff rather than the summary. First, the frontend number: v8 measures only the files the tests import, which is 20 of 185 here and reads 48.06%. Measuring the whole tree, as the backend already did, reads 4.91%. The floor is set on the second, because a floor a new untested file cannot lower is not a floor. Second, `global` is the only threshold group: Jest removes any file matching a per-directory key from `global`, so carving out the five directories that cover well would have dropped what `global` measures to 33.88% and printed `statements: 33` in a repository covering 41.7%. Also worth checking that the story admits what it did not do — diff coverage is criterion 2's first half and is now E7-S2b, not a tick." },
+  { pr:115, t:"CH-5, the board rule covers the page rather than the row",
+    why:"Rule 8 named three fields to update on a page that states the same fact six times, so following it exactly still left five stale statements behind. This is that rule rewritten and, more to the point, checked.",
+    look:"Whether the two defects it found are the right evidence that the old rule was too narrow: the go-live tile claimed 2 gates wait on external input where the list marks 3, and the queue you are reading led with #114 after it merged. Both sat on a board that passed `validate:board`. Then the judgement call in `scripts/check-board.mjs`: structural claims — the tiles, the header, the queue, the PR numbers day cards name in prose — are required, but the two counts quoted in the Up next narrative are verified only where the sentence is still there. A check that fired on rewording would be routed around inside a week, and rule 8 says so itself. Everything is checked outwards from one source: rows fix the day cards, day cards fix the tiles." },
   { pr:null, t:"Day 4 is closed — the week is now only day 5",
-    why:"Nineteen PRs against fourteen planned, and every security row is in. What is left is packaging, and it is the part the next team actually opens.",
+    why:"Twenty PRs against fourteen planned, and every security row is in. What is left is packaging, and it is the part the next team actually opens.",
     look:"Whether day 5 gets cut before it starts rather than during it. That decision is listed below and has been listed since day 3." },
   { pr:null, t:"Day 5 is oversubscribed — decide what gets cut before it starts",
     why:"Five PRs against a packaging day. E7-S5 and DOCS-4 are the handover itself and cannot move. E7-S4 lists E3-S2, durable object storage, as a dependency and E3-S2 is not scheduled this week.",
@@ -390,6 +392,7 @@ const STORIES = [
   ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
   ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore had no env pattern at all, so a root .env or .env.production was committable — and root .env.example tells you to make a root env file. Only .env.local was safe, and only because *.local happened to match it. The family pattern now sits in the root file, which covers every directory.","D4","—","S","none","done",false,113],
   ["CH-4","Chore","Make this board a merge gate rather than a habit","The board went stale twice and a person caught it both times. scripts/check-board.mjs validates it against itself, and CI fails a story PR that does not touch it.","D4","—","S","none","done",false,110],
+  ["CH-5","Chore","Board updates cover the page, not the row","Rule 8 asked for status, PR and Day. The same fact is restated in the day card, the tiles, the header, the queue and the prose, and nothing checked those, so a rule followed exactly still left five stale statements. validate:board now checks every restated number against the rows.","D5","—","S","CH-4","done",false,115],
 
   ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
   ["E1-S2","Loop","Transaction state machine, DD_PURCHASED to DD_COMPLETE","Only the standalone path sets these statuses, so listing transactions stop dead.","","dd_case_lifecycle","M","E1-S1","planned",true],

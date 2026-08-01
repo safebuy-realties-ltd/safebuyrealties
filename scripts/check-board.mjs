@@ -7,6 +7,12 @@
  * caught in a second: two different commit hashes in two adjacent header lines, and a "Day 3
  * done" card sitting above three unfinished day-3 rows. Those are the checks below.
  *
+ * The unit of update is the page, not the row. A story's status appears in a row, in a day card, in
+ * a counter tile, in the header, in the review queue and in the prose above them, and an author who
+ * moves the row alone leaves five true-looking statements behind. So everything the page states
+ * twice is checked against one source: rows fix the day cards, day cards fix the tiles, and the
+ * header and the queue are checked against both.
+ *
  * This validates *consistency*, not truth. It cannot know whether a row that says "done" really
  * shipped — that is the reviewer's job. It knows whether the board contradicts itself.
  *
@@ -33,7 +39,20 @@ const SIZES = new Set(["S", "M", "L"]);
 
 const failures = [];
 const notes = [];
-const fail = (message) => failures.push(message);
+const fail = (message) => {
+  failures.push(message);
+};
+
+/** Board prose carries entities and inline tags. Compare against the text a reader actually sees. */
+const text = (html) =>
+  html
+    .replaceAll(/<[^>]+>/g, "")
+    .replaceAll("&ndash;", "–")
+    .replaceAll("&mdash;", "—")
+    .replaceAll("&middot;", "·")
+    .replaceAll("&amp;", "&")
+    .replaceAll(/\s+/g, " ")
+    .trim();
 
 const source = readFileSync(BOARD, "utf8");
 
@@ -198,8 +217,21 @@ for (const [index, card] of DAYS.entries()) {
     listed.push(id);
     if (!byId.has(id)) {
       fail(`${expectedName} lists "${id}", which is not a row on the board`);
-    } else if (byId.get(id).row[4] !== key) {
+      continue;
+    }
+    if (byId.get(id).row[4] !== key) {
       fail(`${expectedName} lists ${id}, but its Day column says "${byId.get(id).row[4] || "deferred"}"`);
+    }
+
+    // Day-card items name the PR in prose — "E3-S4 /verify page · PR 98 merged" — beside a row that
+    // names it as data. Two places, one fact, and only the row is under any other check.
+    const claimed = String(item).match(/\bPR (\d+)\b/);
+    if (!claimed) continue;
+    const rowPr = byId.get(id).row[10];
+    if (rowPr === undefined) {
+      fail(`${expectedName} says ${id} merged as PR ${claimed[1]}, but its row carries no PR number`);
+    } else if (Number(claimed[1]) !== rowPr) {
+      fail(`${expectedName} says ${id} is PR ${claimed[1]} but its row says PR ${rowPr}`);
     }
   }
 
@@ -251,6 +283,28 @@ if (!header) {
   } else {
     verifyCommitExists(shas[0]);
   }
+
+  const headerText = text(header[0]);
+  if (!/\bUpdated \d{4}-\d{2}-\d{2}\b/.test(headerText)) {
+    fail(`the header carries no "Updated YYYY-MM-DD" — an undated board reads as current forever`);
+  }
+
+  // How much of the week is closed, asserted in prose directly above the day cards that decide it.
+  let complete = 0;
+  while (complete < DAYS.length && DAYS[complete].done) complete += 1;
+  const claim = headerText.match(/days 1 to (\d+) complete, day (\d+) open/);
+  if (claim) {
+    if (Number(claim[1]) !== complete) {
+      fail(`the header says days 1 to ${claim[1]} are complete, but ${complete} day cards from day 1 are marked done`);
+    }
+    if (Number(claim[2]) !== complete + 1) {
+      fail(`the header says day ${claim[2]} is open, but the first day card not marked done is day ${complete + 1}`);
+    }
+  } else if (complete !== DAYS.length || !/every day complete/.test(headerText)) {
+    fail(
+      `the header makes no day claim this check can verify — write "days 1 to N complete, day M open", or "every day complete" once the week closes`,
+    );
+  }
 }
 
 /** Skipped on a shallow clone, where an older commit legitimately is not present. */
@@ -267,13 +321,132 @@ function verifyCommitExists(sha) {
   }
 }
 
+/**
+ * The tiles are the day cards restated as six numbers at the top of the page, which makes them the
+ * first thing a reader trusts and the last thing an author edits. Nothing but attention has ever
+ * moved them. The day cards are already checked against the rows, so checking the tiles against the
+ * day cards chains every count on the page back to a single source.
+ */
+const tiles = new Map();
+for (const match of source.matchAll(
+  /<div class="tile"><div class="label">([\s\S]*?)<\/div><div class="value">([\s\S]*?)<\/div><div class="foot">([\s\S]*?)<\/div>/g,
+)) {
+  tiles.set(text(match[1]), { value: text(match[2]), foot: text(match[3]) });
+}
+if (!tiles.size) fail("no tiles found — the counters at the top of the page are missing or restructured");
+
+/** Returns the tile so callers can go on to check its footnote, or null when it is not there. */
+function checkTile(label, expected, describe) {
+  const found = tiles.get(label);
+  if (!found) {
+    fail(`there is no "${label}" tile — the counters no longer match what this check knows to verify`);
+    return null;
+  }
+  if (found.value !== String(expected)) {
+    fail(`the "${label}" tile reads ${found.value}, but ${describe} is ${expected}`);
+  }
+  return found;
+}
+
+// Counted over rows rather than whole days, so both stay true in the middle of a day and not only
+// at the boundary where one closes: the first row of an open day going done moves "PRs merged".
+const prShaped = [...prShapedByDay.values()].flat();
+const mergedPrs = prShaped.filter((id) => byId.get(id).row[8] === "done").length;
+const remainingPrs = prShaped.length - mergedPrs;
+checkTile("PRs merged", mergedPrs, "the number of PR-shaped rows marked done");
+checkTile("Remaining", remainingPrs, "the number of PR-shaped rows carrying a day and not done");
+
+// A tile named for a day — the one that moves every time a day closes.
+for (const [label, { value, foot }] of tiles) {
+  const named = label.match(/^Day (\d+)$/);
+  if (!named) continue;
+  const card = DAYS[Number(named[1]) - 1];
+  if (!card) {
+    fail(`the "${label}" tile names a day with no card`);
+    continue;
+  }
+  const expected = card.done ? "Done" : "Open";
+  if (value !== expected) fail(`the "${label}" tile reads "${value}" but its day card is not marked ${expected}`);
+  const progress = foot.match(/^(\d+) of (\d+)\b/);
+  if (!progress) {
+    fail(`the "${label}" tile footnote should open with the day's progress, as "5 of 5 in"`);
+    continue;
+  }
+  if (Number(progress[2]) !== card.count) {
+    fail(`the "${label}" tile footnote says "of ${progress[2]}" but the day card counts ${card.count}`);
+  }
+  if (card.done && Number(progress[1]) !== card.count) {
+    fail(`the "${label}" tile says ${progress[1]} of ${progress[2]} in, but the day is done, so it is ${card.count}`);
+  }
+}
+
+const adrs = [...source.matchAll(/<li><b>ADR-(\d{4})/g)].map((match) => match[1]);
+const decisions = checkTile("Open decisions", adrs.length, "the number of ADRs listed under Open decisions");
+if (decisions && adrs.length) {
+  const range = decisions.foot.match(/ADRs (\d{4})[–-](\d{4})/);
+  if (!range) fail(`the "Open decisions" tile footnote should name the range, as "now ADRs 0001–0005"`);
+  else if (range[1] !== adrs[0] || range[2] !== adrs.at(-1)) {
+    fail(`the "Open decisions" tile footnote says ADRs ${range[1]}–${range[2]} but the list runs ${adrs[0]}–${adrs.at(-1)}`);
+  }
+}
+
+const gates = [...source.matchAll(/<li><b>(G\d+)<\/b>([\s\S]*?)<\/li>/g)];
+const externalGates = gates.filter((gate) => /\bexternal\b/.test(text(gate[2]))).map((gate) => gate[1]);
+const gateTile = checkTile("Go-live gates", gates.length, "the number of gates listed");
+if (gateTile) {
+  const blocked = gateTile.foot.match(/^(\d+)\b/);
+  if (!blocked) fail(`the "Go-live gates" tile footnote should open with how many wait on external input`);
+  else if (Number(blocked[1]) !== externalGates.length) {
+    fail(
+      `the "Go-live gates" tile footnote says ${blocked[1]} wait on external input, but ${externalGates.length} gates are marked external: ${externalGates.join(", ")}`,
+    );
+  }
+}
+
+/**
+ * The narrative under "Up next" quotes the same counts in prose. Rewriting that prose is normal work
+ * and must not fail CI, so these are verified only where the sentence is present — the pattern is a
+ * contract, not a requirement. Reword freely; do not leave behind a number the data stopped
+ * supporting, which is the whole failure mode this file exists for.
+ */
+const narrated = source.match(/(\d+) have merged/);
+if (narrated && Number(narrated[1]) !== mergedPrs) {
+  fail(`the "Up next" prose says ${narrated[1]} have merged, but ${mergedPrs} PR-shaped rows are marked done`);
+}
+const holds = source.match(/Day (\d+) holds all (\d+) remaining/);
+if (holds && Number(holds[2]) !== remainingPrs) {
+  fail(
+    `the "Up next" prose says day ${holds[1]} holds ${holds[2]} remaining, but ${remainingPrs} PR-shaped rows carry a day and are not done`,
+  );
+}
+
+/**
+ * The queue is what the reviewer opens next, and every row on this board is written as though its
+ * pull request had already merged — that is the convention, since the board lands inside the diff it
+ * describes. So a done row is not evidence a queue entry is stale. What makes it stale is a newer PR
+ * existing: the highest number on the board is the one being opened right now, and it is the only one
+ * a reviewer has left to open. Anything below it merged, and a queue advertising landed work is worse
+ * than an empty one — the queue led with #114 for a whole story after it merged.
+ */
+const openPr = Math.max(...prOwners.keys());
 for (const [index, entry] of QUEUE.entries()) {
   for (const field of ["t", "why", "look"]) {
     if (typeof entry[field] !== "string" || entry[field] === "") {
       fail(`QUEUE[${index}] has no ${field}`);
     }
   }
-  if (entry.pr !== null && !Number.isInteger(entry.pr)) fail(`QUEUE[${index}] has a malformed PR`);
+  if (entry.pr === null) continue;
+  if (!Number.isInteger(entry.pr)) {
+    fail(`QUEUE[${index}] has a malformed PR`);
+    continue;
+  }
+  if (!prOwners.has(entry.pr)) {
+    fail(`QUEUE[${index}] points at PR ${entry.pr}, which no row on the board carries`);
+  } else if (entry.pr !== openPr) {
+    fail(
+      `QUEUE[${index}] still asks for a review of PR ${entry.pr}, but PR ${openPr} is newer, so ${entry.pr} has merged — a merged pull request comes out of the queue in the same diff that adds the next one`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
