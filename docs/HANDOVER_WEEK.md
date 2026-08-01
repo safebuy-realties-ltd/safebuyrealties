@@ -107,6 +107,9 @@ Give this to every agent alongside the story.
 7. If the change is user-facing and there is no feature-flag system yet, say so in the PR rather than inventing one.
 8. **Bring the whole board up to date in the same diff as the work.** Not afterwards, not in a
    follow-up, and not the row on its own. This one is enforced rather than trusted — see below.
+9. **Write like a person, not like a model.** No em dashes, full punctuation, no chatbot house style.
+   This covers PR titles and descriptions, commit messages, board prose, anything under `docs/`, and
+   the notes you write back to whoever asked for the work. Specifics below.
 
 ### Rule 8, and why it is a gate rather than a habit
 
@@ -172,6 +175,39 @@ a record of where it was first planned; the day cards carry that history in pros
 
 A gate that blocks honest work gets disabled within a week, so if the check is wrong, say so in the
 PR and fix `scripts/check-board.mjs`. What it must never become is a step people route around.
+
+### Rule 9, and what "like a person" means here
+
+Everything this repo produces in prose is read by somebody deciding whether to trust it. A reviewer
+reading a PR description, a stakeholder reading the board, whoever inherits this in six months
+reading a commit message. Writing that reads as machine-generated gets skimmed rather than read, and
+the evidence inside it gets skimmed along with it. That is a real cost, because the evidence is the
+entire point of rules 2, 3 and 4.
+
+"Write better" is not a rule anyone can follow, so here are the specifics.
+
+- **No em dashes.** Not in prose, not in a heading, not as `&mdash;` in board copy. A comma, a
+  colon, a semicolon or a full stop does the same job, and none of them announce who wrote the
+  sentence. Em dashes already sitting in files you are not otherwise editing can stay. Do not open a
+  PR to sweep them.
+- **Full punctuation and complete sentences.** Including in bullet lists, table cells and commit
+  message bodies. A fragment saves the writer two seconds and costs every reader a re-read.
+- **No stock openers or closers.** "In summary", "It is worth noting that", "Certainly", "I hope
+  this helps", "Let me know if you would like me to". Say the thing and stop.
+- **No filler structure.** Three items because there are three, not because three sounds complete.
+  No bolding every third phrase. No "not just X, but Y" when "Y" was the whole sentence.
+- **A claim carries its evidence or it does not go in.** This is rule 4 pointed at prose. "Improves
+  performance significantly" is a sentence a model writes. "Cuts the listing query from 40 round
+  trips to 3" is a sentence a reviewer can check, and checking it is their job.
+
+Where this does not apply: code comments follow the conventions of the file they sit in, and
+generated output is whatever the generator emits.
+
+Unlike rule 8, this one is trusted rather than gated, and deliberately so. A blanket grep for `—` in
+a diff would fail honest work on day one, because the board uses a bare em dash as the "no flag"
+marker in the flag column of every `STORIES` row. A check that fires on correct data is a check
+people learn to ignore, and rule 8's own section explains why that is the worst outcome available.
+Catching this one is a review job.
 
 ## What good looks like on Friday
 
