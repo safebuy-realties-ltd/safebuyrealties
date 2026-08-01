@@ -178,7 +178,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
 | E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | 📋 | none |
 | E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 | E1-S4, D3 |
-| E4-S3 | Access | Cross-role authorization test suite | — | M | 📋 | E4-S1 |
+| E4-S3 | Access | Cross-role authorization test suite | — | M | ✅ #125 | E4-S1 |
 | E5-S1 🔴 | Security | Rate limiting and lockout on auth and payments | — | M | 📋 | none |
 | E5-S2 🔴 | Security | CORS allow-list from configuration | — | S | ✅ #97, tightened by E5-S2a #102 | none |
 | E5-S3 | Security | Password reset | `auth_recovery` | M | 📋 | E6-S1 |
@@ -230,6 +230,8 @@ E3-S2 (durable storage)
 | G6 | Escrow and settlement model confirmed against CBN and AML obligations | Client, external | D2 |
 
 > **G3 is half-earned, 2026-07-31.** The probe suite it asks for exists — `backend/src/storage/uploads-exposure.spec.ts`, written red in #103 and green since #112 — and no private document is reachable without authorization through the route it probes. The gate stays open because it is blocked by E3 and E4-S3, not by E3-S1: **E3-S2** is unstarted, and a document store that authorizes correctly and then loses the file on the next deploy does not pass a gate worded *no private document is reachable without authorization* in spirit, only in letter. Read the probe suite as the evidence G3 will eventually be closed with, not as the closing of it.
+>
+> **E4-S3 landed, 2026-08-01.** The other half of the gate's E4 dependency is now covered: `backend/src/common/authz/cross-role-authz.spec.ts` classifies all 51 path-parameter routes and drives 240 cross-role cells against the real services. G3 still waits on E3-S2, which is the storage half and has not started.
 
 ### 3.3 External inputs
 
@@ -654,7 +656,11 @@ The design decision E3-S1d-3 arrived at is not the one the proposal anticipated 
 
 **Evidence of the gap**
 
-Ownership checks are written per service, for example `escrow.service.ts` `assertCanViewEscrow`, `documents.service.ts` `toDocumentDto`, and `listings-public.helper.ts`. They are correct where they exist and there is no systematic check that they exist everywhere. voxdiary solves the same class of problem with a fail-closed data-layer extension rather than per-service checks, which is the direction to move once this suite exists to protect the refactor.
+Ownership checks are written per service, for example `escrow.service.ts` `assertCanViewEscrow`, `documents.service.ts` `toDocumentDto`, and `listings-public.helper.ts`. They are correct where they exist and there is no systematic check that they exist everywhere. The stronger shape for this class of problem is a fail-closed rule at the data layer, where a query that names no owner returns nothing, rather than a predicate repeated in every service. That is the direction to move, and this suite is what makes the move safe to attempt.
+
+**Delivered** in PR #125. `backend/src/common/authz/` holds three files: a persona and store fixture with an in-memory Prisma double, a builder that constructs the real services against it, and the matrix spec. The spec has two halves. A census puts all 51 path-parameter routes into exactly one of four buckets, so a new one fails by name until somebody classifies it. A matrix then drives the real service method for 23 resource-scoped routes against ten personas, 240 cells, each compared to a table written by reading the predicates rather than running them. The table caught its own author on the first run: `GET /escrow/:transactionId` admits the listing's seller alongside the buyer, which had been written down as a denial.
+
+Two findings came out of the census and are recorded in the suite itself. `GET /standalone-dd/orders/:serviceId` performs no authorization at all, and `GET /transactions/:id` refuses the seller of the listing being transacted, which is intended but is the kind of rule that breaks quietly.
 
 **Acceptance criteria**
 
