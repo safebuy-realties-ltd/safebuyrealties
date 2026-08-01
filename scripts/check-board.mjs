@@ -34,7 +34,6 @@ const BOARD = path.join(REPO_ROOT, "docs", "mvp-board.html");
  */
 const DIRECT_COMMITS = new Set(["DOCS-1", "DOCS-2", "DOCS-3"]);
 
-const DAY_KEYS = ["D1", "D2", "D3", "D4", "D5"];
 const SIZES = new Set(["S", "M", "L"]);
 
 const failures = [];
@@ -85,6 +84,28 @@ const EPICS = readLiteral("EPICS", "]");
 if (!STORIES || !DAYS || !STATUS || !QUEUE || !EPICS) {
   console.error(failures.map((f) => `  ✖ ${f}`).join("\n"));
   process.exit(1);
+}
+
+/**
+ * The schedule is whatever the board says it is.
+ *
+ * It began as the five days of the handover week, and the keys were written out here as
+ * D1 to D5. That stopped being true the moment the week closed and the follow-on waves went on
+ * the page, so a card now carries its own key ("D3", "W2") beside its own display name ("Day 3",
+ * "Wave 2"), and every check below joins rows to cards through that key. Adding the next wave is
+ * then a board edit rather than a board edit plus a matching edit here — which is the failure this
+ * file exists to catch, one level up.
+ */
+const DAY_KEYS = [];
+for (const [index, card] of DAYS.entries()) {
+  if (typeof card.n !== "string" || card.n === "") fail(`DAYS[${index}] has no display name`);
+  if (typeof card.key !== "string" || !/^[A-Z]\d+$/.test(card.key)) {
+    fail(`DAYS[${index}] ("${card.n}") has key ${JSON.stringify(card.key)}, expected a key like "D3" or "W2"`);
+  } else if (DAY_KEYS.includes(card.key)) {
+    fail(`two schedule cards share the key "${card.key}"`);
+  } else {
+    DAY_KEYS.push(card.key);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -198,15 +219,10 @@ for (const [id, { row }] of byId) {
   prShapedByDay.get(row[4])?.push(id);
 }
 
-if (DAYS.length !== DAY_KEYS.length) {
-  fail(`DAYS has ${DAYS.length} cards, expected ${DAY_KEYS.length}`);
-}
-
-for (const [index, card] of DAYS.entries()) {
-  const key = DAY_KEYS[index];
-  if (!key) break;
-  const expectedName = `Day ${index + 1}`;
-  if (card.n !== expectedName) fail(`DAYS[${index}] is named "${card.n}", expected "${expectedName}"`);
+for (const card of DAYS) {
+  const key = card.key;
+  if (!DAY_KEYS.includes(key)) continue;
+  const name = card.n;
 
   const listed = [];
   for (const item of card.items) {
@@ -217,11 +233,11 @@ for (const [index, card] of DAYS.entries()) {
     const id = match[1];
     listed.push(id);
     if (!byId.has(id)) {
-      fail(`${expectedName} lists "${id}", which is not a row on the board`);
+      fail(`${name} lists "${id}", which is not a row on the board`);
       continue;
     }
     if (byId.get(id).row[4] !== key) {
-      fail(`${expectedName} lists ${id}, but its Day column says "${byId.get(id).row[4] || "deferred"}"`);
+      fail(`${name} lists ${id}, but its Day column says "${byId.get(id).row[4] || "deferred"}"`);
     }
 
     // Day-card items name the PR in prose — "E3-S4 /verify page · PR 98 merged" — beside a row that
@@ -230,19 +246,19 @@ for (const [index, card] of DAYS.entries()) {
     if (!claimed) continue;
     const rowPr = byId.get(id).row[10];
     if (rowPr === undefined) {
-      fail(`${expectedName} says ${id} merged as PR ${claimed[1]}, but its row carries no PR number`);
+      fail(`${name} says ${id} merged as PR ${claimed[1]}, but its row carries no PR number`);
     } else if (Number(claimed[1]) !== rowPr) {
-      fail(`${expectedName} says ${id} is PR ${claimed[1]} but its row says PR ${rowPr}`);
+      fail(`${name} says ${id} is PR ${claimed[1]} but its row says PR ${rowPr}`);
     }
   }
 
   const rows = prShapedByDay.get(key) ?? [];
   if (card.count !== rows.length) {
-    fail(`${expectedName} claims ${card.count} PRs but ${rows.length} rows carry day ${key}: ${rows.join(", ")}`);
+    fail(`${name} claims ${card.count} PRs but ${rows.length} rows carry day ${key}: ${rows.join(", ")}`);
   }
   if (listed.length !== rows.length) {
     const missing = rows.filter((id) => !listed.includes(id));
-    fail(`${expectedName} lists ${listed.length} stories but ${rows.length} rows carry day ${key}${missing.length ? ` — missing ${missing.join(", ")}` : ""}`);
+    fail(`${name} lists ${listed.length} stories but ${rows.length} rows carry day ${key}${missing.length ? ` — missing ${missing.join(", ")}` : ""}`);
   }
 
   // The failure that started this script: a day marked done above rows that are not.
@@ -252,13 +268,13 @@ for (const [index, card] of DAYS.entries()) {
     .map(([id]) => id);
   if (card.done && (unfinished.length || parts.length)) {
     fail(
-      `${expectedName} is marked done, but ${[...unfinished, ...parts].join(", ")} ${
+      `${name} is marked done, but ${[...unfinished, ...parts].join(", ")} ${
         unfinished.length + parts.length === 1 ? "is" : "are"
       } not`,
     );
   }
   if (!card.done && !unfinished.length && !parts.length) {
-    fail(`${expectedName} has no unfinished rows, so it should be marked done`);
+    fail(`${name} has no unfinished rows, so it should be marked done`);
   }
 }
 
@@ -290,21 +306,33 @@ if (!header) {
     fail(`the header carries no "Updated YYYY-MM-DD" — an undated board reads as current forever`);
   }
 
-  // How much of the week is closed, asserted in prose directly above the day cards that decide it.
+  // Where the schedule has got to, asserted in prose directly above the cards that decide it. The
+  // header names one card as open and it must be the first one not marked done; naming a later card
+  // reads as progress the cards do not support, and naming an earlier one as complete is worse.
   let complete = 0;
   while (complete < DAYS.length && DAYS[complete].done) complete += 1;
-  const claim = headerText.match(/days 1 to (\d+) complete, day (\d+) open/);
-  if (claim) {
-    if (Number(claim[1]) !== complete) {
-      fail(`the header says days 1 to ${claim[1]} are complete, but ${complete} day cards from day 1 are marked done`);
+  const openCard = DAYS[complete];
+  const namedOpen = DAYS.filter((card) => new RegExp(`\\b${card.n} open\\b`, "i").test(headerText));
+
+  if (openCard) {
+    if (!namedOpen.length) {
+      fail(`the header names nothing as open — write "${openCard.n} open", the first card not marked done`);
+    } else if (namedOpen.length > 1 || namedOpen[0] !== openCard) {
+      fail(
+        `the header calls ${namedOpen.map((card) => card.n).join(" and ")} open, but the first card not marked done is ${openCard.n}`,
+      );
     }
-    if (Number(claim[2]) !== complete + 1) {
-      fail(`the header says day ${claim[2]} is open, but the first day card not marked done is day ${complete + 1}`);
-    }
-  } else if (complete !== DAYS.length || !/every day complete/.test(headerText)) {
-    fail(
-      `the header makes no day claim this check can verify — write "days 1 to N complete, day M open", or "every day complete" once the week closes`,
-    );
+  } else if (namedOpen.length) {
+    fail(`the header calls ${namedOpen[0].n} open, but every card is marked done`);
+  } else if (!/every (day|card|wave) complete/.test(headerText)) {
+    fail(`the header makes no claim this check can verify — write "every card complete" once the schedule closes`);
+  }
+
+  const wrongly = DAYS.filter(
+    (card) => !card.done && new RegExp(`\\b${card.n} (complete|closed|done)\\b`, "i").test(headerText),
+  );
+  if (wrongly.length) {
+    fail(`the header calls ${wrongly.map((card) => card.n).join(", ")} finished, but the card is not marked done`);
   }
 }
 
@@ -357,13 +385,12 @@ const remainingPrs = prShaped.length - mergedPrs;
 checkTile("PRs merged", mergedPrs, "the number of PR-shaped rows marked done");
 checkTile("Remaining", remainingPrs, "the number of PR-shaped rows carrying a day and not done");
 
-// A tile named for a day — the one that moves every time a day closes.
+// A tile named for a schedule card — the one that moves every time that card closes.
 for (const [label, { value, foot }] of tiles) {
-  const named = label.match(/^Day (\d+)$/);
-  if (!named) continue;
-  const card = DAYS[Number(named[1]) - 1];
+  if (!/^(Day|Wave) \d+$/.test(label)) continue;
+  const card = DAYS.find((entry) => entry.n === label);
   if (!card) {
-    fail(`the "${label}" tile names a day with no card`);
+    fail(`the "${label}" tile names a schedule card that does not exist`);
     continue;
   }
   const expected = card.done ? "Done" : "Open";
@@ -435,10 +462,16 @@ const narrated = source.match(/(\d+) have merged/);
 if (narrated && Number(narrated[1]) !== mergedPrs) {
   fail(`the "Up next" prose says ${narrated[1]} have merged, but ${mergedPrs} PR-shaped rows are marked done`);
 }
-const holds = source.match(/Day (\d+) holds all (\d+) remaining/);
-if (holds && Number(holds[2]) !== remainingPrs) {
+const holds = source.match(/(Day|Wave) (\d+) holds all (\d+) remaining/);
+if (holds && Number(holds[3]) !== remainingPrs) {
   fail(
-    `the "Up next" prose says day ${holds[1]} holds ${holds[2]} remaining, but ${remainingPrs} PR-shaped rows carry a day and are not done`,
+    `the "Up next" prose says ${holds[1]} ${holds[2]} holds ${holds[3]} remaining, but ${remainingPrs} PR-shaped rows carry a schedule key and are not done`,
+  );
+}
+const scheduled = source.match(/(\d+) startable stories are on the schedule/);
+if (scheduled && Number(scheduled[1]) !== remainingPrs) {
+  fail(
+    `the "Up next" prose says ${scheduled[1]} startable stories are on the schedule, but ${remainingPrs} PR-shaped rows carry a schedule key and are not done`,
   );
 }
 
@@ -477,8 +510,8 @@ const done = [...byId].filter(([, { row }]) => row[8] === "done").length;
 const open = [...byId].filter(([, { row }]) => row[4] !== "" && row[8] !== "done").length;
 
 console.log(
-  `docs/mvp-board.html: ${STORIES.length} rows, ${done} done, ${open} open in-week, ` +
-    `${prOwners.size} PRs, days ${DAYS.map((d) => d.count).join("/")}`,
+  `docs/mvp-board.html: ${STORIES.length} rows, ${done} done, ${open} open on the schedule, ` +
+    `${prOwners.size} PRs, ${DAYS.map((d) => d.key + " " + d.count).join(" / ")}`,
 );
 for (const note of notes) console.log(`  · ${note}`);
 
