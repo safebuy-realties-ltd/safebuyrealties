@@ -37,6 +37,13 @@ export default defineConfig({
       // 37 tests over 185 files. Set just under each measured number, as backend does: room for
       // 1152 more uncovered statements, 290 branches, 497 functions, 1034 lines before one trips.
       // Low, but not nothing — deleting the tests that cover ~50 statements already fails this.
+      //
+      // Unchanged at the first turn of the ratchet, while backend went 40 to 69. `npm run
+      // coverage:ratchet` says "stays" on all four here, and it is right: no frontend test was
+      // written in the handover week or the three waves after it, so the frontend has earned
+      // nothing and a floor it has not earned is decoration. The real answer is not a higher number
+      // in this file, it is the diff bar in scripts/diff-coverage.mjs, which holds the next changed
+      // .tsx to 80% whatever this says. That is where the frontend gap stops growing.
       thresholds: {
         statements: 4,
         branches: 3,

@@ -190,7 +190,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E6-S3 | Comms | Transactional email templates for the core journeys | `email_notifications` | M | 📋 | E6-S2 |
 | E7-S1 | Ops | Structured logging, correlation id, error tracking | — | M | 📋 | none |
 | E7-S2 | Ops | Coverage thresholds and a CI coverage gate | — | S | ✅ #114, floor only | none |
-| E7-S2b | Ops | Diff coverage: new and changed files meet the strict bar | — | M | 📋 | E7-S2 |
+| E7-S2b | Ops | Diff coverage: new and changed files meet the strict bar | — | M | ✅ #127 | E7-S2 |
 | E7-S3 🔴 | Ops | End-to-end journeys in CI against an ephemeral database | — | L | 📋 | E7-S2 |
 | E7-S4 | Ops | Deterministic demo seed and reset | — | M | 📋 | E3-S2 |
 | E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | ✅ #117 | none |
@@ -886,7 +886,7 @@ next time.
 **Acceptance criteria**
 
 1. ✅ Both suites run with coverage in CI and publish a report artifact.
-2. 🔨 **Half done, and the open half is now E7-S2b.** The repository floor is in: thresholds sit just under the measured numbers in both suites, so coverage cannot fall without failing CI. The strict bar on new and changed files is diff coverage, and neither Jest nor Vitest can express a threshold scoped to changed files. Doing it needs lcov compared against `git diff`, which is a script and a CI step, or a third-party action, which is a dependency decision. Both are beyond an S, so the half that stops decay shipped and the half that stops accrual is carried as its own row rather than ticked.
+2. ✅ **Closed by E7-S2b, PR #127.** The repository floor is in: thresholds sit just under the measured numbers in both suites, so coverage cannot fall without failing CI. The strict bar on new and changed files is diff coverage, and neither Jest nor Vitest can express a threshold scoped to changed files. Doing it needs lcov compared against `git diff`, which is a script and a CI step, or a third-party action, which is a dependency decision. Both were beyond an S, so the half that stops decay shipped here and the half that stops accrual was carried as its own row rather than ticked. That row is E7-S2b, and it went the script route: `scripts/diff-coverage.mjs`, no new dependency.
 3. ✅ The gate is a required status check on `main`, wired to the existing `ci-gate` job.
 4. ✅ **Measured, and the measurement was the finding.** The backend was already measuring all 155 of its files: **41.7%** of statements. The frontend was measuring nothing, and Vitest's default would have reported **48.06%** — computed over the 20 files the tests happen to import, out of 185. Measured the way the backend measures, the whole tree, it is **4.91%**. The floor a ratchet starts from has to be the number over everything, or the ratchet holds a fifth of the repository and reports on the whole of it.
 
@@ -894,7 +894,7 @@ next time.
 
 #### E7-S2b, diff coverage on new and changed files
 
-**Size** M · **Status** 📋 planned, unscheduled · **Deps** E7-S2
+**Size** M · **Status** ✅ merged, PR #127, on five criteria of five · **Deps** E7-S2
 
 **Why it exists.** It is criterion 2 of E7-S2 above, split out rather than dropped. E7-S2 put a floor under the repository, which stops coverage falling. This is the strict bar on new and changed code, which is what stops the gap accruing — and at a frontend floor of 4.91% the gap is where nearly all of the risk sits. A floor alone means a new file with no tests passes as long as it does not drag the average below where it already is.
 
@@ -902,11 +902,11 @@ next time.
 
 **Acceptance criteria**
 
-1. New and changed files in a pull request are measured separately from the repository floor, and the strict bar applies only to them.
-2. The bar is a required status check, failing the pull request rather than warning in a log nobody opens.
-3. A file that is touched but not newly covered fails with output naming the uncovered lines, so the author knows what to write rather than what to disable.
-4. If the implementation adds a dependency or a third-party action, that choice is stated in the pull request with the alternative that was rejected — the repository has a standing rule against unnamed dependencies.
-5. The frontend floor from E7-S2 is raised to whatever the ratchet has earned once this has run for a while, and the mechanism for raising it is written down.
+1. ✅ `scripts/diff-coverage.mjs` intersects `git diff --unified=0 <base>...HEAD` with the `DA:` records of the lcov each runner already writes, so only the lines the branch changed are scored. The repository floor is untouched and still lives in the two configs. Which files count is not configured a third time: a file is measured if and only if it appears in the lcov, so the answer is whatever the runner instrumented, and it cannot drift from `include` or `collectCoverageFrom`.
+2. ✅ It runs inside `frontend-test` and `backend-check`, both of which already feed `ci-gate`, the single required check on `main`. Failing there fails the pull request. It runs in those jobs rather than a job of its own because the lcov it reads is thirty seconds old at that point, so no artifact plumbing is needed.
+3. ✅ Output is per file, with the uncovered line numbers compressed into ranges, then the verdict. Two rules: the 80% bar applies to the diff as a whole, because a percentage over three changed lines is noise, and separately a file with ten or more changed lines that no test reaches fails on its own however well the rest of the diff scores. That second rule is the case this story exists for.
+4. ✅ **No dependency and no third-party action.** The rejected alternative was a coverage action such as the several that post diff coverage as a check: less code to own, but a new supply-chain dependency in the required path of every pull request, and this repository has a standing rule against dependencies a story does not name. The script is 200 lines of Node against two formats that are already produced. Stated in PR #127 as the criterion asks.
+5. 🔨 **Done in substance, and the honest answer is not the one the criterion assumed.** The mechanism is `npm run coverage:ratchet`: it reads both configs and both summaries and prints what each floor has earned, the measured percentage floored to a whole percent less two points, never below what is already there. Written down in `docs/LOCAL_DEVELOPMENT.md` and beside the numbers in `backend/jest.config.js`. The first turn raised **backend from 40/40/40/41 to 69/49/51/70**, on 41.70% to 71.05% statements. The **frontend floors do not move**, because no frontend test has been written since they were set, so the ratchet has earned nothing there and a floor that has not been earned is decoration. The frontend gap is held by the diff bar instead, which holds the next changed `.tsx` to 80% whatever the floor says.
 
 ---
 
@@ -1089,7 +1089,7 @@ Every story above is done when all of the following hold. This is voxdiary's `ru
 2. Behind its declared feature flag where one is given, with the flag defaulting off and a documented kill switch.
 3. No unhandled 5xx. Every failure maps to the correct 4xx or a deliberate 502 with a correlation id.
 4. Structured logs on every new endpoint or job, carrying the correlation id, never PII, secrets, documents, or account numbers.
-5. Tests cover the happy path and every rejected path. New and changed files meet the coverage ratchet, which is E7-S2b — until that lands the bar is unenforced and the repository floor from E7-S2 is all CI checks, so this one is on the author.
+5. Tests cover the happy path and every rejected path. New and changed files clear the diff bar, which is 80% of the lines the branch changed, enforced by `scripts/diff-coverage.mjs` inside `frontend-test` and `backend-check`. It is no longer on the author's honour: CI fails and names the uncovered lines. If a diff genuinely cannot be covered, say so with `diff-coverage-exception: <reason>` in the description.
 6. Input validated on client and server against the same rules. Validation failures return 4xx with a machine-readable code.
 7. Authorization is server side and fail closed. Hiding a control in the UI is never the control.
 8. Docs updated in the same pull request: `docs/BUILD_CHECKLIST.md`, `README.md` where behaviour changed, and an ADR when a real decision was made.
