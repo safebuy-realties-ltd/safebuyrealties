@@ -147,8 +147,8 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>065e8c8</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 4 complete, day 5 open, main at 065e8c8</p>
+    <p class="sub">Verified against <code>main</code> @ <code>21e981a</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 4 complete, day 5 open, main at 21e981a</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
@@ -156,10 +156,10 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">20</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">21</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
     <div class="tile"><div class="label">Day 4</div><div class="value">Done</div><div class="foot">5 of 5 in, closed on the coverage floor</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">5</div><div class="foot">all of it in day 5, over the ceiling</div></div>
-    <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">4</div><div class="foot">all of it in day 5, over the ceiling</div></div>
+    <div class="tile"><div class="label">Full backlog</div><div class="value">67&ndash;97</div><div class="foot">developer-days remaining, was 72&ndash;100</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">3 wait on external input</div></div>
   </div>
@@ -171,11 +171,13 @@
 
   <div class="flagbox">
     <p><b>Day 3 closed in day 4.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and at the end of all seven the day's actual deliverable was still open: E3-S1 says <i>retire the public static route</i>, and the route was still mounted. It came out in E3-S1d-3 (#112), two days and two sub-stories later. Seven merged PRs was not the same fact as a closed day, and this board said "done" until someone checked.</p>
-    <p><b>Two of those seven did less than their titles claimed. Both gaps are now closed or reduced.</b> #105 widened <code>backend/.gitignore</code> only, so a root <code>.env</code> or <code>.env.production</code> stayed committable &mdash; and the root is exactly where env files are expected, since <code>.env.example</code> there tells you to make one and Vite reads the whole family. The one root name that was safe, <code>.env.local</code>, was safe by accident: it matched <code>*.local</code>, a Vite convention line rather than an env rule. <b>CH-3</b> (#113) put the family pattern in the root file, where it covers every directory instead of one. #107's reconcile was sound, but it predated #108 and its suggested two-way split for E3-S1d has since been shown wrong &mdash; the backlog caught up in #112, so <b>DOCS-6</b> is now that one stale paragraph plus a sweep. Neither was a regression; both were the gap between what shipped and what the row said, which is the thing this board exists to make visible.</p>
+    <p><b>Two of those seven did less than their titles claimed. Both gaps are now closed or reduced.</b> #105 widened <code>backend/.gitignore</code> only, so a root <code>.env</code> or <code>.env.production</code> stayed committable &mdash; and the root is exactly where env files are expected, since <code>.env.example</code> there tells you to make one and Vite reads the whole family. The one root name that was safe, <code>.env.local</code>, was safe by accident: it matched <code>*.local</code>, a Vite convention line rather than an env rule. <b>CH-3</b> (#113) put the family pattern in the root file, where it covers every directory instead of one. #107's reconcile was sound, but it predated #108 and its suggested two-way split for E3-S1d has since been shown wrong &mdash; the backlog caught up in #112, and <b>DOCS-6</b> (#116) has now closed that paragraph along with the rest of the sweep. Neither was a regression; both were the gap between what shipped and what the row said, which is the thing this board exists to make visible.</p>
     <p><b>E3-S1 closed by deleting a route, not by adding one.</b> What was left was not what the row said: the mount was held open by <i>public</i> listing imagery, the last thing on the frontend still building an <code>/uploads/</code> URL. The obvious answer was a second, public delivery route beside the authorized one. E3-S1d-3 did the opposite &mdash; <code>/api/v1/documents/file</code> took optional authentication, so one route now decides per <code>Document</code> row and serves <code>listing_hero</code> and <code>listing_gallery</code> to a visitor with no session while refusing the title deed one row away. That absorbed the E3-S1b gate rather than leaving two gates on one prefix, which is how the next leak would have got in.</p>
     <p><b>The coverage floor was measured, and the measurement was the finding.</b> <b>E7-S2</b> (#114) set thresholds just under today's numbers in both suites and made CI publish the reports. The backend was already measuring all 155 of its files: 41.7% of statements. The frontend was not measuring anything, and its default would have reported 48.06% &mdash; a number computed over the 20 files the tests happen to import, out of 185. Measured the way the backend measures, it is <b>4.91%</b>. Both numbers are now written beside the thresholds that enforce them. The other half of the criterion, a strict bar on new and changed files, is diff coverage: no runner here can express it, so it is <b>E7-S2b</b> rather than a tick.</p>
     <p><b>The board rule was updating three fields on a page that states everything six times.</b> <b>CH-5</b> (#115) is the answer to that. Rule 8 asked for the row's status, PR number and Day column, and a story's status also lives in the day card, the counter tiles, the header, the review queue and the prose above them &mdash; so an author who followed the rule exactly left five true-looking statements behind. Two were sitting on this page when the check went in: the go-live tile said 2 gates wait on external input where the list marks 3, and the review queue still led with #114, which had merged. Neither would ever have been caught by a rule that stops at the row. <code>validate:board</code> now checks every restated number against the rows, so the table in rule 8 is enforced rather than advised.</p>
-    <p><b>Day 5 holds all 5 remaining PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 20 have merged. Days 1 to 4 are closed and every security row is in; what is left is a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
+    <p><b>The backlog had gone stale in the direction that flatters nobody, and <b>DOCS-6</b> (#116) is the reconcile.</b> Seven rows still said <i>planned</i> about work that had merged, which is the harmless half. The harmful half was in the executive summary: it named three blockers, and by day 4 one of them was telling the reader that <i>private documents are publicly readable</i> &mdash; untrue since #112 deleted the mount. A document that overstates a closed risk is not a cautious document; it is one the next team stops believing on the first thing they check. Effort was re-derived rather than re-guessed: each merged story subtracted at its published size, so the new <b>Remaining</b> column sits beside the original estimate and means the same kind of thing. <b>72&ndash;100 becomes 67&ndash;97</b>, and the tile and the bars below now read from it.</p>
+    <p><b>A week of merging bought five days off the floor and three off the ceiling, and Ops got longer.</b> Six milestone stories landed and five of them were S; the one M turned into six sub-stories. Meanwhile E7 went from 10&ndash;14 to 10&ndash;16, because measuring the coverage floor found the half of its own criterion a floor cannot express and that is now <b>E7-S2b</b>. Both of those are the shape of an audit week rather than a mis-estimate. The check gained a tooth to match: <code>validate:board</code> now requires the Full backlog tile's ceiling to equal the sum of the effort bars, which is CH-shaped work inside a DOCS story and is flagged as such in the PR &mdash; it earned its place by catching the drift already there, bars summing to 103 under a tile claiming 100.</p>
+    <p><b>Day 5 holds all 4 remaining PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 21 have merged. Days 1 to 4 are closed and every security row is in; what is left is a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
     <p><b>Carry these two rules into day 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now brings the whole of this page up to date in the same diff &mdash; the row, its day card, the tiles, the header, the queue and any count the prose quotes &mdash; with <code>npm run validate:board</code> locally and enforced in CI, because every time this board went stale it was found by a person rather than by a check.</p>
   </div>
 
@@ -266,8 +268,12 @@
 </section>
 
 <section>
-  <h2>Full backlog effort by epic <span class="note">upper-bound estimate, developer-days, beyond this week</span></h2>
-  <div class="card"><div class="bars" id="bars"></div></div>
+  <h2>Full backlog effort by epic <span class="note">upper bound, developer-days, beyond this week &middot; sums to the ceiling on the tile above</span></h2>
+  <div class="card">
+    <div class="bars" id="bars"></div>
+    <p class="meta" style="margin-top:12px">Re-derived in <b>DOCS-6</b> against the week's merges. These are the pre-week estimates with each merged story subtracted <i>at its own published size</i> &mdash; S about a day, M two to four, L about a week &mdash; rather than re-estimated from scratch, so the bars stay comparable with the figures the backlog struck before the week started. Six milestone stories landed: E2-S4, E3-S1, E3-S4, E5-S2, E7-S2 and E7-S6, taking the total from 72&ndash;100 down to 67&ndash;97. <b>Chores</b> falls furthest, from 7 to 4, because everything in that bar except <b>CH-1</b> is this week's own work and it is landing now; what is left is the feature-flag service.</p>
+    <p class="meta"><b>Ops went up, from 14 to 16, and that is the honest number.</b> Two of its stories merged and the bar still grew, because measuring the coverage floor in E7-S2 found the half of its own criterion no runner here can express &mdash; diff coverage on new and changed files &mdash; and that is now <b>E7-S2b</b>, an M nobody had counted. A week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.</p>
+  </div>
 </section>
 
 <section>
@@ -319,15 +325,17 @@
 </div>
 
 <script>
+// days = the milestone's upper bound in MVP_OUTSTANDING_BACKLOG.md section 1.3, Remaining column.
+// Merged stories are subtracted at their own published size, not re-estimated. Sum = the Full backlog tile's ceiling.
 const EPICS = [
-  { key:"Chore", name:"Chores and handover", days:7 },
+  { key:"Chore", name:"Chores and handover", days:4 },
   { key:"Loop", name:"E1 Close the loop", days:14 },
-  { key:"Money", name:"E2 Money integrity", days:15 },
-  { key:"Trust", name:"E3 Document trust", days:10 },
+  { key:"Money", name:"E2 Money integrity", days:14 },
+  { key:"Trust", name:"E3 Document trust", days:7 },
   { key:"Access", name:"E4 Access correctness", days:9 },
-  { key:"Security", name:"E5 Account security", days:15 },
+  { key:"Security", name:"E5 Account security", days:14 },
   { key:"Comms", name:"E6 Communications", days:7 },
-  { key:"Ops", name:"E7 Operability", days:14 },
+  { key:"Ops", name:"E7 Operability", days:16 },
   { key:"Compliance", name:"E8 Compliance and go-live", days:12 }
 ];
 
@@ -358,26 +366,26 @@ const DAYS = [
     "<b>E7-S2</b> coverage floor measured and recorded &middot; PR 114 merged" ]},
   { n:"Day 5", theme:"Package and freeze, oversubscribed", count:6, done:false, items:[
     "<b>CH-5</b> the board rule covers the page, not the row &middot; PR 115 merged",
+    "<b>DOCS-6</b> backlog reconciled against the week: statuses, the E3-S1d split, effort remaining &middot; PR 116 merged",
     "<b>E7-S5</b> runbook, environment matrix, secrets",
-    "<b>DOCS-6</b> re-reconcile E3-S1d in the backlog",
     "<b>DOCS-4</b> re-audit against HEAD, tag handover commit",
     "<b>E7-S3</b> ephemeral-database spike, timeboxed",
     "<b>E7-S4</b> demo seed that resolves",
-    "&mdash; five still open is more than a reviewer can take on a packaging day. E7-S4 is first to cut, E7-S3 second" ]}
+    "&mdash; four still open is more than a reviewer can take on a packaging day. E7-S4 is first to cut, E7-S3 second" ]}
 ];
 
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:115, t:"CH-5, the board rule covers the page rather than the row",
-    why:"Rule 8 named three fields to update on a page that states the same fact six times, so following it exactly still left five stale statements behind. This is that rule rewritten and, more to the point, checked.",
-    look:"Whether the two defects it found are the right evidence that the old rule was too narrow: the go-live tile claimed 2 gates wait on external input where the list marks 3, and the queue you are reading led with #114 after it merged. Both sat on a board that passed `validate:board`. Then the judgement call in `scripts/check-board.mjs`: structural claims — the tiles, the header, the queue, the PR numbers day cards name in prose — are required, but the two counts quoted in the Up next narrative are verified only where the sentence is still there. A check that fired on rewording would be routed around inside a week, and rule 8 says so itself. Everything is checked outwards from one source: rows fix the day cards, day cards fix the tiles." },
+  { pr:116, t:"DOCS-6, the backlog reconciled against a week of merging",
+    why:"The backlog is the document the next team plans from, and after nineteen merges it still described the repository of six days ago. Seven rows said planned about work that had shipped, and two of the three named blockers in the executive summary were wrong in the direction that matters — one told the reader private documents are publicly readable, which stopped being true on day 4 when #112 deleted the mount.",
+    look:"First, whether the effort figures are derived or invented. Section 1.3 now carries a Remaining column beside the original Estimate, and the method is stated in the table's own preamble: merged stories subtracted at their published sizes, never re-estimated, so the two columns are comparable. 72–100 becomes 67–97, and the same numbers drive the Full backlog tile and the effort bars on this page. Second, that M7 Operability got *longer*, 10–14 up to 10–16, because E7-S2 found E7-S2b inside itself; if that reads as a mistake rather than a finding, say so. Third, the E3-S1d record: #107 proposed a two-way split, it shipped as three, and the paragraph now says which half of the proposal was wrong and why POA and listing documents only look alike from outside. Fourth, a judgement call — `scripts/check-board.mjs` now reads the EPICS literal and requires the Full backlog tile's ceiling to equal the sum of the bars. That is CH-shaped work inside a DOCS story, and it caught a real drift: the old bars summed to 103 against a tile claiming 100. The gap evidence quoted throughout the backlog is deliberately left at its original `fc05e1e` — a finding rewritten after its own fix stops being checkable." },
   { pr:null, t:"Day 4 is closed — the week is now only day 5",
-    why:"Twenty PRs against fourteen planned, and every security row is in. What is left is packaging, and it is the part the next team actually opens.",
+    why:"Twenty-one PRs against fourteen planned, and every security row is in. What is left is packaging, and it is the part the next team actually opens.",
     look:"Whether day 5 gets cut before it starts rather than during it. That decision is listed below and has been listed since day 3." },
   { pr:null, t:"Day 5 is oversubscribed — decide what gets cut before it starts",
-    why:"Five PRs against a packaging day. E7-S5 and DOCS-4 are the handover itself and cannot move. E7-S4 lists E3-S2, durable object storage, as a dependency and E3-S2 is not scheduled this week.",
-    look:"Whether E7-S4's dependency is real. A seed that resolves against the local uploads directory is an M with no dependency; a seed that must resolve on Vercel needs E3-S2 first and therefore cannot land this week. That is a decision, not a discovery — make it on day 4." }
+    why:"Four PRs against a packaging day. E7-S5 and DOCS-4 are the handover itself and cannot move. E7-S4 lists E3-S2, durable object storage, as a dependency and E3-S2 is not scheduled this week.",
+    look:"Whether E7-S4's dependency is real. A seed that resolves against the local uploads directory is an M with no dependency; a seed that must resolve on Vercel needs E3-S2 first and therefore cannot land this week. That is a decision, not a discovery — it is now overdue." }
 ];
 
 // [id, epic, title, what, day, flag, size, deps, status, criticalPath, pr]
@@ -387,7 +395,7 @@ const STORIES = [
   ["DOCS-3","Chore","ADRs 0001 to 0005 for the open decisions","The next team inherits the questions rather than discovering them.","D1","—","S","none","done",false],
   ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit.","D5","—","S","week's PRs","planned",false],
   ["DOCS-5","Chore","Reconcile E3-S1 with what shipped","The row described one M story; three sub-stories had already landed under it against criteria nobody had re-read.","D3","—","S","none","done",false,107],
-  ["DOCS-6","Chore","Re-reconcile E3-S1d: record #108, correct the split","The backlog still calls E3-S1d planned after #108 merged, and its suggested split puts POA, listing documents and the mount removal in one sub-story, which does not hold.","D5","—","S","E3-S1d-2","planned",false],
+  ["DOCS-6","Chore","Reconcile the backlog against the week: statuses, the E3-S1d split, effort remaining","Seven rows said planned about merged work, and two of the three blockers in the executive summary had been closed or narrowed — one still told the reader private documents are publicly readable. #107's proposed two-way split for E3-S1d shipped as three. Section 1.3 gains a Remaining column: merged stories subtracted at their published sizes, 72–100 down to 67–97, which is what the tile and the effort bars on this page now read.","D5","—","S","E3-S1d-3, E7-S2","done",false,116],
   ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
   ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
   ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore had no env pattern at all, so a root .env or .env.production was committable — and root .env.example tells you to make a root env file. Only .env.local was safe, and only because *.local happened to match it. The family pattern now sits in the root file, which covers every directory.","D4","—","S","none","done",false,113],
