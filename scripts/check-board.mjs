@@ -80,8 +80,9 @@ const STORIES = readLiteral("STORIES", "]");
 const DAYS = readLiteral("DAYS", "]");
 const STATUS = readLiteral("STATUS", "}");
 const QUEUE = readLiteral("QUEUE", "]");
+const EPICS = readLiteral("EPICS", "]");
 
-if (!STORIES || !DAYS || !STATUS || !QUEUE) {
+if (!STORIES || !DAYS || !STATUS || !QUEUE || !EPICS) {
   console.error(failures.map((f) => `  ✖ ${f}`).join("\n"));
   process.exit(1);
 }
@@ -400,6 +401,27 @@ if (gateTile) {
     fail(
       `the "Go-live gates" tile footnote says ${blocked[1]} wait on external input, but ${externalGates.length} gates are marked external: ${externalGates.join(", ")}`,
     );
+  }
+}
+
+// Same shape as the two above: a tile summarising a list that lives further down the page. The
+// effort bars are the data, the "Full backlog" tile is the restatement, so the tile's ceiling has to
+// be their sum. Only the ceiling is derivable here — the floor is a judgement recorded in the
+// backlog's section 1.3, which this page does not carry per epic, so it is checked for being a
+// smaller number and nothing more.
+const backlogDays = EPICS.reduce((total, epic) => total + epic.days, 0);
+const backlogTile = tiles.get("Full backlog");
+if (!backlogTile) {
+  fail(`there is no "Full backlog" tile — the effort bars below it summarise nothing`);
+} else {
+  const span = backlogTile.value.match(/^(\d+)–(\d+)$/);
+  const bars = EPICS.map((epic) => `${epic.key} ${epic.days}`).join(", ");
+  if (!span) {
+    fail(`the "Full backlog" tile reads "${backlogTile.value}", expected a range of days like "67–97"`);
+  } else if (Number(span[2]) !== backlogDays) {
+    fail(`the "Full backlog" tile's ceiling is ${span[2]} days but the effort bars sum to ${backlogDays}: ${bars}`);
+  } else if (Number(span[1]) >= backlogDays) {
+    fail(`the "Full backlog" tile reads ${span[1]}–${span[2]}, but a range's floor is below its ceiling`);
   }
 }
 

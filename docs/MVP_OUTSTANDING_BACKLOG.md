@@ -2,6 +2,8 @@
 
 **Prepared:** 2026-07-29 · **Codebase reviewed:** `main` @ `fc05e1e` (2026-07-24) · **Paradigm applied:** derived from `/Users/saito/projects/voxdiary`
 
+**Reconciled:** 2026-07-31 against `main` @ `21e981a`, covering the handover week's pull requests #97 to #115. Statuses, the E3-S1 split record, and the effort remaining in section 1.3 are as of that commit. The gap evidence quoted throughout is deliberately left at `fc05e1e`: it is the record of what was found, and a finding rewritten after its own fix stops being checkable.
+
 Two audiences, one document. Section 1 to 3 are for stakeholders (what is done, what is left, what it costs, what the risk is). Section 4 onward is the developer backlog: one story, one PR, testable acceptance criteria, cited evidence for every claimed gap.
 
 Every "not built" claim below was verified by reading the code, not by reading `docs/BUILD_CHECKLIST.md`. File and line references are given so any claim can be checked in under a minute.
@@ -79,24 +81,32 @@ That is a real product. The remaining work is narrower than the checklist histor
 
 **Two. The money cannot safely move.** Payouts resolve the destination bank account from two environment variables that default to Paystack's test account, so every seller payout would go to the same account regardless of who sold the property. Refunds change a database status and never call the gateway, so a refunded buyer is not actually repaid. The payment webhook has no replay protection, so a duplicated gateway callback re-fires notifications and escrow holds. If the Paystack key is absent in production, payouts are silently recorded as completed.
 
+> **Partly closed, 2026-07-30.** The last sentence no longer holds: E2-S4 (#99) makes the application refuse to start in production without a live key, so mock mode cannot be reached there by omission. The first three sentences stand, and they are E2-S1, E2-S3 and E2-S2. This blocker is narrower than it was and is not closed.
+
 **Three. Private documents are publicly readable.** Uploaded files are served by an unauthenticated static route. Anyone who learns or guesses a storage key can fetch a title deed, a government ID, or a KYC selfie without logging in. On the current Vercel deployment those files also land in ephemeral serverless storage, so in production uploads disappear between requests. For a platform whose entire proposition is document trust, sold to clients who were previously defrauded, this is the finding that most needs to close before any real user is invited.
+
+> **The first half is closed, 2026-07-30.** There is no unauthenticated static route any more. E3-S1 ran to six sub-stories (#103, #104, #106, #108, #111, #112) and the last of them deleted the `/uploads` mount rather than guarding it, so every document family now resolves through `GET /api/v1/documents/file`, which authorizes per `Document` row. The probes in `uploads-exposure.spec.ts` fail if that is reverted. **The second half is open and unchanged:** uploads still land in ephemeral serverless storage on Vercel, which is E3-S2, and it is still on the critical path. A platform that authorizes documents correctly and then loses them is not a platform that keeps documents.
 
 ### 1.3 What it takes
 
-| Milestone | Outcome | Stories | Estimate |
-| --- | --- | --- | --- |
-| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days |
-| **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days |
-| **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days |
-| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days |
-| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days |
-| **M6 Communications** | Email actually leaves the building | E6 (3) | 5 to 7 days |
-| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days |
-| **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time |
+**Estimate** is the figure struck before the handover week. **Remaining** is that same figure with the merged stories subtracted at their own sizes from the section 0.2 key, S a day, M two to four, L about a week. The two columns are therefore comparable: nothing here is a re-estimate of work that has not been touched.
 
-Total: 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. One developer lands that in about 15 to 20 calendar weeks. Two developers working the split in section 6 land it in about 8 to 10 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story.
+| Milestone | Outcome | Stories | Estimate | Merged since | Remaining |
+| --- | --- | --- | --- | --- | --- |
+| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | none | 4 stories, 11 to 14 days |
+| **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4 | 4 stories, 11 to 14 days |
+| **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days | E3-S1, E3-S4 | 2 stories, 4 to 7 days |
+| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | none | 3 stories, 6 to 9 days |
+| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it | 4 stories, 10 to 14 days |
+| **M6 Communications** | Email actually leaves the building | E6 (3) | 5 to 7 days | none | 3 stories, 5 to 7 days |
+| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, and E7-S2b found | 5 stories, 10 to 16 days |
+| **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | none | 4 stories, 8 to 12 days plus external lead time |
 
-**Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus M3 plus E2-S2 and E2-S4 is enough, roughly 22 to 28 days. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Six milestone stories and DOCS-1 have merged, and E7-S2b was discovered inside E7-S2, so **29 milestone stories plus CH-1, 30 in all, roughly 67 to 97 developer-days remain.** One developer lands that in about 14 to 19 calendar weeks. Two developers working the split in section 6 land it in about 8 to 10 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story.
+
+**A week of merging bought five days off the floor and three off the ceiling, and M7 got longer.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the six milestone stories, five were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
+
+**Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 plus E2-S2 is enough, roughly 17 to 25 days, down from 22 to 28 because E2-S4 and the document authorization half of M3 have landed. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
 
 ### 1.4 Decisions needed before the work starts
 
@@ -126,26 +136,29 @@ Auth, users, listings, documents, verification, tasks, transactions, payments an
 
 | Document | Status | Note |
 | --- | --- | --- |
-| `docs/BUILD_CHECKLIST.md` | Optimistic | Every item is `[x]`, including "API, staff/client DD case lifecycle". That is true for standalone DD and false for listing-based DD |
-| `docs/analysis/03_CURRENT_STATE_AUDIT.md` | Stale, 2026-05-23 | Its three crashing screens were fixed in Step 1, its missing trust layer now exists |
-| `docs/TECH_AUDIT.md` | Stale, 2026-05-02 | Predates cookie auth, transactions, escrow, and object storage |
-| `docs/VALIDATION_REPORT.md` | Stale, 2026-05-25 | Snapshot of a production deploy two months old |
-| `docs/QA_FINDINGS.md` | Mostly closed | QA-015 (seeded documents have no files on disk) and QA-016 (Paystack not validated end to end locally) remain open |
+| `docs/BUILD_CHECKLIST.md` | ✅ Corrected, DOCS-1 | Every item read `[x]`, including "API, staff/client DD case lifecycle" — true for standalone DD, false for listing-based DD. The file now opens with an accuracy notice and an audit corrections table, and the overstated items carry `[!]` |
+| `docs/analysis/03_CURRENT_STATE_AUDIT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-23 | Its three crashing screens were fixed in Step 1, its missing trust layer now exists |
+| `docs/TECH_AUDIT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-02 | Predates cookie auth, transactions, escrow, and object storage |
+| `docs/VALIDATION_REPORT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-25 | Snapshot of a production deploy two months old |
+| `docs/QA_FINDINGS.md` | ✅ Bannered, DOCS-2 · mostly closed | QA-015 (seeded documents have no files on disk) and QA-016 (Paystack not validated end to end locally) remain open. QA-015 is E7-S4, which is the first story recommended for the cut |
 | `docs/analysis/05_STRATEGIC_RECOMMENDATIONS.md` | Still the right frame | Its Core MVP and Launch-Ready buckets map onto E1 to E4 and E5 to E8 below |
 
 **First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the voxdiary paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
+
+> **Done, 2026-07-29, and the reason it was first still holds.** DOCS-1 reconciled the checklist and DOCS-2 bannered six documents, all six pointing at `HANDOVER.md` for current state and here for current gaps. What the row above cannot say is what the reconcile cost: the checklist had been `[x]` on the listing DD lifecycle for long enough that two later documents inherited the claim. The banners are deliberately loud and deliberately non-destructive — nothing was deleted, because a stale document is evidence of what was believed and when, and the only thing wrong with it is a reader who cannot tell.
 
 ---
 
 ## 3. Board
 
-Status: `📋 planned` · `🔨 in progress` · `👀 in review` · `✅ merged` · `⛔ blocked`
+Status: `📋 planned` · `🔨 in progress` · `👀 in review` · `✅ merged` · `⛔ blocked` · `🚫 superseded`
 Size: S is about a day · M is two to four days · L is about a week
 🔴 CP marks the critical path to a launchable product.
+A merged row carries the pull request that closed it, so every ✅ is traceable to a diff. Sub-stories earn a row here only while they are outstanding: the ones that have merged are recorded in their parent's detail section in section 4, and the handover week's own chores live on `docs/mvp-board.html`, which tracks that week at PR grain.
 
 | ID | Epic | Story | Flag | Size | Status | Deps |
 | --- | --- | --- | --- | --- | --- | --- |
-| DOCS-1 | Chore | Reconcile the checklist and mark stale analysis docs | — | S | 📋 | none |
+| DOCS-1 | Chore | Reconcile the checklist and mark stale analysis docs | — | S | ✅ direct commit | none |
 | CH-1 | Chore | Feature-flag service with kill switch, server and client | — | M | 📋 | none |
 | E1-S1 🔴 | Loop | Listing DD case lifecycle: queue, assign, report, complete | `dd_case_lifecycle` | L | 📋 | D1 |
 | E1-S2 🔴 | Loop | Transaction state machine, DD_PURCHASED to DD_COMPLETE | `dd_case_lifecycle` | M | 📋 | E1-S1 |
@@ -154,17 +167,17 @@ Size: S is about a day · M is two to four days · L is about a week
 | E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | 📋 | E1-S4, D2 |
 | E2-S2 🔴 | Money | Webhook idempotency, replay and freshness guard | — | M | 📋 | none |
 | E2-S3 | Money | Gateway refunds, not ledger-only | `payouts` | M | 📋 | E2-S1 |
-| E2-S4 🔴 | Money | Production guard on payment mock mode | — | S | 📋 | none |
+| E2-S4 🔴 | Money | Production guard on payment mock mode | — | S | ✅ #99 | none |
 | E2-S5 | Money | Finance reconciliation view | — | M | 📋 | E2-S1, E4-S1 |
-| E3-S1 🔴 | Trust | Authorized document access, retire the public static route | `secure_docs` | M | 📋 | none |
+| E3-S1 🔴 | Trust | Authorized document access, retire the public static route | `secure_docs` | M | ✅ #103–112, six sub-stories | none |
 | E3-S2 🔴 | Trust | Durable object storage in production | — | M | 📋 | D4 |
 | E3-S3 | Trust | Upload hardening: type allow-list, magic bytes, AV hook | `secure_docs` | M | 📋 | E3-S2 |
-| E3-S4 | Trust | Public PoA verification page | — | S | 📋 | none |
+| E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
 | E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | 📋 | none |
 | E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 | E1-S4, D3 |
 | E4-S3 | Access | Cross-role authorization test suite | — | M | 📋 | E4-S1 |
 | E5-S1 🔴 | Security | Rate limiting and lockout on auth and payments | — | M | 📋 | none |
-| E5-S2 🔴 | Security | CORS allow-list from configuration | — | S | 📋 | none |
+| E5-S2 🔴 | Security | CORS allow-list from configuration | — | S | ✅ #97, tightened by E5-S2a #102 | none |
 | E5-S3 | Security | Password reset | `auth_recovery` | M | 📋 | E6-S1 |
 | E5-S4 | Security | Email verification on self-registration | `auth_signup` | M | 📋 | E6-S1 |
 | E5-S5 | Security | Session management: refresh rotation and revocation | `auth_sessions` | L | 📋 | none |
@@ -172,11 +185,12 @@ Size: S is about a day · M is two to four days · L is about a week
 | E6-S2 | Comms | Email channel for notification types | `email_notifications` | M | 📋 | E6-S1 |
 | E6-S3 | Comms | Transactional email templates for the core journeys | `email_notifications` | M | 📋 | E6-S2 |
 | E7-S1 | Ops | Structured logging, correlation id, error tracking | — | M | 📋 | none |
-| E7-S2 | Ops | Coverage thresholds and a CI coverage gate | — | S | 📋 | none |
+| E7-S2 | Ops | Coverage thresholds and a CI coverage gate | — | S | ✅ #114, floor only | none |
+| E7-S2b | Ops | Diff coverage: new and changed files meet the strict bar | — | M | 📋 | E7-S2 |
 | E7-S3 🔴 | Ops | End-to-end journeys in CI against an ephemeral database | — | L | 📋 | E7-S2 |
 | E7-S4 | Ops | Deterministic demo seed and reset | — | M | 📋 | E3-S2 |
 | E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | 📋 | none |
-| E7-S6 | Ops | Health and readiness probes with dependency checks | — | S | 📋 | none |
+| E7-S6 | Ops | Health and readiness probes with dependency checks | — | S | ✅ #101 | none |
 | E8-S1 | Compliance | NDPR consent, retention, and erasure | `privacy_centre` | L | 📋 | E5-S5 |
 | E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | external |
 | E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | external, E4-S3 |
@@ -197,6 +211,8 @@ E3-S2 (durable storage)
 
 `E2-S2`, `E2-S4`, `E3-S1`, `E4-S1`, `E5-S1`, `E5-S2` and `E6-S1` have no upstream dependency and should be picked up in any idle slot. Together they are about 9 days and they close the highest-severity findings in this document.
 
+> **Reconciled 2026-07-31.** Three of those seven have merged: E2-S4 (#99), E5-S2 (#97) and E3-S1 (#103 to #112). **What is left with no upstream dependency is `E2-S2`, `E4-S1`, `E5-S1` and `E6-S1`, about 5 days**, and E6-S1 is not really idle-slot work any more because it waits on EXT-3. The critical path above is otherwise unchanged, with one edit that matters: `E1-S3` still reads *also needs E3-S1*, and that clause is now satisfied. E1-S3 is gated on E1-S2 alone.
+
 ### 3.2 Go-live gates
 
 | Gate | Meaning | Owner | Blocked by |
@@ -207,6 +223,8 @@ E3-S2 (durable storage)
 | G4 | Signed PoA instrument and terms of service approved by counsel | Client, external | E8-S2 |
 | G5 | Independent security review closed with no high findings outstanding | External | E8-S3 |
 | G6 | Escrow and settlement model confirmed against CBN and AML obligations | Client, external | D2 |
+
+> **G3 is half-earned, 2026-07-31.** The probe suite it asks for exists — `backend/src/storage/uploads-exposure.spec.ts`, written red in #103 and green since #112 — and no private document is reachable without authorization through the route it probes. The gate stays open because it is blocked by E3 and E4-S3, not by E3-S1: **E3-S2** is unstarted, and a document store that authorizes correctly and then loses the file on the next deploy does not pass a gate worded *no private document is reachable without authorization* in spirit, only in letter. Read the probe suite as the evidence G3 will eventually be closed with, not as the closing of it.
 
 ### 3.3 External inputs
 
@@ -420,7 +438,7 @@ Do not copy `standalone-dd.service.ts`. Extract the shared case machinery into a
 4. `GET /health` reports payment configuration state without leaking the key.
 5. A test asserts the startup failure and a test asserts the badge.
 
-**Note.** This is a one-day story and it removes the single worst failure mode in the money path. It should be picked up in the first idle slot regardless of milestone order.
+**✅ Merged in #99, day 2.** `backend/src/config/payments-guard.ts` is the guard and `payments-guard.spec.ts` is its proof; the branch quoted above still exists, but production can no longer reach it, because the application refuses to boot into it. That is the shape worth noting for the rest of the money epic: the mock path was not deleted, it was made unreachable where it lies, which keeps it available to development and test without leaving a production failure mode behind. It closed the single worst failure mode in the repository and it was a one-day story.
 
 ---
 
@@ -496,7 +514,15 @@ E3-S1d also loses the property that kept E3-S1c small. C changed no frontend cod
 
 Both landed. E3-S1d-3 replaced `DocumentDto.storageKey` with a `url` the API builds, so the client no longer constructs a path into the bucket; `purchase.$listingId.tsx` reads it directly. One key-based builder survives at `listings.$listingId.tsx`, pointed at the authorized reader rather than the mount, because `ListingMediaDto` still carries a raw `storageKey` — and `ListingMedia` has no writer anywhere in the application, so that array is always empty and the code is unreached. The string it builds confers nothing: the reader re-authorizes every request. Making `ListingsService` emit a URL means injecting `StorageService` and making `toDto` async to serve an empty table, which is left for whoever gives that table a writer.
 
-**Suggested further split.** E3-S1d-1, DD reports: introduces the Prisma-backed policy shape with one family using it, and needs no frontend change. E3-S1d-2, POA and listing documents, then remove the mount and complete the criterion 5 walk: response-shape and frontend work, and it is the last thing standing between the mount and deletion.
+**How E3-S1d actually split, and why the suggestion was wrong.** The proposal recorded here in #107 was two sub-stories: DD reports first, then POA and listing documents and the mount removal together. It shipped as three, and the second half of that proposal was the part that did not hold. POA and listing documents look alike from the outside — both need a Prisma lookup, both emit a raw key — and they are not alike in the diff. POA is backend only: `serialize()` hands out `pdfStorageKey` and `qrCodeStorageKey` and never calls `getSignedUrl()`, so giving it a policy changes one service. Listing documents are the mixed family, public photographs beside title deeds in one prefix, and they are what held the mount open; closing them meant a `DocumentDto` shape change, two frontend routes, and deciding what replaces the mount for public imagery. Bundling those into one sub-story would have put the only real design decision of the epic in the same PR as a mechanical one.
+
+| Sub-story | What it carried | PR |
+| --- | --- | --- |
+| E3-S1d-1 | DD reports, and with them the Prisma-backed policy shape the other two reuse. No frontend change | ✅ #108 |
+| E3-S1d-2 | POA documents. Backend only, one service, no response-shape change | ✅ #111 |
+| E3-S1d-3 | Private listing documents, the `DocumentDto` shape change and its frontend edits, then the mount, the E3-S1b gate and the `/uploads` rewrites all deleted. Closed E3-S1 | ✅ #112 |
+
+The design decision E3-S1d-3 arrived at is not the one the proposal anticipated either. The proposal assumed a replacement public-delivery route beside the authorized one. What shipped made `GET /api/v1/documents/file` take optional authentication instead, so one route decides per `Document` row rather than two routes guarding one prefix. Criterion 2 above records why.
 
 **Carried debt.** `Document.storageKey` has no index (`schema.prisma:196`). The E3-S1b gate resolves every public image request by storage key, so each one is a sequential scan. Harmless at MVP volume, but `@@index([storageKey])` belongs in the next migration this project is allowed to run.
 
@@ -562,6 +588,8 @@ Both landed. E3-S1d-3 replaced `DocumentDto.storageKey` with a `url` the API bui
 4. The page is server rendered with its own title, description, and canonical URL, and is indexable.
 5. `VERIFY_BASE_URL` is read from configuration rather than hard coded, so staging QR codes point at staging.
 6. A test asserts that a QR generated in the test environment resolves to a live route.
+
+**✅ Merged in #98, day 2.** `src/routes/verify.tsx` is the page and `backend/src/config/poa-verify-config.ts` is criterion 5, so staging QR codes point at staging rather than at production. Worth keeping in view when reading the rest of E3: this story fixed nothing about how documents are stored or authorized. It made an integrity claim the platform was already printing on every instrument actually checkable, which is a different kind of gap from the one E3-S1 and E3-S2 describe, and it was cheap only because the backend endpoint had been there all along.
 
 ---
 
@@ -669,6 +697,8 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 3. `allowedHeaders` and `exposedHeaders` are explicit lists.
 4. Startup fails in production when `FRONTEND_URL` is unset.
 5. Tests assert an allowed origin, a rejected origin, and a preview-pattern origin.
+
+**✅ Merged in #97, day 2, and tightened by E5-S2a in #102.** `backend/src/config/cors-config.ts` holds the allow-list and `main.ts:6` calls `assertCorsConfigured`, which is criterion 4. The follow-up is the part worth reading: the preview pattern criterion 1 asks for is a wildcard over a domain anybody can deploy to, so as first written it re-opened a narrower version of the hole it closed — a squatted preview subdomain would have been an allowed origin carrying credentials. E5-S2a bound the pattern to this project's own deployments. A story can meet all five of its criteria and still ship the bug, when one of the criteria is itself the loose part.
 
 ---
 
@@ -798,16 +828,34 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 
 #### E7-S2, coverage thresholds and a CI gate
 
-**Size** S · **Deps** none
+**Size** S · **Status** ✅ merged, PR #114, on three criteria of four · **Deps** none
 
 **Evidence of the gap.** `backend/jest.config.js` sets `collectCoverageFrom` and no `coverageThreshold`. `vitest.config.ts` configures no coverage at all. `.github/workflows/ci.yml` runs `npm test` without coverage. Nothing prevents coverage from falling.
 
 **Acceptance criteria**
 
-1. Both suites run with coverage in CI and publish a report artifact.
-2. A ratchet: new and changed files must meet the strict bar, the repository floor may not fall below its current measured level.
-3. The gate is a required status check on `main`, wired to the existing `ci-gate` job.
-4. The current baseline is measured and recorded in the pull request that adds the gate, so the ratchet has a starting point.
+1. ✅ Both suites run with coverage in CI and publish a report artifact.
+2. 🔨 **Half done, and the open half is now E7-S2b.** The repository floor is in: thresholds sit just under the measured numbers in both suites, so coverage cannot fall without failing CI. The strict bar on new and changed files is diff coverage, and neither Jest nor Vitest can express a threshold scoped to changed files. Doing it needs lcov compared against `git diff`, which is a script and a CI step, or a third-party action, which is a dependency decision. Both are beyond an S, so the half that stops decay shipped and the half that stops accrual is carried as its own row rather than ticked.
+3. ✅ The gate is a required status check on `main`, wired to the existing `ci-gate` job.
+4. ✅ **Measured, and the measurement was the finding.** The backend was already measuring all 155 of its files: **41.7%** of statements. The frontend was measuring nothing, and Vitest's default would have reported **48.06%** — computed over the 20 files the tests happen to import, out of 185. Measured the way the backend measures, the whole tree, it is **4.91%**. The floor a ratchet starts from has to be the number over everything, or the ratchet holds a fifth of the repository and reports on the whole of it.
+
+---
+
+#### E7-S2b, diff coverage on new and changed files
+
+**Size** M · **Status** 📋 planned, unscheduled · **Deps** E7-S2
+
+**Why it exists.** It is criterion 2 of E7-S2 above, split out rather than dropped. E7-S2 put a floor under the repository, which stops coverage falling. This is the strict bar on new and changed code, which is what stops the gap accruing — and at a frontend floor of 4.91% the gap is where nearly all of the risk sits. A floor alone means a new file with no tests passes as long as it does not drag the average below where it already is.
+
+**Evidence of the gap.** `backend/jest.config.js` and `vitest.config.ts` both express `coverageThreshold` globally or per glob, and neither can scope one to the files a pull request touched. Nothing in either runner reads `git diff`.
+
+**Acceptance criteria**
+
+1. New and changed files in a pull request are measured separately from the repository floor, and the strict bar applies only to them.
+2. The bar is a required status check, failing the pull request rather than warning in a log nobody opens.
+3. A file that is touched but not newly covered fails with output naming the uncovered lines, so the author knows what to write rather than what to disable.
+4. If the implementation adds a dependency or a third-party action, that choice is stated in the pull request with the alternative that was rejected — the repository has a standing rule against unnamed dependencies.
+5. The frontend floor from E7-S2 is raised to whatever the ratchet has earned once this has run for a while, and the mechanism for raising it is written down.
 
 ---
 
@@ -868,6 +916,8 @@ Ownership checks are written per service, for example `escrow.service.ts` `asser
 2. `/health/ready` checks database, object storage, and payment gateway configuration, and returns per-dependency state.
 3. Neither endpoint leaks versions, keys, or connection strings.
 4. Readiness failure marks the instance unavailable rather than serving errors.
+
+**✅ Merged in #101, day 2.** `health.controller.ts:43` is `/health/live` and `:52` is `/health/ready`; the original bare `@Get()` at `:25` stays for anything already pointed at it. Criterion 4 is the one to re-read on Vercel: readiness is a serverless function's answer about itself, and nothing here is an orchestrator that will stop routing traffic to a failing instance. The probes tell a person which dependency is broken, which is what E7-S5's runbook needs; treating them as an automatic remedy would be reading more into them than they do.
 
 ---
 
@@ -945,7 +995,7 @@ Every story above is done when all of the following hold. This is voxdiary's `ru
 2. Behind its declared feature flag where one is given, with the flag defaulting off and a documented kill switch.
 3. No unhandled 5xx. Every failure maps to the correct 4xx or a deliberate 502 with a correlation id.
 4. Structured logs on every new endpoint or job, carrying the correlation id, never PII, secrets, documents, or account numbers.
-5. Tests cover the happy path and every rejected path. New and changed files meet the coverage ratchet from E7-S2.
+5. Tests cover the happy path and every rejected path. New and changed files meet the coverage ratchet, which is E7-S2b — until that lands the bar is unenforced and the repository floor from E7-S2 is all CI checks, so this one is on the author.
 6. Input validated on client and server against the same rules. Validation failures return 4xx with a machine-readable code.
 7. Authorization is server side and fail closed. Hiding a control in the UI is never the control.
 8. Docs updated in the same pull request: `docs/BUILD_CHECKLIST.md`, `README.md` where behaviour changed, and an ADR when a real decision was made.
@@ -956,7 +1006,7 @@ Every story above is done when all of the following hold. This is voxdiary's `ru
 
 ## 6. Suggested sequencing
 
-**One developer, about 15 to 19 weeks.** Follow the critical path in section 3.1, and use the unblocked quick wins as filler while waiting on external inputs.
+**One developer, about 14 to 19 weeks.** Follow the critical path in section 3.1, and use the unblocked quick wins as filler while waiting on external inputs.
 
 **Two developers, about 8 to 10 weeks.**
 
@@ -966,6 +1016,8 @@ Every story above is done when all of the following hold. This is voxdiary's `ru
 - The only hard cross-dependency is E1-S3 needing E3-S1, so B should land E3-S1 in week one.
 
 **First week, whoever is on shift.** DOCS-1, E2-S4, E5-S2, E6-S1, E3-S4. Five small stories, about four days, and between them they close the worst silent-failure mode in the money path, the credential-reflecting CORS policy, the silently dropped email, and the QR code that has always pointed at a 404.
+
+> **Reconciled 2026-07-31.** The handover week ran this first week and landed four of the five: DOCS-1, E2-S4 (#99), E5-S2 (#97, tightened by E5-S2a #102) and E3-S4 (#98). **E6-S1 is the one that did not**, and it did not because it needs a mail domain the client owns, which is EXT-3 and still outstanding — so the silently dropped email is the one item from this paragraph the next team inherits, and it is waiting on someone outside the repository rather than on a developer. The week also closed **E3-S1**, which is the two-developer plan's only hard cross-dependency and its week-one instruction for developer B: that constraint is now discharged, so B can start anywhere in E3 to E7 and A is no longer gated at E1-S3. What replaces it as the earliest scheduling decision is **E3-S2**, durable object storage, which is still on the critical path and still waits on ADR-0004.
 
 ---
 
