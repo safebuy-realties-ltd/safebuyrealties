@@ -14,7 +14,10 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
-import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from "../common/decorators/permissions.decorator";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import type { JwtPayload } from "../auth/jwt.strategy";
 import { PERMISSIONS, PERMISSION_LABELS, PERMISSION_NAV_UNLOCKS } from "../common/permissions";
@@ -58,6 +61,7 @@ export class AdminRolesController {
   /** Privilege catalog with labels + which dashboard areas each unlocks. */
   @Get("privileges")
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
   privileges() {
     return {
       data: Object.values(PERMISSIONS).map((code) => ({
@@ -70,8 +74,11 @@ export class AdminRolesController {
 
   @Get()
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  // Readable by anyone who can manage users or roles (needed for assign dropdown). The user
+  // screen sits behind users.read and populates its admin-role select from this list, so an
+  // all-of roles.manage here would close that screen to every seeded role but Super Administrator.
+  @RequireAnyPermission(PERMISSIONS.ROLES_MANAGE, PERMISSIONS.USERS_READ)
   list(@CurrentUser() user: JwtPayload) {
-    // Readable by anyone who can manage users or roles (needed for assign dropdown).
     return this.roles.listForActor(user.sub, user.role);
   }
 

@@ -11,7 +11,10 @@ import { UserRole } from "@prisma/client";
 import { ServiceCatalogService, UpdateItemDto } from "./service-catalog.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { Roles } from "../common/decorators/roles.decorator";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import { PERMISSIONS } from "../common/permissions";
 
 class CalculateDto {
   itemIds?: string[];
@@ -41,9 +44,10 @@ export class ServiceCatalogController {
     return this.serviceCatalog.calculate(body.itemIds, body.bundleId);
   }
 
-  /** PATCH /service-catalog/items/:id — ADMIN only */
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  /** PATCH /service-catalog/items/:id — ADMIN holding catalog.manage */
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(PERMISSIONS.CATALOG_MANAGE)
   @Patch("items/:id")
   updateItem(@Param("id") id: string, @Body() body: UpdateItemDto) {
     return this.serviceCatalog.updateItem(id, body);
