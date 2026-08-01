@@ -29,6 +29,25 @@ import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
 import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
 import { MoneyFields, withMoneyOperation } from "../common/logging/money-operation";
+import {
+  assessFreshness,
+  claimPaymentForSuccess,
+  webhookMaxAgeMs,
+  type WebhookTiming,
+} from "./webhook-idempotency";
+
+/**
+ * What this service reads out of a Paystack webhook, and nothing more.
+ *
+ * E2-S2 widened `data` to carry the gateway's own timestamps. They were previously dropped at the
+ * type boundary, which is why nothing downstream could tell a retry from a payload captured last
+ * month and posted back. Everything is optional and the timing fields are `unknown`: this is the
+ * outer edge of the system and the body is whatever the network sent, not whatever we hoped for.
+ */
+export interface PaystackWebhookPayload {
+  event?: string;
+  data?: { reference?: string; status?: string } & WebhookTiming;
+}
 
 @Injectable()
 export class PaymentsService {
@@ -226,6 +245,8 @@ export class PaymentsService {
         where: { id: payment.id },
         data: { providerReference: mockRef, status: PaymentStatus.PROCESSING },
       });
+      // Mock mode initialises and succeeds in one call, so this is always the first claim. The
+      // return is ignored rather than asserted: a second initialize creates a new payment row.
       await this.applyPaymentChargeSuccess(payment.id);
       record({ reference: mockRef, mock: true });
       return {
@@ -284,10 +305,16 @@ export class PaymentsService {
   /**
    * Marks the payment succeeded and applies intent-specific side effects (same path as
    * Paystack charge.success and mock-mode auto-success).
+   *
+   * E2-S2: returns whether this call is the one that applied it. Every side effect below hangs off
+   * `claimPaymentForSuccess`, so a replayed webhook, a second browser tab hitting verify, and a
+   * retry racing the original all reach here and exactly one of them proceeds. The claim replaces
+   * the unconditional `payment.update` that used to sit at the top of the transaction: that update
+   * was what made a duplicate re-run everything, because it succeeded every time it was called.
    */
-  private async applyPaymentChargeSuccess(paymentId: string) {
+  private async applyPaymentChargeSuccess(paymentId: string): Promise<boolean> {
     const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
-    if (!p) return;
+    if (!p) return false;
     const meta = p.metadata as {
       serviceRequestId?: string;
       guestCheckout?: boolean;
@@ -295,15 +322,19 @@ export class PaymentsService {
     };
 
     if (meta.standaloneDd) {
+      // This path completes inside StandaloneDdService, which runs its own transaction and sets
+      // SUCCEEDED itself. Claiming first is still what stops the replay: it is the account
+      // activation token and the notifications in there that must not happen twice.
+      if (!(await claimPaymentForSuccess(this.prisma, paymentId))) return false;
       await this.standaloneDd.completePayment(paymentId);
-      return;
+      return true;
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { id: p.id },
-        data: { status: PaymentStatus.SUCCEEDED },
-      });
+    const applied = await this.prisma.$transaction(async (tx) => {
+      // Inside the transaction on purpose. If anything below throws, the claim rolls back with it
+      // and the gateway's next retry can legitimately re-apply, rather than finding the payment
+      // marked done with half its side effects missing.
+      if (!(await claimPaymentForSuccess(tx, p.id))) return false;
 
       if (p.intent === PaymentIntent.DD_SERVICE) {
         if (p.transactionId) {
@@ -346,7 +377,13 @@ export class PaymentsService {
           });
         }
       }
+      return true;
     });
+
+    // These three are the reason the claim exists. They are outside the transaction, because a
+    // notification cannot be rolled back and an escrow hold writes through another service, so
+    // nothing but the claim stands between a replayed delivery and a second hold on the same money.
+    if (!applied) return false;
 
     // Fire-and-forget notifications — outside the DB transaction.
     if (
@@ -364,6 +401,7 @@ export class PaymentsService {
     if (meta.serviceRequestId || meta.guestCheckout) {
       await this.guestCheckout.completePayment(paymentId);
     }
+    return true;
   }
 
   async findOne(id: string, actor: JwtPayload) {
@@ -429,7 +467,12 @@ export class PaymentsService {
     record({ providerStatus: paystackStatus });
 
     if (paystackStatus === "success") {
-      await this.applyPaymentChargeSuccess(payment.id);
+      // The webhook and this verify call race whenever both reach us. The buyer's browser
+      // returning from Paystack while Paystack's own delivery is in flight is the ordinary case,
+      // not the rare one. The status guard above catches it once the row is committed; the claim
+      // catches it in the window before that.
+      const applied = await this.applyPaymentChargeSuccess(payment.id);
+      record({ outcome: applied ? "charge-succeeded" : "already-applied" });
     } else if (paystackStatus === "failed") {
       await this.prisma.payment.update({
         where: { id: payment.id },
@@ -445,10 +488,7 @@ export class PaymentsService {
     return this.paystack.verifyWebhookSignature(rawBody, signature);
   }
 
-  async handlePaystackWebhook(payload: {
-    event?: string;
-    data?: { reference?: string; status?: string };
-  }) {
+  async handlePaystackWebhook(payload: PaystackWebhookPayload) {
     // The envelope logs the event name, the reference and the provider's own status — the three
     // fields needed to reconcile against Paystack's dashboard. The payload itself is never logged:
     // it carries customer and authorization data that has no business in a log line.
@@ -466,7 +506,7 @@ export class PaymentsService {
   }
 
   private async applyPaystackWebhook(
-    payload: { event?: string; data?: { reference?: string; status?: string } },
+    payload: PaystackWebhookPayload,
     record: (extra: MoneyFields) => void,
   ) {
     const ref = payload.data?.reference;
@@ -486,18 +526,46 @@ export class PaymentsService {
       subjectUserId: payment.payerId,
     });
 
+    // E2-S2 criterion 3. Checked once the payment is known, so the suspicious line names the row the
+    // event was aimed at, and before either branch acts, because a replayed charge.failed is as
+    // damaging as a replayed charge.success. It is the one that can move money backwards.
+    const freshness = assessFreshness(payload.data, new Date(), webhookMaxAgeMs());
+    if (!freshness.fresh) {
+      record({
+        outcome: freshness.reason === "future" ? "rejected-future-dated" : "rejected-stale",
+        suspicious: true,
+        eventAt: freshness.eventAt,
+        ageMs: freshness.ageMs,
+      });
+      // A second line, at warn, on purpose. The money-operation envelope closes at log level
+      // because the request itself succeeded, we answered it, and an alert cannot be built on a
+      // field buried inside a success line.
+      this.logger.warn(
+        `suspicious paystack webhook rejected: ${freshness.reason} event ${payload.event ?? "?"} for payment ${payment.id} dated ${freshness.eventAt}`,
+      );
+      // Still a 200. The gateway retries anything else, and this is an event we have decided never
+      // to apply: retrying it forever costs both sides and changes nothing.
+      return { received: true };
+    }
+
     const success = payload.event === "charge.success" && payload.data?.status === "success";
     const failed = payload.event === "charge.failed" || payload.data?.status === "failed";
 
     if (success) {
-      record({ outcome: "charge-succeeded" });
-      await this.applyPaymentChargeSuccess(payment.id);
+      // Criterion 2. The claim inside decides; a duplicate is acknowledged with 200 and applies
+      // nothing, and the outcome field is what makes that visible in the log rather than
+      // indistinguishable from the delivery that did the work.
+      const applied = await this.applyPaymentChargeSuccess(payment.id);
+      record({ outcome: applied ? "charge-succeeded" : "duplicate-ignored" });
     } else if (failed) {
-      record({ outcome: "charge-failed" });
-      await this.prisma.payment.update({
-        where: { id: payment.id },
+      // Conditional for the same reason the success path is. Before this, a late or replayed
+      // charge.failed overwrote a SUCCEEDED payment, leaving money held in escrow against a row
+      // that reads as failed.
+      const marked = await this.prisma.payment.updateMany({
+        where: { id: payment.id, status: { not: PaymentStatus.SUCCEEDED } },
         data: { status: PaymentStatus.FAILED },
       });
+      record({ outcome: marked.count > 0 ? "charge-failed" : "duplicate-ignored" });
     } else {
       record({ outcome: "ignored" });
     }

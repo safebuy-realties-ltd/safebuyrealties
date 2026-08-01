@@ -453,6 +453,27 @@ if (!backlogTile) {
 }
 
 /**
+ * The prose beneath the bars quotes their numbers back in sentences, and until now nothing read it.
+ * That is how a paragraph reading "68–98" survived under a tile reading 57–87 for two merges. The
+ * fix is not to pin the wording, which would make every honest rewrite a CI failure. Any figure a
+ * sentence lifts from the bars carries the epic it came from in a data attribute, so the sentence
+ * around it stays free to change and the number in it cannot quietly stop being true.
+ */
+for (const quoted of source.matchAll(/<b data-epic="([^"]+)">(\d+)<\/b>/g)) {
+  const epic = EPICS.find((candidate) => candidate.key === quoted[1]);
+  if (!epic) {
+    fail(`the effort prose quotes an epic "${quoted[1]}", which is not a key in EPICS`);
+  } else if (Number(quoted[2]) !== epic.days) {
+    fail(`the effort prose says ${epic.name} stands at ${quoted[2]} days, but its bar reads ${epic.days}`);
+  }
+}
+for (const quoted of source.matchAll(/<b data-total="backlog">(\d+)<\/b>/g)) {
+  if (Number(quoted[1]) !== backlogDays) {
+    fail(`the effort prose says the backlog totals ${quoted[1]} days, but the bars sum to ${backlogDays}`);
+  }
+}
+
+/**
  * The narrative under "Up next" quotes the same counts in prose. Rewriting that prose is normal work
  * and must not fail CI, so these are verified only where the sentence is present — the pattern is a
  * contract, not a requirement. Reword freely; do not leave behind a number the data stopped

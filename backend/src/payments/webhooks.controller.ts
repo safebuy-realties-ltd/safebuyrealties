@@ -1,6 +1,6 @@
 import { Controller, Param, Post, Req, UnauthorizedException } from "@nestjs/common";
 import type { Request } from "express";
-import { PaymentsService } from "./payments.service";
+import { PaymentsService, type PaystackWebhookPayload } from "./payments.service";
 
 @Controller("webhooks/payments")
 export class WebhooksController {
@@ -16,7 +16,10 @@ export class WebhooksController {
     if (!this.payments.verifyPaystackSignature(raw, sig)) {
       throw new UnauthorizedException("Invalid webhook signature");
     }
-    const body = req.body as { event?: string; data?: { reference?: string; status?: string } };
+    // The signature above is what makes this cast defensible: the body is Paystack's or it never
+    // reached this line. The shape is still all-optional, because a verified sender can still send
+    // an event we have never seen.
+    const body = req.body as PaystackWebhookPayload;
     return this.payments.handlePaystackWebhook(body);
   }
 }

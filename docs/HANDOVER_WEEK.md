@@ -159,6 +159,12 @@ a record of where it was first planned; the day cards carry that history in pros
   check that fired on rewording would be routed around within a week. The numeric claims in *Up
   next* are verified only where the sentence is still there: reword freely, but do not leave behind
   a figure the data stopped supporting.
+- The one place that softness cost something is the effort section, where a paragraph reading
+  "68 to 98 developer-days" sat under a tile reading 57 to 87 for two merges before anyone noticed.
+  The fix keeps the wording free and pins the figures instead. A number a sentence lifts from the
+  effort bars is tagged with the epic it came from, `<b data-epic="Ops">12</b>`, or with
+  `data-total="backlog"` for the sum, and the check verifies those against `EPICS`. Rewrite the
+  sentence around a tagged figure however you like. What you cannot do is leave the figure behind.
 - CI runs the same script on every pull request, and **fails a PR that changes `src/`, `backend/`,
   `scripts/`, `docs/` or the workflows without touching `docs/mvp-board.html`.**
 - The escape hatch is a line in the PR description reading `no-board-update: <reason>`. It is
