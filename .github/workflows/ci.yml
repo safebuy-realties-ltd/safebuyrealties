@@ -86,7 +86,17 @@ jobs:
           node-version: "22"
           cache: "npm"
       - run: npm ci
-      - run: npm test
+      # Coverage runs here, not in frontend-typecheck, so the floor fails in the job that owns the
+      # tests. Thresholds live in vitest.config.ts with the measured baseline written beside them.
+      - run: npm run test:cov
+      - name: Upload frontend coverage
+        if: always() # the report is most useful on the run where the floor failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: error
 
   backend-check:
     needs: changes
@@ -104,7 +114,16 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: npm test
+      - run: npm run test:cov
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # working-directory does not apply to `uses:` steps — this path is from the repository root.
+          name: coverage-backend
+          path: backend/coverage/
+          retention-days: 14
+          if-no-files-found: error
 
   # The board is the repository's index of what is done, open and deferred. It went stale twice in
   # the handover week and a person caught it both times, so it is a check now. Two parts: the board

@@ -17,6 +17,10 @@ dist-ssr
 *.local
 .vercel/*
 
+# Coverage output, at any depth — the frontend writes ./coverage, backend writes backend/coverage.
+# No leading slash, so one line covers both and anything added later.
+coverage/
+
 # Secrets. Every env file except the checked-in template, at any depth. This file had no env
 # pattern at all until now, so a root `.env` or `.env.production` was committable while `backend/`
 # was covered; `.env.local` only looked covered, by the `*.local` line above, which is a Vite
