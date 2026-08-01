@@ -1,7 +1,8 @@
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { AppModule } from "./app.module";
-import { configureApp } from "./app-bootstrap";
+import { configureApp, createAppDependencies } from "./app-bootstrap";
+import { installProcessErrorHandlers } from "./common/logging/error-tracker.service";
 import { assertSafeDatabaseUrl } from "./config/database-guard";
 import { assertCorsConfigured } from "./config/cors-config";
 import { assertPaymentsConfigured } from "./config/payments-guard";
@@ -13,8 +14,19 @@ assertPaymentsConfigured();
 assertJwtSecret();
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
-  configureApp(app);
+  // Built and installed before NestFactory, because module construction can throw and a failure
+  // during boot is precisely the one nobody can currently see. `useLogger` is passed as an option
+  // rather than called on the app: that way the structured logger is in place for Nest's own
+  // startup lines too, and `Logger.overrideLogger` — which is static, process-wide state — is never
+  // touched from `configureApp`, where the specs would inherit it.
+  const deps = createAppDependencies();
+  installProcessErrorHandlers(deps.errorTracker);
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+    logger: deps.logger,
+  });
+  configureApp(app, deps);
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
 }

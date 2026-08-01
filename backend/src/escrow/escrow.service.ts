@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import {
@@ -21,6 +22,7 @@ import { JwtPayload } from "../auth/jwt.strategy";
 import { isInternalRole } from "../common/user-roles";
 import { PaystackService } from "../payments/paystack.service";
 import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
+import { MoneyFields, withMoneyOperation } from "../common/logging/money-operation";
 import {
   DEFAULT_RELEASE_CONDITIONS,
   ESCROW_STATUS,
@@ -42,6 +44,9 @@ type EscrowRow = Prisma.EscrowGetPayload<{
 
 @Injectable()
 export class EscrowService {
+  /** See PaymentsService: resolved through the structured logger, so lines carry the request id. */
+  private readonly logger = new Logger(EscrowService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
@@ -138,6 +143,24 @@ export class EscrowService {
   }
 
   async hold(transactionId: string, amount: Prisma.Decimal | number | string) {
+    return withMoneyOperation(
+      this.logger,
+      "escrow.hold",
+      {
+        transactionId,
+        amount: String(amount),
+        amountMinor: Math.round(Number(amount) * 100),
+        currency: "NGN",
+      },
+      (record) => this.holdFunds(transactionId, amount, record),
+    );
+  }
+
+  private async holdFunds(
+    transactionId: string,
+    amount: Prisma.Decimal | number | string,
+    record: (extra: MoneyFields) => void,
+  ) {
     const tx = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
       include: { listing: true },
@@ -164,6 +187,8 @@ export class EscrowService {
       },
       include: this.escrowInclude(),
     });
+
+    record({ escrowId: row.id, subjectUserId: tx.listing?.sellerId });
 
     return this.serializeEscrow(row, await this.checkConditions(transactionId));
   }
@@ -251,6 +276,20 @@ export class EscrowService {
   }
 
   async release(transactionId: string, staffId: string, note?: string) {
+    return withMoneyOperation(
+      this.logger,
+      "escrow.release",
+      { transactionId, releasedById: staffId },
+      (record) => this.releaseFunds(transactionId, staffId, record, note),
+    );
+  }
+
+  private async releaseFunds(
+    transactionId: string,
+    staffId: string,
+    record: (extra: MoneyFields) => void,
+    note?: string,
+  ) {
     const unmet = await this.checkConditions(transactionId);
     if (unmet.length > 0) {
       throw new BadRequestException({
@@ -264,6 +303,12 @@ export class EscrowService {
     if (existing.status !== ESCROW_STATUS.HELD) {
       throw new BadRequestException(`Escrow cannot be released from status ${existing.status}`);
     }
+    record({
+      escrowId: existing.id,
+      amount: existing.heldAmount.toString(),
+      amountMinor: Math.round(Number(existing.heldAmount) * 100),
+      currency: "NGN",
+    });
 
     const metCodes = DEFAULT_RELEASE_CONDITIONS.map((c) => c.code);
     const now = new Date();
@@ -297,6 +342,7 @@ export class EscrowService {
     });
 
     const payout = await this.initiatePayout(transactionId);
+    record({ payoutId: payout.id, payoutStatus: payout.status });
 
     await this.audit.log({
       actorId: staffId,
@@ -311,6 +357,20 @@ export class EscrowService {
   }
 
   async refund(transactionId: string, staffId: string, note?: string) {
+    return withMoneyOperation(
+      this.logger,
+      "escrow.refund",
+      { transactionId, releasedById: staffId },
+      (record) => this.refundFunds(transactionId, staffId, record, note),
+    );
+  }
+
+  private async refundFunds(
+    transactionId: string,
+    staffId: string,
+    record: (extra: MoneyFields) => void,
+    note?: string,
+  ) {
     const existing = await this.prisma.escrow.findUnique({
       where: { transactionId },
       include: { transaction: { include: { listing: true } } },
@@ -319,6 +379,13 @@ export class EscrowService {
     if (existing.status !== ESCROW_STATUS.HELD) {
       throw new BadRequestException(`Escrow cannot be refunded from status ${existing.status}`);
     }
+    record({
+      escrowId: existing.id,
+      amount: existing.heldAmount.toString(),
+      amountMinor: Math.round(Number(existing.heldAmount) * 100),
+      currency: "NGN",
+      subjectUserId: existing.transaction.buyerId,
+    });
 
     const now = new Date();
     const row = await this.prisma.$transaction(async (db) => {
@@ -356,6 +423,15 @@ export class EscrowService {
   }
 
   async initiatePayout(transactionId: string) {
+    return withMoneyOperation(
+      this.logger,
+      "payout.initiate",
+      { transactionId, currency: "NGN" },
+      (record) => this.createPayout(transactionId, record),
+    );
+  }
+
+  private async createPayout(transactionId: string, record: (extra: MoneyFields) => void) {
     const escrow = await this.prisma.escrow.findUnique({
       where: { transactionId },
       include: { transaction: { include: { listing: true } } },
@@ -365,7 +441,18 @@ export class EscrowService {
     const existing = await this.prisma.payout.findFirst({
       where: { transactionId, status: { not: PAYOUT_STATUS.FAILED } },
     });
-    if (existing) return this.serializePayout(existing);
+    if (existing) {
+      // Idempotent re-entry, not a second payment. Logged as such, because two `payout.initiate`
+      // starts for one transaction would otherwise read as double-paying a seller.
+      record({
+        payoutId: existing.id,
+        outcome: "already-initiated",
+        payoutStatus: existing.status,
+        amount: existing.netAmount.toString(),
+        amountMinor: Math.round(Number(existing.netAmount) * 100),
+      });
+      return this.serializePayout(existing);
+    }
 
     const gross = escrow.heldAmount;
     const platformFee = gross.mul(PLATFORM_FEE_RATE);
@@ -377,43 +464,20 @@ export class EscrowService {
     const sellerId = listing.sellerId;
     const now = new Date();
 
-    let status: string = PAYOUT_STATUS.PENDING;
-    let gatewayReference: string | null = null;
-    let initiatedAt: Date | null = null;
-    let completedAt: Date | null = null;
+    record({
+      escrowId: escrow.id,
+      subjectUserId: sellerId,
+      grossAmountMinor: Math.round(Number(gross) * 100),
+      platformFeeMinor: Math.round(Number(platformFee) * 100),
+      amount: netAmount.toString(),
+      amountMinor: Math.round(Number(netAmount) * 100),
+    });
 
-    if (!this.paystack.isConfigured()) {
-      status = PAYOUT_STATUS.COMPLETED;
-      gatewayReference = `${MOCK_REFERENCE_PREFIX}transfer_${transactionId.slice(0, 8)}`;
-      initiatedAt = now;
-      completedAt = now;
-    } else {
-      const seller = await this.prisma.user.findUnique({
-        where: { id: sellerId },
-        select: { firstName: true, lastName: true },
-      });
-      const sellerName = seller
-        ? `${seller.firstName} ${seller.lastName}`.trim()
-        : "Seller payout";
-      const amountMinor = Math.round(Number(netAmount) * 100);
-      try {
-        const transfer = await this.paystack.createTransfer({
-          amountMinor,
-          recipientName: sellerName,
-          reason: `Escrow payout for transaction ${transactionId.slice(0, 8)}`,
-          reference: `sbr_payout_${transactionId.slice(0, 12)}`,
-        });
-        gatewayReference = transfer.reference;
-        initiatedAt = now;
-        status =
-          transfer.status === "success" ? PAYOUT_STATUS.COMPLETED : PAYOUT_STATUS.INITIATED;
-        if (status === PAYOUT_STATUS.COMPLETED) completedAt = now;
-      } catch {
-        status = PAYOUT_STATUS.FAILED;
-        gatewayReference = `transfer_failed_${transactionId.slice(0, 8)}`;
-        initiatedAt = now;
-      }
-    }
+    const settlement = await this.settleWithProvider(
+      { transactionId, sellerId, netAmount, now },
+      record,
+    );
+    record({ payoutStatus: settlement.status, reference: settlement.gatewayReference ?? undefined });
 
     const payout = await this.prisma.payout.create({
       data: {
@@ -422,14 +486,71 @@ export class EscrowService {
         grossAmount: gross,
         platformFee,
         netAmount,
-        status,
-        gatewayReference,
-        initiatedAt,
-        completedAt,
+        ...settlement,
       },
     });
 
+    record({ payoutId: payout.id });
     return this.serializePayout(payout);
+  }
+
+  /**
+   * Asks the provider to move the money and reports what came back. Extracted from `createPayout`
+   * so that the money maths, the provider call and the row write are three readable things rather
+   * than one long one.
+   */
+  private async settleWithProvider(
+    input: { transactionId: string; sellerId: string; netAmount: Prisma.Decimal; now: Date },
+    record: (extra: MoneyFields) => void,
+  ): Promise<{
+    status: string;
+    gatewayReference: string | null;
+    initiatedAt: Date | null;
+    completedAt: Date | null;
+  }> {
+    const { transactionId, sellerId, netAmount, now } = input;
+
+    if (!this.paystack.isConfigured()) {
+      record({ mock: true });
+      return {
+        status: PAYOUT_STATUS.COMPLETED,
+        gatewayReference: `${MOCK_REFERENCE_PREFIX}transfer_${transactionId.slice(0, 8)}`,
+        initiatedAt: now,
+        completedAt: now,
+      };
+    }
+
+    const seller = await this.prisma.user.findUnique({
+      where: { id: sellerId },
+      select: { firstName: true, lastName: true },
+    });
+    const sellerName = seller ? `${seller.firstName} ${seller.lastName}`.trim() : "Seller payout";
+
+    try {
+      const transfer = await this.paystack.createTransfer({
+        amountMinor: Math.round(Number(netAmount) * 100),
+        recipientName: sellerName,
+        reason: `Escrow payout for transaction ${transactionId.slice(0, 8)}`,
+        reference: `sbr_payout_${transactionId.slice(0, 12)}`,
+      });
+      const completed = transfer.status === "success";
+      return {
+        status: completed ? PAYOUT_STATUS.COMPLETED : PAYOUT_STATUS.INITIATED,
+        gatewayReference: transfer.reference,
+        initiatedAt: now,
+        completedAt: completed ? now : null,
+      };
+    } catch (cause) {
+      // The row records that it failed; only the log records why. Before this the provider's
+      // reason was swallowed here and a seller's payout failed silently.
+      record({ transferError: cause instanceof Error ? cause.message : String(cause) });
+      return {
+        status: PAYOUT_STATUS.FAILED,
+        gatewayReference: `transfer_failed_${transactionId.slice(0, 8)}`,
+        initiatedAt: now,
+        completedAt: null,
+      };
+    }
   }
 
   private notifyEscrowParties(
