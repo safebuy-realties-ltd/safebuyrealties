@@ -57,5 +57,6 @@ Preview URLs may return 401 without bypass token / Vercel auth. **Do not block c
 | Build fails: `API_PROXY_TARGET is required` | Add env var for the environment being deployed (Production/Preview) |
 | Login works locally but not on Vercel | Ensure `FRONTEND_URL` on **Render** includes `https://safebuyrealties-app.vercel.app` |
 | CORS on preview | Add preview URL to `FRONTEND_URL` on Render |
-| Empty DB on new env | Run `cd backend && npm run prisma:seed` against the new database |
+| Empty DB on new env | Run `cd backend && SEED_NO_WIPE=1 npm run prisma:seed` against the new database. **Without `SEED_NO_WIPE=1` the seed wipes 24 tables first** — see `docs/RUNBOOK.md` §4.1 |
 | Paystack mock | Unset invalid `PAYSTACK_SECRET_KEY` or use test key |
+| Anything else | `docs/RUNBOOK.md` §5 triages from `/health/ready`, which names the broken dependency |

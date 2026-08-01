@@ -12,6 +12,7 @@ Single reference for how we build, test, validate, and ship. **Agents and humans
 | `docs/GIT_WORKFLOW.md` | Branch → PR → merge (never push `main` directly) |
 | `docs/LOCAL_DEVELOPMENT.md` | **Primary** — local FE/BE, cloud Postgres, curl, L5 E2E |
 | `docs/VERCEL_VALIDATION.md` | Optional deploy / production smoke |
+| `docs/RUNBOOK.md` | Deploy, rollback, incident triage, environment matrix, secrets |
 | `docs/demo-script-checklist.md` | Manual browser journeys (Gate C on localhost:8080) |
 | `docs/VALIDATION_REPORT.md` | Last production validation snapshot |
 
