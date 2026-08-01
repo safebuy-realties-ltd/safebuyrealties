@@ -35,7 +35,19 @@ USER nestjs
 
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3001)+'/api/v1/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+# Readiness, not the bare health endpoint. /api/v1/health answers 200 from static values and
+# touches nothing, so a container whose database was unreachable used to report itself healthy —
+# the exact failure the readiness probe was built to make visible. /health/ready answers 503 when
+# any dependency is down, and anything other than 200 is unhealthy here.
+#
+# --start-period covers `prisma migrate deploy` against the shared cloud Postgres plus Nest boot;
+# readiness cannot pass until both finish, and the previous 20s could mark a container unhealthy
+# while it was still legitimately migrating. Failures inside the start period do not count towards
+# --retries, so a generous value costs only a slower verdict on a container that was never going
+# to start, and Render cancels a deploy at 15 minutes regardless.
+#
+# Docker runs this. Render does not — its health check is a dashboard setting. See docs/RUNBOOK.md §2.2.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3001)+'/api/v1/health/ready',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

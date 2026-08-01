@@ -9,8 +9,9 @@ breaks, and who holds each secret. Every behavioural claim cites a file and line
 that describes what the variable names suggest rather than what the code does is worse than none.
 
 **[§7](#7-known-gaps-this-runbook-cannot-close) is findings rather than instructions** — gaps this
-document can describe but not close. Read it before you rely on the rest. One entry, §7.2, is now
-closed and kept there for the one follow-up the fix cannot do for you.
+document can describe but not close. Read it before you rely on the rest. Two entries, §7.2 and §7.4,
+are now closed and kept there for the follow-ups the fixes cannot do for you — both need somebody
+holding the Render dashboard.
 
 ---
 
@@ -64,6 +65,39 @@ step to remember and no separate one to forget. Consequences worth holding in mi
 
 The image hard-codes `NODE_ENV=production` and `PORT=3001`, which is what arms the four boot guards
 below. Nothing else is baked in; all other configuration comes from Render's environment.
+
+**Health checks: what the image does, and what Render does. These are two different mechanisms.**
+
+The image's `HEALTHCHECK` polls `/api/v1/health/ready` and treats anything other than `200` as
+unhealthy ([`Dockerfile:50-51`](../backend/Dockerfile#L50-L51), E7-S6b). Its `--start-period` is 180s
+because the container migrates before it serves and readiness cannot pass until it has. That is what
+Docker runs — `docker run`, Compose, anything that reads the image's own metadata.
+
+**Render does not run it.** Render sends its own checks every few seconds, configured outside the
+image: a **Health Check Path** on the service's Settings page, or `healthCheckPath` in a Blueprint.
+There is no `render.yaml` in this repository, so the live value is whatever is set in the dashboard
+and nothing here can tell you what that is. **With no path set, Render's check is a TCP probe against
+the open port** — which a container with a dead database passes, exactly as the old image healthcheck
+did. Fixing the image did not fix that; only the dashboard can.
+
+What Render does when its own check fails ([health checks](https://render.com/docs/health-checks)):
+
+| Render | When |
+| --- | --- |
+| Withholds traffic from a new deploy's instances | Until all of them pass at the same time |
+| **Cancels the deploy**, old instances keep serving | If that has not happened within **15 minutes** |
+| **Stops routing** to a running instance | After it fails consecutively for **15 seconds** |
+| **Restarts** the instance | After it fails consecutively for **60 seconds** |
+
+So on Render the probe is a remedy and not only a signal — with one consequence worth expecting.
+**A restart does not fix a dependency, and this service migrates on every start.** Point the dashboard
+at `/health/ready` and a genuinely unreachable database gives you a container restarting every 60
+seconds, each restart re-running `prisma migrate deploy` against the database that is down. That is
+loud, which is the point, but read it as a restart loop rather than a recovery, and go to §5.1.
+
+**Open item for whoever holds the Render dashboard:** set Health Check Path to
+`/api/v1/health/ready`, then record here that it is set. Until then the image is right and the
+platform is not using it.
 
 ### 2.3 The boot guards, in the order they fire
 
@@ -197,6 +231,7 @@ bucket name, hostname or key fragment, so **the probe tells you which dependency
 | Symptom | First check | Likely cause and fix |
 | --- | --- | --- |
 | API restart-looping, never serves | Container log, first 20 lines | One of the four boot guards (§2.3). The message names the variable |
+| API boots cleanly, serves briefly, restarts every ~60s | `/health/ready` on the instance | Not a boot guard — the container started. Render restarts an instance that fails its health check for 60 seconds (§2.2), so if the dashboard path is `/health/ready` a broken dependency now recycles the container instead of serving 200s. **The restart cannot fix the dependency**; read the `checks` object and fix that. Each restart also re-runs `prisma migrate deploy` |
 | `/health/ready` → `database: unavailable` | Prisma Data Platform status; `DATABASE_URL` on Render | Wrong or rotated URL, or the platform is down. `timeout` instead means reachable but slow — check pool exhaustion before blaming the network |
 | `/health/ready` → `storage: misconfigured` | `STORAGE_DRIVER` on Render | `s3` with `AWS_REGION`/`AWS_S3_BUCKET` missing, or exactly one of the credential pair set. Half a pair silently falls back to ambient credentials, which is why it is treated as broken ([`storage.service.ts:75-89`](../backend/src/storage/storage.service.ts#L75-L89)) |
 | `/health/ready` → `payments: misconfigured` | Paystack keys on Render | Production with no secret key. The instance should not have booted at all — if it did, `NODE_ENV`/`VERCEL_ENV` do not say production and §7.2 applies |
@@ -313,16 +348,27 @@ empty `user` table to fire. That is a narrow window and a total blast radius.
 are dead weight and deleting them is a small chore. If it does, there are two deploy paths and only
 one of them is documented anywhere.
 
-### 7.4 The container healthcheck does not use the readiness probe
+### 7.4 The container healthcheck uses the readiness probe — closed in E7-S6b
 
-`backend/Dockerfile`'s `HEALTHCHECK` polls `/api/v1/health` — the original bare endpoint at
+**The finding.** `backend/Dockerfile`'s `HEALTHCHECK` polled `/api/v1/health`, the bare endpoint at
 [`health.controller.ts:25`](../backend/src/health/health.controller.ts#L25), which returns `200` from
-static values and touches no dependency. E7-S6 (#101) added `/health/ready`, which is the endpoint
-that would actually detect a broken deploy, and the Dockerfile was not updated to point at it.
+static values and touches no dependency. E7-S6 (#101) added `/health/ready` — the endpoint that would
+actually detect a broken deploy — and the Dockerfile was never pointed at it, so **a container with an
+unreachable database passed its own healthcheck.**
 
-**A container with an unreachable database therefore passes its own healthcheck.** Recorded as story
-**E7-S6b**. It is a one-line change, but it is a change to a deploy file and this is a documentation
-story, so it is written down rather than slipped in.
+**What changed.** The `HEALTHCHECK` now polls `/api/v1/health/ready`, where a failing dependency is a
+`503` and anything other than `200` exits non-zero. `--start-period` went from 20s to 180s: the
+container runs `prisma migrate deploy` against the shared cloud Postgres before it serves, readiness
+cannot pass until that finishes, and 20s could mark a healthy container unhealthy mid-migration.
+[`dockerfile-healthcheck.spec.ts`](../backend/src/health/dockerfile-healthcheck.spec.ts) extracts the
+real command out of the Dockerfile and runs it against a stub server, so the `200`-passes and
+`503`-fails behaviour is executed rather than asserted about, and the polled path is derived from the
+controller's own routing metadata — renaming the route fails the suite instead of production.
+
+**What still needs the dashboard.** Render does not read the image's `HEALTHCHECK`; its check is a
+dashboard setting, and unset it is a TCP probe that a container with a dead database still passes.
+**§2.2 has the table of what Render does on failure and the one setting to change.** The gap this
+section described is closed in the image and still open on the platform until somebody sets it.
 
 ---
 
