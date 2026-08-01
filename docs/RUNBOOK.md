@@ -422,6 +422,9 @@ the boot rather than defaulting to something.
 | `SMTP_FROM` | O | O | R | Client (EXT-3) | Defaults to `noreply@safebuyrealties.com` |
 | `STAFF_ALERT_EMAIL` | O | O | O | Client | Falls back to `SMTP_FROM`, then `ops@safebuyrealties.com` |
 | `SEED_NO_WIPE` | **use it** | — | — | — | `1` prevents the seed wiping every table. See §4.1 |
+| `FEATURE_<KEY>` | O | O | O | Corne Labs | One per registry key, upper-cased. Unset means the registry default, which is off for every roadmap flag. §11 |
+| `FEATURE_STANDALONE_DD_PUBLIC_ORDER_READ` | O | O | O | Corne Labs | The exception: defaults **on**, because the route is live. Setting it off closes an unauthenticated route and costs the guest receipt view. §11.3 |
+| `FEATURE_FLAGS_KILL_SWITCH` | O | O | O | Corne Labs | Turns every flag off at once. It cannot turn anything on. §11.2 |
 
 **§7.5 — a test key satisfies the production guard.** `hasPaymentSecretKey()` accepts either variable
 ([`payments-guard.ts:30-33`](../backend/src/config/payments-guard.ts#L30-L33)) and `secretKey()` falls back
@@ -440,6 +443,7 @@ so §6.1's audit will not find them. Before go-live, confirm the production key 
 | `VITE_API_URL` | O | O | O | — | Defaults to `/api/v1`. **Keep it relative** — cookies are same-origin |
 | `SBR_API_PROXY_TARGET` | O | — | — | — | Local-only alias for pointing Vite at a remote API |
 | `VITE_DEV_HOST` | O | — | — | — | Local dev host binding |
+| `VITE_FEATURE_<KEY>` | O | O | O | Corne Labs | The value a flag has before `GET /feature-flags` answers. Inlined at build time, so changing one needs a rebuild. The API wins once it answers. §11 |
 
 ### 8.3 Tooling only
 
@@ -503,3 +507,103 @@ against 59 `[x]`. It also states that it is no longer the work queue and points 
 
 That audit was run against `fc05e1e`, before the week's merges. Re-running it against HEAD is story
 **DOCS-4**, deliberately scheduled last, and is not duplicated here.
+
+---
+
+## 11. Feature flags
+
+CH-1. Four inputs decide whether a feature is on, and the highest one that has an opinion wins:
+
+1. the kill switch, which forces every flag off
+2. a runtime override, set through the admin API and held in memory
+3. `FEATURE_<KEY>` in the environment
+4. the default in
+   [`feature-flags.constants.ts`](../backend/src/feature-flags/feature-flags.constants.ts), which is
+   the list of what exists
+
+**Two of those survive a restart and two do not.** The environment variables do, and they reach
+every instance, so they are how a flag is really flipped. A runtime override applies to the one
+process that answered the request and is gone when it restarts, so it is the lever you pull while
+the durable change is still deploying. `GET /feature-flags` says which is which rather than leaving
+you to remember.
+
+There is no flag table in the database. A row would need a migration, and §4 is why a migration on
+this project is a scheduled event rather than part of an afternoon.
+
+### 11.1 Reading what a process believes
+
+```bash
+curl -s "$SBR_API_BASE/feature-flags" -H "Authorization: Bearer $TOKEN" | jq
+```
+
+Signed in as STAFF, ADMIN or SUPER_ADMIN you get every flag with its value, the source that decided
+it, the variable that would set it, and the state of the kill switch. Anyone else, including a
+caller with no session at all, gets the client-visible flags and their values and nothing about how
+they were reached.
+
+`source` is the field to read first. `default` means nothing is configured. `env` means a variable
+set it. `override` means somebody flipped it on this process. `kill-switch` means the switch is on
+and the flag's own setting is not being consulted.
+
+`envValueIgnored` appears when the variable holds something the API could not read. The flag is
+running on whatever the layer below said, not on what somebody typed. It is also warned about at
+boot, naming both the variable and the value it dropped. Accepted values are `on`, `true`, `1`,
+`yes`, `enabled` and their opposites `off`, `false`, `0`, `no`, `disabled`.
+
+### 11.2 Turning something off in a hurry
+
+An override takes effect in the time of one HTTP call:
+
+```bash
+curl -s -X PATCH "$SBR_API_BASE/feature-flags/payouts" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+If more than one thing is wrong, arm the kill switch instead:
+
+```bash
+curl -s -X PUT "$SBR_API_BASE/feature-flags/kill-switch" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"armed": true}'
+```
+
+**Then do the durable half.** Both of those live in one process's memory. Render runs one instance
+today, so one call is the whole fleet, but a restart or a scale-up loses it. Set `FEATURE_PAYOUTS=off`
+in the Render environment, or `FEATURE_FLAGS_KILL_SWITCH=on` for the switch, and let the redeploy
+land behind you. `DELETE /feature-flags/<key>` drops the override afterwards so the flag reads from
+the environment again.
+
+Both routes need ADMIN or SUPER_ADMIN and the `platform.config` privilege, the same one that gates
+`PATCH /platform-config`, and both write an audit row. That row is the only durable record that an
+override happened, so do not expect to reconstruct it from anywhere else.
+
+The kill switch can only turn flags off. A switch that could also turn one on would be a second way
+to enable a feature, which is not a kill switch.
+
+### 11.3 The one flag that is on
+
+`FEATURE_STANDALONE_DD_PUBLIC_ORDER_READ` gates `GET /standalone-dd/orders/:serviceId`. That route
+mounts no guard, declares no role, and the service behind it takes no actor, so **anybody holding a
+service id can read that order.** It is an open finding from E4-S3 and it is listed as such in
+[`cross-role-authz.spec.ts`](../backend/src/common/authz/cross-role-authz.spec.ts).
+
+The flag is not the fix. Closing the route properly is a product decision, either a signed expiring
+link or an email-plus-reference check. What the flag buys is the ability to shut it in one API call
+while that decision is pending, at the cost of the guest receipt view. Before CH-1 the only way to
+close it was a deploy.
+
+A route whose flag is off answers `404` with the message Nest emits for a path it does not serve,
+not `403`. A caller cannot tell a switched-off feature from one that was never built, which is what
+shipping dark means.
+
+### 11.4 The browser half
+
+The frontend reads the same endpoint and lays the answer over whatever `VITE_FEATURE_<KEY>` was
+baked into the build. The API wins, because the API is the half an operator can change without a
+deploy. Values are re-checked every minute and on window focus, so a tab that has been open all
+afternoon follows a flip without a reload.
+
+Hiding a control is a courtesy to the person looking at the screen. It is not what stops the
+request: that is `FeatureGuard` on the server, and it holds whether or not the browser ever
+rendered.

@@ -18,6 +18,14 @@ export const AuditAction = {
   PRIVATE_DOCUMENT_READ_DENIED: "PRIVATE_DOCUMENT_READ_DENIED",
   /** A SUPER_ADMIN passed a privilege check it holds by bypass rather than by grant. */
   SUPER_ADMIN_PRIVILEGE_BYPASS: "SUPER_ADMIN_PRIVILEGE_BYPASS",
+  /**
+   * A feature was switched on or off at runtime. Overrides are process-local and leave no other
+   * trace, so this row is the only durable record that the change happened at all.
+   */
+  FEATURE_FLAG_OVERRIDE_SET: "FEATURE_FLAG_OVERRIDE_SET",
+  FEATURE_FLAG_OVERRIDE_CLEARED: "FEATURE_FLAG_OVERRIDE_CLEARED",
+  FEATURE_FLAG_KILL_SWITCH_ARMED: "FEATURE_FLAG_KILL_SWITCH_ARMED",
+  FEATURE_FLAG_KILL_SWITCH_DISARMED: "FEATURE_FLAG_KILL_SWITCH_DISARMED",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];
