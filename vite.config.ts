@@ -54,11 +54,6 @@ export default defineConfig({
           changeOrigin: true,
           secure: apiProxyTarget.startsWith("https://"),
         },
-        "/uploads": {
-          target: apiProxyTarget,
-          changeOrigin: true,
-          secure: apiProxyTarget.startsWith("https://"),
-        },
       },
     },
   },

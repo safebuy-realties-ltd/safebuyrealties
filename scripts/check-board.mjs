@@ -74,6 +74,9 @@ if (!STORIES || !DAYS || !STATUS || !QUEUE) {
 // [id, epic, title, what, day, flag, size, deps, status, criticalPath, pr]
 const byId = new Map();
 
+/** Done rows with no PR, resolved after the loop — a parent's evidence is its children's PRs. */
+const doneWithoutPr = [];
+
 for (const [index, row] of STORIES.entries()) {
   const where = `STORIES[${index}]`;
 
@@ -111,7 +114,32 @@ for (const [index, row] of STORIES.entries()) {
       fail(`${id} carries PR ${pr} but its status is "${status}"`);
     }
   } else if (status === "done" && day !== "" && !DIRECT_COMMITS.has(id)) {
+    doneWithoutPr.push(id);
+  }
+}
+
+/**
+ * A parent row — one whose id prefixes its sub-stories' ids, like E3-S1 over E3-S1a and E3-S1d-2 —
+ * has no diff of its own. It is the `part` status while its children land, and it closes when the
+ * last one does; the PR numbers live on the children. Every other done row must name a PR, which is
+ * the rule this exception is carved out of. The trade is a stricter one: a parent may only be done
+ * when all of its children are, so flipping the parent early now fails instead of passing silently.
+ */
+const childrenOf = (id) =>
+  [...byId.keys()].filter((other) => other.startsWith(id) && /^\D/.test(other.slice(id.length)));
+
+for (const id of doneWithoutPr) {
+  const children = childrenOf(id);
+  if (!children.length) {
+    const day = byId.get(id).row[4];
     fail(`${id} is done in ${day} but names no PR — a done row must be traceable to a diff`);
+    continue;
+  }
+  const openChildren = children.filter((child) => byId.get(child).row[8] !== "done");
+  if (openChildren.length) {
+    const one = openChildren.length === 1;
+    const noun = one ? "sub-story" : "sub-stories";
+    fail(`${id} is done, but its ${noun} ${openChildren.join(", ")} ${one ? "is" : "are"} not`);
   }
 }
 
@@ -138,12 +166,15 @@ for (const [id, { row }] of byId) {
 // ---------------------------------------------------------------------------
 
 /**
- * A `part` row is a parent that closes when its last child lands — it is not a PR of its own, so
- * it does not count towards a day's PR count. Every other row in a day is one PR.
+ * A `part` row is a parent mid-flight — it is not a PR of its own, so it does not count towards a
+ * day's PR count. Neither is that same parent once it closes: E3-S1 went `done` because its last
+ * sub-story landed, not because a diff named E3-S1. A parent that does carry its own PR still
+ * counts — E5-S2 shipped the CORS allow-list under #97 and E5-S2a is a later, separate row.
  */
 const prShapedByDay = new Map(DAY_KEYS.map((key) => [key, []]));
 for (const [id, { row }] of byId) {
   if (row[4] === "" || row[8] === "part") continue;
+  if (row[10] === undefined && childrenOf(id).length) continue;
   prShapedByDay.get(row[4])?.push(id);
 }
 

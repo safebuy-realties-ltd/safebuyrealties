@@ -17,14 +17,14 @@ export const config = {
   ignoreCommand: "node scripts/vercel-ignore-frontend.mjs",
   ...(apiProxyTarget
     ? {
+        // `/uploads/:path*` used to be rewritten here too. E3-S1d-3 deleted the static mount it
+        // pointed at; documents are served by `/api/v1/documents/file`, which the rewrite above
+        // already covers. Leaving the rewrite in place would have forwarded a public path to an
+        // API that no longer answers on it.
         rewrites: [
           {
             source: "/api/v1/:path*",
             destination: `${apiProxyTarget}/api/v1/:path*`,
-          },
-          {
-            source: "/uploads/:path*",
-            destination: `${apiProxyTarget}/uploads/:path*`,
           },
         ],
       }

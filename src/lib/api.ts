@@ -33,7 +33,16 @@ export type DocumentDto = {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  storageKey: string;
+  /**
+   * Where to fetch the bytes, root-relative, ready to drop into `src` or `href`.
+   *
+   * This replaced `storageKey` in E3-S1d-3. The key was a path into the bucket, and the client
+   * turned it into `/uploads/<key>` itself — an unauthenticated URL that anyone holding it could
+   * fetch, which is how title deeds became public. This names the API's authorized reader instead,
+   * so the request carries the session cookie and the server decides, per request, whether these
+   * particular bytes may leave. Holding the URL grants nothing.
+   */
+  url: string;
   createdAt: string;
   status?: string;
 };

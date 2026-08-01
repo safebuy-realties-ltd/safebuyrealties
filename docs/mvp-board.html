@@ -147,8 +147,8 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>2d0d8c5</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 and 2 complete, day 3 open, main at 2d0d8c5</p>
+    <p class="sub">Verified against <code>main</code> @ <code>9c9e414</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-07-31 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 3 complete, day 4 open, main at 9c9e414</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
@@ -156,9 +156,9 @@
 <section>
   <h2>The week</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">16</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
-    <div class="tile"><div class="label">Day 3</div><div class="value">Open</div><div class="foot">7 PRs in, the mount is still mounted</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">8</div><div class="foot">3 in day 4, 5 in day 5, over the ceiling</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">17</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
+    <div class="tile"><div class="label">Day 4</div><div class="value">Open</div><div class="foot">3 of 5 in, the mount is out, E3-S1 closed</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">7</div><div class="foot">2 in day 4, 5 in day 5, over the ceiling</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">72&ndash;100</div><div class="foot">developer-days remaining</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">2 blocked externally</div></div>
@@ -167,13 +167,13 @@
 </section>
 
 <section>
-  <h2>Up next <span class="note">finish day 3, then day 4</span></h2>
+  <h2>Up next <span class="note">finish day 4, then day 5</span></h2>
 
   <div class="flagbox">
-    <p><b>Day 3 is not closed.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and the day's actual deliverable is still open. E3-S1 says <i>retire the public static route</i>. The route is still mounted at <code>app-bootstrap.ts:39</code>. Seven merged PRs is not the same fact as a closed day, and this board said "done" until someone checked.</p>
+    <p><b>Day 3 closed in day 4.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and at the end of all seven the day's actual deliverable was still open: E3-S1 says <i>retire the public static route</i>, and the route was still mounted. It came out in E3-S1d-3 (#112), two days and two sub-stories later. Seven merged PRs was not the same fact as a closed day, and this board said "done" until someone checked.</p>
     <p><b>Two of those seven do less than their titles claimed.</b> #105 widened <code>backend/.gitignore</code> only: the <b>root</b> <code>.gitignore</code> still has no env pattern, so <code>.env</code> and <code>.env.production</code> at the repository root remain committable, and a root <code>.env.example</code> says a root <code>.env</code> is expected &mdash; now <b>CH-3</b>. #107's reconcile is sound, but its suggested split for E3-S1d has since been shown wrong, and it predates #108 so the backlog still calls E3-S1d planned &mdash; now <b>DOCS-6</b>. Neither is a regression; both are the gap between what shipped and what the row said.</p>
-    <p><b>What is left of E3-S1 is not what the row said.</b> Retiring the static mount is not blocked by private documents — it is blocked by <i>public</i> listing imagery, the only thing on the frontend that still builds an <code>/uploads/</code> URL (<code>uploadAssetUrl()</code> in <code>listings.$listingId.tsx:36</code> and <code>purchase.$listingId.tsx:56</code>). That needs a replacement public-delivery route and frontend edits, so it is split out as E3-S1d-3 rather than bolted onto E3-S1d-2, which is backend-only.</p>
-    <p><b>Days 4 and 5 now hold 9 PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 15 have merged, so the remaining nine do not fit and pretending otherwise is how a board starts lying again. Order of value if something has to go: E3-S1d-2 and E3-S1d-3 close an open security hole and are not negotiable; E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
+    <p><b>E3-S1 closed by deleting a route, not by adding one.</b> What was left was not what the row said: the mount was held open by <i>public</i> listing imagery, the last thing on the frontend still building an <code>/uploads/</code> URL. The obvious answer was a second, public delivery route beside the authorized one. E3-S1d-3 did the opposite &mdash; <code>/api/v1/documents/file</code> took optional authentication, so one route now decides per <code>Document</code> row and serves <code>listing_hero</code> and <code>listing_gallery</code> to a visitor with no session while refusing the title deed one row away. That absorbed the E3-S1b gate rather than leaving two gates on one prefix, which is how the next leak would have got in.</p>
+    <p><b>Day 5 still holds 5 PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 17 have merged. The security work is off the list now that both halves of E3-S1d have landed; what is left is two S rows in day 4 and a packaging day that is over the ceiling. Order of value if something has to go: E7-S5 and DOCS-4 are what the next team opens on their first morning; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
     <p><b>Carry these two rules into days 4 and 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now updates this board in the same diff: <code>npm run validate:board</code> locally, enforced in CI, because both times this board went stale it was found by a person rather than by a check.</p>
   </div>
 
@@ -339,7 +339,7 @@ const DAYS = [
     "<b>E2-S4</b> payment mock guard &middot; PR 99 merged",
     "<b>E7-S6</b> health probes &middot; PR 101 merged",
     "<b>E5-S2</b> CORS allow-list &middot; PR 97 merged" ]},
-  { n:"Day 3", theme:"The exposure, 7 PRs in, not closed", count:7, done:false, review:true, items:[
+  { n:"Day 3", theme:"The exposure, 7 PRs in, closed from day 4", count:7, done:true, review:false, items:[
     "<b>E5-S2a</b> squattable preview origins &middot; PR 102 merged",
     "<b>E3-S1a</b> failing probe, merged red &middot; PR 103 merged",
     "<b>E3-S1b</b> only public imagery from /uploads &middot; PR 104 merged",
@@ -347,11 +347,11 @@ const DAYS = [
     "<b>E3-S1d-1</b> due diligence report reads &middot; PR 108 merged",
     "<b>CH-2</b> backend env files ignored, snapshot untracked &middot; PR 105 merged",
     "<b>DOCS-5</b> E3-S1 reconciled against what shipped &middot; PR 107 merged",
-    "&mdash; E3-S1 stays here, part done. Its last two sub-stories carried into day 4, and DOCS-6 into day 5" ]},
-  { n:"Day 4", theme:"Close the exposure, then make it runnable", count:5, done:false, items:[
+    "&mdash; E3-S1 belongs to this day but closed in day 4, when E3-S1d-3 took the mount out. DOCS-6, the backlog reconcile it needs, is in day 5" ]},
+  { n:"Day 4", theme:"Close the exposure, then make it runnable", count:5, done:false, review:true, items:[
     "<b>CH-4</b> the board is a merge gate &middot; PR 110 merged",
     "<b>E3-S1d-2</b> power of attorney reads &middot; PR 111 merged",
-    "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes",
+    "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes &middot; PR 112 merged",
     "<b>CH-3</b> env ignore rules at the repository root",
     "<b>E7-S2</b> coverage floor measured and recorded" ]},
   { n:"Day 5", theme:"Package and freeze, oversubscribed", count:5, done:false, items:[
@@ -366,12 +366,9 @@ const DAYS = [
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:111, t:"E3-S1d-2, power of attorney documents through the authorized reader",
-    why:"The last private family that is small. POA keys are poa/&lt;transactionId&gt;/…, the readers are the POA buyer, the listing seller and operators, and nothing on the frontend renders pdfStorageKey or qrCodeStorageKey — so this is backend-only, unlike what the backlog row claimed.",
-    look:"poa.service.ts serialize() hands out the raw storage keys and never calls getSignedUrl(), so routing the family is not enough on its own. Check the reader set is resolved from PowerOfAttorney to Transaction to Listing.sellerId, and that a missing POA refuses with the same 403 as a real one." },
-  { pr:null, t:"E3-S1d-3, private listing documents, then retire the static mount",
-    why:"Split out of E3-S1d-2 because it is not the same size. listings/&lt;listingId&gt;/ holds public photos and title deeds under one prefix, so the key alone cannot decide privacy — it needs the Document.category row, which private-documents.ts is deliberately Prisma-free to avoid. Removing the mount then forces a replacement public-delivery route and the frontend edits behind it.",
-    look:"Whether the authorized reader absorbs the E3-S1b gate rather than sitting beside it: one route deciding per Document row, public categories marked @Public(). Two gates for one prefix is how the next leak gets in. Criterion 5, the probe walk over every category, closes here or not at all." },
+  { pr:112, t:"E3-S1d-3, private listing documents, then retire the static mount",
+    why:"Split out of E3-S1d-2 because it is not the same size. listings/&lt;listingId&gt;/ holds public photos and title deeds under one prefix, so the key alone cannot decide privacy — it needs the Document.category row, which private-documents.ts is deliberately Prisma-free to avoid. This is the PR that closes E3-S1, so it is the one to read hardest.",
+    look:"The reader absorbed the E3-S1b gate rather than sitting beside it: one route, optional authentication, deciding per Document row. Check the anonymous path specifically — a visitor with no session gets 200 on listing_hero and 401 on the title deed in the same listing, the refusal is audited and the success is not, and the public asset is the only response that carries a public Cache-Control. Criterion 5, the probe walk over every category, is the it.each in private-document.controller.spec.ts." },
   { pr:null, t:"CH-3, then E7-S2, to close out day 4",
     why:"Both are S and neither blocks anything, so they are the cheap end of a day whose expensive half is E3-S1d-3. CH-3 is four lines of .gitignore and closes the half of #105 that was overstated.",
     look:"E7-S2 needs today's real coverage number recorded in the PR body. A threshold set above the current number breaks CI for whoever merges next; a threshold set at zero ratchets from nothing." },
@@ -404,13 +401,13 @@ const STORIES = [
   ["E2-S4","Money","Production guard on payment mock mode","A missing key records every payout as completed with a mock reference. Highest harm per line in the repo.","D2","—","S","none","done",true,99],
   ["E2-S5","Money","Finance reconciliation view","The Finance Manager role has no finance screen; the admin chart is a placeholder generator.","","—","M","E2-S1, E4-S1","planned",false],
 
-  ["E3-S1","Trust","Authorized document access, retire the public static route","/uploads is mounted before any guard, so any key fetches any document. One M row on paper; six sub-stories in practice, four of them merged.","D3","secure_docs","M","none","part",true],
+  ["E3-S1","Trust","Authorized document access, retire the public static route","/uploads was mounted before any guard, so any key fetched any document. One M row on paper; six sub-stories in practice, and the last of them took the mount out. Closed in day 4.","D3","secure_docs","M","none","done",true],
   ["E3-S1a","Trust","Failing probe test for document exposure","Merged red with a linked story. Executable proof beats a paragraph, and it is now the regression test.","D3","—","S","none","done",false,103],
   ["E3-S1b","Trust","Serve only public listing imagery from /uploads","A gate ahead of the static mount resolves each key to its Document row and 404s everything that is not a published listing asset.","D3","—","S","E3-S1a","done",false,104],
   ["E3-S1c","Trust","Authorized reads for KYC and credential documents","Both key builders take the id from the uploader's own JWT subject, so the key is the ownership record and needs no lookup.","D3","—","M","E3-S1b","done",false,106],
   ["E3-S1d-1","Trust","Authorized reads for due diligence reports","The id in the key names an order, not a user, so the reader set comes from the database: the ordering buyer, assigned professionals, operators.","D3","—","M","E3-S1c","done",false,108],
   ["E3-S1d-2","Trust","Authorized reads for power of attorney documents","poa/&lt;transactionId&gt;/ resolves to buyer, listing seller and operators. serialize() hands out raw keys today and never signs them. Backend only.","D4","—","S","E3-S1d-1","done",false,111],
-  ["E3-S1d-3","Trust","Private listing documents, then retire the static mount","listings/ mixes public photos with title deeds, so privacy needs the Document row. Removing the mount forces a replacement public-delivery route and frontend edits.","D4","secure_docs","M","E3-S1b, E3-S1d-2","planned",true],
+  ["E3-S1d-3","Trust","Private listing documents, then retire the static mount","listings/ mixes public photos with title deeds, so privacy needs the Document row. Removing the mount forces a replacement public-delivery route and frontend edits.","D4","secure_docs","M","E3-S1b, E3-S1d-2","done",true,112],
   ["E3-S2","Trust","Durable object storage in production","On Vercel uploads land in ephemeral /tmp and do not survive.","","—","M","ADR-0004","planned",true],
   ["E3-S3","Trust","Upload hardening: type allow-list, magic bytes, AV hook","Multer has no fileFilter and the stored MIME type is whatever the client claimed.","","secure_docs","M","E3-S2","planned",false],
   ["E3-S4","Trust","Public PoA verification page","Every generated QR points at /verify, a route that does not exist.","D2","—","S","none","done",false,98],
