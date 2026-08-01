@@ -53,10 +53,7 @@ export class StandaloneDdController {
   }
 
   @Post("orders/:serviceId/verify")
-  verifyPayment(
-    @Param("serviceId") serviceId: string,
-    @Body() body: { reference?: string },
-  ) {
+  verifyPayment(@Param("serviceId") serviceId: string, @Body() body: { reference?: string }) {
     return this.standaloneDd.verifyPayment(serviceId, body?.reference);
   }
 
@@ -75,10 +72,7 @@ export class StandaloneDdController {
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @RequirePermissions(PERMISSIONS.DD_ORDERS_READ)
-  listProfessionals(
-    @CurrentUser() user: JwtPayload,
-    @Query("scheduleCode") scheduleCode?: string,
-  ) {
+  listProfessionals(@CurrentUser() user: JwtPayload, @Query("scheduleCode") scheduleCode?: string) {
     return this.standaloneDd.listAssignableProfessionals(user, scheduleCode);
   }
 

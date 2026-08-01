@@ -7,12 +7,28 @@ import {
 import { RequestMethod } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import { ROLES_KEY } from "../decorators/roles.decorator";
-import {
-  ANY_PERMISSIONS_KEY,
-  PERMISSIONS_KEY,
-} from "../decorators/permissions.decorator";
+import { ANY_PERMISSIONS_KEY, PERMISSIONS_KEY } from "../decorators/permissions.decorator";
 import type { Permission } from "../permissions";
 import { isInternalRole } from "../user-roles";
+
+/**
+ * A class, as Nest hands one back: constructable, named, and carrying a prototype.
+ *
+ * Spelled out rather than written `Function` because that type accepts any callable at all,
+ * including the handlers below, and the two are not interchangeable here — `collectModules`
+ * reads `imports` off a module class and `collectRoutes` reads a prototype off a controller.
+ */
+export type ClassRef = {
+  new (...args: never[]): object;
+  readonly name: string;
+  readonly prototype: object;
+};
+
+/** A route handler read back off a controller prototype. */
+export type HandlerRef = {
+  (...args: never[]): unknown;
+  readonly name: string;
+};
 
 /**
  * Every HTTP route the application actually mounts, read back off the decorators.
@@ -29,11 +45,11 @@ import { isInternalRole } from "../user-roles";
  */
 export interface RouteEntry {
   /** Controller class the handler is declared on. */
-  controller: Function;
+  controller: ClassRef;
   /** Method name on the controller, e.g. `release`. */
   handlerName: string;
   /** The handler itself, for tests that build an `ExecutionContext` around the real function. */
-  handler: Function;
+  handler: HandlerRef;
   /** `GET`, `POST`, … */
   method: string;
   /** Full mounted path, controller prefix included, e.g. `/escrow/:transactionId/release`. */
@@ -55,13 +71,9 @@ export interface RouteEntry {
 }
 
 /** A `@Module` class, a `DynamicModule`, a `forwardRef` thunk, or a promise of one. */
-type ModuleRef =
-  | Function
-  | { module?: Function; forwardRef?: () => unknown }
-  | undefined
-  | null;
+type ModuleRef = ClassRef | { module?: ClassRef; forwardRef?: () => unknown } | undefined | null;
 
-function unwrap(entry: ModuleRef): Function | null {
+function unwrap(entry: ModuleRef): ClassRef | null {
   if (!entry) return null;
   if (typeof entry === "function") return entry;
   if (typeof entry.forwardRef === "function") {
@@ -71,11 +83,11 @@ function unwrap(entry: ModuleRef): Function | null {
 }
 
 /** Depth-first over `imports`, collecting each module class once. */
-function collectModules(root: Function): Function[] {
-  const seen = new Set<Function>();
-  const queue: Function[] = [root];
+function collectModules(root: ClassRef): ClassRef[] {
+  const seen = new Set<ClassRef>();
+  const queue: ClassRef[] = [root];
   while (queue.length) {
-    const mod = queue.shift() as Function;
+    const mod = queue.shift() as ClassRef;
     if (seen.has(mod)) continue;
     seen.add(mod);
     const imports =
@@ -88,7 +100,7 @@ function collectModules(root: Function): Function[] {
   return [...seen];
 }
 
-function guardNames(target: object | Function): string[] {
+function guardNames(target: ClassRef | HandlerRef): string[] {
   const guards = (Reflect.getMetadata(GUARDS_METADATA, target) as unknown[] | undefined) ?? [];
   return guards.map((guard) =>
     typeof guard === "function"
@@ -98,7 +110,7 @@ function guardNames(target: object | Function): string[] {
 }
 
 /** Handler metadata wins over class metadata, matching `Reflector.getAllAndOverride`. */
-function override<T>(handler: Function, controller: Function, key: string): T | undefined {
+function override<T>(handler: HandlerRef, controller: ClassRef, key: string): T | undefined {
   const onHandler = Reflect.getMetadata(key, handler) as T | undefined;
   return onHandler ?? (Reflect.getMetadata(key, controller) as T | undefined);
 }
@@ -111,13 +123,13 @@ function joinPath(...segments: unknown[]): string {
 }
 
 /** Every route reachable from `rootModule`, in module-then-declaration order. */
-export function collectRoutes(rootModule: Function): RouteEntry[] {
+export function collectRoutes(rootModule: ClassRef): RouteEntry[] {
   const routes: RouteEntry[] = [];
-  const seenControllers = new Set<Function>();
+  const seenControllers = new Set<ClassRef>();
 
   for (const mod of collectModules(rootModule)) {
     const controllers =
-      (Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, mod) as Function[] | undefined) ?? [];
+      (Reflect.getMetadata(MODULE_METADATA.CONTROLLERS, mod) as ClassRef[] | undefined) ?? [];
 
     for (const controller of controllers) {
       if (seenControllers.has(controller)) continue;
@@ -130,8 +142,9 @@ export function collectRoutes(rootModule: Function): RouteEntry[] {
       for (const name of Object.getOwnPropertyNames(prototype)) {
         if (name === "constructor") continue;
         // Read the descriptor rather than the property so a getter is never invoked.
-        const handler = Object.getOwnPropertyDescriptor(prototype, name)?.value as unknown;
-        if (typeof handler !== "function") continue;
+        const value = Object.getOwnPropertyDescriptor(prototype, name)?.value as unknown;
+        if (typeof value !== "function") continue;
+        const handler = value as HandlerRef;
         if (!Reflect.hasMetadata(PATH_METADATA, handler)) continue;
 
         const roles = override<UserRole[]>(handler, controller, ROLES_KEY) ?? [];

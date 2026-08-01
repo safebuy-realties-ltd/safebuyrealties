@@ -24,8 +24,7 @@ describe("operator routes declare and enforce a privilege", () => {
   const routes = collectRoutes(AppModule);
   const operatorRoutes = routes.filter((r) => r.reachableByOperators);
 
-  const list = (entries: RouteEntry[]) =>
-    entries.map((r) => `  - ${describeRoute(r)}`).join("\n");
+  const list = (entries: RouteEntry[]) => entries.map((r) => `  - ${describeRoute(r)}`).join("\n");
 
   it("finds the application's routes at all", () => {
     // Without this the whole file passes vacuously if the walker ever stops resolving modules:
@@ -169,10 +168,7 @@ describe("operator routes declare and enforce a privilege", () => {
     it("keeps the frontend and backend privilege catalogs in step", () => {
       // Two hand-maintained copies of the same list. If they drift the dashboard hides the wrong
       // things, and a privilege the API enforces stops appearing in the role editor at all.
-      const frontend = readFileSync(
-        join(__dirname, "../../../../src/lib/permissions.ts"),
-        "utf8",
-      );
+      const frontend = readFileSync(join(__dirname, "../../../../src/lib/permissions.ts"), "utf8");
       const declared = [...frontend.matchAll(/^ {2}[A-Z_]+: "([a-z.]+)",$/gm)].map((m) => m[1]);
       expect(declared.sort()).toEqual(Object.values(PERMISSIONS).sort());
     });

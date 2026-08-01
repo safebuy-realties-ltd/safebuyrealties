@@ -8,13 +8,11 @@ import { AuditAction } from "../../audit/audit-actions.constants";
 import type { AuditService } from "../../audit/audit.service";
 import type { PermissionsService } from "../../permissions/permissions.service";
 import type { JwtPayload } from "../../auth/jwt.strategy";
-import {
-  RequireAnyPermission,
-  RequirePermissions,
-} from "../decorators/permissions.decorator";
+import { RequireAnyPermission, RequirePermissions } from "../decorators/permissions.decorator";
 import { Roles } from "../decorators/roles.decorator";
 import { PERMISSIONS, type Permission } from "../permissions";
 import { PermissionsGuard } from "./permissions.guard";
+import type { ClassRef, HandlerRef } from "./route-inventory";
 
 /**
  * Two routes that do not exist in the application, for the two cases the application should never
@@ -73,14 +71,14 @@ describe("PermissionsGuard", () => {
   });
 
   function contextFor(
-    controller: Function,
+    controller: ClassRef,
     handlerName: string,
     caller?: JwtPayload,
   ): ExecutionContext {
     const req = request(caller);
     return {
       getClass: () => controller,
-      getHandler: () => (controller.prototype as Record<string, Function>)[handlerName],
+      getHandler: () => (controller.prototype as Record<string, HandlerRef>)[handlerName],
       switchToHttp: () => ({ getRequest: () => req }),
     } as unknown as ExecutionContext;
   }
@@ -130,7 +128,9 @@ describe("PermissionsGuard", () => {
     it("names only the privileges the caller is actually short of", async () => {
       effective = [PERMISSIONS.ESCROWS_WRITE];
       await expect(
-        guard.canActivate(contextFor(UndeclaredRouteController, "twoPrivileges", user(UserRole.ADMIN))),
+        guard.canActivate(
+          contextFor(UndeclaredRouteController, "twoPrivileges", user(UserRole.ADMIN)),
+        ),
       ).rejects.toThrow("Missing privilege: platform.config");
     });
 
@@ -200,7 +200,9 @@ describe("PermissionsGuard", () => {
       // privilege system cannot constrain this account. The remaining control is the record.
       effective = [PERMISSIONS.ESCROWS_WRITE];
       await expect(
-        guard.canActivate(contextFor(EscrowController, "release", user(UserRole.SUPER_ADMIN, "root"))),
+        guard.canActivate(
+          contextFor(EscrowController, "release", user(UserRole.SUPER_ADMIN, "root")),
+        ),
       ).resolves.toBe(true);
 
       expect(log).toHaveBeenCalledTimes(1);

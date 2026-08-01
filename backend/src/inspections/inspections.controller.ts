@@ -52,7 +52,11 @@ export class InspectionsController {
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN)
   @RequirePermissions(PERMISSIONS.STAFF_OPS)
-  patch(@Param("id") id: string, @Body() dto: PatchInspectionSlotDto, @CurrentUser() user: JwtPayload) {
+  patch(
+    @Param("id") id: string,
+    @Body() dto: PatchInspectionSlotDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.inspections.patch(id, dto, user);
   }
 }

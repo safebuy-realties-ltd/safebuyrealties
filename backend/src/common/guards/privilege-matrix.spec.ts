@@ -6,11 +6,7 @@ import { UserRole } from "@prisma/client";
 import { AppModule } from "../../app.module";
 import type { AuditService } from "../../audit/audit.service";
 import type { PermissionsService } from "../../permissions/permissions.service";
-import {
-  DEFAULT_ADMIN_ROLE_TEMPLATES,
-  resolvePermissions,
-  type Permission,
-} from "../permissions";
+import { DEFAULT_ADMIN_ROLE_TEMPLATES, resolvePermissions, type Permission } from "../permissions";
 import { PermissionsGuard } from "./permissions.guard";
 import { collectRoutes, type RouteEntry } from "./route-inventory";
 
@@ -130,7 +126,12 @@ describe("the seeded admin roles against every privileged endpoint", () => {
 
   function contextFor(route: RouteEntry, role: UserRole): ExecutionContext {
     const request = {
-      user: { sub: `seeded-${role}`, email: `${role}@safebuyrealties.test`, role, professionalType: null },
+      user: {
+        sub: `seeded-${role}`,
+        email: `${role}@safebuyrealties.test`,
+        role,
+        professionalType: null,
+      },
       ip: "203.0.113.9",
       method: route.method,
       originalUrl: route.path,
@@ -221,13 +222,15 @@ describe("the seeded admin roles against every privileged endpoint", () => {
 
     for (const route of administration) {
       for (const persona of PERSONAS) {
-        expect({ route: route.id, role: persona.name, allowed: await allows(route, persona) }).toEqual(
-          {
-            route: route.id,
-            role: persona.name,
-            allowed: persona.role === UserRole.SUPER_ADMIN,
-          },
-        );
+        expect({
+          route: route.id,
+          role: persona.name,
+          allowed: await allows(route, persona),
+        }).toEqual({
+          route: route.id,
+          role: persona.name,
+          allowed: persona.role === UserRole.SUPER_ADMIN,
+        });
       }
     }
   });
@@ -249,10 +252,7 @@ describe("the seeded admin roles against every privileged endpoint", () => {
     for (const match of source.matchAll(/grantPermissions\((\w+)\.id,\s*\[([^\]]*)\]/g)) {
       const templateName = byVariable[match[1]];
       if (!templateName) continue;
-      found.set(
-        templateName,
-        [...match[2].matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort(),
-      );
+      found.set(templateName, [...match[2].matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort());
     }
 
     // If the seed is rewritten in a shape this cannot read, fail here rather than pass with zero

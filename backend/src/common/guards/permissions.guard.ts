@@ -7,10 +7,7 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { UserRole } from "@prisma/client";
-import {
-  PERMISSIONS_KEY,
-  ANY_PERMISSIONS_KEY,
-} from "../decorators/permissions.decorator";
+import { PERMISSIONS_KEY, ANY_PERMISSIONS_KEY } from "../decorators/permissions.decorator";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 import { hasPermission, type Permission } from "../permissions";
 import { isInternalRole } from "../user-roles";
