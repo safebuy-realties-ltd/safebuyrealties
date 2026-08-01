@@ -279,6 +279,47 @@ for (const card of DAYS) {
 }
 
 // ---------------------------------------------------------------------------
+// Page furniture that has to survive a rewrite
+// ---------------------------------------------------------------------------
+
+/*
+ * The light and dark switch. Every story PR rewrites large parts of this page under rule 8, and a
+ * control nobody's checklist mentions is exactly what a wide edit drops without noticing. It was
+ * asked for twice, so it is a check rather than a good intention.
+ *
+ * Three parts, each useless alone: the pre-paint script decides the opening theme before the first
+ * paint, the button gives a reader somewhere to click, and the handler flips it and remembers the
+ * flip. Assert all three so half of it cannot survive and read as working.
+ */
+const THEME_PARTS = [
+  {
+    what: "the pre-paint theme script in <head>",
+    test: /localStorage\.getItem\("sbr-board-theme"\)/,
+    why: "without it the page opens light on a dark machine, or flashes light and then corrects",
+  },
+  {
+    what: 'the toggle button (id="themeBtn")',
+    test: /id="themeBtn"/,
+    why: "without it the theme can only be changed by changing the operating system",
+  },
+  {
+    what: "the click handler that sets documentElement.dataset.theme",
+    test: /document\.documentElement\.dataset\.theme\s*=/,
+    why: "without it the button is decoration",
+  },
+  {
+    what: "the line that stores the choice",
+    test: /localStorage\.setItem\("sbr-board-theme"/,
+    why: "without it the page forgets the choice on every reload, which reads as broken",
+  },
+];
+for (const part of THEME_PARTS) {
+  if (!part.test.test(source)) {
+    fail(`the board has lost ${part.what}: ${part.why}. Put it back, do not delete the switch`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Prose that quotes the data
 // ---------------------------------------------------------------------------
 
