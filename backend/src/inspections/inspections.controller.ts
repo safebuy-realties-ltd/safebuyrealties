@@ -2,6 +2,9 @@ import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/co
 import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import { PERMISSIONS } from "../common/permissions";
 import { Roles } from "../common/decorators/roles.decorator";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { JwtPayload } from "../auth/jwt.strategy";
@@ -31,8 +34,9 @@ export class InspectionsController {
   }
 
   @Get("inspections/queue")
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN)
+  @RequirePermissions(PERMISSIONS.STAFF_OPS)
   listQueue(@CurrentUser() user: JwtPayload) {
     return this.inspections.listQueue(user);
   }
@@ -45,9 +49,14 @@ export class InspectionsController {
   }
 
   @Patch("inspection-slots/:id")
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN)
-  patch(@Param("id") id: string, @Body() dto: PatchInspectionSlotDto, @CurrentUser() user: JwtPayload) {
+  @RequirePermissions(PERMISSIONS.STAFF_OPS)
+  patch(
+    @Param("id") id: string,
+    @Body() dto: PatchInspectionSlotDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.inspections.patch(id, dto, user);
   }
 }

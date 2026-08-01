@@ -16,6 +16,8 @@ export const AuditAction = {
   PLATFORM_CONFIG_UPDATED: "PLATFORM_CONFIG_UPDATED",
   PRIVATE_DOCUMENT_READ: "PRIVATE_DOCUMENT_READ",
   PRIVATE_DOCUMENT_READ_DENIED: "PRIVATE_DOCUMENT_READ_DENIED",
+  /** A SUPER_ADMIN passed a privilege check it holds by bypass rather than by grant. */
+  SUPER_ADMIN_PRIVILEGE_BYPASS: "SUPER_ADMIN_PRIVILEGE_BYPASS",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];

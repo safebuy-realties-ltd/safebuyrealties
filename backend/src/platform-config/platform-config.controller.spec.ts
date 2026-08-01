@@ -3,7 +3,10 @@ import { Reflector } from "@nestjs/core";
 import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { ROLES_KEY } from "../common/decorators/roles.decorator";
+import { PERMISSIONS_KEY } from "../common/decorators/permissions.decorator";
+import { PERMISSIONS } from "../common/permissions";
 import { PlatformConfigController } from "./platform-config.controller";
 import { PlatformConfigService } from "./platform-config.service";
 
@@ -39,6 +42,12 @@ describe("PlatformConfigController", () => {
       .useValue({ canActivate: () => true })
       .overrideGuard(RolesGuard)
       .useValue({ canActivate: () => true })
+      // PermissionsGuard is built from PermissionsService and AuditService, which the application
+      // supplies from two @Global() modules. This root test module imports neither, so the guard is
+      // overridden here as the other two already are. What it does is tested in
+      // `common/guards/permissions.guard.spec.ts`; what this file cares about is that it is mounted.
+      .overrideGuard(PermissionsGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     controller = module.get(PlatformConfigController);
@@ -57,6 +66,17 @@ describe("PlatformConfigController", () => {
 
     expect(roles).toEqual([UserRole.ADMIN]);
     expect(guards).toEqual(expect.arrayContaining([RolesGuard]));
+  });
+
+  it("restricts PATCH further, to admins holding platform.config", () => {
+    // Being an ADMIN is not enough: a content manager is an ADMIN too. `@Roles` narrows the route to
+    // operators, `@RequirePermissions` narrows it to the operators whose job this is.
+    const reflector = new Reflector();
+    const required = reflector.get<string[]>(PERMISSIONS_KEY, controller.update);
+    const guards = Reflect.getMetadata("__guards__", controller.update);
+
+    expect(required).toEqual([PERMISSIONS.PLATFORM_CONFIG]);
+    expect(guards).toEqual(expect.arrayContaining([PermissionsGuard]));
   });
 
   it("delegates GET and PATCH to the service", async () => {

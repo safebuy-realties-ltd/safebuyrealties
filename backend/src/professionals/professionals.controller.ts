@@ -18,7 +18,10 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Roles } from "../common/decorators/roles.decorator";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { PERMISSIONS } from "../common/permissions";
 import { UpdateMyProfileDto } from "./dto/update-my-profile.dto";
 import { VerifyCredentialDto } from "./dto/verify-credential.dto";
 import { ProfessionalsService } from "./professionals.service";
@@ -61,15 +64,17 @@ export class ProfessionalsController {
   }
 
   @Get("credentials/pending")
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.STAFF_OPS)
   listPending() {
     return this.professionals.listPending();
   }
 
   @Patch(":id/verify")
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.STAFF_OPS)
   verify(
     @Param("id") id: string,
     @Body() dto: VerifyCredentialDto,

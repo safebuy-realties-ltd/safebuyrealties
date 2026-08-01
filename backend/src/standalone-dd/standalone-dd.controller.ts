@@ -20,7 +20,10 @@ import { OptionalJwtAuthGuard } from "../auth/optional-jwt.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Roles } from "../common/decorators/roles.decorator";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { PERMISSIONS } from "../common/permissions";
 import { CreateStandaloneDdOrderDto } from "./dto/create-standalone-dd-order.dto";
 import { InitiateStandaloneDdPaymentDto } from "./dto/initiate-standalone-dd-payment.dto";
 import { ListStandaloneDdOrdersQueryDto } from "./dto/list-standalone-dd-orders.query";
@@ -50,10 +53,7 @@ export class StandaloneDdController {
   }
 
   @Post("orders/:serviceId/verify")
-  verifyPayment(
-    @Param("serviceId") serviceId: string,
-    @Body() body: { reference?: string },
-  ) {
+  verifyPayment(@Param("serviceId") serviceId: string, @Body() body: { reference?: string }) {
     return this.standaloneDd.verifyPayment(serviceId, body?.reference);
   }
 
@@ -69,12 +69,10 @@ export class StandaloneDdController {
   }
 
   @Get("professionals")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  listProfessionals(
-    @CurrentUser() user: JwtPayload,
-    @Query("scheduleCode") scheduleCode?: string,
-  ) {
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_READ)
+  listProfessionals(@CurrentUser() user: JwtPayload, @Query("scheduleCode") scheduleCode?: string) {
     return this.standaloneDd.listAssignableProfessionals(user, scheduleCode);
   }
 
@@ -86,8 +84,9 @@ export class StandaloneDdController {
   }
 
   @Post("orders/:id/assignments")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_WRITE)
   assignProfessional(
     @Param("id") id: string,
     @Body() dto: AssignStandaloneDdDto,
@@ -96,9 +95,14 @@ export class StandaloneDdController {
     return this.standaloneDd.assignProfessional(id, dto, user);
   }
 
+  // Mixed audience: the assigned professional files their own report, and an operator may file it
+  // on their behalf. The privilege applies to the operator half only — `PermissionsGuard` passes a
+  // PROFESSIONAL through, since `ROLE_DEFAULT_PERMISSIONS` gives that role no privileges at all and
+  // measuring it against one could only ever deny. `uploadAssignmentReport` scopes the assignment.
   @Post("assignments/:id/report")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.PROFESSIONAL, UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_WRITE)
   @UseInterceptors(
     FileInterceptor("file", {
       storage: memoryStorage(),
@@ -114,8 +118,9 @@ export class StandaloneDdController {
   }
 
   @Patch("orders/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_WRITE)
   updateOrder(
     @Param("id") id: string,
     @Body() dto: UpdateStandaloneDdOrderDto,
@@ -125,8 +130,9 @@ export class StandaloneDdController {
   }
 
   @Post("orders/:id/report")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_WRITE)
   @UseInterceptors(
     FileInterceptor("file", {
       storage: memoryStorage(),

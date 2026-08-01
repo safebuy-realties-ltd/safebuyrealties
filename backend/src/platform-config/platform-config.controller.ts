@@ -4,7 +4,10 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Roles } from "../common/decorators/roles.decorator";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { PERMISSIONS } from "../common/permissions";
 import { UpdatePlatformConfigDto } from "./dto/update-platform-config.dto";
 import { PlatformConfigService } from "./platform-config.service";
 
@@ -13,6 +16,8 @@ import { PlatformConfigService } from "./platform-config.service";
 export class PlatformConfigController {
   constructor(private platformConfig: PlatformConfigService) {}
 
+  // No `@Roles`: every signed-in account reads the config, and `getForRole` decides which fields
+  // it gets back. Not an operator route, so it declares no privilege.
   @Get()
   async get(@CurrentUser() user: JwtPayload) {
     const config = await this.platformConfig.get();
@@ -20,8 +25,9 @@ export class PlatformConfigController {
   }
 
   @Patch()
-  @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(UserRole.ADMIN)
+  @RequirePermissions(PERMISSIONS.PLATFORM_CONFIG)
   update(@Body() dto: UpdatePlatformConfigDto, @CurrentUser() user: JwtPayload) {
     return this.platformConfig.update(dto, user.sub);
   }
