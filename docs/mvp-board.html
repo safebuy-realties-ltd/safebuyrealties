@@ -147,27 +147,27 @@
 <header class="top">
   <div>
     <h1>SafeBuyRealties, MVP board and handover week</h1>
-    <p class="sub">Verified against <code>main</code> @ <code>8765b70</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
-    <p class="meta">Updated 2026-08-01 &middot; one-week handover, one reviewer plus agents &middot; days 1 to 4 complete, day 5 open, main at 8765b70</p>
+    <p class="sub">Verified against <code>main</code> @ <code>7936194</code>. Backlog format derived from the voxdiary delivery paradigm.</p>
+    <p class="meta">Updated 2026-08-01 &middot; handover week closed at 23 PRs, three follow-on waves laid out &middot; Wave 1 open &middot; one builder plus agents, one reviewer</p>
   </div>
   <button class="theme" id="themeBtn" type="button">Dark mode</button>
 </header>
 
 <section>
-  <h2>The week</h2>
+  <h2>The week, and what follows it</h2>
   <div class="tiles">
-    <div class="tile"><div class="label">PRs merged</div><div class="value">22</div><div class="foot">against 14 planned, but day 3 took 7</div></div>
-    <div class="tile"><div class="label">Day 4</div><div class="value">Done</div><div class="foot">5 of 5 in, closed on the coverage floor</div></div>
-    <div class="tile"><div class="label">Remaining</div><div class="value">3</div><div class="foot">all of it in day 5, still over the ceiling</div></div>
+    <div class="tile"><div class="label">PRs merged</div><div class="value">23</div><div class="foot">22 across the handover week against 14 planned, plus this one</div></div>
+    <div class="tile"><div class="label">Wave 1</div><div class="value">Open</div><div class="foot">0 of 4 in, and E5-S6 goes first</div></div>
+    <div class="tile"><div class="label">Remaining</div><div class="value">13</div><div class="foot">every story a developer can start without a stakeholder</div></div>
     <div class="tile"><div class="label">Full backlog</div><div class="value">68&ndash;98</div><div class="foot">developer-days remaining, up 1 &mdash; E7-S5 found two stories</div></div>
     <div class="tile"><div class="label">Open decisions</div><div class="value">5</div><div class="foot">now ADRs 0001&ndash;0005</div></div>
     <div class="tile"><div class="label">Go-live gates</div><div class="value">6</div><div class="foot">3 wait on external input</div></div>
   </div>
-  <p class="meta" style="margin-top:10px">The limit this week is not developer-days, it is <b>review hours</b>. A small PR costs 30 to 45 minutes to review properly, which caps one reviewer at 12 to 15 PRs across five days. The plan is sized to that, not to agent throughput.</p>
+  <p class="meta" style="margin-top:10px">The limit was never developer-days, it is <b>review hours</b>, and that did not change when the week ended. A small PR costs 30 to 45 minutes to review properly, which caps one reviewer at 12 to 15 PRs a week however many agents the builder runs. The waves below are sized to that. They are also serialised by this page: every story PR has to bring the whole of it up to date in the same diff, and two PRs both moving the counter tiles conflict on purpose, so they merge one at a time with a rebase between them.</p>
 </section>
 
 <section>
-  <h2>Up next <span class="note">day 5, the last day</span></h2>
+  <h2>Up next <span class="note">wave 1 of 3</span></h2>
 
   <div class="flagbox">
     <p><b>Day 3 closed in day 4.</b> Seven PRs merged against two planned &mdash; E5-S2a (#102), the failing probe (#103), the public-asset gate on <code>/uploads</code> (#104), KYC and credential reads (#106), due diligence report reads (#108), plus env-file hygiene (#105) and a backlog reconcile (#107) &mdash; and at the end of all seven the day's actual deliverable was still open: E3-S1 says <i>retire the public static route</i>, and the route was still mounted. It came out in E3-S1d-3 (#112), two days and two sub-stories later. Seven merged PRs was not the same fact as a closed day, and this board said "done" until someone checked.</p>
@@ -178,42 +178,41 @@
     <p><b>The backlog had gone stale in the direction that flatters nobody, and <b>DOCS-6</b> (#116) is the reconcile.</b> Seven rows still said <i>planned</i> about work that had merged, which is the harmless half. The harmful half was in the executive summary: it named three blockers, and by day 4 one of them was telling the reader that <i>private documents are publicly readable</i> &mdash; untrue since #112 deleted the mount. A document that overstates a closed risk is not a cautious document; it is one the next team stops believing on the first thing they check. Effort was re-derived rather than re-guessed: each merged story subtracted at its published size, so the new <b>Remaining</b> column sits beside the original estimate and means the same kind of thing. <b>72&ndash;100 becomes 67&ndash;97</b>, and the tile and the bars below now read from it.</p>
     <p><b>A week of merging bought four days off the floor and two off the ceiling, and found four stories doing it.</b> Seven milestone stories landed and six of them were S; the one M turned into six sub-stories. Against that, E7 went from 10&ndash;14 to 10&ndash;16 when measuring the coverage floor found the half of its own criterion a floor cannot express, now <b>E7-S2b</b>; and E5 went from 14 to 15 when writing the environment matrix found the one credential in this application that does not fail closed, now <b>E5-S6</b>. That is the shape of an audit week rather than a mis-estimate. The check gained a tooth to match: <code>validate:board</code> now requires the Full backlog tile's ceiling to equal the sum of the effort bars, which is CH-shaped work inside a DOCS story and is flagged as such in the PR &mdash; it earned its place by catching the drift already there, bars summing to 103 under a tile claiming 100.</p>
     <p><b>The week discovered four stories &mdash; E5-S2a, E7-S2b, E5-S6 and E7-S6b &mdash; and half of them came out of a documentation story that shipped no code.</b> <b>E7-S5</b> (#117) is a runbook, an environment matrix and a secrets checklist, and writing the matrix meant asking of every variable what happens when it is missing. Two answers were wrong. <code>JWT_SECRET</code> has no boot guard: unset, the API starts and signs every session token with <code>dev-secret-change-me</code>, a string published in this repository, so anyone who reads it can forge a token for any user &mdash; that is <b>E5-S6</b>, and it is the most severe single finding of the week. And the container <code>HEALTHCHECK</code> polls <code>/api/v1/health</code>, the bare handler that returns ok without touching anything, rather than the <code>/health/ready</code> probe <b>E7-S6</b> built on day 2 to answer that exact question &mdash; that is <b>E7-S6b</b>. Both were documented and filed rather than fixed inside an S-sized docs story, which is rule 5 working; both are also the argument against treating documentation as the part to skip.</p>
-    <p><b>Day 5 holds all 3 remaining PRs, and one reviewer can absorb 4 to 6.</b> The week was sized at 14 and 22 have merged. Days 1 to 4 are closed, every security row is in and the runbook is written; what is left is still over the ceiling. Order of value if something has to go: <b>DOCS-4</b> is the freeze and must run last; <b>E7-S3</b> is a timeboxed spike whose deliverable can be a written finding; <b>E7-S4</b> is the one to cut first, and its dependency needs a decision either way &mdash; the row lists <b>E3-S2</b>, durable object storage, which is not scheduled this week. If the seed only has to resolve locally the dependency is soft and the story is an M; if it has to resolve on Vercel it cannot land at all.</p>
-    <p><b>Carry these two rules into day 5.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing each day — silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR now brings the whole of this page up to date in the same diff &mdash; the row, its day card, the tiles, the header, the queue and any count the prose quotes &mdash; with <code>npm run validate:board</code> locally and enforced in CI, because every time this board went stale it was found by a person rather than by a check.</p>
+    <p><b>The week closed at 23 PRs against 14 planned, and three of its stories left it rather than finished in it.</b> The week was sized at 14 and 23 have merged. Days 1 to 4 closed inside the week; day 5 closed by moving its last three rows somewhere honest instead of ticking them. <b>DOCS-4</b> is the freeze and can only run after the work it freezes, so it goes last of everything, in wave 3. <b>E7-S3</b> is a timeboxed spike that was never a packaging-day task, and it goes to wave 3 too. <b>E7-S4</b> comes off the schedule entirely: it lists <b>E3-S2</b>, durable object storage, as a dependency, E3-S2 waits on <b>ADR-0004</b>, and that is a decision nobody in this repository can take. A story parked against a named blocker is a truer statement than a story sitting in a day it was never going to make.</p>
+    <p><b>What follows the week is not another week, it is three waves, and 13 startable stories are on the schedule.</b> Thirty-two stories remain; 19 of them sit behind a stakeholder decision, an external party or a story that does. The other 13 need nobody &mdash; <b>39 developer-days</b>, laid out below as <b>Wave 1</b> (8 days), <b>Wave 2</b> (12) and <b>Wave 3</b> (19). The ordering is not preference. E4-S1 precedes E4-S3 because a cross-role test suite tests a guard that has to exist first; DOCS-4 is last because it freezes what the other twelve changed; and the deep-review stories &mdash; the guards, the authorization work, the session rewrite &mdash; are spread roughly half and half through each wave rather than stacked, because stacking them idles the builder behind one approver. At the end of wave 3 there is no wave 4, and that is the point: everything still standing is behind an ADR, an external input or a story that is, and the <b>Not scheduled</b> card below names all 19 by epic. That list is the ask, and it is the whole ask.</p>
+    <p><b>Carry these two rules into every wave.</b> Pass <code>--base main</code> on every <code>gh pr create</code>, and run <code>gh pr list --json number,title,baseRefName --jq '.[] | select(.baseRefName != "main")'</code> before reviewing &mdash; silence means every open PR targets main. That one-second check would have caught the #100 failure immediately. And every story PR brings the whole of this page up to date in the same diff &mdash; the row, its schedule card, the tiles, the header, the queue and any count the prose quotes &mdash; with <code>npm run validate:board</code> locally and enforced in CI, because every time this board went stale it was found by a person rather than by a check.</p>
   </div>
 
   <div class="card" id="queue"></div>
 </section>
 
 <section>
-  <h2>Day by day <span class="note">truth over features &middot; all 55 rows accounted for</span></h2>
+  <h2>The week, then the waves <span class="note">truth over features &middot; all 56 rows accounted for</span></h2>
   <div class="days" id="days"></div>
 </section>
 
 <section>
-  <h2>Not doing this week, and why <span class="note">say it out loud, silence reads as oversight</span></h2>
+  <h2>Not on any wave, and why <span class="note">say it out loud, silence reads as oversight</span></h2>
   <div class="card">
     <ul class="tight" style="margin:0">
-      <li><b>E1, the DD case lifecycle.</b> An L story. Half-built and unreviewed is worse to inherit than absent and precisely documented</li>
+      <li><b>E1, the DD case lifecycle.</b> Blocked on ADR-0001. Half-built and unreviewed is worse to inherit than absent and precisely documented</li>
       <li><b>E2-S1, seller payout accounts.</b> Blocked on ADR-0002. Whether the platform holds client funds decides if this is a bank-details form or a regulated flow, and those are not refactors of each other</li>
-      <li><b>E5-S5, session management.</b> L, and it touches every authenticated request. Not something to land in a week you are leaving</li>
+      <li><b>E3-S2, durable object storage.</b> Blocked on ADR-0004, and it is why E7-S4 and E3-S3 are here too. One decision holds three stories</li>
       <li><b>E8-S1, NDPR.</b> L, and needs the client's retention policy first</li>
-      <li><b>E6-S2 and E6-S3, email channel and templates.</b> Depend on E6-S1, which needs a mail domain the client owns</li>
+      <li><b>E6-S1, and therefore E6-S2 and E6-S3.</b> Needs a mail domain the client owns, which is EXT-3. Nothing a developer does moves it</li>
+      <li><b>E5-S5, session management, is no longer on this list.</b> It was deferred because it touches every authenticated request and the week was ending. The week has ended, so it is in wave 3, where the L stories belong</li>
     </ul>
   </div>
 </section>
 
 <section>
-  <h2>Board <span class="note">week assignment in the Day column &middot; the day it landed, or the day it is now scheduled to land</span></h2>
+  <h2>Board <span class="note">schedule key in the Day column &middot; the day it landed, or the wave it is scheduled for</span></h2>
   <div class="filters">
     <select id="fEpic"><option value="">All epics</option></select>
     <select id="fDay">
       <option value="">All rows</option>
-      <option value="week">This week only</option>
-      <option value="D1">Day 1</option><option value="D2">Day 2</option>
-      <option value="D3">Day 3</option><option value="D4">Day 4</option>
-      <option value="D5">Day 5</option>
-      <option value="def">Deferred</option>
+      <option value="sched">On the schedule</option>
+      <option value="def">Not scheduled</option>
     </select>
     <select id="fSize"><option value="">All sizes</option>
       <option value="S">S, about a day</option><option value="M">M, two to four days</option><option value="L">L, about a week</option>
@@ -248,7 +247,7 @@
 </section>
 
 <section>
-  <h2>The three launch blockers <span class="note">none are fixable this week, all are now documented</span></h2>
+  <h2>The three launch blockers <span class="note">one is closed, one is narrowed, one needs a decision no wave can take</span></h2>
   <div class="grid2">
     <div class="card">
       <div class="chip"><span class="dot crit"></span>Critical</div>
@@ -258,21 +257,21 @@
     <div class="card">
       <div class="chip"><span class="dot crit"></span>Critical</div>
       <h3 style="font-size:14px;margin:10px 0 6px">The money cannot safely move</h3>
-      <p style="margin:0;color:var(--text-secondary)">Payouts resolve the destination from two environment variables defaulting to Paystack's test account, so every seller is paid to the same place. Refunds change a status and never call the gateway. The webhook has no replay guard. <b>E2-S4 on day 2 removes the worst of it</b> by refusing to start in production without a key.</p>
+      <p style="margin:0;color:var(--text-secondary)">Payouts resolve the destination from two environment variables defaulting to Paystack's test account, so every seller is paid to the same place. Refunds change a status and never call the gateway. The webhook has no replay guard. <b>E2-S4 removed the worst of it on day 2</b> (#99): production refuses to start without a key. The replay guard is <b>E2-S2</b>, in wave 2. The destination itself is <b>E2-S1</b>, and it is blocked on <b>ADR-0002</b>.</p>
     </div>
     <div class="card">
-      <div class="chip"><span class="dot crit"></span>Critical</div>
-      <h3 style="font-size:14px;margin:10px 0 6px">Private documents are publicly readable</h3>
-      <p style="margin:0;color:var(--text-secondary)">Uploads are served by an unauthenticated static route, so any storage key fetches a title deed, a government ID or a KYC selfie with no session. <b>Day 3 attempts the fix and ships the failing probe test either way</b>, so the hole is executable knowledge, not a paragraph.</p>
+      <div class="chip"><span class="dot ok"></span>Was critical, closed in the week</div>
+      <h3 style="font-size:14px;margin:10px 0 6px">Private documents were publicly readable</h3>
+      <p style="margin:0;color:var(--text-secondary)">Uploads were served by an unauthenticated static route, so any storage key fetched a title deed, a government ID or a KYC selfie with no session. Day 3 shipped the failing probe first (#103) so the hole was executable knowledge rather than a paragraph, and <b>E3-S1d-3 took the static mount out on day 4</b> (#112). The probe stays as the regression test. What remains in E3 is <b>durable storage</b> and <b>upload hardening</b>, both behind ADR-0004.</p>
     </div>
   </div>
 </section>
 
 <section>
-  <h2>Full backlog effort by epic <span class="note">upper bound, developer-days, beyond this week &middot; sums to the ceiling on the tile above</span></h2>
+  <h2>Full backlog effort by epic <span class="note">upper bound, developer-days remaining &middot; sums to the ceiling on the tile above</span></h2>
   <div class="card">
     <div class="bars" id="bars"></div>
-    <p class="meta" style="margin-top:12px">Re-derived in <b>DOCS-6</b> against the week's merges. These are the pre-week estimates with each merged story subtracted <i>at its own published size</i> &mdash; S about a day, M two to four, L about a week &mdash; rather than re-estimated from scratch, so the bars stay comparable with the figures the backlog struck before the week started. Seven milestone stories landed: E2-S4, E3-S1, E3-S4, E5-S2, E7-S2, E7-S6 and E7-S5, taking the total from 72&ndash;100 to <b>68&ndash;98</b>. <b>Chores</b> falls furthest, from 7 to 4, because everything in that bar except <b>CH-1</b> is this week's own work and it is landing now; what is left is the feature-flag service.</p>
+    <p class="meta" style="margin-top:12px">Re-derived in <b>DOCS-6</b> against the week's merges. These are the pre-week estimates with each merged story subtracted <i>at its own published size</i> &mdash; S about a day, M two to four, L about a week &mdash; rather than re-estimated from scratch, so the bars stay comparable with the figures the backlog struck before the week started. Seven milestone stories landed: E2-S4, E3-S1, E3-S4, E5-S2, E7-S2, E7-S6 and E7-S5, taking the total from 72&ndash;100 to <b>68&ndash;98</b>. <b>Chores</b> falls furthest, from 7 to 4, because everything in that bar except <b>CH-1</b> was the week's own work and it has landed; what is left is the feature-flag service, in wave 2.</p>
     <p class="meta"><b>Two bars went up while their own stories were merging, and those are the honest numbers.</b> <b>Ops</b> went from 14 to 16 with two stories merged, because measuring the coverage floor in E7-S2 found the half of its own criterion no runner here can express &mdash; diff coverage on new and changed files &mdash; and that is now <b>E7-S2b</b>, an M nobody had counted. It then absorbed E7-S5 landing and <b>E7-S6b</b> appearing in the same diff, one S each, and stayed at 16. <b>Security</b> went from 14 to 15 because writing E7-S5's environment matrix found <b>E5-S6</b>: <code>JWT_SECRET</code> is the one credential here with no boot guard, and the fallback it signs tokens with is printed in this repository. A week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.</p>
   </div>
 </section>
@@ -340,17 +339,20 @@ const EPICS = [
   { key:"Compliance", name:"E8 Compliance and go-live", days:12 }
 ];
 
+// Each card carries its own key, and every row's Day column joins to it. The keys were D1 to D5
+// for as long as the schedule was the handover week; the waves that follow it are W1 to W3, and
+// validate:board reads the keys off these cards rather than holding a list of its own.
 const DAYS = [
-  { n:"Day 1", theme:"Truth", count:3, done:true, items:[
+  { key:"D1", n:"Day 1", theme:"Truth", count:3, done:true, items:[
     "<b>DOCS-1</b> checklist reconciled, audit corrections table added",
     "<b>DOCS-2</b> HANDOVER.md written, six stale docs bannered",
     "<b>DOCS-3</b> ADRs 0001 to 0005 recording the open decisions" ]},
-  { n:"Day 2", theme:"Landmines, all four landed", count:4, done:true, review:false, items:[
+  { key:"D2", n:"Day 2", theme:"Landmines, all four landed", count:4, done:true, review:false, items:[
     "<b>E3-S4</b> /verify page &middot; PR 98 merged",
     "<b>E2-S4</b> payment mock guard &middot; PR 99 merged",
     "<b>E7-S6</b> health probes &middot; PR 101 merged",
     "<b>E5-S2</b> CORS allow-list &middot; PR 97 merged" ]},
-  { n:"Day 3", theme:"The exposure, 7 PRs in, closed from day 4", count:7, done:true, review:false, items:[
+  { key:"D3", n:"Day 3", theme:"The exposure, 7 PRs in, closed from day 4", count:7, done:true, review:false, items:[
     "<b>E5-S2a</b> squattable preview origins &middot; PR 102 merged",
     "<b>E3-S1a</b> failing probe, merged red &middot; PR 103 merged",
     "<b>E3-S1b</b> only public imagery from /uploads &middot; PR 104 merged",
@@ -359,31 +361,49 @@ const DAYS = [
     "<b>CH-2</b> backend env files ignored, snapshot untracked &middot; PR 105 merged",
     "<b>DOCS-5</b> E3-S1 reconciled against what shipped &middot; PR 107 merged",
     "&mdash; E3-S1 belongs to this day but closed in day 4, when E3-S1d-3 took the mount out. DOCS-6, the backlog reconcile it needs, is in day 5" ]},
-  { n:"Day 4", theme:"Close the exposure, then make it runnable", count:5, done:true, review:true, items:[
+  { key:"D4", n:"Day 4", theme:"Close the exposure, then make it runnable", count:5, done:true, review:false, items:[
     "<b>CH-4</b> the board is a merge gate &middot; PR 110 merged",
     "<b>E3-S1d-2</b> power of attorney reads &middot; PR 111 merged",
     "<b>E3-S1d-3</b> private listing documents, mount comes out, E3-S1 closes &middot; PR 112 merged",
     "<b>CH-3</b> env ignore rules at the repository root &middot; PR 113 merged",
     "<b>E7-S2</b> coverage floor measured and recorded &middot; PR 114 merged" ]},
-  { n:"Day 5", theme:"Package and freeze, oversubscribed", count:6, done:false, items:[
+  { key:"D5", n:"Day 5", theme:"Package, and put the rest somewhere honest", count:4, done:true, review:false, items:[
     "<b>CH-5</b> the board rule covers the page, not the row &middot; PR 115 merged",
     "<b>DOCS-6</b> backlog reconciled against the week: statuses, the E3-S1d split, effort remaining &middot; PR 116 merged",
     "<b>E7-S5</b> runbook, environment matrix, secrets &middot; PR 117 merged, and found E5-S6 and E7-S6b",
-    "<b>DOCS-4</b> re-audit against HEAD, tag handover commit",
-    "<b>E7-S3</b> ephemeral-database spike, timeboxed",
-    "<b>E7-S4</b> demo seed that resolves",
-    "&mdash; three still open is more than a reviewer can take on a packaging day. E7-S4 is first to cut, E7-S3 second" ]}
+    "<b>CH-6</b> the schedule outgrew the week, so the board and its check grew a wave &middot; PR 118 merged",
+    "&mdash; the day carried three more and a reviewer could take none of them. DOCS-4 freezes what the next thirteen stories change, so it goes last of everything, in wave 3; E7-S3 is a spike, not a packaging task, and follows it there. E7-S4 comes off the schedule: it needs E3-S2, E3-S2 needs ADR-0004, and that decision is not ours to take" ]},
+
+  { key:"W1", n:"Wave 1", theme:"The credential, the probe, the guard", count:4, done:false, review:true, items:[
+    "<b>E5-S6</b> fail closed when JWT_SECRET is unset &middot; the week's own finding, and it goes first",
+    "<b>E7-S6b</b> point the container healthcheck at /health/ready",
+    "<b>E4-S1</b> PermissionsGuard on every privileged endpoint",
+    "<b>E7-S1</b> structured logging, correlation id, error tracking",
+    "&mdash; 8 developer-days, 4 of them deep review. Two S rows open the wave so the first merge is quick and the board's new shape gets exercised before an M lands on it" ]},
+  { key:"W2", n:"Wave 2", theme:"Prove the guard, then stop the replays", count:4, done:false, items:[
+    "<b>E4-S3</b> cross-role authorization test suite &middot; needs E4-S1 merged, hence the wave boundary",
+    "<b>E2-S2</b> webhook idempotency, replay and freshness guard",
+    "<b>E7-S2b</b> diff coverage on new and changed files &middot; names a dependency decision",
+    "<b>CH-1</b> feature-flag service with a kill switch",
+    "&mdash; 12 developer-days, 6 of them deep review. E4-S3 is the proof that E4-S1 is complete, so it cannot precede it" ]},
+  { key:"W3", n:"Wave 3", theme:"The long ones, and then the freeze", count:5, done:false, items:[
+    "<b>E5-S1</b> rate limiting and lockout on auth and payments",
+    "<b>E5-S5</b> session management: refresh rotation and revocation &middot; the one L",
+    "<b>E8-S4</b> public web surface: robots, sitemap, per-route metadata",
+    "<b>E7-S3</b> ephemeral-database spike, timeboxed &middot; carried from day 5",
+    "<b>DOCS-4</b> re-audit against HEAD and freeze &middot; last of everything, it freezes the other twelve",
+    "&mdash; 19 developer-days, 8 of them deep review. After this wave there is no wave 4: everything left needs a stakeholder" ]}
 ];
 
 const REPO = "https://github.com/safebuy-realties-ltd/safebuyrealties/pull/";
 
 const QUEUE = [
-  { pr:117, t:"E7-S5, the runbook — and the two findings writing it produced",
-    why:"A docs story that ships no code, and it is the highest-value review of the week, because the two things it found are things nobody was looking for. Writing an environment matrix means reading every variable and asking what happens when it is missing, and one of them answers: nothing. JWT_SECRET has no boot guard. Unset, the API starts normally and signs every session token with the string \"dev-secret-change-me\", hard-coded at backend/src/auth/auth.module.ts:17 and again at jwt.strategy.ts:33, and that string is public in this repository — anyone who reads it can forge a token for any user, including an admin. DATABASE_URL, FRONTEND_URL and the Paystack keys all refuse to start without valid values. The one credential that signs identity does not.",
-    look:"First, that finding, and whether E5-S6 is the right response to it. The story was documented and filed rather than fixed, because E7-S5 is an S and a guard that exits the process needs its own tests and its own review — but if you would rather it were a one-line hotfix today, say so, because the argument for waiting gets weaker the closer this gets to a live key. Second, whether §9.3's four go-live checks are checks a person can actually run: each names the dashboard and the value to look for, and none can be answered from this repository — is JWT_SECRET set on Render, does PAYSTACK_SECRET_KEY begin sk_live_ rather than being a test key the production guard also accepts (§7.5), is STORAGE_DRIVER still local, and is the superseded Vercel backend project still connected and deploying a second copy of this API (§7.3). Third, E7-S6b: the container HEALTHCHECK polls /api/v1/health, the bare handler that returns ok without touching anything, not the /health/ready probe E7-S6 built two days ago to answer exactly this question. Render will call a container healthy while its database is unreachable. Fourth, the seed: docs/LOCAL_DEVELOPMENT.md and docs/VERCEL_VALIDATION.md both offered `prisma db seed` as routine housekeeping, and the seed's first act is deleteMany() across 24 tables against whatever DATABASE_URL points at — which those same documents point at the shared cloud Postgres. Both now pass SEED_NO_WIPE=1 and say why." },
-  { pr:null, t:"Day 5 is down to three, and two of them are still the ones to cut",
-    why:"Twenty-two PRs against fourteen planned, every security row is in, and the runbook is written. DOCS-4 is the freeze and must run last. E7-S4 lists E3-S2, durable object storage, as a dependency and E3-S2 is not scheduled this week.",
-    look:"Whether E7-S4's dependency is real. A seed that resolves against the local uploads directory is an M with no dependency; a seed that must resolve on Vercel needs E3-S2 first and therefore cannot land this week. That is a decision, not a discovery — it has been listed since day 3 and is now the last thing standing between the week and its freeze." }
+  { pr:118, t:"CH-6, the schedule outgrew the week this board was built for",
+    why:"The week is over and thirteen stories can start without anybody's permission. There was nowhere on this page to put them. Every row carried a Day of D1 to D5 or an empty string, validate:board held that list as a constant, and the counter tiles derive from it — so thirteen stories left unscheduled would have frozen \"PRs merged 22\" and \"Remaining 3\" on a page whose whole purpose is that its numbers cannot go stale quietly. The alternative was a page that lies by omission, which is the failure CH-4 and CH-5 exist to prevent. So the schedule became data: each card names its own key (\"D5\", \"W1\") and its own display name, every row joins to a card through that key, and the check reads the keys off the cards instead of holding a list. Adding wave 4 is now a board edit rather than a board edit plus a matching edit to the checker — which is exactly the drift this file was written to catch, one level up.",
+    look:"First, whether closing day 5 at four PRs is honest. Three of its rows did not ship: DOCS-4 and E7-S3 moved to wave 3 with reasons on the card, and E7-S4 came off the schedule entirely because it needs E3-S2, which needs ADR-0004, which needs a stakeholder. Marking the day done while moving its remainder is either the right call or a tidy-up of a miss — you decide which, because the alternative is a card that stays open forever. Second, the header check: it used to compare a hard-coded string, and now it asserts that the header names exactly the first not-done card as open and calls no unfinished card complete, so \"Wave 1 open\" cannot survive wave 1 closing. Third, the wave composition below — 4, 4, 5 across 39 developer-days, with deep-review stories spread roughly half through each wave rather than stacked, because stacking them idles the builder behind one approver. E4-S1 before E4-S3 and DOCS-4 last are dependencies; the rest is a judgement about review load and can be reordered." },
+  { pr:null, t:"Wave 1 opens with the week's own finding, and E7-S4 needs a decision either way",
+    why:"E5-S6 goes first because E7-S5 found it and filing a forgeable session token rather than fixing it only holds while the deploy has no live key. E7-S4 is not in any wave: it needs E3-S2, durable object storage, which needs ADR-0004. Parked against a named blocker is a truer statement than scheduled and slipping, but parked is not free — it is one of the 19 stories this board now says out loud are waiting on somebody who is not a developer.",
+    look:"Whether E7-S4's dependency is real, because the answer changes which list it belongs on. A seed that only has to resolve against the local uploads directory is an M with no dependency and it rejoins wave 3; a seed that has to resolve on Vercel needs E3-S2 first and stays parked until ADR-0004 is decided. That is a decision, not a discovery, and it has been listed since day 3." }
 ];
 
 // [id, epic, title, what, day, flag, size, deps, status, criticalPath, pr]
@@ -391,14 +411,15 @@ const STORIES = [
   ["DOCS-1","Chore","Reconcile the checklist against the code","Accuracy notice, audit corrections table, queue repointed at the backlog.","D1","—","S","none","done",false],
   ["DOCS-2","Chore","HANDOVER.md and stale-doc banners","One-page truth doc; banners on TECH_AUDIT, VALIDATION_REPORT, QA_FINDINGS, analysis 03/04/05.","D1","—","S","none","done",false],
   ["DOCS-3","Chore","ADRs 0001 to 0005 for the open decisions","The next team inherits the questions rather than discovering them.","D1","—","S","none","done",false],
-  ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit.","D5","—","S","week's PRs","planned",false],
+  ["DOCS-4","Chore","Re-audit against HEAD and freeze","Re-run the gap claims, update statuses, tag a handover commit. Last of everything: it freezes what the other twelve startable stories change, so it cannot precede them.","W3","—","S","every wave's PRs","planned",false],
   ["DOCS-5","Chore","Reconcile E3-S1 with what shipped","The row described one M story; three sub-stories had already landed under it against criteria nobody had re-read.","D3","—","S","none","done",false,107],
   ["DOCS-6","Chore","Reconcile the backlog against the week: statuses, the E3-S1d split, effort remaining","Seven rows said planned about merged work, and two of the three blockers in the executive summary had been closed or narrowed — one still told the reader private documents are publicly readable. #107's proposed two-way split for E3-S1d shipped as three. Section 1.3 gains a Remaining column: merged stories subtracted at their published sizes, 72–100 down to 67–97, which is what the tile and the effort bars on this page now read.","D5","—","S","E3-S1d-3, E7-S2","done",false,116],
-  ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","","—","M","none","planned",false],
+  ["CH-1","Chore","Feature-flag service with kill switch","No flag system exists, so no risky change can ship dark or roll back without a deploy.","W2","—","M","none","planned",false],
   ["CH-2","Chore","Ignore backend env files, untrack the committed Vercel snapshot","backend/.env.vercel.prod was tracked in the repository. Removed, and backend/.gitignore widened to .env and .env.* with the template excepted.","D3","—","S","none","done",false,105],
   ["CH-3","Chore","Extend the env ignore rules to the repository root","#105 fixed backend/ only. The root .gitignore had no env pattern at all, so a root .env or .env.production was committable — and root .env.example tells you to make a root env file. Only .env.local was safe, and only because *.local happened to match it. The family pattern now sits in the root file, which covers every directory.","D4","—","S","none","done",false,113],
   ["CH-4","Chore","Make this board a merge gate rather than a habit","The board went stale twice and a person caught it both times. scripts/check-board.mjs validates it against itself, and CI fails a story PR that does not touch it.","D4","—","S","none","done",false,110],
   ["CH-5","Chore","Board updates cover the page, not the row","Rule 8 asked for status, PR and Day. The same fact is restated in the day card, the tiles, the header, the queue and the prose, and nothing checked those, so a rule followed exactly still left five stale statements. validate:board now checks every restated number against the rows.","D5","—","S","CH-4","done",false,115],
+  ["CH-6","Chore","Extend the board past the handover week into waves","Every row's Day was D1 to D5 or empty, and validate:board held that list as a constant, so the thirteen startable stories had nowhere to go but unscheduled — which would have frozen the PRs merged and Remaining tiles on a page built so its numbers cannot go stale quietly. The schedule is now data: each card names its own key and display name, rows join through the key, and the check reads the keys off the cards. The header claim is checked structurally too — exactly the first not-done card must be named open.","D5","—","S","CH-5","done",false,118],
 
   ["E1-S1","Loop","Listing DD case lifecycle: queue, assign, report, complete","DueDiligenceService has one method. The lifecycle exists only for standalone orders.","","dd_case_lifecycle","L","ADR-0001","planned",true],
   ["E1-S2","Loop","Transaction state machine, DD_PURCHASED to DD_COMPLETE","Only the standalone path sets these statuses, so listing transactions stop dead.","","dd_case_lifecycle","M","E1-S1","planned",true],
@@ -406,7 +427,7 @@ const STORIES = [
   ["E1-S4","Loop","Property purchase step wired to the state machine","The buyer UI gates on a status nothing reaches, so the branch is dead code.","","property_purchase","M","E1-S2","planned",true],
 
   ["E2-S1","Money","Seller payout destination, per-seller bank account","Payouts go to one env-configured account defaulting to a Paystack test account.","","payouts","L","E1-S4, ADR-0002","blocked",true],
-  ["E2-S2","Money","Webhook idempotency, replay and freshness guard","A replayed callback re-fires notifications and escrow holds.","","—","M","none","planned",true],
+  ["E2-S2","Money","Webhook idempotency, replay and freshness guard","A replayed callback re-fires notifications and escrow holds.","W2","—","M","none","planned",true],
   ["E2-S3","Money","Gateway refunds, not ledger-only","Refund updates a status and never calls the gateway, so the buyer is not repaid.","","payouts","M","E2-S1","planned",false],
   ["E2-S4","Money","Production guard on payment mock mode","A missing key records every payout as completed with a mock reference. Highest harm per line in the repo.","D2","—","S","none","done",true,99],
   ["E2-S5","Money","Finance reconciliation view","The Finance Manager role has no finance screen; the admin chart is a placeholder generator.","","—","M","E2-S1, E4-S1","planned",false],
@@ -422,35 +443,35 @@ const STORIES = [
   ["E3-S3","Trust","Upload hardening: type allow-list, magic bytes, AV hook","Multer has no fileFilter and the stored MIME type is whatever the client claimed.","","secure_docs","M","E3-S2","planned",false],
   ["E3-S4","Trust","Public PoA verification page","Every generated QR points at /verify, a route that does not exist.","D2","—","S","none","done",false,98],
 
-  ["E4-S1","Access","Enforce PermissionsGuard on every privileged endpoint","Privileges gate menus. Only two controllers check them, so a content manager can release escrow.","","—","M","none","planned",true],
+  ["E4-S1","Access","Enforce PermissionsGuard on every privileged endpoint","Privileges gate menus. Only two controllers check them, so a content manager can release escrow.","W1","—","M","none","planned",true],
   ["E4-S2","Access","KYC gate on money-moving actions","KycRecord is never read outside its own module and a dashboard count.","","kyc_gate","M","E1-S4","planned",false],
-  ["E4-S3","Access","Cross-role authorization test suite","Ownership checks are per service with no systematic proof they all exist.","","—","M","E4-S1","planned",false],
+  ["E4-S3","Access","Cross-role authorization test suite","Ownership checks are per service with no systematic proof they all exist. It is the proof that E4-S1 is complete, so it follows it a wave later rather than beside it.","W2","—","M","E4-S1","planned",false],
 
-  ["E5-S1","Security","Rate limiting and lockout on auth and payments","No throttling dependency, no lockout. Login and guest checkout are unlimited.","","—","M","none","planned",true],
+  ["E5-S1","Security","Rate limiting and lockout on auth and payments","No throttling dependency, no lockout. Login and guest checkout are unlimited.","W3","—","M","none","planned",true],
   ["E5-S2","Security","CORS allow-list from configuration","origin: true with credentials reflects any origin. The allow-list was documented, never built.","D2","—","S","none","done",true,97],
   ["E5-S2a","Security","Tighten the Vercel preview origin rule","subdomain.startsWith(\"safebuyrealties\") accepted any first-come .vercel.app project with that prefix. The team-slug suffix rule is not squattable; the project-prefix rule was.","D3","—","S","E5-S2","done",false,102],
   ["E5-S3","Security","Password reset","No forgot or reset route exists. A locked-out user needs an administrator.","","auth_recovery","M","E6-S1","planned",false],
   ["E5-S4","Security","Email verification on self-registration","Self-signup skips the activation mechanism admin-created accounts already use.","","auth_signup","M","E6-S1","planned",false],
-  ["E5-S5","Security","Session management: refresh rotation and revocation","One seven-day JWT, no refresh, no server-side session, no revocation.","","auth_sessions","L","none","planned",false],
-  ["E5-S6","Security","Fail closed when JWT_SECRET is unset","Found writing the environment matrix in E7-S5. Unset, the API starts normally and signs every token with the hard-coded fallback \"dev-secret-change-me\" (auth.module.ts:17, jwt.strategy.ts:33), which is public in this repository, so anyone can forge a token for any user. The database, CORS and payment guards all refuse to start; the one credential that signs identity does not.","","—","S","none","planned",true],
+  ["E5-S5","Security","Session management: refresh rotation and revocation","One seven-day JWT, no refresh, no server-side session, no revocation.","W3","auth_sessions","L","none","planned",false],
+  ["E5-S6","Security","Fail closed when JWT_SECRET is unset","Found writing the environment matrix in E7-S5. Unset, the API starts normally and signs every token with the hard-coded fallback \"dev-secret-change-me\" (auth.module.ts:17, jwt.strategy.ts:33), which is public in this repository, so anyone can forge a token for any user. The database, CORS and payment guards all refuse to start; the one credential that signs identity does not.","W1","—","S","none","planned",true],
 
   ["E6-S1","Comms","SMTP configuration and delivery observability","dispatch() returns early with no SMTP_HOST, and no environment defines one.","","—","S","EXT-3","blocked",true],
   ["E6-S2","Comms","Email channel for notification types","Notifications write rows only. A rejected seller finds out by logging in.","","email_notifications","M","E6-S1","planned",false],
   ["E6-S3","Comms","Transactional email templates","Two templates are built inline with unescaped interpolation into HTML.","","email_notifications","M","E6-S2","planned",false],
 
-  ["E7-S1","Ops","Structured logging, correlation id, error tracking","No logging, tracing, or error-tracking dependency in either package.","","—","M","none","planned",false],
+  ["E7-S1","Ops","Structured logging, correlation id, error tracking","No logging, tracing, or error-tracking dependency in either package.","W1","—","M","none","planned",false],
   ["E7-S2","Ops","Coverage thresholds and a CI coverage gate","Both suites now run with coverage in CI and upload the report. Floors sit just under today's measured numbers: backend 41.7% of statements, frontend 4.91% once the whole tree is measured instead of only the 20 files the tests import, which flattered it to 48%. Diff coverage, the other half of the criterion, is beyond an S and stays open as E7-S2b.","D4","—","S","none","done",false,114],
-  ["E7-S2b","Ops","Diff coverage: new and changed files meet the strict bar","The half of E7-S2 a repository floor cannot express. Neither Jest nor Vitest can threshold on changed files, so this needs lcov compared against git diff — a script plus a CI step, or a third-party action, which is a dependency decision. Unscheduled on purpose: the floor stops decay today, and this is the part that would stop it accruing.","","—","M","E7-S2","planned",false],
-  ["E7-S3","Ops","End-to-end journeys in CI, ephemeral database","Six E2E scripts exist and CI runs none; they need the shared cloud database. Spike is timeboxed.","D5","—","L","E7-S2","planned",true],
-  ["E7-S4","Ops","Deterministic demo seed and reset","Seeded documents point at keys with no files, so demos show stock photography. QA-015. Dependency needs a call: soft if the seed only has to resolve locally, hard if it has to resolve on Vercel.","D5","—","M","E3-S2","planned",false],
+  ["E7-S2b","Ops","Diff coverage: new and changed files meet the strict bar","The half of E7-S2 a repository floor cannot express. Neither Jest nor Vitest can threshold on changed files, so this needs lcov compared against git diff — a script plus a CI step, or a third-party action, which is a dependency decision. The floor stops decay today; this is the part that would stop it accruing.","W2","—","M","E7-S2","planned",false],
+  ["E7-S3","Ops","End-to-end journeys in CI, ephemeral database","Six E2E scripts exist and CI runs none; they need the shared cloud database. Spike is timeboxed. Carried out of day 5: it was never a packaging-day task.","W3","—","L","E7-S2","planned",true],
+  ["E7-S4","Ops","Deterministic demo seed and reset","Seeded documents point at keys with no files, so demos show stock photography. QA-015. Off the schedule until its dependency is called: soft if the seed only has to resolve locally, in which case it rejoins wave 3; hard if it has to resolve on Vercel, in which case it waits on E3-S2 and therefore on ADR-0004.","","—","M","E3-S2","planned",false],
   ["E7-S5","Ops","Runbook, environment matrix, secrets checklist","docs/RUNBOOK.md: what runs where, deploy, rollback and its forward-only migration caveat, incident triage from /health/ready, the payment and payout failure paths, an environment matrix with an owner per variable, and a secrets checklist. Reading every variable to write the matrix is what found E5-S6 and E7-S6b, and that the seed wipes 24 tables in two documents that recommended it.","D5","—","S","none","done",false,117],
   ["E7-S6","Ops","Health and readiness probes with dependency checks","/health returns ok without touching the database, storage, or the gateway.","D2","—","S","none","done",false,101],
-  ["E7-S6b","Ops","Point the container healthcheck at the readiness probe","backend/Dockerfile HEALTHCHECK polls /api/v1/health, the bare handler that returns ok without touching anything, so Render calls a container healthy while its database is unreachable. /health/ready, built in E7-S6 and returning 503 when a dependency is down, is the endpoint it should have been polling.","","—","S","E7-S6","planned",false],
+  ["E7-S6b","Ops","Point the container healthcheck at the readiness probe","backend/Dockerfile HEALTHCHECK polls /api/v1/health, the bare handler that returns ok without touching anything, so Render calls a container healthy while its database is unreachable. /health/ready, built in E7-S6 and returning 503 when a dependency is down, is the endpoint it should have been polling.","W1","—","S","E7-S6","planned",false],
 
   ["E8-S1","Compliance","NDPR consent, retention, and erasure","No consent model, retention policy, or erasure path, while storing IDs and selfies.","","privacy_centre","L","E5-S5, EXT-5","planned",false],
   ["E8-S2","Compliance","Legal review of the PoA instrument and terms","The instrument clauses were written in a build checklist, not by counsel.","","—","S","external","blocked",false],
   ["E8-S3","Compliance","Pre-launch security review","The client's own legal comments ask for one; none has been run.","","—","S","external, E4-S3","blocked",false],
-  ["E8-S4","Compliance","Public web surface: robots, sitemap, per-route metadata","No public directory exists, so no robots.txt, no sitemap, no per-route metadata.","","—","M","none","planned",false]
+  ["E8-S4","Compliance","Public web surface: robots, sitemap, per-route metadata","No public directory exists, so no robots.txt, no sitemap, no per-route metadata.","W3","—","M","none","planned",false]
 ];
 
 const STATUS = {
@@ -478,8 +499,8 @@ function laterCard() {
   })).filter(e => e.n > 0).sort((a, b) => b.n - a.n);
   return `
   <div class="day later">
-    <div class="hd"><span class="n">Not this week</span><span class="cnt">${later.length} stories</span></div>
-    <div class="theme-l">Deferred, and documented</div>
+    <div class="hd"><span class="n">Not scheduled</span><span class="cnt">${later.length} stories</span></div>
+    <div class="theme-l">Waiting on somebody who is not a developer</div>
     ${byEpic.map(e => `<div class="lrow"><span>${e.name}</span><span>${e.n}</span></div>`).join("")}
     <div class="lrow" style="border-top:1px solid var(--grid);margin-top:6px;padding-top:6px">
       <span><b>Total</b></span><span><b>${later.length}</b></span></div>
@@ -509,6 +530,10 @@ document.getElementById("bars").innerHTML = EPICS.map(e => `
 const fEpic = document.getElementById("fEpic");
 EPICS.forEach(e => { const o = document.createElement("option"); o.value = e.key; o.textContent = e.name; fEpic.appendChild(o); });
 
+// One option per schedule card, in card order, so a new wave shows up in the filter by existing.
+const fDaySel = document.getElementById("fDay");
+DAYS.forEach(d => { const o = document.createElement("option"); o.value = d.key; o.textContent = d.n; fDaySel.appendChild(o); });
+
 function render() {
   const epic = fEpic.value;
   const day  = document.getElementById("fDay").value;
@@ -517,8 +542,8 @@ function render() {
   const q = document.getElementById("fText").value.trim().toLowerCase();
 
   const dayOk = s => !day
-    || (day === "week" && s[4] !== "")
-    || (day === "def"  && s[4] === "")
+    || (day === "sched" && s[4] !== "")
+    || (day === "def"   && s[4] === "")
     || s[4] === day;
 
   const rows = STORIES.filter(s =>
@@ -540,9 +565,9 @@ function render() {
     </tr>`;
   }).join("") : `<tr><td colspan="7" class="empty">No stories match these filters.</td></tr>`;
 
-  const inWeek = rows.filter(s => s[4] !== "").length;
+  const scheduled = rows.filter(s => s[4] !== "").length;
   document.getElementById("count").textContent =
-    `Showing ${rows.length} of ${STORIES.length} rows, ${inWeek} scheduled this week. Shaded rows are in the week. CP marks the critical path.`;
+    `Showing ${rows.length} of ${STORIES.length} rows, ${scheduled} on the schedule. Shaded rows carry a day or a wave. CP marks the critical path.`;
 }
 
 ["fEpic","fDay","fSize","fCp","fText"].forEach(id =>
