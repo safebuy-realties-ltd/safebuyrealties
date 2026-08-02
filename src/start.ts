@@ -1,5 +1,6 @@
 import { createMiddleware, createStart } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
+import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
+import { robotsTagFor } from "@/lib/seo";
 
 /**
  * Security headers applied to every SSR document and server route response.
@@ -48,6 +49,11 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     "Permissions-Policy",
     'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.paystack.com" "https://js.paystack.co" "https://standard.paystack.co")',
   );
+
+  // E8-S4 criterion 5. The meta tag in the document says the same thing, and this says it for the
+  // responses that are not a document: a JSON payload, a redirect, a file the API streamed back.
+  const robotsTag = robotsTagFor(new URL(getRequest().url).pathname);
+  if (robotsTag) setResponseHeader("X-Robots-Tag", robotsTag);
 
   return next();
 });

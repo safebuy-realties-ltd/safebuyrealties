@@ -3,14 +3,14 @@ import { ShieldCheck } from "lucide-react";
 import { PoaVerifyResult } from "@/components/PoaVerifyResult";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useVerifyPoaQuery } from "@/hooks/use-poa";
+import { seoHead } from "@/lib/seo";
 
 /**
- * Public origin this page is served from. Keep in step with the backend's
- * POA_VERIFY_BASE_URL (backend/.env.example), which is what QR codes encode.
+ * This page used to carry a hand-written head with the origin spelled out in it, which is how the
+ * canonical here came to name a different host from the rest of the site. The origin now comes from
+ * `VITE_SITE_URL` like every other route, and it has to match the backend's `POA_VERIFY_BASE_URL`
+ * (backend/.env.example) because that is the URL a printed QR code sends people to.
  */
-const CANONICAL_URL = "https://safebuyrealties.com/verify";
-
-const PAGE_TITLE = "Verify a Power of Attorney — SafeBuyRealties";
 const PAGE_DESCRIPTION =
   "Check a SafeBuyRealties Power of Attorney against the register. Enter or scan the document hash to confirm the property and the date it was executed.";
 
@@ -24,18 +24,12 @@ export const Route = createFileRoute("/verify")({
     const raw = typeof search.hash === "string" ? search.hash.trim() : "";
     return raw ? { hash: raw } : {};
   },
-  head: () => ({
-    meta: [
-      { title: PAGE_TITLE },
-      { name: "description", content: PAGE_DESCRIPTION },
-      { name: "robots", content: "index,follow" },
-      { property: "og:title", content: PAGE_TITLE },
-      { property: "og:description", content: PAGE_DESCRIPTION },
-      { property: "og:url", content: CANONICAL_URL },
-      { property: "og:type", content: "website" },
-    ],
-    links: [{ rel: "canonical", href: CANONICAL_URL }],
-  }),
+  head: () =>
+    seoHead({
+      title: "Verify a Power of Attorney",
+      description: PAGE_DESCRIPTION,
+      path: "/verify",
+    }),
 });
 
 function VerifyPage() {

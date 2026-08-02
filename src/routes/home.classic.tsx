@@ -27,9 +27,17 @@ import { ListingCard } from "@/components/ListingCard";
 import { ListingCardSkeleton } from "@/components/ListingCardSkeleton";
 import { usePublicListingsQuery } from "@/hooks/use-listings";
 import { listingDtoToCard } from "@/lib/listing-card-map";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/home/classic")({
   component: ClassicLanding,
+  head: () =>
+    seoHead({
+      title: "How SafeBuyRealties works",
+      description:
+        "The long version of the SafeBuyRealties story: who checks what, where the money sits while it is checked, and what each side has to produce before a sale completes.",
+      path: "/home/classic",
+    }),
 });
 
 const heroPaths = [

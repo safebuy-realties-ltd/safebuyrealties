@@ -31,6 +31,7 @@ import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { DD_SCHEDULES, type DdChecklistSelections } from "@/lib/dd-schedule-checklists";
 import { getLgasForState, NIGERIA_STATE_LABELS, NIGERIA_STATES } from "@/lib/nigeria-locations";
+import { seoHead } from "@/lib/seo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/due-diligence/request")({
@@ -44,6 +45,13 @@ export const Route = createFileRoute("/due-diligence/request")({
     serviceId: typeof search.serviceId === "string" ? search.serviceId : undefined,
   }),
   component: DueDiligenceRequestPage,
+  head: () =>
+    seoHead({
+      title: "Request a due diligence report",
+      description:
+        "Tell us about the property and choose the checks you want. A verified professional picks the job up and the report comes back through your dashboard.",
+      path: "/due-diligence/request",
+    }),
 });
 
 const STEPS = ["SCHEDULES", "PROPERTY", "CONTACT", "REVIEW"] as const;

@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DueDiligenceRouteImport } from './routes/due-diligence'
@@ -74,6 +76,16 @@ import { Route as DashboardProfessionalTasksTaskIdRouteImport } from './routes/d
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -401,6 +413,8 @@ export interface FileRoutesByFullPath {
   '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -462,6 +476,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/browse': typeof BrowseRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -520,6 +536,8 @@ export interface FileRoutesById {
   '/due-diligence': typeof DueDiligenceRouteWithChildren
   '/login': typeof LoginRouteWithChildren
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/activate/$token': typeof ActivateTokenRoute
   '/checkout/$listingId': typeof CheckoutListingIdRoute
@@ -585,6 +603,8 @@ export interface FileRouteTypes {
     | '/due-diligence'
     | '/login'
     | '/register'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
@@ -646,6 +666,8 @@ export interface FileRouteTypes {
     | '/'
     | '/browse'
     | '/register'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
@@ -703,6 +725,8 @@ export interface FileRouteTypes {
     | '/due-diligence'
     | '/login'
     | '/register'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/verify'
     | '/activate/$token'
     | '/checkout/$listingId'
@@ -767,6 +791,8 @@ export interface RootRouteChildren {
   DueDiligenceRoute: typeof DueDiligenceRouteWithChildren
   LoginRoute: typeof LoginRouteWithChildren
   RegisterRoute: typeof RegisterRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VerifyRoute: typeof VerifyRoute
   ActivateTokenRoute: typeof ActivateTokenRoute
   CheckoutListingIdRoute: typeof CheckoutListingIdRoute
@@ -789,6 +815,20 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -1398,6 +1438,8 @@ const rootRouteChildren: RootRouteChildren = {
   DueDiligenceRoute: DueDiligenceRouteWithChildren,
   LoginRoute: LoginRouteWithChildren,
   RegisterRoute: RegisterRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   VerifyRoute: VerifyRoute,
   ActivateTokenRoute: ActivateTokenRoute,
   CheckoutListingIdRoute: CheckoutListingIdRoute,
