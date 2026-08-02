@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
+import { LoginAttemptsService } from "./login-attempts.service";
 import { resolveJwtSecret } from "../config/jwt-secret";
 
 @Global()
@@ -21,7 +22,7 @@ import { resolveJwtSecret } from "../config/jwt-secret";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, LoginAttemptsService],
   exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}

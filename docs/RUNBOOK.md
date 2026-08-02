@@ -425,6 +425,9 @@ the boot rather than defaulting to something.
 | `FEATURE_<KEY>` | O | O | O | Corne Labs | One per registry key, upper-cased. Unset means the registry default, which is off for every roadmap flag. §11 |
 | `FEATURE_STANDALONE_DD_PUBLIC_ORDER_READ` | O | O | O | Corne Labs | The exception: defaults **on**, because the route is live. Setting it off closes an unauthenticated route and costs the guest receipt view. §11.3 |
 | `FEATURE_FLAGS_KILL_SWITCH` | O | O | O | Corne Labs | Turns every flag off at once. It cannot turn anything on. §11.2 |
+| `THROTTLE_<KEY>` | O | O | O | Corne Labs | One per policy, `"<requests>:<seconds>"`. Unset means the default in the registry. §12 |
+| `THROTTLE_DISABLED` | O | O | O | Corne Labs | Turns the request limiter off. Does not touch the login lockout. §12.3 |
+| `TRUST_PROXY_HOPS` | O | O | **set it to 1** | Corne Labs | How many proxies sit in front. Wrong value puts every caller in one rate-limit bucket. §12.4 |
 
 **§7.5 — a test key satisfies the production guard.** `hasPaymentSecretKey()` accepts either variable
 ([`payments-guard.ts:30-33`](../backend/src/config/payments-guard.ts#L30-L33)) and `secretKey()` falls back
@@ -607,3 +610,144 @@ afternoon follows a flip without a reload.
 Hiding a control is a courtesy to the person looking at the screen. It is not what stops the
 request: that is `FeatureGuard` on the server, and it holds whether or not the browser ever
 rendered.
+
+---
+
+## 12. Rate limiting and account lockout
+
+**Two things can answer `429`, and they count different things.** Confusing them wastes the first
+ten minutes of an incident, so start here.
+
+| | Request throttle | Login lockout |
+| --- | --- | --- |
+| Counts | requests per client address | failed logins per account, and per address |
+| Window | seconds to minutes | one hour ([`login-attempts.service.ts:66`](../backend/src/auth/login-attempts.service.ts#L66)) |
+| Where | [`throttle.guard.ts`](../backend/src/common/guards/throttle.guard.ts), third `APP_GUARD` | [`login-attempts.service.ts`](../backend/src/auth/login-attempts.service.ts), inside `AuthService.login` |
+| Survives a restart | no, the counters are in memory | yes, the counters are `AuditLog` rows |
+| Applies to | every route | `POST /auth/login` only |
+| Can be switched off | yes, `THROTTLE_DISABLED` | no |
+
+Both answer the same shape: `429`, code `TOO_MANY_REQUESTS`, `Retry-After` in seconds, and the same
+number again in `error.details.retryAfterSeconds` for a client that ignores headers. The header is
+set in one place, [`http-exception.filter.ts:91`](../backend/src/common/filters/http-exception.filter.ts#L91),
+so any 429 raised anywhere gets it.
+
+Neither says why. The message names no address, no policy and no count, because a limiter that
+explains itself is telling an attacker how close they are.
+
+### 12.1 The limits, and where they came from
+
+Defaults live in [`throttle.constants.ts`](../backend/src/common/throttle/throttle.constants.ts),
+one entry per policy with a sentence saying what it protects. Every one is overridable through
+`THROTTLE_<KEY>` set to `"<requests>:<seconds>"`.
+
+| Policy | Default | Route |
+| --- | --- | --- |
+| `global` | 300 / 60s | everything that says nothing |
+| `login` | 10 / 60s | `POST /auth/login` |
+| `register` | 5 / 300s | `POST /auth/register` |
+| `activate` | 10 / 300s | `GET /auth/activate/:token`, `POST /auth/activate` |
+| `password_reset` | 5 / 900s | declared ahead of the routes E5-S3 builds |
+| `payment_initiate` | 10 / 60s | `POST /payments/initiate` |
+| `guest_checkout` | 10 / 300s | the whole of `/guest-checkout` |
+| `webhook` | 240 / 60s | `POST /webhooks/payments/:provider` |
+
+The counts are per address per policy, not shared, so spending the login allowance leaves the rest
+of the API open to that caller.
+
+**A bad value is ignored, not fatal.** `THROTTLE_LOGIN="lots"` leaves the default in place and warns
+at boot naming the variable and the value it dropped. The API booting with a limit somebody meant to
+change is bad; the API not booting at all is worse.
+
+**Two routes are deliberately not on the global limit.** Webhooks have their own high ceiling,
+because Paystack retries from a small set of addresses and a refused retry strands a payment a buyer
+has already made; the signature check is what actually guards that route. `/health` is exempt
+outright, because the platform reads a 429 as a failed probe and enough failed probes is a restart.
+A rate limit that can restart the service it protects is worse than no rate limit.
+
+The store holds at most 50,000 keys ([`throttle-store.ts:37`](../backend/src/common/throttle/throttle-store.ts#L37)),
+sweeps expired windows when it reaches that, and evicts oldest-first if the sweep frees nothing. The
+key is something a caller chooses, so it needs a ceiling.
+
+### 12.2 When somebody says they are locked out
+
+Ask for the wall-clock minute and the email. Then:
+
+```bash
+psql "$DATABASE_POSTGRES_URL" -c "
+  select action, \"entityId\", \"createdAt\"
+  from \"AuditLog\"
+  where entity = 'AuthAttempt'
+  order by \"createdAt\" desc limit 40;"
+```
+
+`entityId` is `account:<sha256>` or `address:<sha256>`. **The email and the address are hashed and
+nothing readable is stored**, so you cannot search this table by email and you cannot read a
+password out of it, which is the point. To confirm it is a given account, hash it the same way: trim
+it, lower-case it, `sha256`, and prefix `account:`.
+
+A `LOGIN_LOCKED_OUT` row marks the failure that crossed a tier and carries the tier in `after`. The
+ladders are 5 / 10 / 20 failures per account for 60 / 300 / 1800 seconds, and 20 / 40 / 80 per
+address for the same durations. The lock runs from the newest failure, so a caller who keeps trying
+keeps it alive.
+
+**There is no unlock command and that is deliberate.** The lock expires on its own, and the longest
+one is thirty minutes. A `LOGIN_SUCCEEDED` row clears the count for that key, so the moment the real
+person gets in, the ladder resets. Nothing is deleted to make that happen.
+
+If the lockout is firing wrongly for everybody at once, read §12.4 before anything else: one address
+for the whole world is exactly what a wrong `TRUST_PROXY_HOPS` looks like.
+
+**If the database cannot be read, this tier fails open** and logs a warning. Counts it cannot read
+would otherwise refuse every login in the product rather than the attacker's. The request throttle
+is still up in that state.
+
+### 12.3 Turning the throttle off
+
+```bash
+THROTTLE_DISABLED=on
+```
+
+Set it in the Render environment and redeploy. Everything passes, and the API warns at boot on every
+start while it is set, so this cannot be left on quietly.
+
+It does not touch the login lockout, which has no off switch. If the lockout is the problem, widen
+the ladder in code and ship it; there is no environment variable that disables brute-force
+protection on a live product.
+
+Prefer raising one policy to disabling all of them. `THROTTLE_GUEST_CHECKOUT="60:300"` is a smaller
+blast radius than opening the whole API.
+
+### 12.4 `TRUST_PROXY_HOPS`, and why it matters more than it looks
+
+Everything in this section counts per client address, and the address comes from `req.ip`. Express
+only knows the real caller if it is told how many proxies sit in front of it
+([`app-bootstrap.ts:69`](../backend/src/app-bootstrap.ts#L69)).
+
+**Set it to 1 on Render.** Render puts exactly one load balancer in front of the container. Unset it
+defaults to 1 anyway, so the failure mode is a deployment that adds a proxy, or one that removes
+them, and nobody updating this.
+
+Wrong high and every caller collapses into the proxy's own address: one bucket for the whole
+internet, the global limit trips within seconds, and legitimate traffic is refused. Wrong low, the
+same. Either way the symptom is everyone being throttled at once, which is why it is the first thing
+to check.
+
+It is a hop count rather than a boolean on purpose. `trust proxy: true` believes the whole
+`X-Forwarded-For` header including the part the client wrote, which would let a caller pick which
+rate-limit bucket to be counted in and defeat both tiers at once. A number never can.
+
+This also fixes four audit call sites that were recording the proxy's address rather than the
+caller's: [`private-document.controller.ts:94`](../backend/src/storage/private-document.controller.ts#L94)
+and `:126`, [`permissions.guard.ts:157`](../backend/src/common/guards/permissions.guard.ts#L157), and
+[`poa.controller.ts:22`](../backend/src/poa/poa.controller.ts#L22). Rows written before this story
+carry the wrong address; nothing backfills them.
+
+### 12.5 What this did not close
+
+`POST /auth/login` answers *"Account is deactivated"* for a deactivated account and *"Invalid email
+or password"* for everything else, which tells an unauthenticated caller that an email is registered
+here. The lockout is enumeration-safe on its own account — the lock is checked before the user is
+looked up, so a locked answer is identical for a real address and an invented one — but that older
+message is not, and changing it is a frontend-visible behaviour change outside this story. It is
+listed in [`MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md) rather than fixed here.

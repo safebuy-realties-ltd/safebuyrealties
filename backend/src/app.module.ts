@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { SbrIdModule } from "./sbr-id/sbr-id.module";
 import { MaintenanceGuard } from "./common/guards/maintenance.guard";
 import { FeatureGuard } from "./common/guards/feature.guard";
+import { ThrottleGuard } from "./common/guards/throttle.guard";
 import { FeatureFlagsModule } from "./feature-flags/feature-flags.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
@@ -76,6 +77,13 @@ import { AdminRolesModule } from "./admin-roles/admin-roles.module";
       // without the decorator costs one Reflector lookup and passes.
       provide: APP_GUARD,
       useClass: FeatureGuard,
+    },
+    {
+      // Third and last, so a request refused by maintenance or by a dark feature is never also
+      // counted against a limit it was never going to reach. `@Throttle` picks a policy and
+      // `@SkipThrottle` opts out; everything else falls to the global default.
+      provide: APP_GUARD,
+      useClass: ThrottleGuard,
     },
   ],
 })

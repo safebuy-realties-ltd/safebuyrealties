@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Ip, Param, Post, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
@@ -6,6 +6,7 @@ import { LoginDto } from "./dto/login.dto";
 import { ActivateAccountDto } from "./dto/activate-account.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { Throttle } from "../common/decorators/throttle.decorator";
 import { JwtPayload } from "./jwt.strategy";
 
 const COOKIE_NAME = "sbr_session";
@@ -40,16 +41,23 @@ export class AuthController {
   constructor(private auth: AuthService) {}
 
   @Post("register")
+  @Throttle("register")
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.auth.register(dto);
     setSessionCookie(res, result.data.accessToken);
     return { data: { user: result.data.user } };
   }
 
+  /**
+   * Two limits sit in front of this route and they count different things. `@Throttle("login")` is
+   * per address and per minute and catches a burst; the lockout inside `AuthService.login` is per
+   * account, durable, and catches a slow grind spread over an hour. Either can answer 429.
+   */
   @Post("login")
   @HttpCode(200)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.auth.login(dto);
+  @Throttle("login")
+  async login(@Body() dto: LoginDto, @Ip() ip: string, @Res({ passthrough: true }) res: Response) {
+    const result = await this.auth.login(dto, ip);
     setSessionCookie(res, result.data.accessToken);
     return { data: { user: result.data.user } };
   }
@@ -68,12 +76,14 @@ export class AuthController {
   }
 
   @Get("activate/:token")
+  @Throttle("activate")
   getActivationPreview(@Param("token") token: string) {
     return this.auth.getActivationPreview(token);
   }
 
   @Post("activate")
   @HttpCode(200)
+  @Throttle("activate")
   async activate(
     @Body() dto: ActivateAccountDto,
     @Res({ passthrough: true }) res: Response,

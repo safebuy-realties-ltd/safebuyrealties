@@ -26,6 +26,14 @@ export const AuditAction = {
   FEATURE_FLAG_OVERRIDE_CLEARED: "FEATURE_FLAG_OVERRIDE_CLEARED",
   FEATURE_FLAG_KILL_SWITCH_ARMED: "FEATURE_FLAG_KILL_SWITCH_ARMED",
   FEATURE_FLAG_KILL_SWITCH_DISARMED: "FEATURE_FLAG_KILL_SWITCH_DISARMED",
+  /**
+   * The three E5-S1 writes. Unlike every action above them these are also read back: they are the
+   * counter the account lockout runs on, which is how it survives a restart without a migration.
+   * See src/auth/login-attempts.service.ts. They are keyed by hash, never by email or address.
+   */
+  LOGIN_FAILED: "LOGIN_FAILED",
+  LOGIN_SUCCEEDED: "LOGIN_SUCCEEDED",
+  LOGIN_LOCKED_OUT: "LOGIN_LOCKED_OUT",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];

@@ -9,6 +9,11 @@ import { ErrorTrackerService } from "./common/logging/error-tracker.service";
 import { RequestActorInterceptor } from "./common/logging/request-actor.interceptor";
 import { StructuredLogger } from "./common/logging/structured-logger.service";
 import { buildCorsOptions } from "./config/cors-config";
+import {
+  TRUST_PROXY_HOPS_ENV_VAR,
+  isTrustProxyValueIgnored,
+  resolveTrustProxyHops,
+} from "./config/trust-proxy";
 
 /**
  * Everything bootstrap() applies to the app between NestFactory.create() and listen().
@@ -51,6 +56,18 @@ export function configureApp(
   app: NestExpressApplication,
   deps: AppDependencies = createAppDependencies(),
 ): void {
+  // Before any middleware, because everything downstream that reads `req.ip` reads it through this
+  // setting: the rate limit, the lockout, and the four places that write an address to the audit
+  // log. See config/trust-proxy.ts for why it is a hop count and not a boolean.
+  const rawHops = process.env[TRUST_PROXY_HOPS_ENV_VAR];
+  if (isTrustProxyValueIgnored(rawHops)) {
+    deps.logger.warn(
+      `${TRUST_PROXY_HOPS_ENV_VAR} is not a whole number of hops and was ignored. Using the default.`,
+      "Bootstrap",
+    );
+  }
+  app.set("trust proxy", resolveTrustProxyHops(rawHops));
+
   // First, and before cookieParser: a request that dies in parsing still deserves an id, and that
   // is the failure someone will most want to trace. See correlation-id.middleware.ts.
   app.use(correlationIdMiddleware(deps.logger));
