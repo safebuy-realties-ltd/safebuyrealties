@@ -144,6 +144,17 @@
   ol.tight { margin:0; padding-left:20px; }
   ol.tight li { margin-bottom:6px; color:var(--text-secondary); }
   ol.tight li b { color:var(--text-primary); font-weight:600; }
+  /* the glossary: a code on the left, plain English on the right. Deliberately a dl and not a ul,
+     because check-board.mjs counts the ADR and gate list items on this page and a second ul would
+     count them twice. */
+  .gloss { display:grid; grid-template-columns:auto 1fr; gap:8px 14px; align-items:baseline; margin:0; }
+  .gloss dt { margin:0; white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11.8px; font-weight:640; color:var(--text-primary); }
+  .gloss dd { margin:0; color:var(--text-secondary); font-size:12.8px; line-height:1.55; }
+  .gloss dd b { color:var(--text-primary); font-weight:600; }
+  .gloss dt.crit { color:var(--critical); }
+  .holds { color:var(--critical); font-weight:600; white-space:nowrap; }
+
   .empty { padding:20px; color:var(--text-muted); }
   footer { margin-top:40px; color:var(--text-muted); font-size:12.5px;
     border-top:1px solid var(--grid); padding-top:14px; }
@@ -341,11 +352,12 @@
   <div class="card">
     <p class="meta" style="margin:0 0 12px"><b>ADR-0001 (D1) is answered and comes off this list.</b> Asked whether the on-platform property purchase is in the MVP or whether standalone due diligence is the MVP. The stakeholders answered on 2026-08-02: <b>buying a property on the platform is part of the MVP</b>. Option A, so the purchase wizard gets finished rather than retired, the roughly 20 days option B would have cut stay in the plan, and E1's four stories are wave 4 above. It is recorded in <code>docs/adr/0001-mvp-scope-envelope.md</code>, which is now Accepted rather than proposed. Four decisions are still open and they are the four below.</p>
     <ul class="tight" style="margin:0">
-      <li><b>ADR-0002 (D2)</b> does SafeBuyRealties hold client funds? Decides whether E2-S1 is a form or a regulated flow with CBN and AML duties</li>
-      <li><b>ADR-0003 (D3)</b> fail startup rather than silently mock payments in production. Recommended for immediate adoption, shipped as E2-S4</li>
-      <li><b>ADR-0004 (D4)</b> private documents behind authorization, plus the storage provider and region choice</li>
-      <li><b>ADR-0005 (D5)</b> raise the quality bar as a ratchet on new code, not retroactively</li>
+      <li><b>ADR-0002 (D2)</b> does SafeBuyRealties hold client funds? Decides whether E2-S1 is a form or a regulated flow with CBN and AML duties. Still open, and it <span class="holds">holds 11 developer-days</span>, none of which it releases on its own, because E2-S1 waits on E1-S4 as well. With ADR-0001 answered this is the largest single answer left on the page</li>
+      <li><b>ADR-0003 (D3)</b> fail startup rather than silently mock payments in production. Recommended for immediate adoption, shipped as E2-S4. Answered, and nothing waits on it</li>
+      <li><b>ADR-0004 (D4)</b> private documents behind authorization, plus the storage provider and region choice. Still open, and it <span class="holds">holds 10 developer-days</span>. It travels with EXT-2, because the decision and the bucket are no use apart</li>
+      <li><b>ADR-0005 (D5)</b> raise the quality bar as a ratchet on new code, not retroactively. Answered and in force, and nothing waits on it</li>
     </ul>
+    <p class="meta" style="margin-top:12px">An ADR is a decision written down and kept, not a task waiting for a developer, so nobody on the engineering team can close one. The <b>D1</b> to <b>D5</b> names are what the same five decisions were called before they were written up, and both names are still in use here and in the backlog.</p>
   </div>
 </section>
 
@@ -366,20 +378,75 @@
     <div class="card">
       <h3 style="font-size:13px;margin:0 0 10px;color:var(--text-secondary)">External inputs</h3>
       <ul class="tight">
-        <li><b>EXT-1</b> production Paystack live keys and a settlement account</li>
-        <li><b>EXT-2</b> S3-compatible bucket, credentials, region decision</li>
-        <li><b>EXT-3</b> email domain with SPF, DKIM, DMARC, and SMTP credentials</li>
-        <li><b>EXT-4</b> counsel-approved PoA instrument and terms of service</li>
-        <li><b>EXT-5</b> NDPR privacy notice and retention policy</li>
-        <li><b>EXT-6</b> penetration test vendor and window</li>
-        <li><b>EXT-7</b> confirmation of ADR-0001 and ADR-0002. Half discharged: ADR-0001 came back on 2026-08-02, ADR-0002 has not</li>
+        <li><b>EXT-1</b> production Paystack live keys and a settlement account, so real money has somewhere to land. Pairs with ADR-0002, and there is no point buying it before that decision is made</li>
+        <li><b>EXT-2</b> S3-compatible bucket, credentials, region decision. Pairs with ADR-0004</li>
+        <li><b>EXT-3</b> email domain with SPF, DKIM, DMARC, and SMTP credentials, so the product can send a message a mail server will accept. <span class="holds">Holds 13 developer-days</span> on its own, more than anything else here that costs only an afternoon of somebody's attention</li>
+        <li><b>EXT-4</b> counsel-approved PoA instrument and terms of service. <span class="holds">Holds 1 developer-day</span> and usually takes a fortnight to obtain</li>
+        <li><b>EXT-5</b> NDPR privacy notice and retention policy. <span class="holds">Holds 6 developer-days</span> and has the longest lead time of the seven</li>
+        <li><b>EXT-6</b> penetration test vendor and window. <span class="holds">Holds 1 developer-day</span>, and it is the booking that is missing rather than the test</li>
+        <li><b>EXT-7</b> confirmation of ADR-0001 and ADR-0002 in writing, which is what turns those two answers into something a developer can build against. <b>Half discharged</b>: ADR-0001 came back on 2026-08-02 and wave 4 above is what it released, ADR-0002 has not</li>
       </ul>
+    </div>
+  </div>
+  <p class="meta" style="margin-top:12px">A gate is a condition that has to hold before real users and real money are let near the product. An external input is something that has to be supplied from outside this repository, an account, a domain, a bucket, a published policy, a signature or a booked vendor, and no amount of engineering produces one. <b>G4</b>, <b>G5</b> and <b>G6</b> cannot be closed by writing code at all: they close when a lawyer, a security vendor and a regulator-facing adviser say so.</p>
+</section>
+
+<section id="codes">
+  <h2>How to read the codes on this page <span class="note">nothing below needs another document open beside it</span></h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="font-size:13px;margin:0 0 10px;color:var(--text-secondary)">What each prefix means</h3>
+      <dl class="gloss">
+        <dt>ADR-0001</dt>
+        <dd><b>Architecture Decision Record.</b> A decision important enough to be written down as a numbered document and kept. An open one is a question waiting for an answer, not a task waiting for a developer.</dd>
+        <dt>D1 to D5</dt>
+        <dd>The short name each of those five decisions carried before it was written up. <code>D2</code> and <code>ADR-0002</code> are the same decision under two names.</dd>
+        <dt>EXT-1</dt>
+        <dd><b>External input.</b> Something supplied from outside this repository: an account, a domain, a bucket, a published policy, a signature, a booked vendor.</dd>
+        <dt>G1 to G6</dt>
+        <dd><b>Go-live gate.</b> A condition that has to hold before the product goes in front of real users and real money.</dd>
+        <dt>E4-S2</dt>
+        <dd>Story 2 of epic 4. Every buildable row in the table above is named this way, so <code>E2-S1</code> is the first story of the money epic.</dd>
+        <dt>S, M, L</dt>
+        <dd>The published size of a story in developer-days. <b>S</b> is about a day, <b>M</b> is two to four, <b>L</b> is about a week. Every day figure on this page is the upper bound of that range.</dd>
+        <dt>CH-1, DOCS-4</dt>
+        <dd>A chore and a documentation story. Neither is user-facing, and both are written, reviewed and merged like any other row.</dd>
+        <dt>QA-015</dt>
+        <dd>A numbered finding from the quality audit that ran before the handover week.</dd>
+        <dt>W1 to W4</dt>
+        <dd>The waves that follow the handover week. <code>D1</code> to <code>D5</code> in the Day column mean the week's days; <code>W1</code> onwards mean the waves after it. Three closed, and <code>W4</code> opened on 2026-08-02 because a stakeholder answered ADR-0001.</dd>
+        <dt>#132</dt>
+        <dd>A pull request number in this repository. A number on this page always means a pull request, never a story.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3 style="font-size:13px;margin:0 0 10px;color:var(--text-secondary)">Words borrowed from finance, law and email</h3>
+      <dl class="gloss">
+        <dt>DD</dt>
+        <dd><b>Due diligence.</b> The checks run on a property and on the person selling it before any money moves. This is the part of the product that exists today.</dd>
+        <dt>KYC</dt>
+        <dd><b>Know your customer.</b> The identity check on a user before that user is allowed to move money.</dd>
+        <dt>PoA</dt>
+        <dd><b>Power of Attorney.</b> The instrument a buyer signs so the platform can act on their behalf. A lawyer drafts it, not a developer.</dd>
+        <dt>NDPR</dt>
+        <dd><b>Nigeria Data Protection Regulation</b>, and the Act that now carries it. It sets the privacy notice and the retention duties EXT-5 covers.</dd>
+        <dt>CBN</dt>
+        <dd><b>Central Bank of Nigeria.</b> Its rules are what turn holding somebody else's money into a regulated activity rather than a feature.</dd>
+        <dt>AML</dt>
+        <dd><b>Anti-money-laundering.</b> The reporting and record-keeping duties that arrive with holding client funds.</dd>
+        <dt>SPF, DKIM, DMARC</dt>
+        <dd>Three records published in a domain's DNS settings. Together they let a receiving mail server believe a message really came from that domain. Without them, transactional email is dropped or filed as spam.</dd>
+        <dt>SMTP</dt>
+        <dd>The protocol, and the credentials a mail provider issues, that let an application send email at all.</dd>
+        <dt>Escrow</dt>
+        <dd>Holding a buyer's money between payment and completion instead of passing it straight to the seller. Whether this platform does that is ADR-0002, and it is the difference between a payout form and a regulated flow.</dd>
+      </dl>
     </div>
   </div>
 </section>
 
 <footer>
-  Companion documents in <code>docs/</code>: <b>HANDOVER.md</b> (read first), <b>HANDOVER_WEEK.md</b> (this plan in full), <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story), <b>adr/0001</b> to <b>0005</b>.
+  Companion documents in <code>docs/</code>: <b>HANDOVER.md</b> (read first), <b>HANDOVER_WEEK.md</b> (this plan in full), <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story), <b>adr/0001</b> to <b>0005</b>, <b>reports/remaining-work.html</b> (what is left, in figures, with the same legend). Every code used anywhere on this page is spelled out under <a class="pr" href="#codes">How to read the codes</a>.
 </footer>
 
 </div>
@@ -408,7 +475,7 @@ const EPICS = [
 ];
 
 // Each card carries its own key, and every row's Day column joins to it. The keys were D1 to D5
-// for as long as the schedule was the handover week; the waves that follow it are W1 to W3, and
+// for as long as the schedule was the handover week; the waves that follow it are W1 onwards, and
 // validate:board reads the keys off these cards rather than holding a list of its own.
 const DAYS = [
   { key:"D1", n:"Day 1", theme:"Truth", count:3, done:true, items:[
