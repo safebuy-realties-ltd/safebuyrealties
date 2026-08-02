@@ -1,3 +1,11 @@
+> **Still usable, and incomplete.** Dated 2026-05-26. Every route below still exists in
+> `src/routeTree.gen.ts` and `password123` is still the seed default, so the walkthrough works as
+> written. What it does not cover is everything built after it: standalone due diligence, escrow, power
+> of attorney, KYC and notifications. The five logins it names are five of the 27 accounts in
+> [`DEMO_TEST_ACCOUNTS.csv`](DEMO_TEST_ACCOUNTS.csv), so a super admin or company demo needs that file
+> instead. Treat this as a subset of the demo rather than the demo.
+> (Banner added 2026-08-02 by story DOCS-4.)
+
 # Demo Script Checklist
 
 **Base URL (local — primary):** http://localhost:8080  

@@ -509,8 +509,10 @@ order — the first two are security, the second two are correctness.
 
 Criterion 4 of E7-S5 asks for `docs/BUILD_CHECKLIST.md` to be reconciled against the backlog, closing
 DOCS-1. **DOCS-1 did that on day 1** and it is verified rather than redone here: the file opens with a
-dated accuracy notice, carries an *Audit corrections* table, and marks three overstated items `[!]`
-against 59 `[x]`. It also states that it is no longer the work queue and points at the backlog.
+dated accuracy notice and carries an *Audit corrections* table of seven overstatements, each with the
+story that closes it. All 59 items in the file remain `[x]`, and the corrections live in the table
+rather than in a marker on the item, so there is no `[!]` in the file to look for. It also states that
+it is no longer the work queue and points at the backlog.
 
 That audit was run against `fc05e1e`, before the week's merges. Re-running it against HEAD is story
 **DOCS-4**, deliberately scheduled last, and is not duplicated here.

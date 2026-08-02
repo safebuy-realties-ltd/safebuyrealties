@@ -13,10 +13,13 @@ GitHub **branch protection** cannot be applied via API on this private repo with
 2. **Require status checks to pass before merging**
    - Enable **Require branches to be up to date before merging**
    - Required check: **`CI (required)`** (job `ci-gate` in `.github/workflows/ci.yml`)
-   - When both FE and BE change, also ensure these ran successfully (they are enforced inside `CI (required)`):
+   - `CI (required)` already enforces every applicable job, so it is the only check that has to be
+     required. The jobs behind it are:
      - `frontend-typecheck` — `tsc` + ESLint
-     - `frontend-test` — `npm test` (Vitest)
-     - `backend-check` — backend `tsc` + `npm test` (Jest)
+     - `frontend-test` — `npm test` (Vitest) + diff coverage on the changed lines
+     - `backend-check` — backend `tsc` + `npm test` (Jest) + diff coverage on the changed lines
+     - `e2e-api` and `e2e-browser` — the journey scripts against an ephemeral database
+     - `board` — `scripts/check-board.mjs`, plus the rule that a code change updates `docs/mvp-board.html`
 
 3. **Block direct pushes to `main`**
    - **Restrict who can push to matching branches** → leave empty (nobody pushes directly), **or**
@@ -39,7 +42,7 @@ Feature branches no longer trigger duplicate failing workflows on every `git pus
 
 - [ ] PR targets `main` (never push commits directly to `main`)
 - [ ] **`CI (required)`** is green
-- [ ] Path-specific jobs passed (`frontend-typecheck`, `frontend-test`, `backend-check` as applicable)
+- [ ] Path-specific jobs passed (`frontend-typecheck`, `frontend-test`, `backend-check`, `e2e-api`, `e2e-browser`, `board`, as applicable)
 - [ ] Vercel preview OK when FE/BE/schema changed
 
 ## Agents / automation
