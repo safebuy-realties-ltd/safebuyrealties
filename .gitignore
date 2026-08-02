@@ -41,6 +41,13 @@ coverage/
 # Local assistant tooling, never committed
 .claude/
 
+# Renders of docs/reports/*.html. The HTML is the source and it is committed; the PDF and the PNG
+# are printed from it on demand and weigh two megabytes and nine between them. A committed binary
+# that regenerates from the file beside it goes stale without anyone noticing, and the stale copy is
+# the one that gets emailed.
+docs/reports/*.pdf
+docs/reports/*.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

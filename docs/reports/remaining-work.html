@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeBuyRealties remaining work: the six things only the stakeholder can do</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:#f9f9f7; --surface-1:#fcfcfb; --text-primary:#0b0b0b; --text-secondary:#52514e;
+    --text-muted:#898781; --grid:#e1e0d9; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --chip-bg:rgba(11,11,11,0.05); --wash:rgba(42,120,214,0.07);
+    --wash-red:rgba(208,59,59,0.07); --wash-green:rgba(12,163,12,0.07);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-size:14px; line-height:1.55;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .wrap { max-width:1180px; margin:0 auto; padding:32px 24px 64px; }
+  header.top h1 { font-size:24px; margin:0 0 4px; letter-spacing:-0.01em; }
+  .sub { color:var(--text-secondary); margin:0; }
+  .meta { color:var(--text-muted); font-size:12.5px; margin-top:6px; }
+  section { margin-top:30px; }
+  h2 { font-size:15px; margin:0 0 4px; font-weight:650; }
+  h2 .note { font-weight:400; color:var(--text-muted); font-size:13px; margin-left:8px; }
+  h3 { font-size:13px; margin:0 0 10px; font-weight:640; color:var(--text-secondary); }
+  .cap { color:var(--text-muted); font-size:12.5px; margin:0 0 12px; }
+  .fignum { font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-muted);
+    font-weight:640; margin-bottom:3px; }
+
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .tile { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .tile .label { font-size:12px; color:var(--text-secondary); }
+  .tile .value { font-size:28px; font-weight:620; letter-spacing:-0.02em; margin-top:2px; }
+  .tile .foot { font-size:12px; color:var(--text-muted); }
+  .tile.red .value { color:var(--critical); } .tile.green .value { color:var(--good); }
+
+  .card { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .card p { margin:0 0 10px; } .card p:last-child { margin-bottom:0; }
+  .card.red { background:var(--wash-red); border-color:rgba(208,59,59,0.25); }
+  .card.green { background:var(--wash-green); border-color:rgba(12,163,12,0.25); }
+  .card.blue { background:var(--wash); border-color:rgba(42,120,214,0.25); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+
+  table { width:100%; border-collapse:collapse; font-size:12.6px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--grid); vertical-align:top; }
+  th { font-weight:620; color:var(--text-secondary); font-size:11.5px; white-space:nowrap; background:var(--chip-bg); }
+  tbody tr:last-child td { border-bottom:none; }
+  .tblwrap { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .id { font-weight:640; white-space:nowrap; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:0.92em;
+    background:var(--chip-bg); padding:1px 4px; border-radius:4px; }
+
+  .dbar { display:flex; align-items:center; gap:6px; }
+  .dbar .t { height:9px; background:var(--grid); border-radius:2px; flex:1; min-width:26px; overflow:hidden; }
+  .dbar .f { height:100%; border-radius:2px; }
+  .dbar .n { font-variant-numeric:tabular-nums; font-size:12px; width:16px; text-align:right; }
+
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .dot.ok{background:var(--good)} .dot.warn{background:var(--warning)}
+  .dot.ser{background:var(--serious)} .dot.crit{background:var(--critical)}
+  .chip { display:inline-flex; align-items:center; background:var(--chip-bg); border-radius:20px;
+    padding:2px 9px; font-size:11.5px; color:var(--text-secondary); white-space:nowrap; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); margin-top:12px; }
+  .legend span { display:inline-flex; align-items:center; }
+  .sw { width:11px; height:11px; border-radius:3px; display:inline-block; margin-right:6px; }
+
+  /* the glossary: a code on the left, plain English on the right */
+  .gloss { display:grid; grid-template-columns:auto 1fr; gap:8px 14px; align-items:baseline;
+    margin:0; font-size:12.8px; }
+  .gloss dt { margin:0; white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11.8px; font-weight:640; color:var(--text-primary); }
+  .gloss dd { margin:0; color:var(--text-secondary); line-height:1.55; }
+  .gloss dd b { color:var(--text-primary); font-weight:640; }
+  .gloss dt.crit { color:var(--critical); }
+
+  /* the short-name key that sits under any figure labelled by short name */
+  .keyrow { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  .keyrow .r { display:inline-flex; align-items:baseline; gap:6px; background:var(--chip-bg);
+    border-radius:7px; padding:4px 9px; font-size:12px; color:var(--text-secondary); }
+  .keyrow .r b { font-weight:640; color:var(--text-primary); }
+  .keyrow .r code { background:none; padding:0; font-size:11px; color:var(--critical); }
+
+  svg { display:block; width:100%; height:auto; overflow:visible; }
+  svg text { font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  ul.tight { margin:0; padding-left:18px; } ul.tight li { margin:5px 0; }
+
+  /* the seven asks */
+  .ask { background:var(--surface-1); border:1px solid var(--border); border-left:5px solid var(--critical);
+    border-radius:12px; padding:0; margin-bottom:16px; overflow:hidden; }
+  .ask > .head { padding:14px 20px 12px; border-bottom:1px solid var(--grid); background:var(--wash-red); }
+  .ask > .head .kicker { font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--critical); font-weight:640; }
+  .ask > .head h3 { font-size:16px; color:var(--text-primary); margin:2px 0 8px; font-weight:640;
+    letter-spacing:-0.01em; }
+  .ask > .head .facts { display:flex; gap:8px; flex-wrap:wrap; }
+  .ask > .body { padding:16px 20px 18px; }
+  .ask .qa { margin:0 0 14px; } .ask .qa:last-child { margin-bottom:0; }
+  .ask .qa .q { font-size:11px; letter-spacing:0.05em; text-transform:uppercase; font-weight:640;
+    color:var(--text-muted); margin-bottom:3px; }
+  .ask .qa p { margin:0 0 6px; } .ask .qa p:last-child { margin-bottom:0; }
+  .ask.warn { border-left-color:var(--warning); }
+  .ask.warn > .head { background:rgba(250,178,25,0.09); }
+  .ask.warn > .head .kicker { color:#a2740c; }
+  .ask .rel { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .rel .r { display:inline-flex; align-items:baseline; gap:6px; background:var(--chip-bg);
+    border-radius:7px; padding:4px 9px; font-size:12px; }
+  .rel .r b { font-weight:640; } .rel .r span { color:var(--text-muted); font-size:11.5px; }
+
+  @media print {
+    body { background:#fff; }
+    .wrap { max-width:none; padding:0 6px; }
+    section, .card, .tblwrap, .ask { break-inside:avoid; }
+    tr { break-inside:avoid; }
+  }
+  @media (max-width:820px) { .grid2,.grid3 { grid-template-columns:1fr; } .tiles { grid-template-columns:repeat(2,1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Remaining work: the six things only the stakeholder can do</h1>
+  <p class="sub">Nineteen stories are left on the MVP. Five of them a developer can start this morning.
+    The other fourteen are waiting on six items that no amount of engineering can produce, because they
+    are decisions, purchases, accounts and documents that belong to somebody outside this team.</p>
+  <p class="sub" style="margin-top:8px;">This is the third edition. The first was written on 1 August.
+    The second was written on the morning of 2 August, when one stakeholder answer was still holding
+    back a third of the build. That answer came back the same day, which is why this edition exists:
+    it released seventeen developer-days, it turned a report about a stalled project into a report
+    about a schedule, and it is the clearest evidence in this document of what one sentence from a
+    stakeholder is worth here.</p>
+  <p class="meta">Generated 2026-08-02, after PRs 134, 135 and 136 merged. Every figure below is derived
+    from <code>docs/mvp-board.html</code> and <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at
+    <code>main</code> @ <code>5be4b6b</code>, and the derivation is described under <b>Method</b> at the foot
+    of the page.</p>
+</header>
+
+<section>
+  <div class="tiles" id="tiles"></div>
+</section>
+
+<section>
+  <div class="card red">
+    <p><b>The position in one paragraph.</b> Forty of the fifty-nine rows on the board are closed. Of the
+      nineteen that remain, five are free: a developer can pick up the first of them this morning and
+      nobody has to be asked for anything. The other fourteen carry forty-four developer-days and every
+      one of them is stopped in front of the same six items. Those items are not engineering work and
+      they cannot be worked around. They are one decision about money, one decision about where documents
+      live, a mail domain, two legal documents and a booked security test.</p>
+    <p><b>What changed since the second edition, and it changed the shape of the report.</b> The stakeholder
+      confirmed that buying a property on the platform is part of the MVP. That is ADR-0001, and answering
+      it released five stories and seventeen developer-days in a single sentence, at a cost to the person
+      answering of one reply. Before it, this page reported a runway of zero: there was literally nothing a
+      developer could begin. Now there are four calendar days of building in front of the team that need
+      nobody's permission.</p>
+    <p><b>What has not changed, and it is now the whole story.</b> Every one of the remaining six items has
+      a lead time attached to it, and five of the six will arrive after the day the code in front of them is
+      ready. Three of them take between two and three weeks to obtain, and between them they hold nine
+      developer-days, which is about one day of building. So the finish date of this MVP is not being set by
+      how much code is left. It is being set by when six emails get sent.</p>
+  </div>
+</section>
+
+<section id="codes">
+  <h2>Before the figures: what every code on this page means</h2>
+  <p class="cap">This project labels things tersely so that the board, the backlog and this report can all
+    point at the same thing without ambiguity. That helps the people who read them daily and it slows down
+    everybody else, so the whole vocabulary is written out here. Nothing below needs to be looked up
+    anywhere else, and every code used in a figure is also spelled out where the figure uses it.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>What each prefix means</h3>
+      <dl class="gloss">
+        <dt>ADR</dt><dd><b>Architecture Decision Record.</b> A numbered, written-down decision, kept in
+          <code>docs/adr/</code>. It exists so that a choice is made once, by a named person, with the
+          reasoning attached, instead of being made five times by whoever is typing. An ADR that is still
+          open is a piece of engineering that nobody is allowed to start.</dd>
+        <dt>EXT</dt><dd><b>External input.</b> Something the team cannot produce with code no matter how many
+          people are on it: an account with a supplier, a domain, a signed document, a booked appointment.
+          Numbered <code>EXT-1</code> to <code>EXT-7</code>.</dd>
+        <dt>E1 to E8</dt><dd><b>Epic.</b> A theme of work. The eight of them are listed on the right.</dd>
+        <dt>-S1, -S2</dt><dd><b>Story</b> within that epic. <code>E6-S2</code> is the second story of epic 6.
+          A story is the unit that becomes one pull request.</dd>
+        <dt>S, M, L</dt><dd><b>Size.</b> Small is about a day, Medium two to four days, Large about a week.
+          These are developer-days of scope, not calendar days, and the difference matters enough that
+          figure 6 is about nothing else.</dd>
+        <dt>D1 to D5</dt><dd><b>Decision</b> awaiting an answer. Each one maps to an ADR.</dd>
+        <dt>G1 to G6</dt><dd><b>Go-live gate.</b> A condition that must be demonstrably true before launch.
+          Listed on the right.</dd>
+        <dt>W1 to W4</dt><dd><b>Wave.</b> A batch of stories a developer works through together. Waves 1, 2
+          and 3 are closed. Wave 4 is open.</dd>
+        <dt>QA-nnn</dt><dd>A numbered finding from the quality audit that produced this backlog.</dd>
+        <dt>DOCS-n, CH-n</dt><dd><b>Documentation and chore rows.</b> Real pull requests that carry no
+          engineering days, so they never move the totals in this report.</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h3>The eight epics, in plain words</h3>
+      <dl class="gloss">
+        <dt>E1 Loop</dt><dd><b>Close the loop.</b> Make buying a property on the platform actually work end
+          to end. This is the wave that just opened.</dd>
+        <dt>E2 Money</dt><dd><b>Money integrity.</b> Sellers get paid into their own account, refunds
+          genuinely reach the buyer's card, and finance can reconcile it.</dd>
+        <dt>E3 Trust</dt><dd><b>Document trust.</b> Uploaded documents survive a deploy, and a file claiming
+          to be a PDF is checked rather than believed.</dd>
+        <dt>E4 Access</dt><dd><b>Access correctness.</b> The right people see the right things, and identity
+          checks actually gate the actions that move money.</dd>
+        <dt>E5 Security</dt><dd><b>Account security.</b> Password reset, email verification, lockout,
+          session handling.</dd>
+        <dt>E6 Comms</dt><dd><b>Communications.</b> The platform can send an email. Today it cannot.</dd>
+        <dt>E7 Ops</dt><dd><b>Operability.</b> The things that make the system runnable: health checks,
+          logging, a demo that can be reset.</dd>
+        <dt>E8 Compliance</dt><dd><b>Compliance and go-live.</b> Privacy law, counsel-approved legal text,
+          an independent security review.</dd>
+      </dl>
+      <h3 style="margin-top:16px;">The six go-live gates</h3>
+      <dl class="gloss">
+        <dt>G1</dt><dd>A buyer completes the on-platform journey on staging with no staff intervention.
+          <b>Now measurable</b>, because E1 is finally allowed to be built.</dd>
+        <dt>G2</dt><dd>A test payout reaches a real, distinct seller account and a test refund is repaid by
+          the payment gateway. Waits on E2.</dd>
+        <dt>G3</dt><dd>No private document is reachable without authorization. Half earned: the probe suite
+          exists and passes. Waits on E3-S2, the storage half.</dd>
+        <dt>G4</dt><dd>Signed Power of Attorney instrument and terms of service approved by counsel.
+          Waits on <code>EXT-4</code>.</dd>
+        <dt>G5</dt><dd>Independent security review closed with no high findings outstanding.
+          Waits on <code>EXT-6</code>.</dd>
+        <dt>G6</dt><dd>Escrow and settlement model confirmed against CBN and AML obligations.
+          Waits on <code>ADR-0002</code>.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <h3>Words borrowed from finance, law and email</h3>
+    <dl class="gloss">
+      <dt>escrow</dt><dd>Holding a buyer's money in a third account until both sides have done their part,
+        instead of passing it straight to the seller. Whether this platform does that is
+        <code>ADR-0002</code>, and it is a regulatory question as much as a technical one.</dd>
+      <dt>PoA</dt><dd><b>Power of Attorney.</b> The instrument by which a buyer authorises the platform to
+        act on their behalf. Its wording was drafted by engineers in a build checklist, which is why
+        <code>EXT-4</code> asks counsel to look at it.</dd>
+      <dt>NDPR</dt><dd><b>Nigeria Data Protection Regulation.</b> The law governing what this platform may do
+        with personal data. It is why E8-S1 exists, and E8-S1 stores identity documents and selfies today
+        with no consent model, no retention policy and no way to erase anybody.</dd>
+      <dt>KYC</dt><dd><b>Know Your Customer.</b> The identity check a regulated business performs before
+        letting somebody move money. The records exist here; nothing reads them yet.</dd>
+      <dt>AML / CBN</dt><dd><b>Anti-Money Laundering</b> obligations, and the <b>Central Bank of Nigeria</b>,
+        the regulator whose rules decide what an escrow answer is allowed to be.</dd>
+      <dt>SPF, DKIM</dt><dd>Two DNS records that tell the rest of the internet that mail claiming to come
+        from this domain really does. Without them, the platform's mail lands in spam or is rejected
+        outright. They are part of <code>EXT-3</code> and they take minutes to add.</dd>
+      <dt>pen test</dt><dd><b>Penetration test.</b> A paid, independent attempt to break into the system,
+        run by people who did not build it. <code>EXT-6</code> is booking one.</dd>
+      <dt>reconciliation</dt><dd>Checking that what the platform thinks it moved and what the bank actually
+        moved are the same number. E2-S5 is the screen that does it.</dd>
+      <dt>retention and erasure</dt><dd>How long personal data is kept, and how a person gets it deleted.
+        Both are legal positions before they are code, which is why <code>EXT-5</code> comes first.</dd>
+    </dl>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <h3>Every decision and external input, by name</h3>
+    <p class="cap" style="margin-bottom:10px;">The six on this page are marked in red. The rest are here so
+      that a code seen elsewhere in the repository can be looked up in one place.</p>
+    <dl class="gloss">
+      <dt>ADR-0001</dt><dd><b>Answered on 2 August. Is buying a property on the platform part of the MVP?</b>
+        Yes. That answer is the reason this edition exists. It released E1's four stories and, behind them,
+        E4-S2. Recorded as Accepted in <code>docs/adr/0001-mvp-scope-envelope.md</code>.</dd>
+      <dt class="crit">ADR-0002</dt><dd><b>Does the platform hold client funds, or pass them straight
+        through?</b> The half of <code>EXT-7</code> still outstanding. It decides whether E2-S1 is a bank
+        details form or a regulated money flow, so it cannot be guessed at and then corrected later. Holds
+        three stories and gate G6.</dd>
+      <dt>ADR-0003</dt><dd>Payment mock-mode guard. <b>Decided and shipped.</b> Production can no longer
+        start in a mode that pretends payments succeeded.</dd>
+      <dt class="crit">ADR-0004</dt><dd><b>How are private documents served?</b> Signed short-lived links
+        from object storage, or streamed through the API with an authorization check on every read. It has
+        to be decided before the bucket is bought, because the two answers need different bucket settings.
+        Holds three stories and half of gate G3.</dd>
+      <dt>ADR-0005</dt><dd>The quality ratchet. <b>Decided and enforced.</b> Coverage on changed lines
+        cannot fall.</dd>
+      <dt class="crit">EXT-1</dt><dd>Production payment keys and a settlement account. Travels with
+        ADR-0002: the decision has to be made before the account can be opened, and the account has a
+        business verification behind it.</dd>
+      <dt class="crit">EXT-2</dt><dd>An S3-compatible bucket, its credentials and a region choice. Travels
+        with ADR-0004.</dd>
+      <dt class="crit">EXT-3</dt><dd>A transactional email domain, SPF, DKIM, DMARC and sending credentials.
+        The single highest-value item on this page: it holds thirteen developer-days and it is the fastest
+        of the six to obtain.</dd>
+      <dt class="crit">EXT-4</dt><dd>Counsel-approved Power of Attorney text and terms of service. Holds one
+        story worth a single day, and gate G4.</dd>
+      <dt class="crit">EXT-5</dt><dd>An NDPR privacy notice and a retention policy. Holds the largest single
+        blocked story on the board.</dd>
+      <dt class="crit">EXT-6</dt><dd>A penetration test vendor and a booked window. Holds one story worth a
+        single day, and gate G5.</dd>
+      <dt>EXT-7</dt><dd>Confirmation of D1 and D2. <b>Half discharged on 2 August</b>, when D1 came back.
+        What is left of it is D2, which is ADR-0002.</dd>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <div class="fignum">Figure 1</div>
+  <h2>Where the work stands, against where it stood two mornings ago</h2>
+  <p class="cap">Each bar is the whole MVP backlog at that moment, in developer-days. Green is work a
+    developer could have picked up without asking anybody. Red is work stopped in front of somebody else's
+    decision or purchase. The bars shrink because delivered work leaves the chart.</p>
+  <div class="card"><div id="fig1"></div></div>
+</section>
+
+<section>
+  <div class="fignum">Figure 2</div>
+  <h2>Everything delivered so far, and the one delivery no developer made</h2>
+  <p class="cap">Twelve stories and thirty-eight developer-days closed across three waves in two days. Then
+    wave 4 opened, and its first three pull requests carried one engineering day between them. The block at
+    the bottom is not a pull request. It is a stakeholder answering a question, and it moved more than any
+    single wave on this chart.</p>
+  <div class="card"><div id="fig2"></div></div>
+</section>
+
+<section>
+  <div class="fignum">Figure 3</div>
+  <h2>Every remaining story, matched to the one item holding it</h2>
+  <p class="cap">Nineteen rows. Each is sized in developer-days and grouped under the item that has to
+    arrive before anybody can start it. The green group at the top is held by nobody.</p>
+  <div class="card"><div id="fig3"></div></div>
+  <div class="keyrow" id="key3"></div>
+</section>
+
+<section>
+  <div class="fignum">Figure 4</div>
+  <h2>How late each item already is</h2>
+  <p class="cap">For each item, two dates. The blue marker is the build day on which the code in front of it
+    is finished and the first story behind it could start. The red marker is the day it actually arrives, if
+    somebody starts obtaining it this morning. The gap between them is a developer standing still.</p>
+  <div class="card"><div id="fig4"></div></div>
+  <p class="cap" style="margin-top:10px;">Five of the six arrive after the team is ready for them, and the
+    three worst are worth nine developer-days between them, which is about one day of building. The last
+    story on this MVP is not blocked by difficulty. It is blocked by a three-week wait that has not been
+    started.</p>
+</section>
+
+<section>
+  <div class="fignum">Figure 5</div>
+  <h2>Two orderings of the same six items, and they are nearly reversed</h2>
+  <p class="cap">On the left, the six ranked by how much work each one releases. On the right, the same six
+    ranked by how long each one takes to obtain. Read them together and the instruction falls out on its own.</p>
+  <div class="grid2">
+    <div class="card"><h3>By developer-days released</h3><div id="fig5a"></div></div>
+    <div class="card"><h3>By calendar days to obtain</h3><div id="fig5b"></div></div>
+  </div>
+  <div class="card blue" style="margin-top:14px;">
+    <p><b>The three items at the bottom of the left chart are the three at the top of the right one.</b>
+      <code>EXT-4</code>, <code>EXT-5</code> and <code>EXT-6</code> release nine developer-days between
+      them, the least of any group here, and they take two to three weeks each to obtain, the longest of
+      any group here. They are also the three nobody feels urgency about, precisely because they release so
+      little.</p>
+    <p>That is the trap. The two items that release the most, <code>EXT-3</code> and <code>ADR-0004</code>,
+      can be dealt with today and tomorrow, so they will be. The three that release the least will sit,
+      and then they will be the only thing between a finished codebase and a launch, for three weeks, with
+      nothing to do but wait. <b>Start all six this morning. The three small ones first.</b></p>
+  </div>
+</section>
+
+<section>
+  <div class="fignum">Figure 6</div>
+  <h2>What sixty-one developer-days is worth in calendar time</h2>
+  <p class="cap">A developer-day is a unit of scope, not a unit of elapsed time, and on this project the two
+    are far apart. One developer running many agents in parallel, with a second developer reviewing and
+    merging, does not spend those days one after another. The evidence is this repository's own history.</p>
+  <div class="grid2">
+    <div class="card"><h3>Sixty-one developer-days of scope</h3><div id="fig6a"></div></div>
+    <div class="card"><h3>The same work, in calendar days</h3><div id="fig6b"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <p><b>Where the rate comes from.</b> Eleven pull requests merged into <code>main</code> on 31 July and
+      eleven more on 1 August. Wave 1 was four stories and eight published developer-days, and it merged as
+      PRs 119 to 122 inside a single afternoon. Wave 3 was four stories and eighteen developer-days in a
+      day. The ceiling this report plans against is <b>six merges and nineteen developer-days in a calendar
+      day</b>, which is the highest the repository has actually sustained, and every day in figure 7 sits
+      under it.</p>
+    <p><b>What that rate cannot buy.</b> It cannot compress a chain. Wave 4 is four stories deep and each
+      one waits on the one before it, so it takes four calendar days no matter how many agents are pointed
+      at it. Adding people or agents to a chain of four does not make it a chain of one. This is why the
+      runway figure at the top of the page is four days rather than one.</p>
+  </div>
+</section>
+
+<section>
+  <div class="fignum">Figure 7</div>
+  <h2>The five build days, laid out</h2>
+  <p class="cap">What gets built and when, on one assumption: the stakeholder clears the three decision and
+    configuration items within three days, and starts the three long-lead paperwork items today. Each column
+    is one calendar day. Every cell names a story, its size in developer-days and the item that released it.</p>
+  <div class="card"><div id="fig7"></div></div>
+  <div class="keyrow" id="key7"></div>
+  <div class="card green" style="margin-top:14px;">
+    <p><b>Sixteen of the nineteen stories and fifty-two of the sixty-one developer-days close inside five
+      calendar days.</b> The busiest day is day four at five merges and eighteen developer-days, which is
+      under the ceiling the repository has already sustained. Nothing in this schedule requires the team to
+      go faster than it has gone.</p>
+    <p><b>The last three stories are nine developer-days, and they are one build day.</b> E8-S1 is seven of
+      those nine on its own. They are not on the chart above because they cannot be scheduled: they start
+      when a privacy notice, a counsel-approved document and a booked penetration test arrive, and those are
+      fourteen to twenty-one calendar days out from whenever somebody begins them.</p>
+    <p><b>End to end, if all six items are started this morning: about twenty-two calendar days.</b> Six of
+      those are days on which code is written. Sixteen are days spent waiting for post. If the three
+      long-lead items are not started this morning, the finish date moves out by exactly as long as they are
+      left, and no amount of engineering changes that.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The six items, written out in full <span class="note">what each one is, why it cannot be worked
+    around, and what it releases</span></h2>
+  <p class="cap">In order of how much work each one releases. Every figure quoted here is the same figure
+    used in the charts above.</p>
+  <div id="askCards"></div>
+</section>
+
+<section>
+  <h2>The fourteen blocked stories in full</h2>
+  <p class="cap">Every story that a developer cannot start today, with the item in front of it and what is
+    true in the code right now. <b>Names it</b> means the story's own dependency list contains that item.
+    <b>Behind</b> means the story is waiting on another story that names it.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr>
+        <th>Story</th><th>Title</th><th>Size</th><th style="text-align:right">Days</th>
+        <th>Held by</th><th>How</th><th>What is true today</th>
+      </tr></thead>
+      <tbody id="blockedRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Five stories nobody is blocking <span class="note">the whole of the free lane</span></h2>
+  <p class="cap">These are the seventeen developer-days that answering ADR-0001 handed back. Four of them
+    are wave 4 on the board. The fifth, E4-S2, is not on a wave yet: it has no stakeholder in front of it
+    either, only E1-S4, so it becomes startable the moment wave 4's chain reaches its fourth link. The board
+    schedules waves conservatively and has not added it. This report counts it as free because it is.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr>
+        <th>Story</th><th>Title</th><th>Size</th><th style="text-align:right">Days</th>
+        <th>Waits on</th><th>What is true today</th>
+      </tr></thead>
+      <tbody id="freeRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Nine things already built that need a setting changed <span class="note">no engineering, no
+    developer-days, an operator with a dashboard login</span></h2>
+  <p class="cap">None of these appear in any total on this page, because there is no code to write. They are
+    listed because each one is a piece of finished, tested work that is doing nothing until somebody with
+    access to a hosting dashboard changes a value.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>What</th><th>Where</th><th>Why it matters</th></tr></thead>
+      <tbody id="opsRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Findings that belong to nobody yet</h2>
+  <p class="cap">Real problems found during the audit that are not on the board, because each one needs a
+    decision about scope before it can be written as a story. Two entries from the last edition have gone:
+    the seeder that deleted rows from a tracked file and the review-queue check that assumed merge order
+    were both fixed by DOCS-4, merged as PR 134.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:90px">Severity</th><th>Finding</th><th>What it needs</th></tr></thead>
+      <tbody id="findRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="fignum">Figure 8</div>
+  <h2>Decisions and gates still open</h2>
+  <p class="cap">Two rows of the same story. The top row is the five architecture decisions, three of them
+    now closed. The bottom row is the six go-live gates, none of which can be closed by engineering alone.</p>
+  <div class="card"><div id="fig8"></div></div>
+</section>
+
+<section>
+  <h2>What to do this week</h2>
+  <div class="grid2">
+    <div class="card green">
+      <h3>The developer, starting this morning</h3>
+      <ul class="tight">
+        <li><b>E1-S1</b> today. It is the only row in wave 4 with nothing in front of it, and nothing else
+          in the wave can start until it lands.</li>
+        <li><b>E1-S2 and E1-S3</b> next, side by side, both behind E1-S1.</li>
+        <li><b>E1-S4</b> after E1-S2. This is the row a stakeholder should care about most: it is where
+          escrow and the Power of Attorney stop being code with no journey that reaches them.</li>
+        <li><b>E4-S2</b> behind E1-S4, and then the free lane is empty and everything depends on the list
+          on the right.</li>
+      </ul>
+    </div>
+    <div class="card red">
+      <h3>The stakeholder, starting this morning</h3>
+      <ul class="tight">
+        <li><b>Send three emails before lunch:</b> the privacy notice request (<code>EXT-5</code>), the
+          counsel instruction (<code>EXT-4</code>), and the penetration test enquiry (<code>EXT-6</code>).
+          They release the least and take the longest, so they are the only three that are genuinely
+          urgent today.</li>
+        <li><b><code>EXT-3</code>, the mail domain.</b> Highest value on the page, thirteen developer-days,
+          and it is an afternoon's work: buy a sending plan, verify a domain, add three DNS records.</li>
+        <li><b><code>ADR-0004</code> then <code>EXT-2</code>.</b> The decision has to come first because it
+          changes how the bucket is configured. Two days for both.</li>
+        <li><b><code>ADR-0002</code>, the money model.</b> Longest of the decisions, because
+          <code>EXT-1</code> behind it has a business verification with its own lead time. The code that
+          needs it is ready on build day four and the answer currently arrives on day twelve.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Method</h2>
+  <div class="card">
+    <p><b>Where the numbers come from.</b> The story list, its statuses, its dependencies and the per-epic
+      effort ranges are read directly from <code>docs/mvp-board.html</code> and
+      <code>docs/MVP_OUTSTANDING_BACKLOG.md</code>. The board is checked on every pull request by
+      <code>scripts/check-board.mjs</code>, which fails if the totals on it stop agreeing with the rows
+      underneath them, so the inputs to this page are gated rather than trusted.</p>
+    <p><b>How per-story days are derived.</b> The backlog publishes effort as a range per epic, not per
+      story. Each epic's upper bound is apportioned across its remaining stories in proportion to size, with
+      Small counting one, Medium three and Large five, and any remainder given to the largest story in the
+      epic. Every allocation lands inside its published size band. The result sums to sixty-one, which is
+      exactly the board's published ceiling.</p>
+    <p><b>A two-day difference from the last edition, and it is not new work.</b> The second edition's
+      per-story figures summed to fifty-nine against a published ceiling of sixty-one, and it called the
+      gap drift and left it. The gap has now been located: it was two developer-days lost to rounding, one
+      in E7 and one in E8, when the remainder was spread evenly instead of given to the largest story.
+      Fixing the arithmetic added two days to the total on paper and added no work at all.</p>
+    <p><b>Upper bounds throughout.</b> Every figure on this page uses the ceiling of each range, not the
+      floor. The floor assumes every remaining story lands at the cheap end of its estimate, and no week in
+      this repository has done that.</p>
+    <p><b>Lead times.</b> The calendar figures for obtaining each external item are planning estimates, not
+      quotes. They are deliberately optimistic: one day for a mail domain, two for a storage decision and a
+      bucket, twelve for a payment decision with a business verification behind it, fourteen for counsel,
+      twenty-one for a privacy review and for a penetration test window. If any of them is wrong it is wrong
+      in the direction of being too short, which makes the case in figure 4 stronger rather than weaker.</p>
+    <p><b>How the work is staffed.</b> One developer building with as many AI agents in parallel as the work
+      allows, and a second developer reviewing and merging. That arrangement is why the calendar figures in
+      figure 6 sit so far below the developer-day figures, and it is also why the stakeholder items dominate
+      this report: when building gets fast, waiting is all that is left.</p>
+  </div>
+</section>
+
+<footer class="meta" style="margin-top:28px;">
+  SafeBuyRealties MVP, remaining work, third edition, 2026-08-02. Companion documents in
+  <code>docs/</code>: <b>mvp-board.html</b> (the live schedule, with the same legend),
+  <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story),
+  <b>HANDOVER_WEEK.md</b> (the working agreement), <b>adr/0001</b> to <b>0005</b>.
+</footer>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Everything below renders from the data literals in this block.      *
+ * Change a number here and every figure and caption that quotes it    *
+ * moves with it. Nothing is hard-coded into the SVG.                  *
+ * ------------------------------------------------------------------ */
+
+const C = {
+  s1:"#2a78d6", good:"#0ca30c", warn:"#fab219", ser:"#ec835a", crit:"#d03b3b",
+  grid:"#e1e0d9", mut:"#898781", sec:"#52514e", txt:"#0b0b0b", face:"#fcfcfb"
+};
+
+const esc = s => String(s).replaceAll(/&(?![a-zA-Z#][a-zA-Z0-9]*;)/g, "&amp;").replaceAll("<", "&lt;");
+const svg = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" role="img">${body}</svg>`;
+const T = (x, y, t, o = {}) =>
+  `<text x="${x}" y="${y}" font-size="${o.fs || 12}" fill="${o.fill || C.sec}"` +
+  ` text-anchor="${o.a || "start"}" font-weight="${o.w || 400}">${t}</text>`;
+const R = (x, y, w, h, f, o = {}) =>
+  `<rect x="${x}" y="${y}" width="${Math.max(0, w)}" height="${h}" fill="${f}" rx="${o.r ?? 2}"` +
+  (o.op ? ` opacity="${o.op}"` : "") + (o.stroke ? ` stroke="${o.stroke}"` : "") + `/>`;
+
+/* ------------------------------------------------------------------ *
+ * THE SIX ITEMS                                                       *
+ *   days   developer-days held, including stories chained behind it   *
+ *   lead   planning estimate, calendar days to obtain from a standing  *
+ *          start                                                      *
+ *   ready  the build day on which the code in front of it is done and  *
+ *          the first story behind it could begin                      *
+ * ------------------------------------------------------------------ */
+const ASKS = [
+  {
+    key:"EXT3", code:"EXT-3", short:"Email", owner:"Client", kind:"A purchase and three DNS records",
+    days:13, lead:1, ready:1,
+    title:"A domain this platform is allowed to send email from",
+    what:"Nothing on this platform can send an email to anybody. Not a sign-up confirmation, not a " +
+      "password reset, not a notice that a viewing was approved, not a completion notice. The code that " +
+      "sends mail exists and is tested, and it returns early every single time because no environment " +
+      "defines a mail host.",
+    need:"A transactional email account with a provider, a verified sending domain, and three DNS " +
+      "records on that domain so the rest of the internet believes mail from it. The records are SPF, " +
+      "DKIM and DMARC and they are copy-and-paste from whatever provider is chosen.",
+    today:"E6-S1 is the row that switches it on and it is Small, about a day. Everything else in E6, plus " +
+      "password reset and email verification in E5, is chained behind it, because a password reset that " +
+      "cannot send an email is not a feature.",
+    extra:"This is the best-value item on the page by a wide margin: it holds thirteen developer-days and " +
+      "it is the fastest of the six to obtain. At MVP volume the running cost is nil to about twenty-five " +
+      "pounds a month.",
+    ifno:"A user who forgets their password needs an administrator to let them back in, and every " +
+      "notification this platform produces is only visible to somebody who happens to log in and look."
+  },
+  {
+    key:"D2", code:"ADR-0002 + EXT-1", owner:"Client", kind:"A decision, then an account", short:"Money",
+    days:11, lead:12, ready:4,
+    title:"Whether this platform holds a buyer's money, and who it holds it with",
+    what:"Sellers are paid into a single account configured in an environment variable, which today " +
+      "points at a test account. Refunds update a row in a database and never reach the payment gateway, " +
+      "so a refunded buyer is not actually repaid. There is no finance screen; the chart on the admin " +
+      "dashboard is generated placeholder data.",
+    need:"First the decision, written down as ADR-0002: does the platform hold client funds in escrow, " +
+      "pass them straight through to the seller, or keep money off the platform altogether? Then, once " +
+      "the answer is known, a live merchant account and a settlement account, which is EXT-1.",
+    today:"This cannot be built speculatively and corrected later. Escrow and pass-through are different " +
+      "regulated arrangements with different account types, different reconciliation and different " +
+      "obligations under CBN and AML rules. Building one and discovering the other was intended is not a " +
+      "refactor, it is a rewrite.",
+    extra:"This is the half of EXT-7 still outstanding. The other half was D1, and answering it on " +
+      "2 August is what released the five stories a developer is starting this morning.",
+    ifno:"Gate G6 cannot be closed, gate G2 cannot be demonstrated, and the platform can take a buyer's " +
+      "money but cannot pay a real seller."
+  },
+  {
+    key:"D4", code:"ADR-0004 + EXT-2", owner:"Client or Corne Labs", kind:"A decision, then a bucket",
+    short:"Storage", days:11, lead:2, ready:1,
+    title:"Where uploaded documents live, and how a private one is served",
+    what:"Uploads land on the local disk of whichever container handled the request. On the production " +
+      "hosting that disk is temporary, so a document uploaded today is gone after the next deploy. " +
+      "Separately, nothing checks what an uploaded file actually is: the recorded type is whatever the " +
+      "browser claimed.",
+    need:"ADR-0004 decides how a private document is served, and there are two workable answers: a " +
+      "signed link from the storage provider that expires, or streaming the file through the API with an " +
+      "authorization check on every read. Then EXT-2 provides the bucket, its credentials and a region.",
+    today:"The decision has to come first because the two answers need the bucket configured differently, " +
+      "and reconfiguring a bucket that already holds documents is worse than configuring it once.",
+    extra:"E7-S4, the deterministic demo seed, sits behind this too. Its dependency is soft if the seed " +
+      "only ever has to work on a developer's machine and hard if it has to work on the hosted " +
+      "environment, and that is itself a question worth ten seconds of somebody's attention.",
+    ifno:"Half of gate G3 stays open. The probe suite that proves no private document is reachable " +
+      "without authorization already exists and passes, and it is proving it about files that do not " +
+      "survive a deploy."
+  },
+  {
+    key:"EXT5", code:"EXT-5", owner:"Client, with legal", kind:"A registration and a written policy",
+    short:"Privacy", days:7, lead:21, ready:1,
+    title:"A privacy notice and a retention policy under Nigerian data protection law",
+    what:"This platform stores identity documents and selfies today. It has no consent model, no stated " +
+      "retention period and no way for a person to have their data erased. That is not a missing feature, " +
+      "it is a legal exposure that grows with every user who signs up.",
+    need:"An NDPR privacy notice and a retention policy, written or reviewed by somebody qualified to " +
+      "write them, plus the data protection registration that goes with them.",
+    today:"E8-S1 is Large, seven developer-days, and it is the biggest single blocked story on the board. " +
+      "It cannot be started from guesswork because the retention periods and the erasure obligations are " +
+      "inputs to the schema, not decorations on top of it.",
+    extra:"Twenty-one calendar days is the planning estimate and it is optimistic. This is the item most " +
+      "likely to be the last thing standing between a finished codebase and a launch.",
+    ifno:"The platform is storing regulated personal data with no lawful basis recorded and no way to " +
+      "honour an erasure request."
+  },
+  {
+    key:"EXT4", code:"EXT-4", owner:"Client, with counsel", kind:"Two documents", short:"Legal",
+    days:1, lead:14, ready:1,
+    title:"Counsel-approved Power of Attorney text and terms of service",
+    what:"The Power of Attorney instrument this platform asks buyers to sign was drafted by engineers " +
+      "inside a build checklist. The terms of service were never drafted at all.",
+    need:"A qualified lawyer to read the instrument, correct it, and approve terms of service to go with " +
+      "it.",
+    today:"The engineering behind this is a single day: E8-S2 is Small and mostly consists of putting the " +
+      "approved words where the drafted ones are now.",
+    extra:"One developer-day held by a fourteen-day wait. This is the clearest example on the page of an " +
+      "item whose cost is entirely in the calendar and not in the code.",
+    ifno:"Gate G4 cannot be closed, and the platform is asking real people to sign an instrument that no " +
+      "lawyer has read."
+  },
+  {
+    key:"EXT6", code:"EXT-6", owner:"Corne Labs", kind:"A booking and a budget", short:"Pen test",
+    days:1, lead:21, ready:1,
+    title:"An independent penetration test, booked",
+    what:"Nobody outside this team has tried to break into this system. The client's own legal review " +
+      "asked for a security review and none has been run.",
+    need:"A vendor chosen, a budget agreed and a window in their calendar. The window is the part with " +
+      "the lead time.",
+    today:"E8-S3 is Small: the story is closing what the test finds, not running it. It cannot be " +
+      "estimated properly until the test report exists, which is why it is sized at one day and flagged " +
+      "as the least certain figure on this page.",
+    extra:"Twenty-one days is a booking lead time, not the duration of the test. Booking it today costs " +
+      "nothing and starts a clock that has to run anyway.",
+    ifno:"Gate G5 cannot be closed, and the platform launches having been reviewed only by the people " +
+      "who built it."
+  }
+];
+const askOf = k => ASKS.find(a => a.key === k);
+
+/* ------------------------------------------------------------------ *
+ * THE NINETEEN REMAINING STORIES                                      *
+ *   [id, title, size, days, ask, hold, today]                         *
+ *   ask "" means nothing outside the team is holding it               *
+ * ------------------------------------------------------------------ */
+const STORIES = [
+  ["E1-S1","Listing DD case lifecycle: queue, assign, report, complete","L",5,"","",
+   "The service has one method. ADR-0001 was all that held this row and it was answered on 2 August, so it is startable today."],
+  ["E1-S2","Transaction state machine, DD_PURCHASED to DD_COMPLETE","M",3,"","E1-S1",
+   "Only the standalone path sets these statuses, so listing transactions stop dead."],
+  ["E1-S3","Buyer DD report delivery, access controlled","M",3,"","E1-S1",
+   "Report keys are never written or read for listing orders. Its other dependency closed in the handover week."],
+  ["E1-S4","Property purchase step wired to the state machine","M",3,"","E1-S2",
+   "The buyer UI gates on a status nothing reaches, so the branch is dead code. This is the row that gives escrow and the Power of Attorney a journey that reaches them."],
+  ["E4-S2","KYC gate on money-moving actions","M",3,"","E1-S4",
+   "Identity records are never read outside their own module and a dashboard count."],
+
+  ["E6-S1","SMTP configuration and delivery observability","S",1,"EXT3","names it",
+   "The dispatch function returns early with no mail host, and no environment defines one."],
+  ["E6-S2","Email channel for notification types","M",3,"EXT3","behind E6-S1",
+   "Notifications write database rows only. A rejected seller finds out by logging in."],
+  ["E6-S3","Transactional email templates","M",3,"EXT3","behind E6-S2",
+   "Two templates are built inline with unescaped interpolation into HTML."],
+  ["E5-S3","Password reset","M",3,"EXT3","behind E6-S1",
+   "No forgot or reset route exists at all. A locked-out user needs an administrator."],
+  ["E5-S4","Email verification on self-registration","M",3,"EXT3","behind E6-S1",
+   "Self-signup skips the activation mechanism that admin-created accounts already use."],
+
+  ["E2-S1","Seller payout destination, per-seller bank account","L",5,"D2","names it",
+   "Payouts go to one account set in an environment variable, defaulting to a test account."],
+  ["E2-S3","Gateway refunds, not ledger-only","M",3,"D2","behind E2-S1",
+   "Refund updates a status and never calls the gateway, so the buyer is not repaid."],
+  ["E2-S5","Finance reconciliation view","M",3,"D2","behind E2-S1",
+   "The Finance Manager role has no finance screen; the admin chart is a placeholder generator."],
+
+  ["E3-S2","Durable object storage in production","M",4,"D4","names it",
+   "On the production hosting, uploads land in temporary storage and do not survive a deploy."],
+  ["E3-S3","Upload hardening: type allow-list, magic bytes, AV hook","M",3,"D4","behind E3-S2",
+   "The upload handler has no file filter and the stored type is whatever the client claimed."],
+  ["E7-S4","Deterministic demo seed and reset","M",4,"D4","behind E3-S2",
+   "Seeded documents point at keys with no files, so demos show stock photography. The dependency is soft if the seed only has to resolve locally and hard if it has to resolve on the hosted environment."],
+
+  ["E8-S1","NDPR consent, retention, and erasure","L",7,"EXT5","names it",
+   "No consent model, retention policy or erasure path, while storing identity documents and selfies."],
+  ["E8-S2","Legal review of the PoA instrument and terms","S",1,"EXT4","names it",
+   "The instrument clauses were written in a build checklist, not by counsel."],
+  ["E8-S3","Pre-launch security review","S",1,"EXT6","names it",
+   "The client's own legal comments ask for one; none has been run."]
+];
+
+const BLOCKED = STORIES.filter(r => r[4]);
+const FREE = STORIES.filter(r => !r[4]);
+
+/* delivered work, for figure 2: [id, days, pr] */
+const WAVES = [
+  { n:1, day:"1 August", items:[["E5-S6",1,119],["E7-S6b",1,120],["E4-S1",3,121],["E7-S1",3,122]] },
+  { n:2, day:"1 to 2 August", items:[["E2-S2",3,123],["E4-S3",3,125],["E7-S2b",3,127],["CH-1",3,128]] },
+  { n:3, day:"2 August", items:[["E5-S1",3,129],["E8-S4",4,130],["E5-S5",5,131],["E7-S3",6,132]] },
+  { n:4, day:"2 August", open:true, items:[["DOCS-4",1,134],["DOCS-7",0,135],["CH-7",0,136],["DOCS-8",0,137]] }
+];
+
+const OPS = [
+  ["Point the health check at the readiness probe","Render hosting",
+   "The service health check polls a path that returns <code>ok</code> without touching anything. A container reports healthy while its database is unreachable. Set the Health Check Path to <code>/api/v1/health/ready</code>, which was built for exactly this and returns a failure when a dependency is down. Two minutes in the dashboard."],
+  ["Confirm <code>JWT_SECRET</code> is set","Render hosting",
+   "Since 1 August the API refuses to start without it, rather than booting and signing every session token with a fallback string published in this repository. If it was ever missing, the next deploy will fail loudly. Worth confirming before that deploy rather than during it."],
+  ["Confirm <code>TRUST_PROXY_HOPS</code> is 1","Render hosting",
+   "Rate limiting and account lockout shipped on 2 August and key on the caller's IP address. Behind a proxy with the wrong hop count every request appears to come from one address, and the limiter then either locks out everybody or nobody."],
+  ["Set <code>VITE_SITE_URL</code> on production only","Vercel hosting",
+   "The public web surface shipped on 2 August and uses it to build canonical URLs, the sitemap and robots. Set it on the production project, leave it unset on previews, and make sure it matches the backend's <code>POA_VERIFY_BASE_URL</code>, or a verification link will point at a different origin than the page that issued it."],
+  ["Leave <code>FEATURE_AUTH_SESSIONS</code> off","Render hosting",
+   "Refresh-token rotation and revocation shipped on 2 August behind this flag, deliberately switched off. Turning it on before the browser has a refresh client would sign everybody out when the short access token expires. Lifting it needs a frontend story that is not yet scheduled. This is a hold, not an oversight."],
+  ["Schedule a database migration window","Shared cloud database",
+   "The webhook replay guard shipped on 1 August. Its durable form needs one new table. The database is shared by local development, previews and production, so this needs a window agreed with whoever owns it rather than merging alongside code."],
+  ["Obtain the live payment key","Payment provider",
+   "Production runs on a test key today. Part of the money item above, listed separately because somebody physically has to complete a business verification to get it, and that has its own lead time."],
+  ["Decide the storage driver setting","Render hosting",
+   "It still defaults to local disk. It changes when the storage item above lands, and it is the switch that makes uploaded documents survive a deploy."],
+  ["Retire the superseded backend project","Vercel hosting",
+   "A second deployment target exists that no longer serves anything. Confirm nothing points at it, then delete it, so no future deploy goes to the wrong place."]
+];
+
+const FINDINGS = [
+  ["serious","A guest can read any due diligence order if they know its reference. The endpoint that returns a standalone order performs no authorization at all. Rate limiting, added on 2 August, slows down guessing a reference; it does not authorize the read.",
+   "A decision between a signed expiring link and an email-plus-reference check. Both are story-sized. Neither should be chosen inside an unrelated change."],
+  ["serious","Security headers are missing on error pages. The middleware that sets them does not run on 404 responses or on router redirects in production, so those responses go out with no content-security policy, no clickjacking protection and no referrer policy.",
+   "A small engineering story, currently unscheduled. It needs somewhere to live on the board."],
+  ["moderate","Login confirms whether an address is registered. A deactivated account and a wrong password produce different messages, which lets somebody test whether an email is on the platform.",
+   "A message change rather than a guard, and it belongs to password reset, which is behind the email item."],
+  ["moderate","A seller cannot view the transaction on their own listing. The transaction endpoint refuses the seller of the listing being transacted.",
+   "Confirmation of the intended rule before anything is changed. This may be deliberate."],
+  ["minor","The default social-preview image is a screenshot left over from the tool the site was originally built with.",
+   "A replacement image from whoever owns the brand assets."]
+];
+
+/* ------------------------------------------------------------------ *
+ * CONSTANTS. Everything quoted in prose above is one of these.        *
+ * ------------------------------------------------------------------ */
+const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
+const BD       = sum(BLOCKED, r => r[3]);   // 44 developer-days behind a stakeholder
+const FREE_D   = sum(FREE, r => r[3]);      // 17 developer-days a developer can start
+const TOTAL    = BD + FREE_D;               // 61, the board's published ceiling
+const ROWS     = 59, ROWS_DONE = 40;
+const DELIVERED = sum(WAVES, w => sum(w.items, i => i[1]));
+const RATE_MERGES = 6, RATE_DAYS = 19;      // the ceiling this repository has sustained
+const RUNWAY   = 4;                         // calendar days of building that need nobody
+const SCHED_DAYS = 5, SCHED_STORIES = 16;
+const SCHED_D  = 52;
+const TAIL_STORIES = 3, TAIL_D = TOTAL - SCHED_D;   // 9
+const END_TO_END = 22;
+const WAS = [
+  { when:"1 August",             blocked:59, free:39 },
+  { when:"2 August, morning",    blocked:59, free:1  },
+  { when:"Now, after the answer",blocked:BD, free:FREE_D }
+];
+const AXIS = Math.max(...WAS.map(w => w.blocked + w.free));   // 98
+
+/* ------------------------------------------------------------------ *
+ * TILES                                                               *
+ * ------------------------------------------------------------------ */
+const TILES = [
+  ["Board rows closed", `${ROWS_DONE} / ${ROWS}`, `${Math.round((ROWS_DONE / ROWS) * 100)}% of everything ever scheduled`, ""],
+  ["Stories left", "19", `${BLOCKED.length} blocked, ${FREE.length} a developer can start`, ""],
+  ["Blocked on a stakeholder", String(BLOCKED.length), `${Math.round((BLOCKED.length / 19) * 100)}% of what is left`, "red"],
+  ["Free to start this morning", String(FREE.length), "wave 4, and the story behind it", "green"],
+  ["Days behind a stakeholder", String(BD), "developer-days nobody may begin", "red"],
+  ["Days free to build", String(FREE_D), "the whole of the free lane", "green"],
+  ["Released by one sentence", String(FREE_D), "what answering ADR-0001 handed back", "green"],
+  ["Runway", String(RUNWAY), "calendar days of building that need nobody", "green"],
+  ["Items only a stakeholder can clear", String(ASKS.length), "two decisions, and four things to obtain", "red"],
+  ["Closed by build day five", `${SCHED_STORIES} / 19`, `${SCHED_D} of ${TOTAL} days, if the decisions take three`, "green"],
+  ["Then all that is left", "1", `build day: ${TAIL_STORIES} stories, ${TAIL_D} developer-days`, ""],
+  ["Calendar days to the end", String(END_TO_END), "if all six are started this morning", "red"]
+];
+document.getElementById("tiles").innerHTML = TILES.map(([l, v, f, c]) =>
+  `<div class="tile${c ? " " + c : ""}"><div class="label">${l}</div>` +
+  `<div class="value">${v}</div><div class="foot">${f}</div></div>`).join("");
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 1  the free lane, then and now                               *
+ * ------------------------------------------------------------------ */
+document.getElementById("fig1").innerHTML = (() => {
+  const W = 1100, L = 190, RGT = 96, BW = W - L - RGT, H = 40, G = 34;
+  const px = d => (d / AXIS) * BW;
+  let o = "";
+  WAS.forEach((w, i) => {
+    const y = 26 + i * (H + G), tot = w.blocked + w.free;
+    o += T(0, y + H / 2 + 4, esc(w.when), { fs: 13, w: 620, fill: C.txt });
+    o += R(L, y, px(w.blocked), H, C.crit, { op: 0.85 });
+    o += R(L + px(w.blocked), y, px(w.free), H, C.good, { op: 0.85 });
+    if (px(w.blocked) > 110)
+      o += T(L + px(w.blocked) / 2, y + H / 2 + 4.5, `${w.blocked} blocked`, { fs: 12.5, a: "middle", fill: "#fff", w: 620 });
+    if (px(w.free) > 90)
+      o += T(L + px(w.blocked) + px(w.free) / 2, y + H / 2 + 4.5, `${w.free} free`, { fs: 12.5, a: "middle", fill: "#fff", w: 620 });
+    else if (w.free > 0)
+      o += T(L + px(w.blocked) + px(w.free) + 6, y + H / 2 + 4.5, String(w.free), { fs: 12, fill: C.good, w: 620 });
+    o += T(W - RGT + 78, y + H / 2 + 4.5, `${tot} days`, { fs: 12.5, a: "end", fill: C.mut });
+  });
+  const yl = 26 + 3 * (H + G) - G + 12;
+  o += R(L, yl, BW, 1, C.grid, { r: 0 });
+  o += T(L, yl + 18, "The middle bar is the report this replaces. One sentence from a stakeholder moved sixteen developer-days from red to green, and delivering DOCS-4 moved one more.", { fs: 12, fill: C.mut });
+  return svg(W, yl + 30, o);
+})();
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 2  what has been delivered                                   *
+ * ------------------------------------------------------------------ */
+document.getElementById("fig2").innerHTML = (() => {
+  const W = 1100, L = 150, RGT = 130, BW = W - L - RGT;
+  const maxW = Math.max(...WAVES.map(w => sum(w.items, i => i[1])), FREE_D);
+  const px = d => (d / maxW) * BW;
+  const H = 34, G = 20;
+  let o = "", y = 20;
+  WAVES.forEach(w => {
+    const tot = sum(w.items, i => i[1]);
+    o += T(0, y + H / 2 + 4, `Wave ${w.n}`, { fs: 13, w: 620, fill: C.txt });
+    o += T(0, y + H / 2 + 19, esc(w.day) + (w.open ? ", open" : ""), { fs: 11, fill: C.mut });
+    let x = L;
+    w.items.forEach(([id, d, pr]) => {
+      const bw = px(d);
+      if (d > 0) {
+        o += R(x, y, bw - 2, H, C.s1, { op: 0.85 });
+        if (bw > 74) o += T(x + bw / 2 - 1, y + H / 2 + 4.5, `${esc(id)} &middot; ${d}`, { fs: 11.5, a: "middle", fill: "#fff", w: 620 });
+        else if (bw > 36) o += T(x + bw / 2 - 1, y + H / 2 + 4.5, esc(id), { fs: 10.5, a: "middle", fill: "#fff", w: 620 });
+        x += bw;
+      } else {
+        o += R(x, y + 7, 62, H - 14, C.grid, { r: 3 });
+        o += T(x + 31, y + H / 2 + 4, esc(id), { fs: 10.5, a: "middle", fill: C.sec, w: 620 });
+        x += 66;
+      }
+    });
+    o += T(L + BW + 8, y + H / 2 + 4.5, `${tot} day${tot === 1 ? "" : "s"} &middot; ${w.items.length} PRs`, { fs: 12, fill: C.mut });
+    y += H + G;
+  });
+  y += 6;
+  o += R(L, y - 12, BW, 1, C.grid, { r: 0 });
+  o += T(0, y + 20 + 4, "The answer", { fs: 13, w: 620, fill: C.good });
+  o += T(0, y + 20 + 19, "2 August", { fs: 11, fill: C.mut });
+  o += R(L, y + 6, px(FREE_D), 34, C.good, { op: 0.85 });
+  o += T(L + px(FREE_D) / 2, y + 6 + 21, `ADR-0001 answered &middot; ${FREE_D} developer-days released`, { fs: 12.5, a: "middle", fill: "#fff", w: 620 });
+  o += T(L + BW + 8, y + 6 + 21, "0 PRs", { fs: 12, fill: C.mut });
+  y += 58;
+  o += T(0, y + 14, `${DELIVERED} developer-days delivered by engineering across ${sum(WAVES, w => w.items.length)} pull requests, against ${FREE_D} developer-days released by a single reply. The green bar cost the person who sent it about a minute.`, { fs: 12, fill: C.mut });
+  return svg(W, y + 24, o);
+})();
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 3  every remaining story, grouped by what holds it           *
+ * ------------------------------------------------------------------ */
+document.getElementById("fig3").innerHTML = (() => {
+  const W = 1100, L = 250, RGT = 60, BW = W - L - RGT;
+  const maxD = Math.max(...STORIES.map(r => r[3]));
+  const px = d => (d / maxD) * BW;
+  const groups = [{ key: "", label: "Held by nobody", sub: "a developer starts this morning", rows: FREE, col: C.good }];
+  ASKS.forEach(a => {
+    const rows = BLOCKED.filter(r => r[4] === a.key);
+    if (rows.length) groups.push({ key: a.key, label: a.code, sub: a.short, rows, col: C.crit });
+  });
+  const H = 22, RG = 5, GG = 20;
+  let o = "", y = 16;
+  groups.forEach(g => {
+    const tot = sum(g.rows, r => r[3]);
+    o += T(0, y + 11, esc(g.label), { fs: 12.5, w: 640, fill: g.col === C.good ? C.good : C.crit });
+    o += T(0, y + 26, `${esc(g.sub)} &middot; ${g.rows.length} ${g.rows.length === 1 ? "story" : "stories"} &middot; ${tot}d`, { fs: 11, fill: C.mut });
+    g.rows.forEach((r, i) => {
+      const ry = y + i * (H + RG);
+      o += T(L - 8, ry + 15, `${esc(r[0])} ${esc(r[2])}`, { fs: 11.5, a: "end", fill: C.sec, w: 600 });
+      o += R(L, ry + 3, px(r[3]), H - 4, g.col, { op: 0.82 });
+      const inside = px(r[3]) > 260;
+      o += T(inside ? L + 8 : L + px(r[3]) + 8, ry + 15, `${esc(r[1])} &middot; ${r[3]}d`,
+        { fs: 11.5, fill: inside ? "#fff" : C.sec, w: inside ? 600 : 400 });
+    });
+    y += g.rows.length * (H + RG) + GG;
+  });
+  return svg(W, y, o);
+})();
+
+document.getElementById("key3").innerHTML =
+  `<div class="r"><b>Held by nobody</b> <code>&mdash;</code> a developer can start it today</div>` +
+  ASKS.map(a => `<div class="r"><b>${esc(a.short)}</b> <code>${esc(a.code)}</code> ${esc(a.kind)}</div>`).join("");
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 4  ready day against arrival day                             *
+ * ------------------------------------------------------------------ */
+document.getElementById("fig4").innerHTML = (() => {
+  const W = 1100, L = 210, RGT = 200, BW = W - L - RGT;
+  const maxDay = Math.max(...ASKS.map(a => a.lead)) + 1;
+  const px = d => (d / maxDay) * BW;
+  const rows = [...ASKS].sort((a, b) => (b.lead - b.ready) - (a.lead - a.ready));
+  const H = 42;
+  let o = "", y = 30;
+  for (let d = 0; d <= maxDay; d += 7) {
+    o += R(L + px(d), 16, 1, rows.length * H + 8, C.grid, { r: 0 });
+    o += T(L + px(d), 10, d === 0 ? "today" : `day ${d}`, { fs: 10.5, a: "middle", fill: C.mut });
+  }
+  rows.forEach((a, i) => {
+    const ry = y + i * H, late = a.lead - a.ready;
+    o += T(0, ry + 4, esc(a.code), { fs: 12.5, w: 640, fill: C.txt });
+    o += T(0, ry + 19, `${esc(a.short)} &middot; holds ${a.days}d`, { fs: 11, fill: C.mut });
+    const x1 = L + px(a.ready), x2 = L + px(a.lead);
+    if (late > 0) o += R(x1, ry - 3, x2 - x1, 10, C.crit, { op: 0.16, r: 5 });
+    o += `<circle cx="${x1}" cy="${ry + 2}" r="5.5" fill="${C.s1}"/>`;
+    o += `<circle cx="${x2}" cy="${ry + 2}" r="5.5" fill="${late > 0 ? C.crit : C.good}"/>`;
+    o += T(L + BW + 12, ry + 6,
+      late > 0 ? `<tspan fill="${C.crit}" font-weight="640">${late} days late</tspan>`
+               : `<tspan fill="${C.good}" font-weight="640">on time, if started today</tspan>`, { fs: 12 });
+  });
+  y += rows.length * H + 6;
+  o += R(L, y, BW, 1, C.grid, { r: 0 });
+  o += `<circle cx="${L + 6}" cy="${y + 20}" r="5.5" fill="${C.s1}"/>` +
+       T(L + 18, y + 24, "the day the code in front of it is ready", { fs: 12, fill: C.sec });
+  o += `<circle cx="${L + 300}" cy="${y + 20}" r="5.5" fill="${C.crit}"/>` +
+       T(L + 312, y + 24, "the day the item arrives, if somebody starts this morning", { fs: 12, fill: C.sec });
+  return svg(W, y + 34, o);
+})();
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 5  value against lead time                                   *
+ * ------------------------------------------------------------------ */
+const rank = (id, key, label, col) => {
+  const rows = [...ASKS].sort((a, b) => b[key] - a[key]);
+  const W = 540, L = 132, RGT = 58, BW = W - L - RGT, H = 30, G = 9;
+  const max = Math.max(...rows.map(r => r[key]));
+  let o = "", y = 10;
+  rows.forEach((a, i) => {
+    const ry = y + i * (H + G), w = (a[key] / max) * BW;
+    o += T(L - 8, ry + H / 2 + 4, esc(a.code), { fs: 11.5, a: "end", w: 620, fill: C.txt });
+    o += R(L, ry, w, H, col(a), { op: 0.85 });
+    o += T(w > 70 ? L + w - 8 : L + w + 8, ry + H / 2 + 4.5, `${a[key]} ${label}`,
+      { fs: 12, a: w > 70 ? "end" : "start", fill: w > 70 ? "#fff" : C.sec, w: 620 });
+  });
+  y += rows.length * (H + G) + 4;
+  document.getElementById(id).innerHTML = svg(W, y, o);
+};
+rank("fig5a", "days", "d", () => C.s1);
+rank("fig5b", "lead", "d", a => (a.lead >= 12 ? C.crit : C.good));
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 6  scope against calendar                                    *
+ * ------------------------------------------------------------------ */
+const pips = (id, n, per, col, note) => {
+  const W = 540, S = 17, GAPX = 3, GAPY = 3, PAD = 2;
+  const rowsN = Math.ceil(n / per);
+  let o = "";
+  for (let i = 0; i < n; i++) {
+    const cx = PAD + (i % per) * (S + GAPX), cy = 12 + Math.floor(i / per) * (S + GAPY);
+    o += R(cx, cy, S, S, col(i), { r: 3 });
+  }
+  const y = 12 + rowsN * (S + GAPY) + 8;
+  o += T(0, y + 12, note, { fs: 12, fill: C.mut });
+  document.getElementById(id).innerHTML = svg(W, y + 22, o);
+};
+pips("fig6a", TOTAL, 20, i => (i < FREE_D ? C.good : C.crit),
+  `${FREE_D} green squares a developer may start today, ${BD} red ones nobody may touch. One square is one developer-day.`);
+const calCol = i => {
+  if (i < RUNWAY) return C.good;
+  if (i < SCHED_DAYS) return C.s1;
+  return i === END_TO_END - 1 ? C.warn : C.grid;
+};
+pips("fig6b", END_TO_END, 20, calCol,
+  `${END_TO_END} calendar days. Green is building that needs nobody, blue is building unlocked by an answer, grey is waiting for post, amber is the last build day.`);
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 7  the five build days                                       *
+ *   arrives  the calendar day the item lands, on the three-day        *
+ *            assumption for decisions                                 *
+ * ------------------------------------------------------------------ */
+const SCHED = [
+  { key:"",     label:"Held by nobody",  code:"free lane", arrives:0,
+    items:[["E1-S1",1],["E1-S2",2],["E1-S3",2],["E1-S4",3],["E4-S2",4]] },
+  { key:"EXT3", label:"Email",           code:"EXT-3",     arrives:1,
+    items:[["E6-S1",2],["E6-S2",3],["E5-S3",3],["E5-S4",3],["E6-S3",4]] },
+  { key:"D4",   label:"Storage",         code:"ADR-0004",  arrives:2,
+    items:[["E3-S2",3],["E3-S3",4],["E7-S4",4]] },
+  { key:"D2",   label:"Money",           code:"ADR-0002",  arrives:3,
+    items:[["E2-S1",4],["E2-S3",5],["E2-S5",5]] }
+];
+const TAIL = [
+  { code:"EXT-4", label:"Legal",   lead:14, items:[["E8-S2"]] },
+  { code:"EXT-5", label:"Privacy", lead:21, items:[["E8-S1"]] },
+  { code:"EXT-6", label:"Pen test",lead:21, items:[["E8-S3"]] }
+];
+const daysOf = id => { const r = STORIES.find(x => x[0] === id); return r ? r[3] : 0; };
+
+document.getElementById("fig7").innerHTML = (() => {
+  const W = 1100, L = 150, COLS = SCHED_DAYS, CW = (W - L - 150) / COLS, H = 30, G = 6;
+  let o = "", y = 34;
+  for (let d = 1; d <= COLS; d++) {
+    const x = L + (d - 1) * CW;
+    o += T(x + CW / 2 - 3, 14, `Day ${d}`, { fs: 12.5, a: "middle", w: 640, fill: C.txt });
+    const on = SCHED.flatMap(g => g.items.filter(it => it[1] === d).map(it => it[0]));
+    const dd = sum(on, id => daysOf(id));
+    o += T(x + CW / 2 - 3, 28, `${on.length} merged &middot; ${dd}d`, { fs: 11, a: "middle", fill: C.mut });
+    if (d > 1) o += R(x - 3, 34, 1, 210, C.grid, { r: 0 });
+  }
+  SCHED.forEach(g => {
+    const col = g.key ? C.crit : C.good;
+    o += T(0, y + 12, esc(g.label), { fs: 12.5, w: 640, fill: col });
+    o += T(0, y + 27, g.arrives === 0 ? "nothing to wait for" : `${esc(g.code)} lands end of day ${g.arrives}`,
+      { fs: 10.5, fill: C.mut });
+    const lanes = [];
+    g.items.forEach(([id, d]) => {
+      let lane = 0;
+      while (lanes[lane] !== undefined && lanes[lane].includes(d)) lane++;
+      lanes[lane] ??= [];
+      lanes[lane].push(d);
+      const x = L + (d - 1) * CW, ry = y + lane * (H + G);
+      o += R(x, ry, CW - 8, H, col, { op: 0.85, r: 4 });
+      o += T(x + CW / 2 - 4, ry + H / 2 + 4.5, `${esc(id)} &middot; ${daysOf(id)}d`,
+        { fs: 11.5, a: "middle", fill: "#fff", w: 620 });
+    });
+    y += Math.max(1, lanes.length) * (H + G) + 12;
+  });
+  o += R(0, y, W, 1, C.grid, { r: 0 });
+  y += 16;
+  TAIL.forEach(t => {
+    o += T(0, y + 18, esc(t.label), { fs: 12.5, w: 640, fill: C.warn });
+    o += T(0, y + 32, `${esc(t.code)} lands day ${t.lead}`, { fs: 10.5, fill: C.mut });
+    o += R(L, y + 4, W - L - 150, H, C.warn, { op: 0.14, r: 4 });
+    o += T(L + 12, y + 4 + H / 2 + 4.5,
+      `${esc(t.items[0][0])} &middot; ${daysOf(t.items[0][0])}d &middot; cannot be scheduled: waits ${t.lead} calendar days from the morning somebody starts it`,
+      { fs: 11.5, fill: C.sec });
+    y += H + 12;
+  });
+  return svg(W, y + 6, o);
+})();
+
+document.getElementById("key7").innerHTML =
+  `<div class="r"><b>Free lane</b> <code>&mdash;</code> released by ADR-0001 on 2 August</div>` +
+  SCHED.filter(g => g.key).map(g => {
+    const a = askOf(g.key);
+    return `<div class="r"><b>${esc(g.label)}</b> <code>${esc(a.code)}</code> ${esc(a.kind)}, ${a.lead} day${a.lead === 1 ? "" : "s"} to obtain</div>`;
+  }).join("") +
+  TAIL.map(t => `<div class="r"><b>${esc(t.label)}</b> <code>${esc(t.code)}</code> ${t.lead} days to obtain</div>`).join("");
+
+/* ------------------------------------------------------------------ *
+ * FIGURE 8  decisions and gates                                       *
+ * ------------------------------------------------------------------ */
+document.getElementById("fig8").innerHTML = (() => {
+  const ADRS = [
+    ["ADR-0001", "MVP scope: is on-platform purchase in?", 1, "Answered 2 August. Released 5 stories."],
+    ["ADR-0002", "Escrow, pass-through, or off-platform?", 0, "Holds 3 stories and gate G6."],
+    ["ADR-0003", "Payment mock-mode guard", 1, "Shipped. Production cannot fake a payment."],
+    ["ADR-0004", "How is a private document served?", 0, "Holds 3 stories and half of gate G3."],
+    ["ADR-0005", "Quality ratchet on changed lines", 1, "Enforced on every pull request."]
+  ];
+  const GATES = [
+    ["G1", "Buyer completes the journey on staging", 0, "Now measurable. E1 is finally allowed to be built."],
+    ["G2", "A real payout lands and a refund is repaid", 0, "Waits on ADR-0002 and EXT-1."],
+    ["G3", "No private document readable unauthorized", 0.5, "Probe suite passes. Waits on E3-S2 and ADR-0004."],
+    ["G4", "PoA and terms approved by counsel", 0, "Waits on EXT-4. Fourteen days out."],
+    ["G5", "Independent security review closed", 0, "Waits on EXT-6. Twenty-one days out."],
+    ["G6", "Escrow model confirmed against CBN and AML", 0, "Waits on ADR-0002."]
+  ];
+  const W = 1100;
+  /* 1 met, 0.5 partly met, 0 not met. */
+  const stCol = st => {
+    if (st === 1) return C.good;
+    return st === 0.5 ? C.warn : C.crit;
+  };
+  const band = (rows, y0, title) => {
+    const CW = W / rows.length, H = 62;
+    let o = T(0, y0, title, { fs: 12.5, w: 640, fill: C.txt });
+    rows.forEach(([id, what, st, note], i) => {
+      const x = i * CW, col = stCol(st);
+      o += R(x, y0 + 12, CW - 10, H, col, { op: 0.1, r: 6 });
+      o += R(x, y0 + 12, 4, H, col, { r: 2 });
+      o += T(x + 12, y0 + 30, esc(id), { fs: 12, w: 640, fill: col });
+      const words = what.split(" ");
+      let line = "", ln = 0;
+      words.forEach(wd => {
+        if ((line + " " + wd).length > 26) { o += T(x + 12, y0 + 44 + ln * 12, esc(line), { fs: 10.5, fill: C.sec }); line = wd; ln++; }
+        else line = line ? line + " " + wd : wd;
+      });
+      o += T(x + 12, y0 + 44 + ln * 12, esc(line), { fs: 10.5, fill: C.sec });
+      o += T(x + 12, y0 + 88, esc(note), { fs: 0, fill: C.mut });
+    });
+    return o;
+  };
+  let o = band(ADRS, 14, "The five architecture decisions. Three closed, two open, and both open ones are on this page.");
+  o += band(GATES, 116, "The six go-live gates. None can be closed by engineering alone.");
+  o += R(0, 200, W, 1, C.grid, { r: 0 });
+  o += T(0, 220, "Green is closed. Amber is half earned. Red is open. Every red one on the bottom row traces back to an item in the list above.", { fs: 12, fill: C.mut });
+  return svg(W, 232, o);
+})();
+
+/* ------------------------------------------------------------------ *
+ * THE SIX ASK CARDS                                                   *
+ * ------------------------------------------------------------------ */
+document.getElementById("askCards").innerHTML = ASKS.map((a, i) => {
+  const rows = BLOCKED.filter(r => r[4] === a.key);
+  const late = a.lead - a.ready;
+  return `
+  <div class="ask">
+    <div class="head">
+      <div class="kicker">Item ${i + 1} of ${ASKS.length} &middot; ${esc(a.code)} &middot; ${esc(a.kind)}</div>
+      <h3>${esc(a.title)}</h3>
+      <div class="facts">
+        <span class="chip"><span class="dot crit"></span>${a.days} developer-days held</span>
+        <span class="chip">${rows.length} ${rows.length === 1 ? "story" : "stories"}</span>
+        <span class="chip">releases all ${a.days} on its own</span>
+        <span class="chip">about ${a.lead} calendar day${a.lead === 1 ? "" : "s"} to obtain</span>
+        <span class="chip">${late > 0 ? `already ${late} days late` : "on time if started today"}</span>
+        <span class="chip">owner: ${esc(a.owner)}</span>
+      </div>
+    </div>
+    <div class="body">
+      <div class="qa"><div class="q">What is broken without it</div><p>${esc(a.what)}</p></div>
+      <div class="qa"><div class="q">What is actually needed</div><p>${esc(a.need)}</p></div>
+      <div class="qa"><div class="q">Why it cannot be worked around</div><p>${esc(a.today)}</p></div>
+      <div class="qa"><div class="q">Worth knowing</div><p>${esc(a.extra)}</p></div>
+      <div class="qa"><div class="q">If it never arrives</div><p>${esc(a.ifno)}</p></div>
+      <div class="qa"><div class="q">What lands the moment it does</div>
+        <div class="rel">${rows.map(r =>
+          `<div class="r"><b>${esc(r[0])}</b> ${esc(r[1])} <span>${r[3]}d</span></div>`).join("")}</div>
+      </div>
+    </div>
+  </div>`;
+}).join("");
+
+/* ------------------------------------------------------------------ *
+ * TABLES                                                              *
+ * ------------------------------------------------------------------ */
+const dayCol = d => {
+  if (d >= 5) return C.crit;
+  return d >= 3 ? C.ser : C.warn;
+};
+const dayCell = d =>
+  `<div class="dbar"><div class="t"><div class="f" style="width:${(d / 7) * 100}%;background:${dayCol(d)}"></div></div><div class="n">${d}</div></div>`;
+
+document.getElementById("blockedRows").innerHTML = BLOCKED.map(r => {
+  const a = askOf(r[4]);
+  return `<tr>
+    <td class="id">${esc(r[0])}</td>
+    <td>${esc(r[1])}</td>
+    <td>${esc(r[2])}</td>
+    <td style="width:96px">${dayCell(r[3])}</td>
+    <td class="id" style="color:${C.crit}">${esc(a.code)}<br><span style="font-weight:400;color:${C.mut}">${esc(a.short)}</span></td>
+    <td>${esc(r[5])}</td>
+    <td>${esc(r[6])}</td>
+  </tr>`;
+}).join("");
+
+document.getElementById("freeRows").innerHTML = FREE.map(r => `<tr>
+  <td class="id">${esc(r[0])}</td>
+  <td>${esc(r[1])}</td>
+  <td>${esc(r[2])}</td>
+  <td style="width:96px">${dayCell(r[3])}</td>
+  <td class="id" style="color:${C.good}">${r[5] ? esc(r[5]) : "nothing"}</td>
+  <td>${esc(r[6])}</td>
+</tr>`).join("");
+
+document.getElementById("opsRows").innerHTML = OPS.map(([w, where, why]) =>
+  `<tr><td class="id">${w}</td><td>${esc(where)}</td><td>${why}</td></tr>`).join("");
+
+const sevDot = sev => {
+  if (sev === "serious") return "ser";
+  return sev === "moderate" ? "warn" : "ok";
+};
+document.getElementById("findRows").innerHTML = FINDINGS.map(([sev, f, need]) =>
+  `<tr><td><span class="dot ${sevDot(sev)}"></span>${sev}</td>` +
+  `<td>${esc(f)}</td><td>${esc(need)}</td></tr>`).join("");
+</script>
+</body>
+</html>
