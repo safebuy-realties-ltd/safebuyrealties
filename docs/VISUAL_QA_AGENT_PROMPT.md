@@ -1,3 +1,13 @@
+> **⚠️ STALE, do not act on this file.** Dated 2026-05-26. This is the prompt that ran the
+> stabilization sprint, and the sprint finished. Its output is
+> [`QA_FINDINGS.md`](QA_FINDINGS.md), where QA-001 to QA-014 and QA-017 are closed and only QA-015 and
+> QA-016 are still open. Its standing instruction, do not start Step 6 and later until the
+> stabilization PR merges, is spent: power of attorney, escrow and the due diligence wizard all shipped
+> afterwards. The branch name it assigns and the bar it sets are both out of date. Current way of
+> working: [`AGENT_PROMPT.md`](AGENT_PROMPT.md) and [`HANDOVER_WEEK.md`](HANDOVER_WEEK.md). Current
+> gaps: [`MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md). Retained as history.
+> (Banner added 2026-08-02 by story DOCS-4.)
+
 # Stabilization sprint — QA + fix agent (master prompt)
 
 Copy everything below into a **new agent session**. This is **not** a shallow click-through — it is a **product stabilization sprint**: find every broken or partial flow, **fix it**, then prove E2E on localhost before any new PRD/checklist work.

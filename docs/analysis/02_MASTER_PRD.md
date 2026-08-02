@@ -1,3 +1,13 @@
+> **Still the requirements baseline, and it describes more than the MVP.** Dated 2026-05-23. Nothing
+> has replaced it: §3's role matrix and §4's workflows are still what "intended behaviour" means when a
+> story argues about it. What it does not carry is the scope cut. It specifies the whole product, and
+> the MVP is a subset of it, so read it beside
+> [`../MVP_OUTSTANDING_BACKLOG.md`](../MVP_OUTSTANDING_BACKLOG.md) §7 for what stayed out and
+> [`../adr/`](../adr/) for the decisions that took things out. ADR-0001 is still open and it is a
+> question about this document's scope, so parts of §4 may yet turn out to be Phase 2. Per feature
+> status is not here and never was: current state is [`../HANDOVER.md`](../HANDOVER.md), current gaps
+> are the backlog. (Banner added 2026-08-02 by story DOCS-4.)
+
 # 02 — Master Product Requirements Document (Master PRD)
 
 **SafeBuyRealties · Strategic Definition Engagement · Phase 2 of 5**

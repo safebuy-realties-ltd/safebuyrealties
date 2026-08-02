@@ -1,8 +1,10 @@
 # SafeBuyRealties, outstanding MVP backlog
 
-**Prepared:** 2026-07-29 · **Codebase reviewed:** `main` @ `fc05e1e` (2026-07-24) · **Paradigm applied:** derived from `/Users/saito/projects/voxdiary`
+**Prepared:** 2026-07-29 · **Codebase reviewed:** `main` @ `fc05e1e` (2026-07-24) · **Paradigm applied:** derived from the reference project (§0)
 
-**Reconciled:** 2026-07-31 against `main` @ `21e981a`, covering the handover week's pull requests #97 to #115. Statuses, the E3-S1 split record, and the effort remaining in section 1.3 are as of that commit. The gap evidence quoted throughout is deliberately left at `fc05e1e`: it is the record of what was found, and a finding rewritten after its own fix stops being checkable.
+**Reconciled:** 2026-08-02 by story **DOCS-4** against `main` @ `84f619c`, covering the handover week's pull requests #97 to #132. Statuses, the E3-S1 split record, and the effort remaining in section 1.3 are as of that commit. An earlier reconciliation on 2026-07-31 covered #97 to #115 against `21e981a`.
+
+**What is frozen and what is current.** The gap evidence quoted in section 4, one story at a time, is deliberately left at `fc05e1e`: it is the record of what was found, and a finding rewritten after its own fix stops being checkable. Two things are exempt and are kept current instead, because a reader uses them to decide what to do today rather than to check what was true in July: the quality gate in **section 0.3**, which is the bar a pull request has to clear tonight, and the document inventory in **section 2.3**, which is the list of files that are safe to believe.
 
 Two audiences, one document. Section 1 to 3 are for stakeholders (what is done, what is left, what it costs, what the risk is). Section 4 onward is the developer backlog: one story, one PR, testable acceptance criteria, cited evidence for every claimed gap.
 
@@ -10,13 +12,13 @@ Every "not built" claim below was verified by reading the code, not by reading `
 
 ---
 
-## 0. The paradigm, derived from voxdiary
+## 0. The paradigm, derived from the reference project
 
-The user asked for the software paradigm used in `/Users/saito/projects/voxdiary`. It is not one thing, it is a stack of four layers. Each layer is summarised here and then applied to this backlog.
+The stakeholder asked for the software paradigm used on an earlier and more mature codebase, and asked for it to be applied here. That codebase is called **the reference project** throughout this document. It is not part of this repository, nothing here depends on it, and it is named this way on purpose so that a reader outside the company can follow the argument without needing access to it. The paradigm is not one thing, it is a stack of four layers. Each layer is summarised here and then applied to this backlog.
 
 ### 0.1 Architectural paradigm
 
-| Dimension | voxdiary | SafeBuyRealties today |
+| Dimension | The reference project | SafeBuyRealties today |
 | --- | --- | --- |
 | Repo shape | pnpm + Turborepo monorepo: `apps/{api,web,mobile,docs-site}`, `services/voice-ai`, `packages/{shared,api-client,ui-tokens,config}` | Two-package repo: frontend at root, `backend/` beside it, no shared contract package |
 | Style | Modular monolith, domain modules, ports and adapters, SOLID enforced by review | Modular monolith, NestJS domain modules, same instinct, less formality |
@@ -26,7 +28,7 @@ The user asked for the software paradigm used in `/Users/saito/projects/voxdiary
 | Tenancy | `firmId` on every table, fail-closed Prisma extension, tenant isolation is unflagged because an invariant has no off switch | Ownership checks written per service, no central enforcement layer |
 | Delivery | Every user-facing change behind a named feature flag with a kill switch (ADR/rules §13) | Flags and a kill switch since CH-1: a registry in the API, `@RequiresFeature` on the server, `<Feature>` in the browser, `RUNBOOK.md` §11 |
 
-The relevant transfer is not "become a monorepo". It is the three habits that make voxdiary's delivery predictable: a shared contract, a fail-closed authorization layer rather than per-service checks, and a flag on every risky change.
+The relevant transfer is not "become a monorepo". It is the three habits that make the reference project's delivery predictable: a shared contract, a fail-closed authorization layer rather than per-service checks, and a flag on every risky change.
 
 ### 0.2 Delivery paradigm
 
@@ -39,11 +41,13 @@ The relevant transfer is not "become a monorepo". It is the three habits that ma
 
 ### 0.3 Quality paradigm (the definition of done)
 
-voxdiary's `rules.md` §1 gate, in short: no unhandled 5xx and correct 4xx mapping, metrics plus traces plus structured logs on every endpoint with a correlation id and never PII in logs, 100 percent line and branch coverage on new code plus mutation testing, zero Sonar issues and zero duplicated lines on new code, zero warnings from every tool, root-cause fixes with a regression test rather than suppressions, and docs updated in the same PR that changed the behaviour.
+The reference project's `rules.md` §1 gate, in short: no unhandled 5xx and correct 4xx mapping, metrics plus traces plus structured logs on every endpoint with a correlation id and never PII in logs, 100 percent line and branch coverage on new code plus mutation testing, zero Sonar issues and zero duplicated lines on new code, zero warnings from every tool, root-cause fixes with a regression test rather than suppressions, and docs updated in the same PR that changed the behaviour.
 
-SafeBuyRealties currently gates on TypeScript compile, ESLint with zero warnings, and unit tests. There is no coverage threshold (`backend/jest.config.js` sets `collectCoverageFrom` but no `coverageThreshold`), no mutation testing, no static analysis gate, and the end-to-end scripts in `scripts/` are not run by CI (`.github/workflows/ci.yml`).
+SafeBuyRealties gates on TypeScript compile, ESLint with zero warnings, unit tests on both sides, a repository coverage floor, a diff coverage bar on the lines a branch changed, the end-to-end journeys, and the board check. The floors are `coverageThreshold` at `backend/jest.config.js:40`, 69 statements, 49 branches, 51 functions and 70 lines, and `thresholds` at `vitest.config.ts:47`, 4, 3, 3 and 4, which is what the frontend has earned so far. The diff bar is `scripts/diff-coverage.mjs`, 80 percent of the changed lines, run inside both test jobs at `.github/workflows/ci.yml:124` and `:162`. The end-to-end scripts in `scripts/` do run in CI, as `node scripts/e2e-ci.mjs --kind api` at `:214` and `--kind browser` at `:288`. What is still missing against the reference bar is mutation testing and a static analysis gate.
 
-Adopting the full voxdiary bar mid-project would stall delivery. The proposal in this backlog is a **ratchet**: apply the strict bar to new and touched code only, and raise the floor over time. That mirrors voxdiary's own ADR-0013, which replaced an absolute gate with a delta gate plus a tracked baseline carrying a remediation SLA.
+**This paragraph is deliberately kept current, unlike the rest of the gap evidence in this document.** At `fc05e1e`, when the backlog was written, the gate was compile, lint and unit tests and nothing else: `backend/jest.config.js` set `collectCoverageFrom` and no `coverageThreshold`, and CI never ran the end-to-end scripts. E7-S2 put the floors in, E7-S2b added the diff bar, and E7-S3 wired the journeys into CI in PR #132. The reason this one is refreshed rather than frozen is that a developer reads it to find out what their PR has to clear tonight, not to find out what was true in July.
+
+Adopting the full reference bar mid-project would have stalled delivery. What this backlog proposed instead, and what is now in force, is a **ratchet**: apply the strict bar to new and touched code only, and raise the floor over time. That mirrors the reference project's own ADR-0013, which replaced an absolute gate with a delta gate plus a tracked baseline carrying a remediation SLA. Here it is ADR-0005, and `npm run coverage:ratchet` is the tool that moves the floor.
 
 ### 0.4 Documentation paradigm
 
@@ -102,15 +106,15 @@ That is a real product. The remaining work is narrower than the checklist histor
 | **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5, E7-S1, E7-S3; E7-S2b and E7-S6b found, both merged | 1 story, 2 to 4 days |
 | **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | E8-S4 | 3 stories, 5 to 9 days plus external lead time |
 
-It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Eighteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5), so **19 milestone stories, roughly 32 to 62 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 12 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Eighteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5). DOCS-4 is a fourth chore the week added to itself, it is the diff you are reading, and with it in there is no chore left, so **19 milestone stories, roughly 41 to 61 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 12 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
 
-One caveat on the two sets of numbers above, because a reader who adds them up will find it anyway. The **Remaining** column subtracts each merged story from that milestone's own range, and the ceilings agree exactly with the per-epic bars on `docs/mvp-board.html`. The floors do not add up the same way: the table's floors sum higher than the 32 in the paragraph above, because the 32 comes from a single running subtraction against the original 72 rather than from the milestone rows. Both are subtracting the same merged work; they disagree on how the six E3-S1 sub-stories and the four discovered stories are counted against a floor. The ceiling is the figure to plan with, and reconciling the floor is **DOCS-4**, the freeze story, which is exactly the kind of thing it exists to catch.
+**The floor above used to be 32, and DOCS-4 has settled it at 41.** Worth recording how it drifted, because the mechanism matters more than the ten days. The **Remaining** column subtracts each merged story from that milestone's own range, and its ceilings have always agreed exactly with the per-epic bars on `docs/mvp-board.html`, because a check on the board derives the tile's ceiling from those bars and fails the build when the two disagree. The floor had no such check. It was kept by hand as a single running subtraction against the pre-week 72, so every merge asked somebody to remember a number rather than to add up a column, and by this week it sat ten days below what the eight milestone rows came to, counting the chore day that was still open on both sides of the comparison. Nobody made an error; nothing was ever going to catch one. The rows are the source, with this chore merged they add up to 41, and that is now the figure in both places. Each effort bar on the board carries a floor beside its ceiling, the Full backlog tile sums both ends from those bars, and `npm run validate:board` fails if either drifts again. Plan against the ceiling, as before. The difference is that the floor is now checkable rather than remembered.
 
 **A week of merging bought four days off the floor and two off the ceiling, and found three stories doing it.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the seven milestone stories, six were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. M5 went up by a day because writing the environment matrix found the one credential in this application that does not fail closed, which is now E5-S6. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
 
 **The week discovered four stories — E5-S2a, E7-S2b, E5-S6 and E7-S6b — and half of them came out of a documentation story that shipped no code.** Worth noticing before the next team decides documentation is the part to skip. Nothing was found by reading a story's title; it was found by reading the code the title described and writing down what it actually did.
 
-**Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 plus E2-S2 is enough, roughly 17 to 25 days, down from 22 to 28 because E2-S4 and the document authorization half of M3 have landed. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
+**Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 is enough, roughly 15 to 21 days, down from 22 to 28 because E2-S4, E2-S2 and the document authorization half of M3 have all landed. That subset used to name E2-S2 as well; it merged in wave 1 and now costs nothing, and DOCS-4 corrected the total here at the same time as the floor above, since both were being carried by hand. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
 
 ### 1.4 Decisions needed before the work starts
 
@@ -122,7 +126,7 @@ These are product and commercial decisions. Engineering can proceed on M3 withou
 | D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts |
 | D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam |
 | D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency |
-| D5 | Adopt the voxdiary quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 |
+| D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 |
 
 ---
 
@@ -140,17 +144,28 @@ Auth, users, listings, documents, verification, tasks, transactions, payments an
 
 | Document | Status | Note |
 | --- | --- | --- |
-| `docs/BUILD_CHECKLIST.md` | ✅ Corrected, DOCS-1 | Every item read `[x]`, including "API, staff/client DD case lifecycle" — true for standalone DD, false for listing-based DD. The file now opens with an accuracy notice and an audit corrections table, and the overstated items carry `[!]` |
+| `docs/BUILD_CHECKLIST.md` | ✅ Corrected, DOCS-1 · re-checked, DOCS-4 | Every item read `[x]`, including "API, staff/client DD case lifecycle", which is true for standalone DD and false for listing-based DD. The file now opens with an accuracy notice and an *Audit corrections* table of seven overstatements, each naming the story that closes it. The corrections live in the table and not in a marker on the item, so all 59 items are still `[x]` and there is no `[!]` in the file. DOCS-4 also removed the instruction to start from the first unchecked box, because there is not one |
 | `docs/analysis/03_CURRENT_STATE_AUDIT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-23 | Its three crashing screens were fixed in Step 1, its missing trust layer now exists |
 | `docs/TECH_AUDIT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-02 | Predates cookie auth, transactions, escrow, and object storage |
 | `docs/VALIDATION_REPORT.md` | ✅ Bannered, DOCS-2 · stale, 2026-05-25 | Snapshot of a production deploy two months old |
 | `docs/QA_FINDINGS.md` | ✅ Bannered, DOCS-2 · mostly closed | QA-015 (seeded documents have no files on disk) and QA-016 (Paystack not validated end to end locally) remain open. QA-015 is E7-S4, which is the first story recommended for the cut |
-| `docs/analysis/05_STRATEGIC_RECOMMENDATIONS.md` | Still the right frame | Its Core MVP and Launch-Ready buckets map onto E1 to E4 and E5 to E8 below |
+| `docs/analysis/04_GAP_ANALYSIS.md` | ✅ Bannered, DOCS-2 · partly stale, 2026-05-23 | Most Core MVP gaps, G13 to G41, are closed. The gap categories and the dependency reasoning were reused here; the per-gap statuses were not |
+| `docs/analysis/05_STRATEGIC_RECOMMENDATIONS.md` | ✅ Bannered, DOCS-2 · still the right frame | Its Core MVP and Launch-Ready buckets map onto E1 to E4 and E5 to E8 below. Statuses inside it are stale, the bucketing is not |
+| `docs/analysis/01_SOURCE_SYNTHESIS.md` | ✅ Bannered, DOCS-4 · not stale | A record of what the source material said on a date, so it does not expire the way an audit does. Only its §9 codebase inventory is time-bound |
+| `docs/PRD.md` | ✅ Bannered, DOCS-4 · superseded | The original one-page PRD, an input to the analysis pack rather than an output of it. Its API sketch omits the `/api/v1` base and most modules, Flutterwave was never integrated, and the primary colour it names is not the one in `src/styles.css` |
+| `docs/analysis/02_MASTER_PRD.md` | ✅ Bannered, DOCS-4 · still the baseline | Nothing has replaced it, and §3 and §4 are still what "intended behaviour" means in a story argument. It specifies the whole product, and the MVP is a subset, so the scope cut lives in §7 below and in `docs/adr/` rather than in it |
 | `docs/LOCAL_DEVELOPMENT.md`, `docs/VERCEL_VALIDATION.md` | ✅ Corrected, E7-S5 | Both offered `prisma db seed` as routine housekeeping. The seed's first act is `deleteMany()` on 24 tables against whatever `DATABASE_URL` points at, and both documents point it at the shared cloud Postgres. Neither said so. Both now pass `SEED_NO_WIPE=1` and say why |
+| `docs/PARALLEL_AGENT_PROMPTS.md` | ✅ Bannered, DOCS-4 · stale, 2026-05-26 | A wave plan for Steps 3 to 5, all merged. It hands out `cursor/<topic>-e4ea` branch names, tells an agent to tick `[x]` in the checklist, and predates the diff coverage bar and the board check. Dangerous because it reads like a live instruction rather than a record |
+| `docs/VISUAL_QA_AGENT_PROMPT.md` | ✅ Bannered, DOCS-4 · stale, 2026-05-26 | The prompt that ran the stabilization sprint. The sprint finished and its output is `QA_FINDINGS.md`. Its standing order, do not start Step 6 and later, is spent: PoA, escrow and the DD wizard all shipped after it |
+| `docs/demo-script-checklist.md` | ✅ Bannered, DOCS-4 · usable but partial | Not stale. Every route in it still exists and the seed password still works. It covers none of standalone DD, escrow, PoA, KYC or notifications, and it names 5 of the 27 accounts in `DEMO_TEST_ACCOUNTS.csv`. Bannered as a subset of the demo rather than the demo |
 
-**First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the voxdiary paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
+**First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the reference project's paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
 
-> **Done, 2026-07-29, and the reason it was first still holds.** DOCS-1 reconciled the checklist and DOCS-2 bannered six documents, all six pointing at `HANDOVER.md` for current state and here for current gaps. What the row above cannot say is what the reconcile cost: the checklist had been `[x]` on the listing DD lifecycle for long enough that two later documents inherited the claim. The banners are deliberately loud and deliberately non-destructive — nothing was deleted, because a stale document is evidence of what was believed and when, and the only thing wrong with it is a reader who cannot tell.
+> **Done, 2026-07-29, and the reason it was first still holds.** DOCS-1 reconciled the checklist and DOCS-2 bannered six documents, all six pointing at `HANDOVER.md` for current state and here for current gaps. What the row above cannot say is what the reconcile cost: the checklist had been `[x]` on the listing DD lifecycle for long enough that two later documents inherited the claim. The banners are deliberately loud and deliberately non-destructive. Nothing was deleted, because a stale document is evidence of what was believed and when, and the only thing wrong with it is a reader who cannot tell.
+>
+> **Finished, 2026-08-02, by DOCS-4.** Six documents had been missed. Three were agent-facing, two prompt packs that read as live instructions and a demo walkthrough that is still correct but no longer complete, and that is the worse half of the problem: a stale audit misleads a reader, a stale prompt misleads a worker. One was `PRD.md`, the original one-page brief, still sitting in `docs/` under a name that invites a reader to treat it as the requirements. The last two, `01_SOURCE_SYNTHESIS.md` and `02_MASTER_PRD.md`, are not stale at all, and the reason to banner them is the same reason in reverse: three of the five analysis files carried a warning and two did not, so silence could mean current or could mean unchecked and a reader had no way to tell.
+>
+> Twelve files now carry a banner, up from six, and **this table is the inventory**. If a file in `docs/` is not listed here, it is live and current. Three live files were corrected rather than bannered, because the fault was a stale sentence rather than a stale document: `DEVELOPMENT_GUIDE.md` still called `BUILD_CHECKLIST.md` the work queue, and `GIT_WORKFLOW.md` and `BRANCH_PROTECTION.md` both described the required gate as three jobs when six now sit behind it, the two end-to-end suites and the board check having been added since.
 
 ---
 
@@ -778,7 +793,9 @@ Criterion 4 is partly delivered and the difference is worth stating plainly. KYC
 
 #### E5-S6, fail closed when `JWT_SECRET` is unset
 
-**Size** S · **Status** 📋 planned, unscheduled · **Deps** none
+**Size** S · **Deps** none
+
+**Delivered** in PR #119. `backend/src/config/jwt-secret.ts` holds the guard and the three answers it can give: `missing`, `too-short` and `development-fallback`, each with its own message, and `assertJwtSecret()` is called from `main.ts` beside the other three. The published literal is gone from `auth.module.ts` and `jwt.strategy.ts`; outside production a missing secret now resolves through one named development default, `DEVELOPMENT_JWT_SECRET`, in one place, and deploying that value to production is itself a distinct rejection rather than a value that happens to be long enough. No exit message prints any part of what was configured. `jwt-secret.spec.ts` covers all of it in 28 tests, in production and out.
 
 **Why it exists.** Found while writing the environment matrix in E7-S5. Every other credential in this
 application fails closed: `assertSafeDatabaseUrl`, `assertCorsConfigured` and `assertPaymentsConfigured`
@@ -810,9 +827,11 @@ which case every session has been forgeable and nothing in the application would
 5. The runbook's §7.2 and §9.3 are updated from finding to closed, and `backend/.env.example`'s warning
    comment is replaced by whatever ends up true.
 
-**Before this is scheduled, someone with the Render dashboard should confirm `JWT_SECRET` is set.**
-That check takes a minute and is not the story; the story is making the answer impossible to get wrong
-next time.
+The open question this story carried, whether `JWT_SECRET` was ever actually set in the deployed
+environment, is now answered by the deployment itself: a production instance with the variable unset,
+empty, short or set to the development default exits non-zero before Nest starts. **If the API is
+serving traffic, the secret is set.** That was the point of the story. It does not tell anyone whether
+the secret in use today was ever the published fallback, so rotating it once remains cheap insurance.
 
 ---
 
@@ -1011,7 +1030,9 @@ A runbook that guessed at those and was wrong would be worse than one that says 
 
 #### E7-S6b, point the container healthcheck at the readiness probe
 
-**Size** S · **Status** 📋 planned, unscheduled · **Deps** E7-S6
+**Size** S · **Deps** E7-S6
+
+**Delivered** in PR #120. `backend/Dockerfile:50` polls `/api/v1/health/ready` and exits 1 on anything that is not a 200, so a 503 from a broken dependency now fails the check instead of passing it. `--start-period` is 180s, which covers `prisma migrate deploy` and boot on the shared cloud database rather than only boot. The bare `/health` stays. `backend/src/health/dockerfile-healthcheck.spec.ts` reads the Dockerfile and asserts all of that in 10 tests, so the next edit to that line cannot quietly point it back at an endpoint that answers from static values. `docs/RUNBOOK.md` §2.2 answers criterion 3 by first separating two mechanisms that had been treated as one: the image's `HEALTHCHECK` is what Docker runs, and Render does not run it at all. Render sends its own checks against a **Health Check Path** configured in the dashboard, there is no `render.yaml` here, so nothing in this repository can say what that path is, and with no path set Render's check is a TCP probe that a container with a dead database passes. Where the path is set to `/health/ready`, Render restarts an instance that fails for 60 seconds. The restart cannot fix the dependency, so the probe is a signal rather than a remedy, and §2.2 now says which.
 
 **Why it exists.** Found while writing the deploy section in E7-S5. E7-S6 built `/health/ready` so that
 a broken dependency is visible; the one automated consumer of a health endpoint in this repository was
@@ -1043,7 +1064,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 **Size** L · **Flag** `privacy_centre` · **Deps** E5-S5, EXT-5
 
-**Evidence of the gap.** No consent model, no retention policy, and no erasure path exist in the schema or the codebase. The platform stores government identity documents, selfies, and professional credentials. voxdiary treats the equivalent as `FR-A6` and `FR-A7` with a dedicated privacy centre, and it is worth reading `docs/adr/0004-auth-and-account-portal.md` there before designing this.
+**Evidence of the gap.** No consent model, no retention policy, and no erasure path exist in the schema or the codebase. The platform stores government identity documents, selfies, and professional credentials. The reference project treats the equivalent as `FR-A6` and `FR-A7` with a dedicated privacy centre, and its own `docs/adr/0004-auth-and-account-portal.md` is worth reading before designing this.
 
 **Acceptance criteria**
 
@@ -1079,7 +1100,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 1. An independent review covering authentication, authorization, payments, and document handling.
 2. Every high and critical finding is fixed with a regression test, not suppressed.
-3. Medium findings are either fixed or tracked with an owner and an SLA, following the ratchet pattern in voxdiary's ADR-0013.
+3. Medium findings are either fixed or tracked with an owner and an SLA, following the ratchet pattern in the reference project's ADR-0013.
 4. A re-test confirms closure before G5.
 
 ---
@@ -1109,7 +1130,7 @@ Two findings came out of the proof and are written up rather than fixed here, be
 
 ## 5. Cross-cutting definition of done
 
-Every story above is done when all of the following hold. This is voxdiary's `rules.md` §1, ratcheted to new and touched code.
+Every story above is done when all of the following hold. This is the reference project's `rules.md` §1, ratcheted to new and touched code.
 
 1. One story, one pull request, single purpose, conventional-commit title, squash merged.
 2. Behind its declared feature flag where one is given, with the flag defaulting off and a documented kill switch. CH-1 built the mechanism, so this is now enforceable rather than aspirational: declare the key in `backend/src/feature-flags/feature-flags.constants.ts`, gate the route with `@RequiresFeature`, gate the control with `<Feature>`, and the kill switch comes with it.

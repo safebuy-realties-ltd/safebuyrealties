@@ -8,19 +8,22 @@ Single reference for how we build, test, validate, and ship. **Agents and humans
 | --- | --- |
 | **This file** | TDD, PR/CI, full-stack validation, step rhythm |
 | `docs/AGENT_PROMPT.md` | Paste into new AI sessions (short loop) |
-| `docs/BUILD_CHECKLIST.md` | Ordered work queue (`[ ]` / `[~]` / `[x]`) |
+| **`docs/MVP_OUTSTANDING_BACKLOG.md`** | **The work queue.** One story, one PR, with acceptance criteria |
+| `docs/mvp-board.html` | The board. Every story, its status, its PR and the day it landed |
+| `docs/HANDOVER_WEEK.md` | The rules a story PR is held to, gates included |
+| `docs/BUILD_CHECKLIST.md` | Historical record of the original build. Every item is `[x]`, so it is **not** the queue any more |
 | `docs/GIT_WORKFLOW.md` | Branch → PR → merge (never push `main` directly) |
 | `docs/LOCAL_DEVELOPMENT.md` | **Primary** — local FE/BE, cloud Postgres, curl, L5 E2E |
 | `docs/VERCEL_VALIDATION.md` | Optional deploy / production smoke |
 | `docs/RUNBOOK.md` | Deploy, rollback, incident triage, environment matrix, secrets |
-| `docs/demo-script-checklist.md` | Manual browser journeys (Gate C on localhost:8080) |
-| `docs/VALIDATION_REPORT.md` | Last production validation snapshot |
+| `docs/demo-script-checklist.md` | Manual browser journeys (Gate C on localhost:8080). A subset: it predates DD, escrow, PoA and KYC |
+| `docs/VALIDATION_REPORT.md` | A production snapshot from 2026-05-25, bannered as stale |
 
 ---
 
 ## Golden rules
 
-1. **Checklist is the queue** — one item at a time unless explicitly parallelized.
+1. **The backlog is the queue** — `docs/MVP_OUTSTANDING_BACKLOG.md`, one story at a time unless explicitly parallelized. It used to be `docs/BUILD_CHECKLIST.md`, and that file is now a record of the original build rather than a list of what is left.
 2. **Branch + PR always** — see `docs/GIT_WORKFLOW.md`. Merge only when **CI is green**.
 3. **Test-driven** — failing test first → minimal implementation → green → refactor.
 4. **Full-stack for features** — backend + frontend + deployed check when both sides change.

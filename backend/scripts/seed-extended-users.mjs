@@ -8,7 +8,7 @@
  *   SBR_ADMIN_PASSWORD=password123 \
  *   node backend/scripts/seed-extended-users.mjs
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -165,41 +165,105 @@ function roleLabel(role, professionalType) {
   return role;
 }
 
-function toCsv(rows) {
-  const header = [
-    "Role",
-    "Professional Type",
-    "First Name",
-    "Last Name",
-    "Email",
-    "Password",
-    "App URL",
-    "Dashboard Path",
-    "Notes",
-  ];
+const CSV_HEADER = [
+  "Role",
+  "Professional Type",
+  "First Name",
+  "Last Name",
+  "Email",
+  "Password",
+  "App URL",
+  "Dashboard Path",
+  "Notes",
+];
+const EMAIL_COLUMN = CSV_HEADER.indexOf("Email");
+
+function toCsvLine(r) {
   const esc = (v) => {
     const s = String(v ?? "");
     return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const lines = [header.join(",")];
-  for (const r of rows) {
-    lines.push(
-      [
-        r.role,
-        r.professionalType ?? "",
-        r.firstName,
-        r.lastName,
-        r.email,
-        r.password,
-        r.appUrl,
-        r.dashboardPath,
-        r.notes,
-      ]
-        .map(esc)
-        .join(","),
-    );
+  return [
+    r.role,
+    r.professionalType ?? "",
+    r.firstName,
+    r.lastName,
+    r.email,
+    r.password,
+    r.appUrl,
+    r.dashboardPath,
+    r.notes,
+  ]
+    .map(esc)
+    .join(",");
+}
+
+/** Split one CSV line, respecting quoted fields and doubled quotes inside them. */
+function splitCsvLine(line) {
+  const fields = [];
+  let field = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch !== '"') field += ch;
+      else if (line[i + 1] === '"') {
+        field += '"';
+        i += 1;
+      } else quoted = false;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ",") {
+      fields.push(field);
+      field = "";
+    } else field += ch;
   }
-  return lines.join("\n") + "\n";
+  fields.push(field);
+  return fields;
+}
+
+/**
+ * Merge the 25 accounts this script seeds into whatever the file already holds, rather than
+ * replacing it.
+ *
+ * docs/DEMO_TEST_ACCOUNTS.csv is a tracked document and it carries accounts this script does not
+ * create: the super admin, because only a super admin may hand out ADMIN and the seed logs in as one
+ * rather than making one, and the company account. Writing the 25 rows straight over the file deleted
+ * both, silently, on any local run. So an existing row keeps its position and is refreshed in place
+ * when this script owns the email, a row this script does not own is copied through untouched, and
+ * anything new is appended.
+ */
+function mergeCsv(existingText, rows) {
+  const owned = new Map(rows.map((r) => [r.email.toLowerCase(), r]));
+  const written = new Set();
+  const lines = [CSV_HEADER.join(",")];
+  let kept = 0;
+
+  const existing = (existingText ?? "").split("\n").filter((line) => line.trim() !== "");
+  const body = existing[0]?.startsWith("Role,") ? existing.slice(1) : existing;
+  for (const line of body) {
+    const email = (splitCsvLine(line)[EMAIL_COLUMN] ?? "").trim().toLowerCase();
+    const row = owned.get(email);
+    if (!row) {
+      kept += 1;
+      lines.push(line);
+      continue;
+    }
+    written.add(email);
+    lines.push(toCsvLine(row));
+  }
+  for (const r of rows) {
+    if (!written.has(r.email.toLowerCase())) lines.push(toCsvLine(r));
+  }
+  return { csv: lines.join("\n") + "\n", kept };
+}
+
+function readIfPresent(path) {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") return "";
+    throw error;
+  }
 }
 
 function dashboardPath(role) {
@@ -288,18 +352,27 @@ async function main() {
     notes: "Shared demo account — do not use for real transactions",
   }));
 
-  const csv = toCsv(rows);
   const outDir = resolve(__dirname, "../../docs");
   mkdirSync(outDir, { recursive: true });
   const csvPath = resolve(outDir, "DEMO_TEST_ACCOUNTS.csv");
+  const { csv, kept } = mergeCsv(readIfPresent(csvPath), rows);
   writeFileSync(csvPath, csv, "utf8");
-  console.log(`[seed-extended-users] Wrote ${csvPath}`);
+  const keptNote = kept === 1 ? ", 1 row kept that this script does not seed" : `, ${kept} rows kept that this script does not seed`;
+  console.log(`[seed-extended-users] Wrote ${csvPath}: ${rows.length} seeded rows${kept ? keptNote : ""}`);
   console.table(
     rows.map((r) => ({ role: r.role, email: r.email, password: r.password })),
   );
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+/**
+ * Seeding needs an API and an admin session; merging a CSV needs neither. Run `main` only when this
+ * file is the process entry point, so the merge above can be imported and checked on its own.
+ */
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
+
+export { mergeCsv, splitCsvLine };

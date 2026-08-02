@@ -2,24 +2,33 @@
 
 > **⚠️ ACCURACY NOTICE, added 2026-07-29 during handover.**
 > This file previously read `[x]` on every item, including work that is **not** in the code. A line-by-line
-> audit against `main` @ `fc05e1e` corrected the items marked **`[!]`** below. The corrected items are not
-> failures of the build, they are gaps between two similar features (standalone due diligence is complete,
-> listing-based due diligence is not).
+> audit against `main` @ `fc05e1e` found seven of them, and they are corrected in the
+> **[Audit corrections](#audit-corrections-2026-07-29)** table below rather than by a marker on the item.
+> The corrections are not failures of the build, they are gaps between two similar features (standalone
+> due diligence is complete, listing-based due diligence is not).
 >
 > **Do not treat this file as the work queue any more.** The current queue is
 > **[`docs/MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md)**, which carries acceptance criteria and a
 > file-and-line citation behind every claimed gap. This file is retained as the history of what was built and when.
 >
-> New legend entry: `[!]` = **claimed done, audit found otherwise** — see the note on the item and the linked story.
+> Re-checked against `main` on 2026-08-02 by **DOCS-4**. The seven corrections still stand as written, and
+> the stories that close them are the ones named in the table's last column.
 
 This is the historical record of development progress. For what remains, read `MVP_OUTSTANDING_BACKLOG.md`.
 
 **Legend:**
-- `[ ]` = Not started
-- `[~]` = In progress (current session working on this)
-- `[x]` = Built and validated ✓
 
-Any AI tool working on this project reads this file first, finds the first `[ ]` or `[~]`, and continues from there. See `AGENT_PROMPT.md` for the full working protocol.
+- `[x]` = Built and validated ✓
+- `[ ]` = Not started
+- `[~]` = In progress
+
+Every item in this file is `[x]`, and none of them are `[ ]` or `[~]`. That is what "historical record"
+means here: the file records that the original build finished, not that there is nothing left to do.
+
+**An agent should not start here.** The instruction this file used to carry, read it first and continue
+from the first unchecked box, would now find no unchecked box and conclude the project is finished.
+Read **[`docs/MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md)** and
+**[`docs/AGENT_PROMPT.md`](AGENT_PROMPT.md)** instead.
 
 **Validation (local-first):** Run backend + frontend locally against the **shared cloud Postgres** — see `docs/LOCAL_DEVELOPMENT.md`. API base: `http://localhost:3001/api/v1`; app: `http://localhost:8080`. Optional post-merge checks: `docs/VERCEL_VALIDATION.md`.
 
@@ -58,14 +67,23 @@ erasure. All are stories in `MVP_OUTSTANDING_BACKLOG.md` with acceptance criteri
 
 > *(Each session updates this section before stopping)*
 
+- **Date:** 2026-08-02
+- **Tool:** Claude Code — the handover week, then waves 1, 2 and 3
+- **Last completed:** DOCS-4, the documentation freeze. Every gap claim re-run against `main`, statuses corrected, this file re-checked
+- **Done this session:** 36 pull requests merged across the week and the three waves. Six more documents bannered and the rest inventoried. Two defects found by re-reading rather than by testing: the seed script was overwriting `docs/DEMO_TEST_ACCOUNTS.csv` and deleting two accounts, and the backlog floor was a figure nothing derived
+- **Next:** Nothing a developer can pick up alone. All 19 remaining stories wait on a decision or an outside party, so the next move belongs to a stakeholder. Read §1.4 of `MVP_OUTSTANDING_BACKLOG.md` and the review queue on `docs/mvp-board.html`
+- **Blockers:** the five open decisions ADR-0001 to ADR-0005, and the external engagements EXT-1 to EXT-7
+
+### Prior session, the handover audit
+
 - **Date:** 2026-07-29
 - **Tool:** Claude (Cowork) — handover audit
 - **Last completed:** Full code audit of `main` @ `fc05e1e`; this checklist reconciled against it
-- **Done this session:** Produced `MVP_OUTSTANDING_BACKLOG.md` (36 stories, cited evidence) and `HANDOVER.md`; corrected the `[!]` items below; bannered the stale analysis documents
-- **Next:** Work `MVP_OUTSTANDING_BACKLOG.md`, not this file. Start with DOCS-1, E2-S4, E5-S2, E3-S4
+- **Done this session:** Produced `MVP_OUTSTANDING_BACKLOG.md` (36 stories, cited evidence) and `HANDOVER.md`; recorded seven overstatements in the Audit corrections table above; bannered the stale analysis documents
+- **Next:** Work `MVP_OUTSTANDING_BACKLOG.md`, not this file. Start with DOCS-1, E2-S4, E5-S2, E3-S4. All four have since merged
 - **Blockers:** decisions D1 and D2 in the backlog gate epics E1 and E2
 
-### Prior session
+### Prior session, the unified admin portal
 
 - **Date:** 2026-07-24
 - **Tool:** Cursor (Cloud Agent) — unified admin portal
