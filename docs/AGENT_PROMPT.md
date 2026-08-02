@@ -1,6 +1,6 @@
 # SafeBuyRealties — Agent Starting Prompt
 
-> Copy everything below this line and paste it as your first message in any tool (Cursor, Claude Code, GitHub Copilot, Codex). Then paste the Master Development Plan document directly below it in the same message.
+> Copy everything below this line and paste it as your first message in whichever AI coding tool you are using. Then paste the Master Development Plan document directly below it in the same message.
 
 ---
 

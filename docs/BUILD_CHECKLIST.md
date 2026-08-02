@@ -68,7 +68,7 @@ erasure. All are stories in `MVP_OUTSTANDING_BACKLOG.md` with acceptance criteri
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-08-02
-- **Tool:** Claude Code — the handover week, then waves 1, 2 and 3
+- **Tool:** one developer running AI agents, with a second developer reviewing and merging, across the handover week and waves 1, 2 and 3
 - **Last completed:** DOCS-4, the documentation freeze. Every gap claim re-run against `main`, statuses corrected, this file re-checked
 - **Done this session:** 36 pull requests merged across the week and the three waves. Six more documents bannered and the rest inventoried. Two defects found by re-reading rather than by testing: the seed script was overwriting `docs/DEMO_TEST_ACCOUNTS.csv` and deleting two accounts, and the backlog floor was a figure nothing derived
 - **Next:** Nothing a developer can pick up alone. All 19 remaining stories wait on a decision or an outside party, so the next move belongs to a stakeholder. Read §1.4 of `MVP_OUTSTANDING_BACKLOG.md` and the review queue on `docs/mvp-board.html`

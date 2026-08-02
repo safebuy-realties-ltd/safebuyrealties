@@ -114,6 +114,10 @@ Give this to every agent alongside the story.
 9. **Write like a person, not like a model.** No em dashes, full punctuation, no chatbot house style.
    This covers PR titles and descriptions, commit messages, board prose, anything under `docs/`, and
    the notes you write back to whoever asked for the work. Specifics below.
+10. **Never name the assistant product that helped write something.** Not in the documents a
+    stakeholder reads, not in the backend, not in a comment, a commit message or a workflow file.
+    Write how the work was staffed instead. This one is enforced rather than trusted, like rule 8,
+    and the section below says what the check covers and what it does not.
 
 ### Rule 8, and why it is a gate rather than a habit
 
@@ -217,6 +221,49 @@ a diff would fail honest work on day one, because the board uses a bare em dash 
 marker in the flag column of every `STORIES` row. A check that fires on correct data is a check
 people learn to ignore, and rule 8's own section explains why that is the worst outcome available.
 Catching this one is a review job.
+
+### Rule 10, and why this one is gated where rule 9 is not
+
+This repository is a handover. Every document in it gets read by somebody deciding whether the work
+under it can be trusted, and a page that opens by naming the assistant that produced it hands that
+reader a different question to answer. They stop weighing the audit and start weighing the tool, and
+whichever way they land on the tool, the evidence underneath gets read with a thumb on the scale.
+That is the cost rule 9 describes, arriving by a different route.
+
+There is a second reason and it outlives any opinion about the tools. A product name is a fact with
+a shelf life. Which assistant was in use in August 2026 tells the team that inherits this in 2027
+nothing they can act on, and it will read as dated long before the architecture does. **How the work
+was staffed does not go stale.** "One developer running AI agents, with a second developer reviewing
+and merging" tells the next reader the volume of pull requests to expect and where the second pair
+of eyes was, and both of those are still true whatever the agents were running on. Write that.
+
+**How it is enforced:**
+
+- `npm run validate:prose` runs `scripts/check-prose.mjs`, which greps every tracked file for the
+  banned terms and prints file, line and the offending text for each hit. The two package lockfiles
+  are excluded because nobody writes prose into them. Binary files are skipped by `git grep -I`.
+  Nothing else is out of scope, source and configuration and the workflows included, because a
+  product name is no more welcome in a code comment than in a heading.
+- CI runs it on every pull request with **no path filter at all**, which is the one thing that
+  separates it from the board job. The board check is filtered because it costs runner-minutes. This
+  one is a single git call, and a writing rule that applies to some diffs and not others is a rule
+  with a gap in the middle of it.
+- **What is gated is the literal list in `BANNED`, which today holds one term.** The rule above is
+  broader than the list, and that is on purpose: a check that tried to recognise every assistant
+  product by name would start guessing, and a check that guesses is one people learn to ignore.
+  Adding a term when a new tool shows up is a one-line change to that array, and doing it is
+  expected rather than exceptional.
+- The script assembles its needles from parts rather than spelling them out, so that it does not
+  have to exempt itself from its own check. That looks fussy for one line and it is the difference
+  between a gate and a gate with a hole in it.
+
+Where this does not apply: local tooling directories are gitignored and never scanned, so keep
+whatever you like in yours. Generated output is whatever the generator emits.
+
+There is a carve-out this rule deliberately does not make, which is history. The *Last Session
+Notes* in `docs/BUILD_CHECKLIST.md` record what each session used, and the honest fix there was to
+rewrite the entry as the arrangement rather than to grandfather the name. A rule that exempts what
+is already written is a rule that never removes anything.
 
 ## What good looks like on Friday
 
