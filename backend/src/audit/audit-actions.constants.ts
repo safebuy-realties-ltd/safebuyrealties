@@ -34,6 +34,16 @@ export const AuditAction = {
   LOGIN_FAILED: "LOGIN_FAILED",
   LOGIN_SUCCEEDED: "LOGIN_SUCCEEDED",
   LOGIN_LOCKED_OUT: "LOGIN_LOCKED_OUT",
+  /**
+   * E5-S5. `SESSION_ISSUED` is the odd one in this file: the row it writes is not only read back but
+   * updated in place, because it is the session itself rather than a note that a session happened.
+   * One row per family, `entity` "AuthSession", `entityId` the family id, state in `after`. The other
+   * two are ordinary append-only notes, so the history of a revocation outlives the session row.
+   * See src/auth/sessions.service.ts for why this lives here instead of in a table of its own.
+   */
+  SESSION_ISSUED: "SESSION_ISSUED",
+  SESSION_REVOKED: "SESSION_REVOKED",
+  SESSION_REUSE_DETECTED: "SESSION_REUSE_DETECTED",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];

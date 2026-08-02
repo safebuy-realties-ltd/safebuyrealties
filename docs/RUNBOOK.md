@@ -394,6 +394,9 @@ the boot rather than defaulting to something.
 | `DATABASE_POSTGRES_URL` | R | R | R | Corne Labs | Direct connection, preferred by the deploy-time migration scripts |
 | `SBR_CONFIRM_CLOUD_DATABASE_URL` | R | — | — | — | Local opt-in to a remote DB. Ignored in production |
 | `JWT_SECRET` | O | O | R | Corne Labs | Min 32 chars, and not the development default. **Production will not boot without it** ([`jwt-secret.ts`](../backend/src/config/jwt-secret.ts)). See §7.2 |
+| `ACCESS_TOKEN_TTL` | O | O | O | Corne Labs | Default `15m`. Read only while `auth_sessions` is on. An unparseable value warns and the default stands. §11.4 |
+| `REFRESH_TOKEN_TTL_DAYS` | O | O | O | Corne Labs | Default 7. The real session length, and how long a stolen refresh token is worth something. §11.4 |
+| `REFRESH_REUSE_LEEWAY_MS` | O | O | O | Corne Labs | Default 10000. How long a rotated token still works, so two tabs waking together do not revoke the family. §11.4 |
 | `PORT` | O | — | — | — | Defaults to 3001; the image sets it |
 | `NODE_ENV` | O | O | R | — | The image sets `production`. Drives all four boot guards |
 | `FRONTEND_URL` | R | R | R | Corne Labs | Comma-separated origins. **Production will not boot without it** |
@@ -424,6 +427,7 @@ the boot rather than defaulting to something.
 | `SEED_NO_WIPE` | **use it** | — | — | — | `1` prevents the seed wiping every table. See §4.1 |
 | `FEATURE_<KEY>` | O | O | O | Corne Labs | One per registry key, upper-cased. Unset means the registry default, which is off for every roadmap flag. §11 |
 | `FEATURE_STANDALONE_DD_PUBLIC_ORDER_READ` | O | O | O | Corne Labs | The exception: defaults **on**, because the route is live. Setting it off closes an unauthenticated route and costs the guest receipt view. §11.3 |
+| `FEATURE_AUTH_SESSIONS` | O | O | **leave it off** | Corne Labs | Short access token, rotating refresh, session list and revoke. **No client refreshes yet, so turning it on signs everybody out every fifteen minutes.** §11.4 |
 | `FEATURE_FLAGS_KILL_SWITCH` | O | O | O | Corne Labs | Turns every flag off at once. It cannot turn anything on. §11.2 |
 | `THROTTLE_<KEY>` | O | O | O | Corne Labs | One per policy, `"<requests>:<seconds>"`. Unset means the default in the registry. §12 |
 | `THROTTLE_DISABLED` | O | O | O | Corne Labs | Turns the request limiter off. Does not touch the login lockout. §12.3 |
@@ -600,7 +604,62 @@ A route whose flag is off answers `404` with the message Nest emits for a path i
 not `403`. A caller cannot tell a switched-off feature from one that was never built, which is what
 shipping dark means.
 
-### 11.4 The browser half
+### 11.4 `auth_sessions`, and the one that cannot go on yet
+
+`FEATURE_AUTH_SESSIONS` gates the whole of E5-S5: server-side sessions, a short access token, a
+rotating refresh token, and the two routes a person uses to see and end their own sessions. **It
+ships off and it has to stay off until a browser-side refresh client exists.** There is no code in
+the frontend today that calls `POST /auth/refresh`, so turning this on would sign every user out
+fifteen minutes after they signed in, with no way back except signing in again, every fifteen
+minutes, forever. That is the single most important line in this subsection.
+
+**Off is the behaviour that has always shipped.** Login mints one seven-day access token and nothing
+else. `POST /auth/refresh`, `GET /auth/sessions` and `DELETE /auth/sessions/:id` answer `404`, the
+same shape as a path the API does not serve, so a caller cannot tell the feature is built. No session
+rows are written and no refresh cookie is set.
+
+**On changes four things at once**, which is why it is one flag rather than four:
+
+| | Off | On |
+| --- | --- | --- |
+| Access token | 7 days | 15 minutes, `ACCESS_TOKEN_TTL` |
+| Refresh | none | `sbr_refresh` cookie, httpOnly, path `/api/v1/auth`, 7 days |
+| Revocation | wait for the token to expire | immediate, checked on every request |
+| Session routes | `404` | live |
+
+#### Turning it off in a hurry
+
+Same two steps as §11.2, and in this order:
+
+```bash
+curl -sS -X PATCH "$API/feature-flags/auth_sessions" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"enabled": false}'
+```
+
+Then set `FEATURE_AUTH_SESSIONS=off` in the Render environment so the next deploy or restart agrees
+with the override. The override is in memory and does not survive a restart.
+
+**What it costs, honestly.** Anybody who signed in while the flag was on is holding a fifteen-minute
+access token. Turning the flag off does not invalidate it, so it keeps working until it expires,
+which is at most fifteen minutes. After that they sign in once more and get a seven-day token like
+everybody else. That is the whole blast radius: one extra sign-in, for the people who happened to be
+signed in during the window.
+
+**What is left behind, and why none of it matters.** Refresh cookies already in browsers are never
+read again, because the route that reads them is answering `404`; the cookie expires on its own after
+seven days and the browser drops it. Session rows stay in `AuditLog` as `entity = 'AuthSession'` and
+are simply no longer consulted. Nothing is deleted and there is no cleanup step, which is what makes
+this a flag flip rather than a rollback: turning it back on within the seven-day window picks up the
+sessions that were already open.
+
+The one asymmetry worth knowing: a token minted while the flag was on carries a session id, and the
+liveness check on that id runs whether or not the flag is on. That is deliberate. A session somebody
+revoked while the feature was live stays revoked through the flip, rather than coming back because an
+operator changed an environment variable.
+
+### 11.5 The browser half
 
 The frontend reads the same endpoint and lays the answer over whatever `VITE_FEATURE_<KEY>` was
 baked into the build. The API wins, because the API is the half an operator can change without a
@@ -645,6 +704,7 @@ one entry per policy with a sentence saying what it protects. Every one is overr
 | --- | --- | --- |
 | `global` | 300 / 60s | everything that says nothing |
 | `login` | 10 / 60s | `POST /auth/login` |
+| `refresh` | 60 / 60s | `POST /auth/refresh`, and deliberately loose. See below |
 | `register` | 5 / 300s | `POST /auth/register` |
 | `activate` | 10 / 300s | `GET /auth/activate/:token`, `POST /auth/activate` |
 | `password_reset` | 5 / 900s | declared ahead of the routes E5-S3 builds |
@@ -654,6 +714,13 @@ one entry per policy with a sentence saying what it protects. Every one is overr
 
 The counts are per address per policy, not shared, so spending the login allowance leaves the rest
 of the API open to that caller.
+
+**`refresh` is sized for browsers, not for people.** One tab asks about every fifteen minutes, and a
+laptop waking with eight tabs open asks eight times in the same second. A tight limit there signs
+innocent people out, which is the failure this policy exists to avoid rather than cause. What
+actually defends that route is reuse detection: the first replayed refresh token revokes the whole
+family, so somebody grinding tokens gets one attempt rather than sixty. The limit is here to stop
+pointless volume. It only applies while `auth_sessions` is on, since the route is a `404` otherwise.
 
 **A bad value is ignored, not fatal.** `THROTTLE_LOGIN="lots"` leaves the default in place and warns
 at boot naming the variable and the value it dropped. The API booting with a limit somebody meant to

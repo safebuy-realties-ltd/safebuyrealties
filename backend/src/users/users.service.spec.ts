@@ -16,12 +16,17 @@ const mockPrisma = {
   $transaction: jest.fn(),
 };
 
+const mockSessions = {
+  revokeAllForUser: jest.fn().mockResolvedValue(0),
+};
+
 describe("UsersService role rules", () => {
   let service: UsersService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new UsersService(mockPrisma as never);
+    mockSessions.revokeAllForUser.mockResolvedValue(0);
+    service = new UsersService(mockPrisma as never, mockSessions as never);
   });
 
   const actor = (role: UserRole, sub = "actor-1"): JwtPayload => ({
@@ -184,6 +189,57 @@ describe("UsersService role rules", () => {
       await expect(
         service.update("actor-1", { isActive: false }, actor(UserRole.ADMIN, "actor-1")),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  /**
+   * E5-S5, criterion 4. The guard already turns a deactivated account away on the next request, so
+   * none of this is what closes the door. It is what makes the record honest: a closed account with
+   * live sessions still listed against it misleads whoever reads the table next.
+   */
+  describe("deactivation and open sessions", () => {
+    const target = {
+      id: "target-1",
+      email: "buyer@test.com",
+      firstName: "Bu",
+      lastName: "Yer",
+      role: UserRole.BUYER,
+      professionalType: null,
+      phone: null,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    beforeEach(() => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: "target-1",
+        role: UserRole.BUYER,
+        professionalType: null,
+      });
+      mockPrisma.user.update.mockResolvedValue(target);
+    });
+
+    it("ends every session the account has open when staff close it", async () => {
+      mockPrisma.user.update.mockResolvedValue({ ...target, isActive: false });
+
+      await service.update("target-1", { isActive: false }, actor(UserRole.ADMIN));
+
+      expect(mockSessions.revokeAllForUser).toHaveBeenCalledWith("target-1", "account_deactivated");
+    });
+
+    it("leaves the sessions alone on an ordinary profile edit", async () => {
+      await service.update("target-1", { phone: "+2348012345678" }, actor(UserRole.ADMIN));
+
+      expect(mockSessions.revokeAllForUser).not.toHaveBeenCalled();
+    });
+
+    it("leaves the sessions alone when the account is turned back on", async () => {
+      await service.update("target-1", { isActive: true }, actor(UserRole.ADMIN));
+
+      // Reactivating is not a security event, and signing the owner out of a session they never
+      // lost would make the reinstatement look like a second punishment.
+      expect(mockSessions.revokeAllForUser).not.toHaveBeenCalled();
     });
   });
 });

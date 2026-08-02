@@ -1,12 +1,14 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   ConflictException,
   BadRequestException,
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
+import { JwtService, type JwtSignOptions } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcryptjs";
 import { UserRole, ProfessionalType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
@@ -16,6 +18,8 @@ import { JwtPayload } from "./jwt.strategy";
 import { portalAcceptsRole } from "../common/auth-portals";
 import { PermissionsService } from "../permissions/permissions.service";
 import { LoginAttemptsService } from "./login-attempts.service";
+import { SessionsService } from "./sessions.service";
+import { DEFAULT_ACCESS_TOKEN_TTL, REFRESH_FAILURE_MESSAGE } from "./sessions.constants";
 import type { Permission } from "../common/permissions";
 
 const SELF_REGISTER_ROLES: UserRole[] = [
@@ -24,13 +28,34 @@ const SELF_REGISTER_ROLES: UserRole[] = [
   UserRole.PROFESSIONAL,
 ];
 
+/**
+ * What an access token was worth before E5-S5, and what it goes back to being if the flag is turned
+ * off. Seven days with nothing that can end it early. It is written here rather than left implicit
+ * in the module's `signOptions` so the difference the flag makes is one line to read.
+ */
+const LEGACY_ACCESS_TOKEN_TTL = "7d";
+
+/** What sign-in hands back. `refreshToken` is null whenever `auth_sessions` is off. */
+export type IssuedCredentials = {
+  accessToken: string;
+  refreshToken: string | null;
+  refreshExpiresAt: Date | null;
+};
+
+/** Where a sign-in came from, used to label the session in the list a person is shown. */
+export type SignInContext = { ip?: string | null; userAgent?: string | null };
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
-    private prisma: PrismaService,
-    private jwt: JwtService,
-    private permissions: PermissionsService,
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly permissions: PermissionsService,
     private readonly loginAttempts: LoginAttemptsService,
+    private readonly sessions: SessionsService,
+    private readonly config: ConfigService,
   ) {}
 
   private userPublic(
@@ -93,7 +118,7 @@ export class AuthService {
     );
   }
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, context: SignInContext = {}) {
     if (!SELF_REGISTER_ROLES.includes(dto.role)) {
       throw new BadRequestException(
         "Only buyer, seller, and professional accounts can self-register. Contact support for other roles.",
@@ -127,10 +152,10 @@ export class AuthService {
       });
     }
 
-    const accessToken = await this.signToken(user);
+    const credentials = await this.issueCredentials(user, context);
     return {
       data: {
-        accessToken,
+        ...credentials,
         user: await this.withPermissions(user),
       },
     };
@@ -148,7 +173,7 @@ export class AuthService {
    * `ip` is the caller's address as Express reports it, which is only true if TRUST_PROXY_HOPS is
    * right for the deployment. See src/config/trust-proxy.ts.
    */
-  async login(dto: LoginDto, ip?: string) {
+  async login(dto: LoginDto, ip?: string, userAgent?: string | null) {
     const attempts = await this.loginAttempts.check(dto.email, ip);
     this.loginAttempts.assertNotLocked(attempts);
 
@@ -173,10 +198,10 @@ export class AuthService {
       );
     }
     await this.loginAttempts.recordSuccess(dto.email, ip, user.id);
-    const accessToken = await this.signToken(user);
+    const credentials = await this.issueCredentials(user, { ip, userAgent });
     return {
       data: {
-        accessToken,
+        ...credentials,
         user: await this.withPermissions(user),
       },
     };
@@ -207,7 +232,14 @@ export class AuthService {
     };
   }
 
-  async activateAccount(token: string, password: string) {
+  /**
+   * Setting a password through an activation link is a password change, and criterion 4 says a
+   * password change ends every other session. It applies here even though this is usually the first
+   * password an account has ever had: an activation token that reached the wrong hands could have
+   * been redeemed already, and the person redeeming it now would have no way to see that or to undo
+   * it. Revoking first and issuing second means the session this call returns is the only one left.
+   */
+  async activateAccount(token: string, password: string, context: SignInContext = {}) {
     const record = await this.prisma.accountActivationToken.findUnique({
       where: { token },
       include: { user: true },
@@ -228,26 +260,120 @@ export class AuthService {
       });
     });
 
-    const accessToken = await this.signToken(user);
+    await this.sessions.revokeAllForUser(user.id, "password_changed");
+    const credentials = await this.issueCredentials(user, context);
     return {
       data: {
-        accessToken,
+        ...credentials,
         user: await this.withPermissions(user),
       },
     };
   }
 
-  private signToken(user: {
-    id: string;
-    email: string;
-    role: UserRole;
-    professionalType: ProfessionalType | null;
-  }) {
-    return this.jwt.signAsync({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      professionalType: user.professionalType,
+  /**
+   * Trades a refresh token for a new pair.
+   *
+   * Deliberately thin. The rotation, the reuse detection and the single refusal message all live in
+   * `SessionsService`; what belongs here is minting the access token that goes with the session it
+   * hands back, and re-checking the user, because a session that outlived its account is a session
+   * that must not be refreshed. The user check reuses the same refusal as everything else, so a
+   * deactivated account does not learn that its token was otherwise fine.
+   */
+  async refresh(presentedToken: string, context: SignInContext): Promise<IssuedCredentials> {
+    const rotated = await this.sessions.rotate(presentedToken, {
+      ipAddress: context.ip ?? null,
+      userAgent: context.userAgent ?? null,
     });
+    const user = await this.prisma.user.findUnique({ where: { id: rotated.userId } });
+    if (!user?.isActive) {
+      await this.sessions.revokeAllForUser(rotated.userId, "account_deactivated");
+      throw new UnauthorizedException(REFRESH_FAILURE_MESSAGE);
+    }
+    return {
+      accessToken: await this.signToken(user, rotated.familyId),
+      refreshToken: rotated.refreshToken,
+      refreshExpiresAt: rotated.expiresAt,
+    };
+  }
+
+  /**
+   * Opens a session if sessions are on, and mints the access token either way.
+   *
+   * The whole of the flag's effect on sign-in is here. Off: one seven-day token and no refresh
+   * token, exactly as before this story. On: a session row, a fifteen-minute token carrying its id,
+   * and a refresh token the caller has to store somewhere the browser will send back.
+   */
+  private async issueCredentials(
+    user: {
+      id: string;
+      email: string;
+      role: UserRole;
+      professionalType: ProfessionalType | null;
+    },
+    context: SignInContext,
+  ): Promise<IssuedCredentials> {
+    if (!this.sessions.enabled()) {
+      return {
+        accessToken: await this.signToken(user),
+        refreshToken: null,
+        refreshExpiresAt: null,
+      };
+    }
+    const session = await this.sessions.issue({
+      userId: user.id,
+      ipAddress: context.ip ?? null,
+      userAgent: context.userAgent ?? null,
+    });
+    return {
+      accessToken: await this.signToken(user, session.familyId),
+      refreshToken: session.refreshToken,
+      refreshExpiresAt: session.expiresAt,
+    };
+  }
+
+  /**
+   * How long a freshly minted access token is good for.
+   *
+   * Fifteen minutes only means something when there is a session behind it that can be refreshed
+   * and revoked. With the flag off there is neither, so a fifteen-minute token would simply sign
+   * people out four times an hour with nothing gained. That is why the TTL follows the flag rather
+   * than being set once in the module.
+   */
+  private accessTokenTtl(): JwtSignOptions["expiresIn"] {
+    if (!this.sessions.enabled()) return LEGACY_ACCESS_TOKEN_TTL;
+    const configured = this.config.get<string>("ACCESS_TOKEN_TTL")?.trim();
+    if (!configured) return DEFAULT_ACCESS_TOKEN_TTL;
+    // Checked here rather than left to the signing library, which throws on a value it cannot
+    // parse. A typo in this variable would then turn every sign-in into a 500, which is a worse
+    // outcome than a token that lives fifteen minutes instead of the five somebody meant.
+    if (!/^\d+(ms|s|m|h|d)?$/.test(configured)) {
+      this.logger.warn(
+        `ACCESS_TOKEN_TTL="${configured}" is not a duration this understands, so it is being ` +
+          `ignored and access tokens live ${DEFAULT_ACCESS_TOKEN_TTL}. Use a form like 15m or 900s.`,
+      );
+      return DEFAULT_ACCESS_TOKEN_TTL;
+    }
+    return configured as JwtSignOptions["expiresIn"];
+  }
+
+  private signToken(
+    user: {
+      id: string;
+      email: string;
+      role: UserRole;
+      professionalType: ProfessionalType | null;
+    },
+    sid?: string,
+  ) {
+    return this.jwt.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        professionalType: user.professionalType,
+        ...(sid ? { sid } : {}),
+      },
+      { expiresIn: this.accessTokenTtl() },
+    );
   }
 }

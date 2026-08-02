@@ -1,5 +1,5 @@
 import { ConfigModule } from "@nestjs/config";
-import { Controller, Get, Module, UseGuards } from "@nestjs/common";
+import { Controller, Get, Module, NotFoundException, UseGuards } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { PassportModule } from "@nestjs/passport";
 import { Test } from "@nestjs/testing";
@@ -8,6 +8,7 @@ import { AppModule } from "../../app.module";
 import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
 import { JwtStrategy } from "../../auth/jwt.strategy";
 import type { JwtPayload } from "../../auth/jwt.strategy";
+import { SessionsService } from "../../auth/sessions.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { collectRoutes, type RouteEntry } from "../guards/route-inventory";
 import {
@@ -134,6 +135,7 @@ const RESOURCE_SCOPED = [
   "POST /payments/:id/verify",
   "GET /transactions/:id",
   "GET /escrow/:transactionId",
+  "DELETE /auth/sessions/:id",
 ];
 
 /* ------------------------------------------------------------------ the matrix */
@@ -173,6 +175,7 @@ GET /payments/:id                                     | allow 403   403   403   
 POST /payments/:id/verify                             | allow 403   403   403   403   403   allow allow allow 401
 GET /transactions/:id                                 | allow 403   403   403   403   403   allow allow allow 401
 GET /escrow/:transactionId                            | allow 403   allow 403   403   403   allow allow allow 401
+DELETE /auth/sessions/:id (buyer-a)                   | allow 404   404   404   404   404   404   404   404   401
 `.trim();
 
 interface Case {
@@ -382,6 +385,31 @@ const CASES: Case[] = [
       "sides of a sale need to see that the money is held. Everybody else is refused.",
     run: (s, a) => s.escrow.findByTransactionId("transaction-a", a),
   },
+  {
+    label: "DELETE /auth/sessions/:id (buyer-a)",
+    route: "DELETE /auth/sessions/:id",
+    denial:
+      "404 for everyone but the owner, staff included. The ownership check is a clause in the same " +
+      "query that finds the session, so a session id belonging to another account reads exactly " +
+      "like one that never existed. Staff get no bypass here on purpose: ending somebody's session " +
+      "is an authentication action, not a moderation one, and the only operator-shaped version of " +
+      "it is deactivating the account, which revokes everything through a different path.",
+    run: async (s, a) => {
+      // The session belongs to buyer-a in every cell. Each cell gets a fresh store, so this is the
+      // only session that exists when the revoke runs and nothing carries between personas.
+      const session = await s.sessions.issue({
+        userId: "buyer-a",
+        ipAddress: "203.0.113.7",
+        userAgent: "Mozilla/5.0 (Macintosh) Safari/605.1.15",
+      });
+      // The service answers false rather than throwing, and the controller is what turns that into
+      // a 404. Repeated here rather than reached through the controller, because the rest of this
+      // matrix drives services and a single row that went through HTTP would prove less, not more.
+      const revoked = await s.sessions.revoke(a.sub, session.familyId, "user_revoked");
+      if (!revoked) throw new NotFoundException("Session not found");
+      return revoked;
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ table parse */
@@ -449,7 +477,7 @@ describe("path-parameter route census (criterion 5)", () => {
   it("holds the buckets at the sizes they were reviewed at", () => {
     const operator = paramRoutes.filter(isOperatorRoute).length;
     expect(operator).toBe(22);
-    expect(RESOURCE_SCOPED.length).toBe(23);
+    expect(RESOURCE_SCOPED.length).toBe(24);
     expect(Object.keys(PUBLIC_BY_DESIGN).length).toBe(7);
     expect(operator + RESOURCE_SCOPED.length + Object.keys(PUBLIC_BY_DESIGN).length + 1).toBe(
       paramRoutes.length,
@@ -583,7 +611,14 @@ class ProbeController {
     PassportModule,
   ],
   controllers: [ProbeController],
-  providers: [JwtStrategy, { provide: PrismaService, useValue: createFixturePrisma(buildStore()) }],
+  providers: [
+    JwtStrategy,
+    { provide: PrismaService, useValue: createFixturePrisma(buildStore()) },
+    // Never reached. The probe sends no token, so `validate` does not run and the session check has
+    // nothing to answer. It is here because Nest resolves constructor arguments at module boot
+    // whether or not a request ever gets that far.
+    { provide: SessionsService, useValue: { isLive: async () => true } },
+  ],
 })
 class ProbeModule {}
 
