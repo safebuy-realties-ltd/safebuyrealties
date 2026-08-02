@@ -68,7 +68,7 @@ erasure. All are stories in `MVP_OUTSTANDING_BACKLOG.md` with acceptance criteri
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-08-02
-- **Tool:** Claude Code, across the handover week, then waves 1, 2 and 3, and now wave 4
+- **Tool:** one developer running AI agents, with a second developer reviewing and merging, across the handover week, then waves 1, 2 and 3, and now wave 4
 - **Last completed:** DOCS-7, recording the ADR-0001 answer. The stakeholders confirmed on 2026-08-02 that buying a property on the platform is part of the MVP, so the ADR is Accepted and E1's four stories came back onto the schedule as wave 4
 - **Done this session:** 37 pull requests merged across the week and the waves. DOCS-4 froze the documents before this and found two defects by re-reading rather than by testing: the seed script was overwriting `docs/DEMO_TEST_ACCOUNTS.csv` and deleting two accounts, and the backlog floor was a figure nothing derived
 - **Next:** **E1-S1, the listing DD case lifecycle.** It is the only startable row in wave 4 and the other three queue behind it: E1-S2 and E1-S3 follow it, E1-S4 follows E1-S2. Eleven to fourteen developer-days for the wave, and read it as a chain rather than a fan, because there is no parallelism to buy at the front of it. Acceptance criteria are in §4 of `MVP_OUTSTANDING_BACKLOG.md` under epic E1
