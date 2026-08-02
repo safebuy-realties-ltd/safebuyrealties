@@ -1,3 +1,13 @@
+> **⚠️ SUPERSEDED, do not act on this file.** This is the original one-page PRD, and it was an *input*
+> to the analysis pack rather than an output of it. See
+> [`analysis/01_SOURCE_SYNTHESIS.md`](analysis/01_SOURCE_SYNTHESIS.md) §8, which extracts it. The
+> requirements baseline is now [`analysis/02_MASTER_PRD.md`](analysis/02_MASTER_PRD.md). Three things
+> here are simply no longer true: the API sketch below omits the `/api/v1` base path and most of the
+> modules that exist; Flutterwave was never integrated and survives only as a `flutterwaveEnabled`
+> toggle on platform config; and the primary colour is not the green it names, it is
+> `oklch(0.42 0.13 22)` at `src/styles.css:78`. Retained as history, because it is the record of what
+> was asked for at the start. (Banner added 2026-08-02 by story DOCS-4.)
+
 # **🧠 1\. PRODUCT REQUIREMENTS DOCUMENT (PRD)**
 
 ## **🏷 Product Name**

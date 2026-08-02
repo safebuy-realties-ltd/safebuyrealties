@@ -40,9 +40,18 @@ PRs to `main` must pass the **`CI (required)`** check (aggregate gate in `.githu
 | Job | When it runs | Commands |
 | --- | --- | --- |
 | `frontend-typecheck` | Frontend paths changed | `tsc`, `eslint` |
-| `frontend-test` | Frontend paths changed | `npm test` (Vitest) |
-| `backend-check` | `backend/**` changed | `tsc`, `npm test` (Jest) |
+| `frontend-test` | Frontend paths changed | `npm test` (Vitest), then `scripts/diff-coverage.mjs --scope frontend` |
+| `backend-check` | `backend/**` changed | `tsc`, `npm test` (Jest), then `scripts/diff-coverage.mjs --scope backend` |
+| `e2e-api` | `src/`, `backend/` or a journey script changed | `node scripts/e2e-ci.mjs --kind api` against an ephemeral database |
+| `e2e-browser` | Same | `node scripts/e2e-ci.mjs --kind browser` against a built app |
+| `board` | Always | `node scripts/check-board.mjs`. Plus, when the PR changed `src/`, `backend/`, `scripts/`, `prisma/`, `docs/` or the workflows, it must also touch `docs/mvp-board.html` |
 | **`CI (required)`** | Every PR to `main` | Fails if any applicable job above failed |
+
+Two of those will fail a PR that compiles and passes its own tests. **Diff coverage** holds the lines your
+branch changed to 80 percent, whatever the repository floor says, and names the uncovered lines when it
+fails. The **board** job fails a code change that does not bring `docs/mvp-board.html` with it. Both have
+a written escape hatch for the case where the rule genuinely does not apply: put
+`diff-coverage-exception: <reason>` or `no-board-update: <reason>` in the PR description.
 
 - Do **not** merge if **`CI (required)`** or any applicable job is red.
 - Re-run `npm run validate:tsc` and `npm test` locally if CI fails.
@@ -60,4 +69,4 @@ Configure branch protection in GitHub (one-time, repo admin). This repo cannot s
 - `docs/AGENT_PROMPT.md` — agent loop
 - `docs/LOCAL_DEVELOPMENT.md` — local dev & primary E2E validation
 - `docs/VERCEL_VALIDATION.md` — optional deploy / production smoke
-- `docs/VALIDATION_REPORT.md` — last known E2E status
+- `docs/VALIDATION_REPORT.md` — a production smoke from 2026-05-25, bannered as stale. For what passes today, read the `e2e-api` and `e2e-browser` jobs on the last green PR

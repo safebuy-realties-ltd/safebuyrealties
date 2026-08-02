@@ -1,3 +1,13 @@
+> **⚠️ STALE, do not act on this file.** Dated 2026-05-26, when Step 2 had just landed. The waves it
+> plans, Steps 3 to 5, are all merged. The `cursor/<topic>-e4ea` branch names it hands out are not the
+> convention any more, and it tells an agent to tick `[x]` in
+> [`BUILD_CHECKLIST.md`](BUILD_CHECKLIST.md), which is now a historical record rather than the work
+> queue. It also predates most of what a pull request has to clear today, the diff coverage bar and the
+> board check among them. Current way of working: [`AGENT_PROMPT.md`](AGENT_PROMPT.md) and
+> [`HANDOVER_WEEK.md`](HANDOVER_WEEK.md). Current work queue:
+> [`MVP_OUTSTANDING_BACKLOG.md`](MVP_OUTSTANDING_BACKLOG.md). Retained as history.
+> (Banner added 2026-08-02 by story DOCS-4.)
+
 # Parallel agent prompt pack
 
 **Baseline as of 2026-05-26** — Step 2 complete on `main` (spec schema, storage, audit, platform config, property spec FE). See `docs/BUILD_CHECKLIST.md`.

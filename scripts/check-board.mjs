@@ -473,23 +473,35 @@ if (gateTile) {
 }
 
 // Same shape as the two above: a tile summarising a list that lives further down the page. The
-// effort bars are the data, the "Full backlog" tile is the restatement, so the tile's ceiling has to
-// be their sum. Only the ceiling is derivable here — the floor is a judgement recorded in the
-// backlog's section 1.3, which this page does not carry per epic, so it is checked for being a
-// smaller number and nothing more.
+// effort bars are the data, the "Full backlog" tile is the restatement, so both ends of the tile
+// have to be their sum.
+//
+// Both ends, since DOCS-4. Before it only the ceiling was derived and the floor was checked for
+// being a smaller number and nothing more, because the bars carried one figure each. The floor was
+// therefore a running subtraction somebody kept by hand, and it drifted ten days below what section
+// 1.3's own rows add up to before anything noticed, which is the failure this file exists to
+// prevent. Each bar now carries `low` beside `days` and the floor is derived the same way.
 const backlogDays = EPICS.reduce((total, epic) => total + epic.days, 0);
+const backlogFloor = EPICS.reduce((total, epic) => total + epic.low, 0);
+for (const epic of EPICS) {
+  if (!Number.isInteger(epic.low) || !Number.isInteger(epic.days)) {
+    fail(`the ${epic.key} effort bar needs an integer low and days, it reads low ${epic.low}, days ${epic.days}`);
+  } else if (epic.low > epic.days) {
+    fail(`the ${epic.key} effort bar reads ${epic.low}–${epic.days}, but a range's floor is not above its ceiling`);
+  }
+}
 const backlogTile = tiles.get("Full backlog");
 if (!backlogTile) {
   fail(`there is no "Full backlog" tile — the effort bars below it summarise nothing`);
 } else {
   const span = backlogTile.value.match(/^(\d+)–(\d+)$/);
-  const bars = EPICS.map((epic) => `${epic.key} ${epic.days}`).join(", ");
+  const bars = EPICS.map((epic) => `${epic.key} ${epic.low}–${epic.days}`).join(", ");
   if (!span) {
     fail(`the "Full backlog" tile reads "${backlogTile.value}", expected a range of days like "67–97"`);
   } else if (Number(span[2]) !== backlogDays) {
-    fail(`the "Full backlog" tile's ceiling is ${span[2]} days but the effort bars sum to ${backlogDays}: ${bars}`);
-  } else if (Number(span[1]) >= backlogDays) {
-    fail(`the "Full backlog" tile reads ${span[1]}–${span[2]}, but a range's floor is below its ceiling`);
+    fail(`the "Full backlog" tile's ceiling is ${span[2]} days but the effort bars' ceilings sum to ${backlogDays}: ${bars}`);
+  } else if (Number(span[1]) !== backlogFloor) {
+    fail(`the "Full backlog" tile's floor is ${span[1]} days but the effort bars' floors sum to ${backlogFloor}: ${bars}`);
   }
 }
 
@@ -508,9 +520,13 @@ for (const quoted of source.matchAll(/<b data-epic="([^"]+)">(\d+)<\/b>/g)) {
     fail(`the effort prose says ${epic.name} stands at ${quoted[2]} days, but its bar reads ${epic.days}`);
   }
 }
-for (const quoted of source.matchAll(/<b data-total="backlog">(\d+)<\/b>/g)) {
-  if (Number(quoted[1]) !== backlogDays) {
-    fail(`the effort prose says the backlog totals ${quoted[1]} days, but the bars sum to ${backlogDays}`);
+const totals = { backlog: backlogDays, "backlog-floor": backlogFloor };
+for (const quoted of source.matchAll(/<b data-total="([^"]+)">(\d+)<\/b>/g)) {
+  const expected = totals[quoted[1]];
+  if (expected === undefined) {
+    fail(`the effort prose quotes a total "${quoted[1]}", which is neither backlog nor backlog-floor`);
+  } else if (Number(quoted[2]) !== expected) {
+    fail(`the effort prose says ${quoted[1]} is ${quoted[2]} days, but the bars sum to ${expected}`);
   }
 }
 
@@ -541,9 +557,18 @@ if (scheduled && Number(scheduled[1]) !== remainingPrs) {
  * The queue is what the reviewer opens next, and every row on this board is written as though its
  * pull request had already merged — that is the convention, since the board lands inside the diff it
  * describes. So a done row is not evidence a queue entry is stale. What makes it stale is a newer PR
- * existing: the highest number on the board is the one being opened right now, and it is the only one
- * a reviewer has left to open. Anything below it merged, and a queue advertising landed work is worse
- * than an empty one — the queue led with #114 for a whole story after it merged.
+ * existing: the highest number on the board is normally the one being opened right now, and it is the
+ * only one a reviewer has left to open. Anything below it merged, and a queue advertising landed work
+ * is worse than an empty one — the queue led with #114 for a whole story after it merged.
+ *
+ * Normally, because that reads merge order off the number, and pull requests do not always merge in
+ * the order they were raised. #131 was approved and went in ahead of #130, which left the queue
+ * correctly pointing at #130 while a higher number sat on the board already merged, and this check
+ * called the correct queue stale. Nothing on the board records merge order, and inventing a field to
+ * carry it for every row would rot within a week, so the exception carries itself: an entry that is
+ * genuinely still open below a higher number says why in `outOfOrder`, and the reason prints beside
+ * the result rather than passing in silence. Same shape as the other two escape hatches in this
+ * repository. The rule still holds, and stepping around it costs you a sentence someone can read.
  */
 const openPr = Math.max(...prOwners.keys());
 for (const [index, entry] of QUEUE.entries()) {
@@ -559,11 +584,17 @@ for (const [index, entry] of QUEUE.entries()) {
   }
   if (!prOwners.has(entry.pr)) {
     fail(`QUEUE[${index}] points at PR ${entry.pr}, which no row on the board carries`);
-  } else if (entry.pr !== openPr) {
-    fail(
-      `QUEUE[${index}] still asks for a review of PR ${entry.pr}, but PR ${openPr} is newer, so ${entry.pr} has merged — a merged pull request comes out of the queue in the same diff that adds the next one`,
-    );
+    continue;
   }
+  if (entry.pr === openPr) continue;
+  const reason = typeof entry.outOfOrder === "string" ? entry.outOfOrder.trim() : "";
+  if (reason !== "") {
+    notes.push(`QUEUE[${index}] keeps PR ${entry.pr} open below PR ${openPr}: ${reason}`);
+    continue;
+  }
+  fail(
+    `QUEUE[${index}] still asks for a review of PR ${entry.pr}, but PR ${openPr} is newer, so ${entry.pr} has merged — a merged pull request comes out of the queue in the same diff that adds the next one. If ${openPr} merged first and ${entry.pr} is still open, put the reason in an outOfOrder field on the entry`,
+  );
 }
 
 // ---------------------------------------------------------------------------

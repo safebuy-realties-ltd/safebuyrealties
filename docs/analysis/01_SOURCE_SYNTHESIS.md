@@ -1,3 +1,12 @@
+> **Not stale, and it cannot go stale.** Dated 2026-05-23. This file records what the source material
+> said, the letter of engagement, the client requirements document, the legal comments and the original
+> proposal, on the day it was read. A record of inputs does not expire the way an audit of the code
+> does, so nothing here is corrected. Two parts are worth reading with a date in mind: §9, the codebase
+> inventory, describes the code as it stood in May, and §11's conflicts were resolved in
+> [`02_MASTER_PRD.md`](02_MASTER_PRD.md) §9. Current state: [`../HANDOVER.md`](../HANDOVER.md). Current
+> gaps: [`../MVP_OUTSTANDING_BACKLOG.md`](../MVP_OUTSTANDING_BACKLOG.md).
+> (Banner added 2026-08-02 by story DOCS-4.)
+
 # 01 — Source Synthesis
 
 **SafeBuyRealties · Strategic Definition Engagement · Phase 1 of 5**
