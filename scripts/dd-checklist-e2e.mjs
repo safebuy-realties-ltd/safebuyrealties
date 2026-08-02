@@ -89,8 +89,9 @@ try {
     throw new Error('PDF looks like a text fallback, expected visual page capture');
   }
 
-  // Staff login + queue
-  await page.goto(`${APP}/login`, { waitUntil: 'networkidle' });
+  // Staff login + queue. /login is the portal chooser and carries no form; the staff form lives at
+  // /login/admin, which is where e2e-portals.mjs has always sent them.
+  await page.goto(`${APP}/login/admin`, { waitUntil: 'networkidle' });
   await page.locator('#email').fill(process.env.SBR_STAFF_EMAIL ?? 'staff@safebuyrealties.test');
   await page.locator('#password').fill(process.env.SBR_PASSWORD ?? 'password123');
   await page.getByRole('button', { name: /^Sign in$/i }).click();
