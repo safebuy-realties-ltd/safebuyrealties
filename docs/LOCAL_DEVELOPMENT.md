@@ -107,6 +107,38 @@ Open http://localhost:8080 and log in with seed users (`password123`):
 
 **Mark browser/API checklist items `[x]` after Gate C on localhost**, not only after Vercel preview.
 
+## Coverage: the floor and the bar
+
+Two different checks, and it is worth knowing which one is shouting at you.
+
+The **floor** is per suite and stops coverage falling. It lives in `backend/jest.config.js` and
+`vitest.config.ts`, and it fails the whole run when the repository average drops under it.
+
+The **bar** is per pull request and stops the gap growing. It measures only the lines your branch
+changed, and holds them to 80 percent. Run it after the suite that measures those files:
+
+```bash
+npm run test:cov && npm run validate:diff-coverage -- --scope frontend
+cd backend && npm run test:cov && cd .. && npm run validate:diff-coverage -- --scope backend
+```
+
+It prints every changed file with its uncovered line numbers, so the answer is which test to write
+rather than which check to disable. In CI it runs inside `frontend-test` and `backend-check` against
+the pull request's base commit. If a diff genuinely cannot be covered by the suite that measures it,
+put `diff-coverage-exception: <reason>` in the pull request description, the same way the board has
+`no-board-update:`. The reason is the price, and a reviewer reads it.
+
+### Raising a floor
+
+```bash
+npm run coverage:ratchet
+```
+
+It reads both configs and both coverage summaries and prints what each floor has earned: the
+measured percentage floored to a whole percent, less two points, and never below what is already
+written down. Ratchets only turn one way. Making the edit is still a person's job, in a pull request
+with those figures in the body, because a floor that moves on its own is a floor nobody reads.
+
 ## API smoke (curl)
 
 ```bash

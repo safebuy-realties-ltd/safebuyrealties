@@ -15,6 +15,8 @@
     "test:watch": "vitest",
     "validate:tsc": "npx tsc --noEmit && cd backend && npx tsc --noEmit",
     "validate:board": "node scripts/check-board.mjs",
+    "validate:diff-coverage": "node scripts/diff-coverage.mjs",
+    "coverage:ratchet": "node scripts/diff-coverage.mjs --ratchet",
     "smoke:api": "node scripts/vercel-api-smoke.mjs",
     "seed:demo-users": "node backend/scripts/seed-extended-users.mjs",
     "seed:marketplace": "node backend/scripts/seed-marketplace-listings.mjs",
