@@ -81,6 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # diff-coverage.mjs diffs this branch against the base commit, which is not in a depth-1
+          # clone. Without this it cannot tell which lines the pull request changed.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -89,6 +93,18 @@ jobs:
       # Coverage runs here, not in frontend-typecheck, so the floor fails in the job that owns the
       # tests. Thresholds live in vitest.config.ts with the measured baseline written beside them.
       - run: npm run test:cov
+
+      # The floor above stops coverage falling. This is the bar on what the pull request added, which
+      # is what stops the gap accruing. It runs inside this job rather than a job of its own because
+      # the lcov it reads was written thirty seconds ago and would otherwise need artifact plumbing,
+      # and because this job already feeds ci-gate, so failing here fails the required check.
+      - name: Diff coverage on changed frontend files
+        if: github.event_name == 'pull_request'
+        env:
+          DIFF_COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/diff-coverage.mjs --scope frontend
+
       - name: Upload frontend coverage
         if: always() # the report is most useful on the run where the floor failed
         uses: actions/upload-artifact@v4
@@ -107,6 +123,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # same reason as frontend-test: the diff needs the base commit
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -115,6 +133,16 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run test:cov
+
+      # ../ because this job runs with working-directory: backend. The script itself does not care
+      # where it is called from, it anchors on its own location.
+      - name: Diff coverage on changed backend files
+        if: github.event_name == 'pull_request'
+        env:
+          DIFF_COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node ../scripts/diff-coverage.mjs --scope backend
+
       - name: Upload backend coverage
         if: always()
         uses: actions/upload-artifact@v4

@@ -162,6 +162,11 @@ a record of where it was first planned; the day cards carry that history in pros
   against those — one source, checked outwards. Note that it reads a `done` row as a claim about the
   diff it sits in rather than about `main`: rows are written as merged because the board lands inside
   the pull request it describes, so staleness is judged by a newer PR existing, not by status.
+- It refuses a board that has lost its light and dark switch. That control has no row, no count and
+  no sentence tying it to anything, so a wide edit can drop it while every other check still passes,
+  and it was asked for twice. All four parts are asserted: the script that picks the opening theme
+  before the first paint, the button, the handler that flips it, and the line that remembers the
+  choice. Move it, restyle it, rename the label, but do not delete it.
 - What it deliberately does not check is the prose itself. Narrative is the reviewer's job, and a
   check that fired on rewording would be routed around within a week. The numeric claims in *Up
   next* are verified only where the sentence is still there: reword freely, but do not leave behind
