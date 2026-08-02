@@ -104,7 +104,9 @@ const NO_AUTHORIZATION: Record<string, string> = {
     "StandaloneDdController.getOrder has no guards and no @Roles, and the service method takes no " +
     "actor. Any caller with a service id can read the order. Tracked as an open gap; closing it " +
     "needs a decision on whether standalone due diligence orders are bearer-referenced like guest " +
-    "checkout or owned by the purchasing account.",
+    "checkout or owned by the purchasing account. CH-1 put it behind the " +
+    "standalone_dd_public_order_read flag, which lets an operator close the route in one API call " +
+    "while that decision is pending. The flag is a lever, not a fix, so the gap stays listed here.",
 };
 
 /** Every route the matrix below is responsible for. One entry per route, not per matrix row. */
@@ -446,7 +448,7 @@ describe("path-parameter route census (criterion 5)", () => {
 
   it("holds the buckets at the sizes they were reviewed at", () => {
     const operator = paramRoutes.filter(isOperatorRoute).length;
-    expect(operator).toBe(20);
+    expect(operator).toBe(22);
     expect(RESOURCE_SCOPED.length).toBe(23);
     expect(Object.keys(PUBLIC_BY_DESIGN).length).toBe(7);
     expect(operator + RESOURCE_SCOPED.length + Object.keys(PUBLIC_BY_DESIGN).length + 1).toBe(

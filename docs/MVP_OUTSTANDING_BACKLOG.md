@@ -24,7 +24,7 @@ The user asked for the software paradigm used in `/Users/saito/projects/voxdiary
 | Eventing | Transactional outbox to BullMQ, Redpanda later (ADR-0002) | Direct in-process calls, some fire-and-forget `void` promises |
 | Contracts | One Zod schema shared client and server, JSON Schema exported for the Python service | DTOs on the server, hand-written mirror types in `src/hooks/*`, drift is possible |
 | Tenancy | `firmId` on every table, fail-closed Prisma extension, tenant isolation is unflagged because an invariant has no off switch | Ownership checks written per service, no central enforcement layer |
-| Delivery | Every user-facing change behind a named feature flag with a kill switch (ADR/rules §13) | No feature-flag system |
+| Delivery | Every user-facing change behind a named feature flag with a kill switch (ADR/rules §13) | Flags and a kill switch since CH-1: a registry in the API, `@RequiresFeature` on the server, `<Feature>` in the browser, `RUNBOOK.md` §11 |
 
 The relevant transfer is not "become a monorepo". It is the three habits that make voxdiary's delivery predictable: a shared contract, a fail-closed authorization layer rather than per-service checks, and a flag on every risky change.
 
@@ -94,15 +94,17 @@ That is a real product. The remaining work is narrower than the checklist histor
 | Milestone | Outcome | Stories | Estimate | Merged since | Remaining |
 | --- | --- | --- | --- | --- | --- |
 | **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | none | 4 stories, 11 to 14 days |
-| **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4 | 4 stories, 11 to 14 days |
+| **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4, E2-S2 | 3 stories, 9 to 11 days |
 | **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days | E3-S1, E3-S4 | 2 stories, 4 to 7 days |
-| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | none | 3 stories, 6 to 9 days |
-| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it; E5-S6 found | 5 stories, 11 to 15 days |
+| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | E4-S1, E4-S3 | 1 story, 2 to 3 days |
+| **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it; E5-S6 found and merged | 4 stories, 10 to 14 days |
 | **M6 Communications** | Email actually leaves the building | E6 (3) | 5 to 7 days | none | 3 stories, 5 to 7 days |
-| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5; E7-S2b and E7-S6b found | 5 stories, 10 to 16 days |
+| **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5, E7-S1; E7-S2b and E7-S6b found, both merged | 2 stories, 5 to 9 days |
 | **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | none | 4 stories, 8 to 12 days plus external lead time |
 
-It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Seven milestone stories and DOCS-1 have merged, and three more were discovered inside them — E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5 — so **30 milestone stories plus CH-1, 31 in all, roughly 68 to 98 developer-days remain.** One developer lands that in about 14 to 20 calendar weeks. Two developers working the split in section 6 land it in about 8 to 10 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Fourteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5), so **23 milestone stories, roughly 48 to 78 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 10 to 16 calendar weeks. Two developers working the split in section 6 land it in about 6 to 8 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
+
+One caveat on the two sets of numbers above, because a reader who adds them up will find it anyway. The **Remaining** column subtracts each merged story from that milestone's own range, and the ceilings agree exactly with the per-epic bars on `docs/mvp-board.html`. The floors do not add up the same way: the table's floors sum higher than the 48 in the paragraph above, because the 48 comes from a single running subtraction against the original 72 rather than from the milestone rows. Both are subtracting the same merged work; they disagree on how the six E3-S1 sub-stories and the four discovered stories are counted against a floor. The ceiling is the figure to plan with, and reconciling the floor is **DOCS-4**, the freeze story, which is exactly the kind of thing it exists to catch.
 
 **A week of merging bought four days off the floor and two off the ceiling, and found three stories doing it.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the seven milestone stories, six were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. M5 went up by a day because writing the environment matrix found the one credential in this application that does not fail closed, which is now E5-S6. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
 
@@ -162,13 +164,13 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | ID | Epic | Story | Flag | Size | Status | Deps |
 | --- | --- | --- | --- | --- | --- | --- |
 | DOCS-1 | Chore | Reconcile the checklist and mark stale analysis docs | — | S | ✅ direct commit | none |
-| CH-1 | Chore | Feature-flag service with kill switch, server and client | — | M | 📋 | none |
+| CH-1 | Chore | Feature-flag service with kill switch, server and client | — | M | ✅ PR #128 | none |
 | E1-S1 🔴 | Loop | Listing DD case lifecycle: queue, assign, report, complete | `dd_case_lifecycle` | L | 📋 | D1 |
 | E1-S2 🔴 | Loop | Transaction state machine, DD_PURCHASED to DD_COMPLETE | `dd_case_lifecycle` | M | 📋 | E1-S1 |
 | E1-S3 🔴 | Loop | Buyer DD report delivery, access controlled | `dd_case_lifecycle` | M | 📋 | E1-S1, E3-S1 |
 | E1-S4 🔴 | Loop | Property purchase step wired to the state machine | `property_purchase` | M | 📋 | E1-S2 |
 | E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | 📋 | E1-S4, D2 |
-| E2-S2 🔴 | Money | Webhook idempotency, replay and freshness guard | — | M | 📋 | none |
+| E2-S2 🔴 | Money | Webhook idempotency, replay and freshness guard | — | M | ✅ #123 | none |
 | E2-S3 | Money | Gateway refunds, not ledger-only | `payouts` | M | 📋 | E2-S1 |
 | E2-S4 🔴 | Money | Production guard on payment mock mode | — | S | ✅ #99 | none |
 | E2-S5 | Money | Finance reconciliation view | — | M | 📋 | E2-S1, E4-S1 |
@@ -176,7 +178,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E3-S2 🔴 | Trust | Durable object storage in production | — | M | 📋 | D4 |
 | E3-S3 | Trust | Upload hardening: type allow-list, magic bytes, AV hook | `secure_docs` | M | 📋 | E3-S2 |
 | E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
-| E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | 📋 | none |
+| E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | ✅ #121 | none |
 | E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 | E1-S4, D3 |
 | E4-S3 | Access | Cross-role authorization test suite | — | M | ✅ #125 | E4-S1 |
 | E5-S1 🔴 | Security | Rate limiting and lockout on auth and payments | — | M | 📋 | none |
@@ -184,18 +186,18 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E5-S3 | Security | Password reset | `auth_recovery` | M | 📋 | E6-S1 |
 | E5-S4 | Security | Email verification on self-registration | `auth_signup` | M | 📋 | E6-S1 |
 | E5-S5 | Security | Session management: refresh rotation and revocation | `auth_sessions` | L | 📋 | none |
-| E5-S6 🔴 | Security | Fail closed when `JWT_SECRET` is unset | — | S | 📋 | none |
+| E5-S6 🔴 | Security | Fail closed when `JWT_SECRET` is unset | — | S | ✅ #119 | none |
 | E6-S1 🔴 | Comms | SMTP configuration and delivery observability | — | S | 📋 | none |
 | E6-S2 | Comms | Email channel for notification types | `email_notifications` | M | 📋 | E6-S1 |
 | E6-S3 | Comms | Transactional email templates for the core journeys | `email_notifications` | M | 📋 | E6-S2 |
-| E7-S1 | Ops | Structured logging, correlation id, error tracking | — | M | 📋 | none |
+| E7-S1 | Ops | Structured logging, correlation id, error tracking | — | M | ✅ #122 | none |
 | E7-S2 | Ops | Coverage thresholds and a CI coverage gate | — | S | ✅ #114, floor only | none |
 | E7-S2b | Ops | Diff coverage: new and changed files meet the strict bar | — | M | ✅ #127 | E7-S2 |
 | E7-S3 🔴 | Ops | End-to-end journeys in CI against an ephemeral database | — | L | 📋 | E7-S2 |
 | E7-S4 | Ops | Deterministic demo seed and reset | — | M | 📋 | E3-S2 |
 | E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | ✅ #117 | none |
 | E7-S6 | Ops | Health and readiness probes with dependency checks | — | S | ✅ #101 | none |
-| E7-S6b | Ops | Container healthcheck polls the readiness probe | — | S | 📋 | E7-S6 |
+| E7-S6b | Ops | Container healthcheck polls the readiness probe | — | S | ✅ #120 | E7-S6 |
 | E8-S1 | Compliance | NDPR consent, retention, and erasure | `privacy_centre` | L | 📋 | E5-S5 |
 | E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | external |
 | E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | external, E4-S3 |
@@ -503,7 +505,7 @@ The mount moved to `backend/src/app-bootstrap.ts:39` behind the E3-S1b gate, and
 3. ✅ **for every family, with a deliberate status-code deviation.** 401 with no session, 403 for a caller who may not read this owner's documents, 404 for a key that names nothing readable. Authorization is decided before storage is touched, so a real key and an imaginary one are indistinguishable to a refused caller and there is no existence oracle. A blanket 404 would also mean answering 404 to a caller who supplied the key themselves, which conceals nothing and makes a genuine permissions problem unreportable in the UI.
 4. ✅ **for every family, with one deliberate silence.** `PRIVATE_DOCUMENT_READ` and `PRIVATE_DOCUMENT_READ_DENIED` carry actor, key, owner, role and IP. A served public listing image writes nothing: it is an anonymous page load, the audit log would fill with rows naming no actor, and the refusal beside it is still recorded in full.
 5. ✅ **done.** The walk covers `kyc/` and `professionals/` (anonymous, wrong buyer, wrong seller, wrong professional), the DD and POA families, and the deny-everything probes in `uploads-exposure.spec.ts`. The every-category walk arrived with E3-S1d-3, once there was a policy for every category to walk: an `it.each` over `LISTING_CATEGORIES` in `private-document.controller.spec.ts` fetches one document of every category the seller upload form offers, with no session, and asserts the outcome that category's `public` flag predicts — and a companion test checks that flag against `PUBLIC_LISTING_ASSET_CATEGORIES`, so widening the public list without widening the walk fails. `Document.category` is a bare `String` in the schema (`:192`), so no test can prove the list is exhaustive; a category invented outside it is refused by default, which is the safe direction.
-6. 🚫 **not implementable as written.** There is no feature-flag mechanism anywhere in this repository: no flag table, no config lookup, no `featureFlag` helper. Building one is a story of its own, not a line item inside this one. Every story in this document carrying a **Flag** field inherits the same problem. Recorded rather than silently dropped.
+6. 🚫 **not implementable as written, and since answered elsewhere.** When this story shipped there was no feature-flag mechanism anywhere in the repository: no flag table, no config lookup, no `featureFlag` helper. Building one was a story of its own rather than a line item inside this one, and every story in this document carrying a **Flag** field inherited the same problem. **CH-1 has since built it**, so the stories still to come can meet this criterion; this one is left as it merged rather than retro-fitted, because gating a shipped and audited read path is a behaviour change nobody asked for.
 
 **Scope note for E3-S1d, from a read of the remaining families**
 
@@ -1086,7 +1088,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 Every story above is done when all of the following hold. This is voxdiary's `rules.md` §1, ratcheted to new and touched code.
 
 1. One story, one pull request, single purpose, conventional-commit title, squash merged.
-2. Behind its declared feature flag where one is given, with the flag defaulting off and a documented kill switch.
+2. Behind its declared feature flag where one is given, with the flag defaulting off and a documented kill switch. CH-1 built the mechanism, so this is now enforceable rather than aspirational: declare the key in `backend/src/feature-flags/feature-flags.constants.ts`, gate the route with `@RequiresFeature`, gate the control with `<Feature>`, and the kill switch comes with it.
 3. No unhandled 5xx. Every failure maps to the correct 4xx or a deliberate 502 with a correlation id.
 4. Structured logs on every new endpoint or job, carrying the correlation id, never PII, secrets, documents, or account numbers.
 5. Tests cover the happy path and every rejected path. New and changed files clear the diff bar, which is 80% of the lines the branch changed, enforced by `scripts/diff-coverage.mjs` inside `frontend-test` and `backend-check`. It is no longer on the author's honour: CI fails and names the uncovered lines. If a diff genuinely cannot be covered, say so with `diff-coverage-exception: <reason>` in the description.

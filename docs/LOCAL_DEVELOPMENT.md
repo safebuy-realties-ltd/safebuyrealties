@@ -187,6 +187,28 @@ Coordinate with teammates — one schema PR at a time on the shared database.
 
 `STORAGE_DRIVER=local` writes to `backend/uploads` (or `STORAGE_LOCAL_PATH`). Seller document upload E2E works against local API + cloud DB.
 
+## Feature flags locally
+
+Every roadmap flag is off by default, so a feature built behind one is invisible until you say
+otherwise. Turn one on for a local session by setting its variable in `backend/.env` and restarting
+the API:
+
+```bash
+FEATURE_PAYOUTS=on npm run start:dev
+```
+
+The names are `FEATURE_<KEY>` with the key upper-cased, and the keys are listed in
+`backend/src/feature-flags/feature-flags.constants.ts`. Accepted values are `on/true/1/yes/enabled`
+and `off/false/0/no/disabled`; anything else is ignored and warned about at boot.
+
+`curl -s localhost:3001/api/v1/feature-flags | jq` shows what the running process believes. Signed
+in as an operator it also shows where each value came from, which is the quick way to find out that
+the variable you set is not the one being read.
+
+The browser reads the same endpoint, so a flag flipped on the API reaches the page within a minute
+without a rebuild. `VITE_FEATURE_<KEY>` in `.env.local` only sets what the page believes before that
+response arrives. `docs/RUNBOOK.md` §11 is the operator version of all this.
+
 ## Optional: Vercel deploy check
 
 See `docs/VERCEL_VALIDATION.md` for production URLs, **`API_PROXY_TARGET`** on the Vercel frontend project, and deploy-only troubleshooting. Skip Vercel preview when deployment protection blocks curl/browser automation.

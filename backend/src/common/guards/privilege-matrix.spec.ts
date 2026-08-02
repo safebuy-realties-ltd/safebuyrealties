@@ -47,6 +47,10 @@ const CELL_COLUMN = 8;
  * 403. Read a column to audit a role; read a row to see who can reach an endpoint.
  *
  * The row this story exists for is `POST /escrow/:transactionId/release`: CONTENT is `DENY`.
+ *
+ * The three `/feature-flags` rows read the same as `PATCH /platform-config` because they are the
+ * same privilege. Switching a feature off is a platform configuration change, so CH-1 reused
+ * `PLATFORM_CONFIG` rather than minting a privilege that would have to be granted to somebody.
  */
 const EXPECTED_MATRIX = `
 route                                           SUPER   PLATFORMOPS     DD-LEAD FINANCE CONTENT |
@@ -69,6 +73,9 @@ POST /admin/roles                               allow   DENY    DENY    DENY    
 POST /escrow/:transactionId/refund              allow   allow   DENY    DENY    allow   DENY    |
 POST /escrow/:transactionId/release             allow   allow   DENY    DENY    allow   DENY    |
 GET /escrow/held                                allow   allow   DENY    DENY    allow   DENY    |
+DELETE /feature-flags/:key                      allow   allow   DENY    DENY    DENY    DENY    |
+PATCH /feature-flags/:key                       allow   allow   DENY    DENY    DENY    DENY    |
+PUT /feature-flags/kill-switch                  allow   allow   DENY    DENY    DENY    DENY    |
 PATCH /inspection-slots/:id                     allow   allow   allow   allow   DENY    DENY    |
 GET /inspections/queue                          allow   allow   allow   allow   DENY    DENY    |
 PATCH /kyc/:userId/reject                       allow   allow   allow   allow   DENY    DENY    |

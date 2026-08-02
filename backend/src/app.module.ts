@@ -3,6 +3,8 @@ import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { SbrIdModule } from "./sbr-id/sbr-id.module";
 import { MaintenanceGuard } from "./common/guards/maintenance.guard";
+import { FeatureGuard } from "./common/guards/feature.guard";
+import { FeatureFlagsModule } from "./feature-flags/feature-flags.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -37,6 +39,7 @@ import { AdminRolesModule } from "./admin-roles/admin-roles.module";
     PrismaModule,
     SbrIdModule,
     AuditModule,
+    FeatureFlagsModule,
     NotificationsModule,
     PermissionsModule,
     DdCmsModule,
@@ -67,6 +70,12 @@ import { AdminRolesModule } from "./admin-roles/admin-roles.module";
     {
       provide: APP_GUARD,
       useClass: MaintenanceGuard,
+    },
+    {
+      // Global so that `@RequiresFeature` is the whole of what a story author writes. A route
+      // without the decorator costs one Reflector lookup and passes.
+      provide: APP_GUARD,
+      useClass: FeatureGuard,
     },
   ],
 })

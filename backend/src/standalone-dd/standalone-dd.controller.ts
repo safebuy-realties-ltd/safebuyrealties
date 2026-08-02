@@ -21,6 +21,7 @@ import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Roles } from "../common/decorators/roles.decorator";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
+import { RequiresFeature } from "../common/decorators/feature.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { PERMISSIONS } from "../common/permissions";
@@ -57,7 +58,18 @@ export class StandaloneDdController {
     return this.standaloneDd.verifyPayment(serviceId, body?.reference);
   }
 
+  /**
+   * Unauthenticated by design, and known to be too open: it mounts no guard, declares no role, and
+   * the service method behind it takes no actor argument, so anyone holding a service id reads that
+   * order. Closing it properly is a product decision, either a signed expiring link or an
+   * email-plus-reference check, and it is recorded as an open finding from E4-S3.
+   *
+   * The flag is not that fix. It is the lever that lets an operator shut the route in one API call
+   * while the decision is pending, at the cost of the guest receipt view. Before CH-1 the only way
+   * to close it was a deploy.
+   */
   @Get("orders/:serviceId")
+  @RequiresFeature("standalone_dd_public_order_read")
   getOrder(@Param("serviceId") serviceId: string) {
     return this.standaloneDd.getOrder(serviceId);
   }

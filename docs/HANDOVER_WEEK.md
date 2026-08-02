@@ -104,7 +104,11 @@ Give this to every agent alongside the story.
 5. If a story turns out bigger than its size, **stop and say so** rather than expanding scope. A flagged
    mis-estimate costs an hour; a sprawling PR costs the reviewer an afternoon.
 6. Never run `prisma migrate reset`. The database is shared.
-7. If the change is user-facing and there is no feature-flag system yet, say so in the PR rather than inventing one.
+7. **A user-facing change ships behind a flag, off by default.** Declare the key in
+   `backend/src/feature-flags/feature-flags.constants.ts`, gate the route with `@RequiresFeature` and
+   the control with `<Feature>`, and say in the PR which variable turns it on. CH-1 built that, so the
+   old form of this rule, say so in the PR rather than inventing a flag system, has been retired.
+   `docs/RUNBOOK.md` §11 is the operator half.
 8. **Bring the whole board up to date in the same diff as the work.** Not afterwards, not in a
    follow-up, and not the row on its own. This one is enforced rather than trusted — see below.
 9. **Write like a person, not like a model.** No em dashes, full punctuation, no chatbot house style.
