@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { isProductionEnvironment } from "../config/payments-guard";
 import { CHECK_TIMEOUT_MS, CheckStatus, runCheck } from "./health-check";
+import { SkipThrottle } from "../common/decorators/throttle.decorator";
 
 /** Statuses an instance can serve traffic with. Mock payments are normal outside production. */
 const READY_STATUSES: ReadonlySet<CheckStatus> = new Set<CheckStatus>(["ok", "mock"]);
@@ -14,7 +15,14 @@ export type ReadinessBody = {
   checks: { database: CheckStatus; storage: CheckStatus; payments: CheckStatus };
 };
 
+/**
+ * The one place `@SkipThrottle()` belongs. The platform polls these routes on a fixed schedule and
+ * reads a 429 as a failed probe; enough failed probes and it restarts the instance. A rate limit
+ * that can restart the service it is protecting is worse than no rate limit, and there is nothing
+ * here worth flooding for: no database write, no gateway call, no secret in any response.
+ */
 @Controller("health")
+@SkipThrottle()
 export class HealthController {
   constructor(
     private readonly paystack: PaystackService,

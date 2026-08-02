@@ -15,6 +15,7 @@ import { LoginDto } from "./dto/login.dto";
 import { JwtPayload } from "./jwt.strategy";
 import { portalAcceptsRole } from "../common/auth-portals";
 import { PermissionsService } from "../permissions/permissions.service";
+import { LoginAttemptsService } from "./login-attempts.service";
 import type { Permission } from "../common/permissions";
 
 const SELF_REGISTER_ROLES: UserRole[] = [
@@ -29,6 +30,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private permissions: PermissionsService,
+    private readonly loginAttempts: LoginAttemptsService,
   ) {}
 
   private userPublic(
@@ -134,17 +136,43 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
+  /**
+   * The order of the first three lines is the whole of the enumeration argument.
+   *
+   * The attempt state is read and the lock is applied before the user is looked up, so a locked
+   * response is identical whether the email belongs to an account or to nobody: same status, same
+   * message, same Retry-After, and no bcrypt round to time. Doing it the other way round, checking
+   * the lock only once an account is found, turns the lockout into an oracle that answers "does
+   * this address have an account here" for anyone patient enough to trigger it.
+   *
+   * `ip` is the caller's address as Express reports it, which is only true if TRUST_PROXY_HOPS is
+   * right for the deployment. See src/config/trust-proxy.ts.
+   */
+  async login(dto: LoginDto, ip?: string) {
+    const attempts = await this.loginAttempts.check(dto.email, ip);
+    this.loginAttempts.assertNotLocked(attempts);
+
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user) throw new UnauthorizedException("Invalid email or password");
+    if (!user) {
+      await this.loginAttempts.recordFailure(dto.email, ip, attempts, null);
+      throw new UnauthorizedException("Invalid email or password");
+    }
+    // Not counted as a failed attempt: the credential was never tested, and a deactivated account
+    // cannot be broken into by guessing at it.
     if (!user.isActive) throw new UnauthorizedException("Account is deactivated");
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) throw new UnauthorizedException("Invalid email or password");
+    if (!ok) {
+      await this.loginAttempts.recordFailure(dto.email, ip, attempts, user.id);
+      throw new UnauthorizedException("Invalid email or password");
+    }
+    // Also not counted. The password was right; this is the wrong door, not a wrong key, and
+    // counting it would let a buyer lock themselves out by bookmarking the staff login page.
     if (dto.portal && !portalAcceptsRole(dto.portal, user.role)) {
       throw new ForbiddenException(
         `This account cannot sign in through the ${dto.portal} portal. Use the login page for your role.`,
       );
     }
+    await this.loginAttempts.recordSuccess(dto.email, ip, user.id);
     const accessToken = await this.signToken(user);
     return {
       data: {

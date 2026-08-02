@@ -3,6 +3,7 @@ import { PaymentsService } from "./payments.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { Throttle } from "../common/decorators/throttle.decorator";
 import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 
 @Controller("payments")
@@ -15,7 +16,9 @@ export class PaymentsController {
     return { data: this.payments.getPaymentConfig() };
   }
 
+  /** Every call here opens a transaction with the gateway, so unbounded callers cost real money. */
   @Post("initiate")
+  @Throttle("payment_initiate")
   initiate(@Body() dto: InitiatePaymentDto, @CurrentUser() user: JwtPayload) {
     return this.payments.initiate(dto, user);
   }

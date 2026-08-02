@@ -82,6 +82,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : {}),
       },
     };
+    // E5-S1 criterion 2. The header lives here rather than in the guard because neither thing that
+    // refuses a caller holds a response object: the guard throws and `AuthService` throws from three
+    // layers down. Both put the number in `details.retryAfterSeconds`, and any 429 raised later gets
+    // the header without its author having to remember it.
+    const retryAfter = details?.retryAfterSeconds;
+    if (status === HttpStatus.TOO_MANY_REQUESTS && typeof retryAfter === "number") {
+      res.setHeader("Retry-After", String(retryAfter));
+    }
+
     res.status(status).json(payload);
   }
 

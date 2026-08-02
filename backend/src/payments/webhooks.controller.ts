@@ -1,8 +1,17 @@
 import { Controller, Param, Post, Req, UnauthorizedException } from "@nestjs/common";
 import type { Request } from "express";
 import { PaymentsService, type PaystackWebhookPayload } from "./payments.service";
+import { Throttle } from "../common/decorators/throttle.decorator";
 
+/**
+ * E5-S1 criterion 4. Paystack retries from a small set of addresses, so under the global limit a
+ * burst of genuine retries counts as one caller hammering the API, and refusing one of them strands
+ * a payment the buyer has already made. This policy is its own and it is high; the signature check
+ * below is what actually guards the route, and the limit is only here so an unsigned flood cannot
+ * cost unbounded HMAC work.
+ */
 @Controller("webhooks/payments")
+@Throttle("webhook")
 export class WebhooksController {
   constructor(private payments: PaymentsService) {}
 
