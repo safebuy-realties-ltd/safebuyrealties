@@ -7,6 +7,10 @@
  */
 const base = (process.env.SBR_API_BASE ?? "http://localhost:3001/api/v1").replace(/\/$/, "");
 const PASSWORD = process.env.SBR_PASSWORD ?? "password123";
+// E7-S3. Against a shared database "partial" means the data happened not to be there, which is not
+// the script's fault and should not fail a developer's run. Against the freshly migrated and seeded
+// database CI provisions, the data is always there, so a partial is a regression. CI sets this.
+const STRICT = process.env.SBR_E2E_STRICT === "1";
 
 const results = [];
 
@@ -255,7 +259,11 @@ async function main() {
   const partial = results.filter((r) => r.status === "partial").length;
   const pass = results.filter((r) => r.status === "pass").length;
   console.log(`\n--- Summary: ${pass} pass, ${partial} partial, ${fails} fail ---\n`);
-  process.exit(fails > 0 ? 1 : 0);
+  if (STRICT && partial > 0) {
+    console.log(`Strict mode: ${partial} partial result(s) counted as failures.`);
+    results.filter((r) => r.status === "partial").forEach((r) => console.log(`  ${r.id}`));
+  }
+  process.exit(fails > 0 || (STRICT && partial > 0) ? 1 : 0);
 }
 
 main().catch((e) => {

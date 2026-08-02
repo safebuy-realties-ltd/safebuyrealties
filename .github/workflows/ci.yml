@@ -22,6 +22,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       board: ${{ steps.filter.outputs.board }}
       story: ${{ steps.filter.outputs.story }}
+      e2e: ${{ steps.filter.outputs.e2e }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,8 +59,25 @@ jobs:
               - 'scripts/**'
               - 'prisma/**'
               - '.github/workflows/**'
+              - '.github/actions/**'
               - 'docs/**'
               - '!docs/mvp-board.html'
+            # Anything that could change what a journey does or whether it still passes. Narrower
+            # than `story` because these two jobs cost roughly ten runner-minutes between them and
+            # a documentation change should not buy them.
+            e2e:
+              - 'src/**'
+              - 'backend/**'
+              - 'scripts/e2e-ci.mjs'
+              - 'scripts/journey-e2e-all-roles.mjs'
+              - 'scripts/listing-lifecycle-e2e.mjs'
+              - 'scripts/guest-checkout-e2e.mjs'
+              - 'scripts/dd-checklist-e2e.mjs'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.ts'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/ephemeral-api/**'
 
   frontend-typecheck:
     needs: changes
@@ -153,6 +171,131 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # E7-S3. The five journeys of the acceptance criteria, run against a Postgres that exists for the
+  # length of the job and is thrown away with the runner. Split in two because criterion 6 asks for
+  # a pull request path under ten minutes and one job doing all of it lands at roughly eight with no
+  # margin: the browser half needs the frontend dependencies and a Chromium, and the API half needs
+  # neither. They run in parallel, so the path is the slower of the two rather than the sum.
+  #
+  # Both carry `timeout-minutes: 10` on purpose. That is criterion 6 written down where it fails
+  # rather than in a document where it rots.
+  e2e-api:
+    name: E2E journeys (API)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sbr_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ephemeral-api
+
+      # No npm ci at the repository root: these three scripts are plain Node using fetch, with no
+      # imports outside node: builtins. That is worth about a minute of every run.
+      - name: Buyer purchase, seller to live with staff verification, guest checkout
+        env:
+          SBR_API_BASE: http://127.0.0.1:3001/api/v1
+          # Strict, because the database was seeded ninety seconds ago. A journey reporting
+          # "no LIVE listing available" here is a regression, not a quiet afternoon.
+          SBR_E2E_STRICT: "1"
+        run: node scripts/e2e-ci.mjs --kind api
+
+      - name: Upload journey logs
+        if: always() # criterion 5: the run that failed is the run whose logs are wanted
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-api
+          path: artifacts/e2e/
+          retention-days: 14
+          if-no-files-found: warn
+
+  e2e-browser:
+    name: E2E journeys (browser)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sbr_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+
+      # The API first, so a broken API fails this job in three minutes rather than after paying for
+      # a Chromium download. The composite action leaves it running in the background.
+      - uses: ./.github/actions/ephemeral-api
+        with:
+          frontend-url: http://127.0.0.1:8080
+
+      - name: Node for the frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22" # matches frontend-test; the API above is built on 20 and already running
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Start the app
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/e2e
+          # `vite dev` rather than `vite preview`. The proxy that puts the API on the same origin as
+          # the app is declared under `server` in vite.config.ts, which preview does not read, and
+          # src/lib/api.ts deliberately ignores an absolute VITE_API_URL because session cookies
+          # have to be same-origin. So dev is not a shortcut here, it is the only mode that serves
+          # a working application.
+          setsid npx vite dev --port 8080 --strictPort > artifacts/e2e/app.log 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:8080 > /dev/null 2>&1; then
+              echo "App ready after ${attempt}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::App did not start within 90s"
+          cat artifacts/e2e/app.log || true
+          exit 1
+
+      - name: Standalone due diligence
+        env:
+          SBR_APP_URL: http://127.0.0.1:8080
+          SBR_API_BASE: http://127.0.0.1:3001/api/v1
+          SBR_E2E_STRICT: "1"
+        run: node scripts/e2e-ci.mjs --kind browser
+
+      - name: Upload journey logs and screenshots
+        if: always() # criterion 5. This job is the one that produces the screenshots.
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-browser
+          path: artifacts/e2e/
+          retention-days: 14
+          if-no-files-found: warn
+
   # The board is the repository's index of what is done, open and deferred. It went stale twice in
   # the handover week and a person caught it both times, so it is a check now. Two parts: the board
   # must not contradict itself, and a pull request that changes the work must say so on the board.
@@ -197,7 +340,7 @@ jobs:
   ci-gate:
     name: CI (required)
     runs-on: ubuntu-latest
-    needs: [changes, frontend-typecheck, frontend-test, backend-check, board]
+    needs: [changes, frontend-typecheck, frontend-test, backend-check, e2e-api, e2e-browser, board]
     if: always()
     steps:
       - name: Changes job must succeed
@@ -223,6 +366,18 @@ jobs:
         run: |
           if [ "${{ needs.backend-check.result }}" != "success" ]; then
             echo "backend-check failed or was cancelled: ${{ needs.backend-check.result }}"
+            exit 1
+          fi
+
+      - name: End-to-end journeys (when they could be affected)
+        if: needs.changes.outputs.e2e == 'true'
+        run: |
+          if [ "${{ needs.e2e-api.result }}" != "success" ]; then
+            echo "e2e-api: ${{ needs.e2e-api.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.e2e-browser.result }}" != "success" ]; then
+            echo "e2e-browser: ${{ needs.e2e-browser.result }}"
             exit 1
           fi
 

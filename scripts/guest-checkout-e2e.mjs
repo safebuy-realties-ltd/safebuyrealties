@@ -8,6 +8,9 @@
 import { randomUUID } from "node:crypto";
 
 const base = (process.env.SBR_API_BASE ?? "http://localhost:3001/api/v1").replace(/\/$/, "");
+// E7-S3. See journey-e2e-all-roles.mjs: a partial is tolerable against a shared database and is a
+// regression against the seeded ephemeral one CI provisions.
+const STRICT = process.env.SBR_E2E_STRICT === "1";
 const STAMP = Date.now();
 
 const results = [];
@@ -93,7 +96,7 @@ async function main() {
     record("guest.createOrder", "fail", `HTTP ${create.status} ${JSON.stringify(create.json)}`);
     process.exit(1);
   }
-  const { serviceId, caseId, buyerId } = create.json.data;
+  const { serviceId, caseId, buyerPublicId } = create.json.data;
   record("guest.createOrder", "pass", `serviceId=${serviceId}`);
 
   if (!/^SBR-SRV-BUY-\d{8}-\d{3}$/.test(serviceId)) {
@@ -108,10 +111,14 @@ async function main() {
     record("guest.caseIdFormat", "partial", caseId ?? "missing");
   }
 
-  if (buyerId && /^SBR-BUY-/.test(buyerId)) {
-    record("guest.buyerIdFormat", "pass", buyerId);
+  // The buyer reference is issued when the order is created, not when it is paid. This check used
+  // to read `buyerId`, a field the API has never returned, and record the miss as a partial saying
+  // "pending until pay". Both halves were wrong: the field is `buyerPublicId` and it is populated
+  // straight away. The partial is what hid it, which is the argument for strict mode in CI.
+  if (buyerPublicId && /^SBR-BUY-/.test(buyerPublicId)) {
+    record("guest.buyerIdFormat", "pass", buyerPublicId);
   } else {
-    record("guest.buyerIdFormat", "partial", buyerId ?? "pending until pay");
+    record("guest.buyerIdFormat", "fail", buyerPublicId ?? "missing");
   }
 
   const pay = await req(`/guest-checkout/orders/${serviceId}/pay`, {
@@ -137,8 +144,13 @@ async function main() {
   record("guest.orderPaid", paid ? "pass" : "partial", order.json?.data?.status ?? "unknown");
 
   const fails = results.filter((r) => r.status === "fail").length;
+  const partial = results.filter((r) => r.status === "partial").length;
   console.log(`\n${results.length - fails}/${results.length} checks passed`);
-  process.exit(fails > 0 ? 1 : 0);
+  if (STRICT && partial > 0) {
+    console.log(`Strict mode: ${partial} partial result(s) counted as failures.`);
+    results.filter((r) => r.status === "partial").forEach((r) => console.log(`  ${r.id}`));
+  }
+  process.exit(fails > 0 || (STRICT && partial > 0) ? 1 : 0);
 }
 
 main().catch((err) => {

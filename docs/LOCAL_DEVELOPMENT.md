@@ -167,6 +167,54 @@ Document curls used in the PR or checklist item.
 2. Walk `docs/demo-script-checklist.md` using **http://localhost:8080** as the base URL.
 3. Record steps and outcomes in the PR (no Vercel preview required).
 
+## End-to-end journeys
+
+Five journeys, run by one command. They are the same five CI runs on every pull request, so a green
+run here is the same evidence a green run there is.
+
+```bash
+npm run test:e2e-ci            # all five
+npm run test:e2e-ci -- --list  # the ids, and which script proves which
+npm run test:e2e-ci -- --kind api      # the four that only need the API
+npm run test:e2e-ci -- --kind browser  # the one that drives a real browser
+npm run test:e2e-ci -- --only guest-checkout
+```
+
+| Journey | Needs | Script |
+| ------- | ----- | ------ |
+| Buyer on-platform purchase | API | `scripts/journey-e2e-all-roles.mjs` |
+| Seller listing to live | API | `scripts/listing-lifecycle-e2e.mjs` |
+| Staff verification | API | same run as the seller journey |
+| Standalone due diligence | API and app | `scripts/dd-checklist-e2e.mjs` |
+| Guest checkout | API | `scripts/guest-checkout-e2e.mjs` |
+
+The staff journey shares a process with the seller journey because they are one flow. Splitting
+them would leave the staff half with no listing to verify.
+
+`SBR_API_BASE` and `SBR_APP_URL` point the run somewhere other than `http://localhost:3001/api/v1`
+and `http://localhost:8080`. Console output is also written per journey under `artifacts/e2e/`,
+which is gitignored, along with any screenshot a failing browser journey takes.
+
+`SBR_E2E_STRICT=1` counts a partial result as a failure. CI sets it, because CI runs against a
+database it seeded a minute earlier, so "no LIVE listing to buy" is a regression there rather than
+somebody else's Tuesday. Leave it off against the shared database.
+
+The browser journey needs `npx playwright install chromium` once, and it needs `npm run dev`
+rather than `npm run preview`: the `/api/v1` proxy is declared under `server` in `vite.config.ts`,
+which preview does not read, and `src/lib/api.ts` deliberately ignores an absolute `VITE_API_URL`
+because session cookies have to be same-origin.
+
+### What CI does differently
+
+CI does not use the shared cloud database for any of this. `.github/workflows/ci.yml` starts a
+Postgres service container, and `.github/actions/ephemeral-api` migrates it with `migrate deploy`,
+seeds it, adds the demo accounts, then builds and starts the API against it. The database lives and
+dies with the job. Payments run in mock mode by an explicit `PAYSTACK_FORCE_MOCK=true`, never
+against a Paystack key of any kind.
+
+Two jobs rather than one, `e2e-api` and `e2e-browser`, so the browser journey's setup runs beside
+the API journeys instead of after them. Both carry `timeout-minutes: 10`.
+
 ## Schema changes (shared cloud DB)
 
 1. Edit `backend/prisma/schema.prisma`

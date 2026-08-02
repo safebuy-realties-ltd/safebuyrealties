@@ -1,0 +1,173 @@
+name: Ephemeral API
+description: >-
+  Migrates and seeds a throwaway Postgres, then builds and starts the API against it and waits
+  until it reports ready. Everything the end-to-end journeys need and nothing they do not.
+
+# E7-S3, criterion 1. The database this points at is created by the `services: postgres` block of
+# the calling job and destroyed with the runner. It is reachable only from that runner. Nothing in
+# here can reach the shared cloud database, and `assertSafeDatabaseUrl()` in
+# backend/src/config/database-guard.ts is the belt to this braces: outside production it refuses to
+# start against a non-local DATABASE_URL unless somebody explicitly sets
+# SBR_CONFIRM_CLOUD_DATABASE_URL, which nothing here does.
+#
+# This is one action rather than two copies of the same twelve steps because there are two jobs,
+# `e2e-api` and `e2e-browser`, and the failure this prevents is the two of them drifting until a
+# journey passes in one and fails in the other for a reason nobody can see in the diff.
+
+inputs:
+  database-url:
+    description: Connection string for the throwaway Postgres the calling job provisioned.
+    required: false
+    default: postgresql://postgres:postgres@localhost:5432/sbr_e2e?schema=public
+  port:
+    description: Port the API listens on.
+    required: false
+    default: "3001"
+  frontend-url:
+    description: >-
+      Browser origin allowed through CORS. Only the browser job actually needs it; outside
+      production localhost is allowed anyway, so it is here for the sake of being explicit.
+    required: false
+    default: http://localhost:8080
+  artifact-dir:
+    description: Where the API's own log is written, so a failed journey has the server side too.
+    required: false
+    default: artifacts/e2e
+
+runs:
+  using: composite
+  steps:
+    - name: Node for the API
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20" # matches backend-check; the API is not tested on 22 anywhere else
+        cache: npm
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Configure the environment
+      shell: bash
+      env:
+        DATABASE_URL_IN: ${{ inputs.database-url }}
+        PORT_IN: ${{ inputs.port }}
+        FRONTEND_URL_IN: ${{ inputs.frontend-url }}
+      run: |
+        set -euo pipefail
+        {
+          echo "DATABASE_URL=${DATABASE_URL_IN}"
+          # prisma/schema.prisma declares `directUrl = env("DATABASE_POSTGRES_URL")` so that
+          # migrations bypass the connection pooler in front of the cloud database. There is no
+          # pooler here, so it is the same string, but Prisma refuses to read the schema at all
+          # without it and the failure is a validation error rather than a connection error.
+          echo "DATABASE_POSTGRES_URL=${DATABASE_URL_IN}"
+          echo "PORT=${PORT_IN}"
+          echo "FRONTEND_URL=${FRONTEND_URL_IN}"
+
+          # Criterion 4, the explicit choice. NODE_ENV=test plus PAYSTACK_FORCE_MOCK=true is the
+          # one combination backend/src/config/payments-guard.ts honours mock mode in, so no
+          # Paystack key of any kind is read and no request leaves the runner. There are no live
+          # keys here to get wrong: PAYSTACK_SECRET_KEY is never set in this workflow, and if it
+          # somehow were, isForceMockHonoured() would still short-circuit ahead of it.
+          echo "NODE_ENV=test"
+          echo "PAYSTACK_FORCE_MOCK=true"
+
+          # Criterion 5 wants logs on failure, and NODE_ENV=test silences the logger by default
+          # (structured-logger.service.ts:56, so that jest output stays readable). This is a
+          # running server rather than a jest run, so put the level back.
+          echo "LOG_LEVEL=log"
+          echo "LOG_FORMAT=human"
+
+          # Not a secret. It signs tokens for a database that is deleted when this job ends, and
+          # it is deliberately not the value in backend/.env.example so that the guard's
+          # "somebody deployed the example file" rejection keeps its meaning.
+          echo "JWT_SECRET=ci-ephemeral-end-to-end-signing-key-0123456789abcdef"
+
+          # The journeys log in as six seeded users and register a seventh, from one address, in
+          # well under a minute. The default login ceiling is 10 a minute and is correct for a
+          # login form. Raised rather than turned off with THROTTLE_DISABLED, so the limiter stays
+          # in the request path and a fault in it still fails the suite.
+          echo "THROTTLE_GLOBAL=5000:60"
+          echo "THROTTLE_LOGIN=500:60"
+          echo "THROTTLE_REGISTER=500:60"
+          echo "THROTTLE_ACTIVATE=500:60"
+          echo "THROTTLE_PAYMENT_INITIATE=500:60"
+          echo "THROTTLE_GUEST_CHECKOUT=500:60"
+        } >> "$GITHUB_ENV"
+
+    - name: Install API dependencies
+      shell: bash
+      working-directory: backend
+      run: npm ci
+
+    - name: Migrate the throwaway database
+      shell: bash
+      working-directory: backend
+      run: |
+        set -euo pipefail
+        npx prisma generate
+        # `migrate deploy`, never `migrate dev` and never `migrate reset`. It applies the committed
+        # migrations and nothing else, so this job cannot invent a migration and cannot drop data.
+        npx prisma migrate deploy
+
+    - name: Seed the throwaway database
+      shell: bash
+      working-directory: backend
+      # This is what makes strict mode fair. Every journey asserts against users, listings and
+      # catalogue items this step creates, so "no LIVE listing available" is a real regression
+      # here rather than an accident of whatever happens to be in a shared database today.
+      run: npx prisma db seed
+
+    - name: Build the API
+      shell: bash
+      working-directory: backend
+      run: npm run build
+
+    - name: Start the API
+      shell: bash
+      env:
+        ARTIFACT_DIR: ${{ inputs.artifact-dir }}
+      run: |
+        set -euo pipefail
+        mkdir -p "${ARTIFACT_DIR}"
+        cd backend
+        # setsid so the server survives this step finishing. Its stdout is the server side of any
+        # journey failure, and the upload step in the workflow collects it.
+        setsid node dist/main.js > "../${ARTIFACT_DIR}/api.log" 2>&1 &
+        echo "$!" > "../${ARTIFACT_DIR}/api.pid"
+
+    - name: Wait for the API to report ready
+      shell: bash
+      env:
+        PORT_IN: ${{ inputs.port }}
+        ARTIFACT_DIR: ${{ inputs.artifact-dir }}
+      run: |
+        set -euo pipefail
+        url="http://localhost:${PORT_IN}/api/v1/health/ready"
+        for attempt in $(seq 1 60); do
+          if curl -fsS "$url" > /dev/null 2>&1; then
+            echo "API ready after ${attempt}s"
+            curl -sS "$url"
+            echo
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "::error::API did not become ready within 60s at ${url}"
+        echo "--- api.log ---"
+        cat "${ARTIFACT_DIR}/api.log" || true
+        exit 1
+
+    - name: Seed the demo accounts
+      shell: bash
+      env:
+        SBR_API_BASE: http://localhost:${{ inputs.port }}/api/v1
+        # As the super admin, not the admin the script defaults to. It promotes four accounts to
+        # ADMIN, and the users endpoint only lets a super admin assign that role. Against the
+        # shared database those four already hold it, so the patch never runs and the default
+        # looks fine; against a database seeded ninety seconds ago it is a 403 on the second user.
+        SBR_ADMIN_EMAIL: superadmin@safebuyrealties.test
+      # `prisma db seed` creates one user per role. The journeys also sign in as the architect and
+      # the engineer, and those two live in this script rather than in the Prisma seed, so without
+      # this step the credential-verification part of the listing lifecycle fails on two 401s.
+      # It runs after the API is ready because it works through the API rather than the database,
+      # registering each account and then patching it to its role over an admin session.
+      run: node backend/scripts/seed-extended-users.mjs

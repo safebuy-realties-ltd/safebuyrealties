@@ -1,15 +1,29 @@
-import { chromium } from 'playwright';
-import fs from 'fs';
+#!/usr/bin/env node
+/**
+ * Standalone due diligence journey, in a browser: schedules → property → contact → review →
+ * submit → PDF → staff queue. This is the one journey of the five that runs through the app
+ * rather than the API, which is why it is the one that produces screenshots.
+ *
+ *   SBR_APP_URL=http://localhost:8080 node scripts/dd-checklist-e2e.mjs
+ *
+ * E7-S3 made the two things it had hard-coded configurable: the artifact directory, which pointed
+ * at a path on a machine nobody here has, and the base URL, so CI can point it at its own server.
+ */
+import { chromium } from "playwright";
+import fs from "fs";
 
-const outDir = '/opt/cursor/artifacts/dd-checklist-e2e';
+const APP = (process.env.SBR_APP_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const outDir = process.env.SBR_E2E_ARTIFACT_DIR ?? "artifacts/e2e/standalone-dd";
+fs.mkdirSync(outDir, { recursive: true });
+
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-page.setDefaultTimeout(20000);
+page.setDefaultTimeout(Number(process.env.SBR_E2E_TIMEOUT_MS ?? 20000));
 
 const log = (...args) => console.log(...args);
 
 try {
-  await page.goto('http://localhost:8080/due-diligence/request', { waitUntil: 'networkidle' });
+  await page.goto(`${APP}/due-diligence/request`, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-testid="dd-select-all-LEGAL_CHECK"]');
 
   // Ensure no recommended bundle / pay wording on schedules
@@ -76,19 +90,16 @@ try {
   }
 
   // Staff login + queue
-  await page.goto('http://localhost:8080/login', { waitUntil: 'networkidle' });
-  await page.locator('#email').fill('staff@safebuyrealties.test');
-  await page.locator('#password').fill('password123');
+  await page.goto(`${APP}/login`, { waitUntil: 'networkidle' });
+  await page.locator('#email').fill(process.env.SBR_STAFF_EMAIL ?? 'staff@safebuyrealties.test');
+  await page.locator('#password').fill(process.env.SBR_PASSWORD ?? 'password123');
   await page.getByRole('button', { name: /^Sign in$/i }).click();
   await page.waitForTimeout(1500);
   const afterLogin = page.url();
   log('AFTER_LOGIN', afterLogin);
-  if (!/dashboard/.test(afterLogin)) {
-    // Try navigating directly; cookie may still be set
-    await page.goto('http://localhost:8080/dashboard/staff/due-diligence', { waitUntil: 'networkidle' });
-  } else {
-    await page.goto('http://localhost:8080/dashboard/staff/due-diligence', { waitUntil: 'networkidle' });
-  }
+  // Either way the next step is the same page. The branch used to differ and no longer does: the
+  // cookie is set by the time the redirect resolves, so navigating directly works from both states.
+  await page.goto(`${APP}/dashboard/staff/due-diligence`, { waitUntil: 'networkidle' });
   await page.waitForSelector(`text=${serviceId}`, { timeout: 25000 });
   const queueText = await page.locator('main').innerText();
   if (!/Title search|Omo-onile|Suggested for this request|Lee Lawyer/i.test(queueText)) {
