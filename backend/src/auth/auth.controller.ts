@@ -1,6 +1,18 @@
-import { Body, Controller, Get, HttpCode, Ip, Param, Post, Res, UseGuards } from "@nestjs/common";
-import type { Response } from "express";
-import { AuthService } from "./auth.service";
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  Ip,
+  Param,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import type { Request, Response } from "express";
+import { AuthService, type IssuedCredentials } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ActivateAccountDto } from "./dto/activate-account.dto";
@@ -8,9 +20,26 @@ import { JwtAuthGuard } from "./jwt-auth.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Throttle } from "../common/decorators/throttle.decorator";
 import { JwtPayload } from "./jwt.strategy";
+import { SessionsService } from "./sessions.service";
 
 const COOKIE_NAME = "sbr_session";
+const REFRESH_COOKIE_NAME = "sbr_refresh";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * The refresh cookie is scoped to the auth routes and nowhere else.
+ *
+ * The access cookie has to go everywhere, because every API call needs it. The refresh cookie is
+ * only ever read by two handlers, so a path narrow enough to cover just those two is a cookie that
+ * is not sent on the hundreds of other requests a session makes, and therefore one that is not
+ * sitting in the logs, proxies and error reports of routes that have no use for it. It is the
+ * longer-lived of the two credentials, so it is the one worth keeping off the wire.
+ *
+ * Must track `app.setGlobalPrefix("api/v1")` in app-bootstrap.ts. If the prefix moves and this does
+ * not, the browser stops sending the cookie and every refresh fails, which is a sign-out storm
+ * fifteen minutes after the deploy rather than at the moment of it.
+ */
+const REFRESH_COOKIE_PATH = "/api/v1/auth";
 
 function sessionCookieOptions() {
   const isProd = process.env.NODE_ENV === "production";
@@ -25,6 +54,10 @@ function sessionCookieOptions() {
   };
 }
 
+function refreshCookieOptions() {
+  return { ...sessionCookieOptions(), path: REFRESH_COOKIE_PATH };
+}
+
 function setSessionCookie(res: Response, token: string) {
   res.cookie(COOKIE_NAME, token, {
     ...sessionCookieOptions(),
@@ -36,15 +69,49 @@ function clearSessionCookie(res: Response) {
   res.clearCookie(COOKIE_NAME, sessionCookieOptions());
 }
 
+/**
+ * Writes whichever cookies the credentials call for.
+ *
+ * The access cookie keeps its seven-day `maxAge` even when the token inside it lives fifteen
+ * minutes, and that is on purpose: a cookie that expired with its token would be gone from the
+ * browser before the refresh call that replaces it could be made, and the person would be signed
+ * out rather than refreshed. The token's own expiry is what is enforced; the cookie is only the
+ * envelope. `refreshToken` is null while `auth_sessions` is off, and then nothing is written.
+ */
+function applyCredentials(res: Response, credentials: IssuedCredentials) {
+  setSessionCookie(res, credentials.accessToken);
+  if (credentials.refreshToken && credentials.refreshExpiresAt) {
+    res.cookie(REFRESH_COOKIE_NAME, credentials.refreshToken, {
+      ...refreshCookieOptions(),
+      // Not a fixed window. Rotation does not extend a session, so the cookie has to expire when
+      // the family does rather than seven days after whichever refresh happened to be the last.
+      expires: credentials.refreshExpiresAt,
+    });
+  }
+}
+
+function readRefreshCookie(req: Request): string | null {
+  const cookies = (req as Request & { cookies?: Record<string, string> }).cookies;
+  return cookies?.[REFRESH_COOKIE_NAME] ?? null;
+}
+
 @Controller("auth")
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly sessions: SessionsService,
+  ) {}
 
   @Post("register")
   @Throttle("register")
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.auth.register(dto);
-    setSessionCookie(res, result.data.accessToken);
+  async register(
+    @Body() dto: RegisterDto,
+    @Ip() ip: string,
+    @Headers("user-agent") userAgent: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.register(dto, { ip, userAgent });
+    applyCredentials(res, result.data);
     return { data: { user: result.data.user } };
   }
 
@@ -56,17 +123,64 @@ export class AuthController {
   @Post("login")
   @HttpCode(200)
   @Throttle("login")
-  async login(@Body() dto: LoginDto, @Ip() ip: string, @Res({ passthrough: true }) res: Response) {
-    const result = await this.auth.login(dto, ip);
-    setSessionCookie(res, result.data.accessToken);
+  async login(
+    @Body() dto: LoginDto,
+    @Ip() ip: string,
+    @Headers("user-agent") userAgent: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.login(dto, ip, userAgent);
+    applyCredentials(res, result.data);
     return { data: { user: result.data.user } };
   }
 
+  /**
+   * Spends the refresh cookie and writes back a new pair.
+   *
+   * Unauthenticated on purpose: it is reached precisely when the access token has expired, so
+   * requiring one would make it unreachable at the only moment it is wanted. The refresh cookie is
+   * the credential. Every way this can fail answers 401 with the same body, and the cookie is
+   * cleared on the way out so a browser holding a dead token stops presenting it, which is the
+   * difference between one 401 and a retry loop.
+   */
+  @Post("refresh")
+  @HttpCode(200)
+  @Throttle("refresh")
+  async refresh(
+    @Req() req: Request,
+    @Ip() ip: string,
+    @Headers("user-agent") userAgent: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const presented = readRefreshCookie(req);
+    try {
+      const credentials = await this.auth.refresh(presented ?? "", { ip, userAgent });
+      applyCredentials(res, credentials);
+      return { data: { refreshed: true } };
+    } catch (err) {
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+      clearSessionCookie(res);
+      throw err;
+    }
+  }
+
+  /**
+   * Ends the session rather than only forgetting it.
+   *
+   * Clearing the cookies was the whole of logout before this story, which meant a copy of the token
+   * taken beforehand stayed good for a week. Now the session behind it is revoked, so signing out
+   * on a shared machine actually signs out. Still 204 whatever happens: a logout that reports
+   * failure gives a person nothing they can act on, and the cookies are cleared either way.
+   */
   @Post("logout")
   @HttpCode(204)
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const presented = readRefreshCookie(req);
+    if (presented && this.sessions.enabled()) {
+      await this.sessions.revokePresented(presented, "logout");
+    }
     clearSessionCookie(res);
-    return;
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
   }
 
   @Get("me")
@@ -86,10 +200,12 @@ export class AuthController {
   @Throttle("activate")
   async activate(
     @Body() dto: ActivateAccountDto,
+    @Ip() ip: string,
+    @Headers("user-agent") userAgent: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.auth.activateAccount(dto.token, dto.password);
-    setSessionCookie(res, result.data.accessToken);
+    const result = await this.auth.activateAccount(dto.token, dto.password, { ip, userAgent });
+    applyCredentials(res, result.data);
     return { data: { user: result.data.user } };
   }
 }
