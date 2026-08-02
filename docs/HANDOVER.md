@@ -77,10 +77,16 @@ The backlog proposes raising this as a **ratchet on new and touched code only**,
 
 ## Decisions the next team inherits
 
-Recorded as proposed ADRs in `docs/adr/`. None are engineering's to make alone.
+Recorded as ADRs in `docs/adr/`. None are engineering's to make alone. One has been made: **D1 was answered on
+2026-08-02**, and the other four are open.
 
-**D1** is the on-platform property purchase in scope, or is standalone due diligence the MVP? Answering
-"standalone only" removes most of epics E1 and E2. **D2** does SafeBuyRealties hold client funds, which decides
+**D1 is settled. Buying a property on the platform is part of the MVP.** It asked whether the on-platform
+purchase was in scope or whether standalone due diligence was the MVP, and answering "standalone only" would
+have removed most of epics E1 and E2 and about 20 days. The stakeholders chose to keep it, so the purchase
+wizard gets finished rather than retired, escrow and the Power of Attorney get a journey that reaches them, and
+E1's four stories are startable. `docs/adr/0001-mvp-scope-envelope.md` is Accepted and carries the reasoning.
+One thing that answer did not do is fix anything: the wizard still takes payment into a transaction that stops
+dead, and it does so until E1-S4 merges. **D2** does SafeBuyRealties hold client funds, which decides
 whether seller payouts are a bank-details form or a regulated flow with CBN and AML obligations. **D3** KYC by
 manual review or by a provider. **D4** object storage provider and region, which is on the critical path.
 **D5** adopt the quality ratchet.
