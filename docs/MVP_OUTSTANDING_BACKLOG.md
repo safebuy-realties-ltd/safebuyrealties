@@ -116,17 +116,17 @@ It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 
 
 **Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 is enough, roughly 15 to 21 days, down from 22 to 28 because E2-S4, E2-S2 and the document authorization half of M3 have all landed. That subset used to name E2-S2 as well; it merged in wave 1 and now costs nothing, and DOCS-4 corrected the total here at the same time as the floor above, since both were being carried by hand. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
 
-### 1.4 Decisions needed before the work starts
+### 1.4 Decisions, one answered and four open
 
-These are product and commercial decisions. Engineering can proceed on M3 without them, and cannot finish M1 or M2 without them.
+These are product and commercial decisions. **D1 came back answered on 2026-08-02**, and it is the first of the five to move since they were raised. The other four are open, so engineering can start M1 now, can proceed on nothing else in M2 until D2 lands, and still cannot start M3.
 
-| # | Decision | Why it blocks | Recommendation |
-| --- | --- | --- | --- |
-| D1 | Is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? | Two due diligence paths exist and only one is complete. Answering "standalone only" removes most of E1 and E2 and cuts about 20 days | Confirm on-platform is in scope, since escrow and PoA only pay off there. If it is not, retire the wizard rather than leaving it half-wired |
-| D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts |
-| D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam |
-| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency |
-| D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 |
+| # | Decision | Why it blocks | Recommendation | Status |
+| --- | --- | --- | --- | --- |
+| D1 | Is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? | Two due diligence paths exist and only one is complete. Answering "standalone only" removes most of E1 and E2 and cuts about 20 days | Confirm on-platform is in scope, since escrow and PoA only pay off there. If it is not, retire the wizard rather than leaving it half-wired | ✅ **Answered 2026-08-02: on-platform purchase is in the MVP.** The recommendation was taken. `docs/adr/0001-mvp-scope-envelope.md` is Accepted, E1's four stories are startable, and they are wave 4 on the board |
+| D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts | ⏳ Open. It is the other half of EXT-7, and now the only thing between the platform and a real seller being paid |
+| D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam | ⏳ Open |
+| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⏳ Open |
+| D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 | ⏳ Open |
 
 ---
 
@@ -180,7 +180,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | --- | --- | --- | --- | --- | --- | --- |
 | DOCS-1 | Chore | Reconcile the checklist and mark stale analysis docs | — | S | ✅ direct commit | none |
 | CH-1 | Chore | Feature-flag service with kill switch, server and client | — | M | ✅ PR #128 | none |
-| E1-S1 🔴 | Loop | Listing DD case lifecycle: queue, assign, report, complete | `dd_case_lifecycle` | L | 📋 | D1 |
+| E1-S1 🔴 | Loop | Listing DD case lifecycle: queue, assign, report, complete | `dd_case_lifecycle` | L | 📋 startable | none, D1 answered |
 | E1-S2 🔴 | Loop | Transaction state machine, DD_PURCHASED to DD_COMPLETE | `dd_case_lifecycle` | M | 📋 | E1-S1 |
 | E1-S3 🔴 | Loop | Buyer DD report delivery, access controlled | `dd_case_lifecycle` | M | 📋 | E1-S1, E3-S1 |
 | E1-S4 🔴 | Loop | Property purchase step wired to the state machine | `property_purchase` | M | 📋 | E1-S2 |
@@ -249,6 +249,8 @@ E3-S2 (durable storage)
 > **G3 is half-earned, 2026-07-31.** The probe suite it asks for exists — `backend/src/storage/uploads-exposure.spec.ts`, written red in #103 and green since #112 — and no private document is reachable without authorization through the route it probes. The gate stays open because it is blocked by E3 and E4-S3, not by E3-S1: **E3-S2** is unstarted, and a document store that authorizes correctly and then loses the file on the next deploy does not pass a gate worded *no private document is reachable without authorization* in spirit, only in letter. Read the probe suite as the evidence G3 will eventually be closed with, not as the closing of it.
 >
 > **E4-S3 landed, 2026-08-01.** The other half of the gate's E4 dependency is now covered: `backend/src/common/authz/cross-role-authz.spec.ts` classifies all 51 path-parameter routes and drives 240 cross-role cells against the real services. G3 still waits on E3-S2, which is the storage half and has not started.
+>
+> **G1 is reachable now, 2026-08-02.** It did not move, and that is the point. Until D1 was answered, G1 asked engineering to demonstrate a journey nobody was allowed to build, so it was a gate against a decision rather than against work. E1 is scheduled, so from today G1 measures progress instead of standing in for a missing answer. G6 still names D2, which is the half of EXT-7 still outstanding.
 
 ### 3.3 External inputs
 
@@ -262,7 +264,7 @@ Work the team cannot do with code.
 | EXT-4 | Counsel-approved PoA instrument text and terms of service | Client | E8-S2, G4 |
 | EXT-5 | NDPR privacy notice and retention policy | Client | E8-S1 |
 | EXT-6 | Penetration test vendor and window | Corne Labs | E8-S3, G5 |
-| EXT-7 | Confirmation of D1 and D2 | Client | E1, E2 |
+| EXT-7 | Confirmation of D1 and D2 | Client | E2. **Half discharged on 2026-08-02**: D1 came back as on-platform purchase is in the MVP, which released E1. What is left of EXT-7 is D2, the escrow money model |
 
 ---
 
@@ -282,7 +284,7 @@ Each story states the user value, the acceptance criteria a reviewer can check, 
 
 > **As** an operations officer, **I want** due diligence orders raised against a platform listing to appear in my queue so that I can assign professionals, collect their reports, and complete the case, **so that** a buyer who paid for due diligence receives it.
 
-**Size** L · **Flag** `dd_case_lifecycle` · **Deps** D1
+**Size** L · **Flag** `dd_case_lifecycle` · **Deps** none. D1 was answered on 2026-08-02 and this story is startable today
 
 **Evidence of the gap**
 
