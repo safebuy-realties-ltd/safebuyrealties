@@ -13,6 +13,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { ListUsersQueryDto } from "./dto/list-users.query";
 import { isInternalRole, isSuperAdmin } from "../common/user-roles";
+import { SessionsService } from "../auth/sessions.service";
 
 const STAFF_ASSIGNABLE_ROLES: UserRole[] = [
   UserRole.BUYER,
@@ -44,7 +45,10 @@ const USER_SELECT = {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sessions: SessionsService,
+  ) {}
 
   private serializeUser(user: {
     id: string;
@@ -272,6 +276,15 @@ export class UsersService {
       !(await this.prisma.professionalProfile.findUnique({ where: { userId: id } }))
     ) {
       await this.createProfessionalProfile(id);
+    }
+
+    // E5-S5, criterion 4. `JwtStrategy` already refuses a deactivated account on every request, so
+    // this is not what closes the door. It is what makes the record match: a deactivated account
+    // with live sessions still listed against it is a lie told to the next person who reads the
+    // table, and the session rows are also what a future story will count when it answers "who is
+    // signed in right now".
+    if (dto.isActive === false && isStaffActor) {
+      await this.sessions.revokeAllForUser(id, "account_deactivated");
     }
 
     return this.serializeUser(user);

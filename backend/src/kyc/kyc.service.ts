@@ -13,6 +13,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationType } from "../notifications/notification-types.constants";
 import { KycStatus } from "./kyc.constants";
 import { SubmitKycDto } from "./dto/submit-kyc.dto";
+import { SessionsService } from "../auth/sessions.service";
 
 export type KycRecordResponse = {
   id: string | null;
@@ -49,6 +50,7 @@ export class KycService {
     private storage: StorageService,
     private platformConfig: PlatformConfigService,
     private notifications: NotificationsService,
+    private readonly sessions: SessionsService,
   ) {}
 
   async getMy(userId: string): Promise<KycRecordResponse> {
@@ -188,6 +190,12 @@ export class KycService {
       entityId: existing.id,
       entityType: "KycRecord",
     });
+    // E5-S5, criterion 4. A rejection usually means the documents did not belong to the person who
+    // submitted them, and the common case behind that is an account somebody else is holding. Ending
+    // every session is the only part of this that acts rather than records, and it is awaited
+    // rather than fired off, because a rejection that returns before the sessions are gone reports
+    // a thing that has not happened yet.
+    await this.sessions.revokeAllForUser(userId, "kyc_rejected");
     return this.serialize(record);
   }
 

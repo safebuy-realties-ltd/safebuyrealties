@@ -11,6 +11,7 @@
  * `VerificationService` calls back into listing status sync and a stub there would quietly skip a
  * second database round trip that a wrong-role actor should never have reached.
  */
+import { SessionsService } from "../../auth/sessions.service";
 import { DocumentsService } from "../../documents/documents.service";
 import { EscrowService } from "../../escrow/escrow.service";
 import { InspectionsService } from "../../inspections/inspections.service";
@@ -42,6 +43,7 @@ export interface Services {
   listings: ListingsService;
   notifications: NotificationsService;
   payments: PaymentsService;
+  sessions: SessionsService;
   tasks: TasksService;
   transactions: TransactionsService;
   users: UsersService;
@@ -64,9 +66,19 @@ export function buildServices(prisma: PrismaService): Services {
     listings,
     notifications,
     payments: new PaymentsService(prisma, notifications, escrow, stub(), stub(), stub()),
+    // E5-S5. The flag stub says on, because a matrix row for a route that answers 404 to everybody
+    // while the flag is off would prove nothing about ownership. The config stub answers nothing so
+    // the service falls back to its own defaults, which is the shape a deployment without the
+    // optional variables set has.
+    sessions: new SessionsService(
+      prisma,
+      stub(),
+      stub({ isEnabled: () => true }),
+      stub({ get: () => undefined }),
+    ),
     tasks: new TasksService(prisma, notifications),
     transactions: new TransactionsService(prisma),
-    users: new UsersService(prisma),
+    users: new UsersService(prisma, stub()),
     verification: new VerificationService(prisma, stub(), notifications, listings),
   };
 }
