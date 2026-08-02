@@ -68,11 +68,11 @@ erasure. All are stories in `MVP_OUTSTANDING_BACKLOG.md` with acceptance criteri
 > *(Each session updates this section before stopping)*
 
 - **Date:** 2026-08-02
-- **Tool:** one developer running AI agents, with a second developer reviewing and merging, across the handover week and waves 1, 2 and 3
-- **Last completed:** DOCS-4, the documentation freeze. Every gap claim re-run against `main`, statuses corrected, this file re-checked
-- **Done this session:** 36 pull requests merged across the week and the three waves. Six more documents bannered and the rest inventoried. Two defects found by re-reading rather than by testing: the seed script was overwriting `docs/DEMO_TEST_ACCOUNTS.csv` and deleting two accounts, and the backlog floor was a figure nothing derived
-- **Next:** Nothing a developer can pick up alone. All 19 remaining stories wait on a decision or an outside party, so the next move belongs to a stakeholder. Read §1.4 of `MVP_OUTSTANDING_BACKLOG.md` and the review queue on `docs/mvp-board.html`
-- **Blockers:** the five open decisions ADR-0001 to ADR-0005, and the external engagements EXT-1 to EXT-7
+- **Tool:** one developer running AI agents, with a second developer reviewing and merging, across the handover week, then waves 1, 2 and 3, and now wave 4
+- **Last completed:** CH-7, rule 10 and the check behind it. Nothing in this repository names the assistant product that helped write it, and `scripts/check-prose.mjs` enforces that on every pull request rather than leaving it to be swept by hand a third time. DOCS-7 came before it and recorded the ADR-0001 answer, so E1's four stories are back on the schedule as wave 4
+- **Done this session:** 38 pull requests merged across the week and the waves. DOCS-4 froze the documents before this and found two defects by re-reading rather than by testing: the seed script was overwriting `docs/DEMO_TEST_ACCOUNTS.csv` and deleting two accounts, and the backlog floor was a figure nothing derived
+- **Next:** **E1-S1, the listing DD case lifecycle.** It is the only startable row in wave 4 and the other three queue behind it: E1-S2 and E1-S3 follow it, E1-S4 follows E1-S2. Eleven to fourteen developer-days for the wave, and read it as a chain rather than a fan, because there is no parallelism to buy at the front of it. Acceptance criteria are in §4 of `MVP_OUTSTANDING_BACKLOG.md` under epic E1
+- **Blockers:** four open decisions, ADR-0002 to ADR-0005, and the external engagements EXT-1 to EXT-6. ADR-0001 was answered on 2026-08-02, which discharges half of EXT-7; the other half is ADR-0002 and it is the one to chase next, because it is what stands between the platform and a real seller being paid
 
 ### Prior session, the handover audit
 
