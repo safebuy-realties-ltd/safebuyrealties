@@ -1,12 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, Briefcase, Building2, ClipboardCheck, Home, Search } from "lucide-react";
 import brandLogo from "@/assets/brand/safebuy-logo.svg";
+import { DEFAULT_TITLE, seoHead } from "@/lib/seo";
 
 const LANDING_BG =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80";
 
 export const Route = createFileRoute("/")({
   component: SimpleLanding,
+  head: () =>
+    seoHead({
+      title: DEFAULT_TITLE,
+      description:
+        "Buy and sell Nigerian property with title checks, survey validation, independent due diligence and escrow-ready payments on one platform.",
+      path: "/",
+    }),
 });
 
 const primaryPaths = [

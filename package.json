@@ -18,6 +18,7 @@
     "validate:diff-coverage": "node scripts/diff-coverage.mjs",
     "coverage:ratchet": "node scripts/diff-coverage.mjs --ratchet",
     "smoke:api": "node scripts/vercel-api-smoke.mjs",
+    "measure:web-vitals": "node scripts/measure-web-vitals.mjs",
     "seed:demo-users": "node backend/scripts/seed-extended-users.mjs",
     "seed:marketplace": "node backend/scripts/seed-marketplace-listings.mjs",
     "validate:e2e": "node scripts/validate-e2e-claims.mjs",

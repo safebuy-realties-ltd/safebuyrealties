@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth";
+import { deepestPathname, rootMeta } from "@/lib/seo";
 import { AppQueryProvider } from "@/lib/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -28,41 +29,13 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SafeBuyRealties — Verified Real Estate Transactions" },
-      {
-        name: "description",
-        content:
-          "Verified listings, secure transactions, and professional validation for confident real estate buying and selling.",
-      },
-      { property: "og:title", content: "SafeBuyRealties — Verified Real Estate Transactions" },
-      {
-        property: "og:description",
-        content:
-          "Verified listings, secure transactions, and professional validation for confident real estate buying and selling.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "SafeBuyRealties — Verified Real Estate Transactions" },
-      {
-        name: "twitter:description",
-        content:
-          "Verified listings, secure transactions, and professional validation for confident real estate buying and selling.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d0bcce2c-5564-441a-b0e0-34ad9b6bdb7f/id-preview-0e8055c3--90c89557-f2c9-4869-ba90-0bc8476a4c61.lovable.app-1777658280743.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d0bcce2c-5564-441a-b0e0-34ad9b6bdb7f/id-preview-0e8055c3--90c89557-f2c9-4869-ba90-0bc8476a4c61.lovable.app-1777658280743.png",
-      },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+  // The defaults every page inherits, and the noindex decision for private paths. Both live in
+  // `rootMeta`, which is unit tested; a leaf overrides any of it by emitting the same key, because
+  // TanStack resolves meta deepest match first. No canonical here, deliberately: links are merged
+  // by concatenation rather than by `rel`, so a canonical at the root and one on a route would ship
+  // two `rel="canonical"` tags on the same page.
+  head: (ctx) => ({
+    meta: rootMeta(deepestPathname(ctx.matches)),
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

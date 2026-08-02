@@ -69,7 +69,15 @@ function listingsQueryString(options?: ListingsQueryOptions) {
   return s ? `?${s}` : "";
 }
 
-export function usePublicListingsQuery(options?: ListingsQueryOptions) {
+/**
+ * `initialData` is what the server render already fetched (E8-S4 criterion 1). Passing it means the
+ * first paint in the browser shows the same rows the HTML did instead of a spinner, and react-query
+ * still refetches on mount, so nothing here decides how long the data stays fresh.
+ */
+export function usePublicListingsQuery(
+  options?: ListingsQueryOptions,
+  initialData?: ApiEnvelope<ListingDto[]>,
+) {
   const { isReady } = useAuth();
   const q = listingsQueryString(options);
   return useQuery({
@@ -87,6 +95,7 @@ export function usePublicListingsQuery(options?: ListingsQueryOptions) {
     ],
     queryFn: () => apiRequest<ListingDto[]>(`/listings${q}`),
     enabled: isReady,
+    initialData,
     select: (envelope) => ({
       listings: envelope.data,
       meta: envelope.meta as { page: number; pageSize: number; total: number } | undefined,

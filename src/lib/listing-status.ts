@@ -60,3 +60,21 @@ export function listingIsPubliclyViewable(status: string, isPublished?: boolean)
   if (isPublished === false) return false;
   return status === "LIVE" || status === "UNDER_OFFER";
 }
+
+/**
+ * Whether the API will hand this listing to somebody with no session, which is the only question a
+ * sitemap entry or a server-rendered `<title>` is allowed to answer.
+ *
+ * This deliberately mirrors `isPubliclyVisible` in `backend/src/listings/listings-public.helper.ts`
+ * rather than reusing `listingIsPubliclyViewable` above, because the two rules are not the same and
+ * the backend is the one that decides. The backend serves `LIVE` whatever `isPublished` says, and
+ * serves `VERIFIED` only when it is published. The UI predicate is stricter on both counts, and every
+ * listing seeded so far is `LIVE` with `isPublished` false, so reusing it here would have produced an
+ * empty sitemap and a metadata-free listing page on a site that has listings to show.
+ *
+ * The divergence between the two is real and predates this change; it is written up for follow-up
+ * rather than fixed here, because widening the UI predicate also moves the checkout gate.
+ */
+export function listingIsPubliclyIndexable(status: string, isPublished?: boolean): boolean {
+  return status === "LIVE" || (status === "VERIFIED" && isPublished === true);
+}
