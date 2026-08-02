@@ -28,7 +28,7 @@ coverage/
 # Secrets. Every env file except the checked-in template, at any depth. This file had no env
 # pattern at all until now, so a root `.env` or `.env.production` was committable while `backend/`
 # was covered; `.env.local` only looked covered, by the `*.local` line above, which is a Vite
-# convention and not an env rule. Match the family, not the members — `vercel env pull` invents
+# convention and not an env rule. Match the family, not the members: `vercel env pull` invents
 # suffixes, and that is how `.env.vercel.prod` reached the repo (f394bb4).
 .env
 .env.*
@@ -38,7 +38,7 @@ coverage/
 .wrangler/
 .dev.vars
 
-# Claude Code local tooling
+# Local assistant tooling, never committed
 .claude/
 
 # Editor directories and files

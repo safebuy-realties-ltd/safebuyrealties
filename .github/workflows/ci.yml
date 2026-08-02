@@ -336,11 +336,36 @@ jobs:
           echo "  no-board-update: <reason>"
           exit 1
 
+  # Rule 10 in docs/HANDOVER_WEEK.md: nothing in this repository names the assistant product that
+  # helped write it. Deliberately unfiltered by path. Every other job here is filtered because it
+  # costs runner-minutes, but this one reads tracked text through one git call and finishes in
+  # seconds, and a writing rule that applies to some diffs and not others is a rule with a gap in
+  # the middle of it.
+  prose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # No npm ci, for the same reason the board check skips it: plain Node and one git call.
+      - run: node scripts/check-prose.mjs
+
   # Single required status check for branch protection (see docs/BRANCH_PROTECTION.md).
   ci-gate:
     name: CI (required)
     runs-on: ubuntu-latest
-    needs: [changes, frontend-typecheck, frontend-test, backend-check, e2e-api, e2e-browser, board]
+    needs:
+      [
+        changes,
+        frontend-typecheck,
+        frontend-test,
+        backend-check,
+        e2e-api,
+        e2e-browser,
+        board,
+        prose,
+      ]
     if: always()
     steps:
       - name: Changes job must succeed
@@ -385,6 +410,12 @@ jobs:
         if: needs.board.result != 'success'
         run: |
           echo "board: ${{ needs.board.result }}"
+          exit 1
+
+      - name: Prose check
+        if: needs.prose.result != 'success'
+        run: |
+          echo "prose: ${{ needs.prose.result }}"
           exit 1
 
       - name: CI gate passed
