@@ -13,6 +13,9 @@ import { join } from "node:path";
 
 const base = (process.env.SBR_API_BASE ?? "http://localhost:3001/api/v1").replace(/\/$/, "");
 const PASSWORD = process.env.SBR_PASSWORD ?? "password123";
+// E7-S3. See journey-e2e-all-roles.mjs: a partial is tolerable against a shared database and is a
+// regression against the seeded ephemeral one CI provisions.
+const STRICT = process.env.SBR_E2E_STRICT === "1";
 const STAMP = Date.now();
 
 const results = [];
@@ -194,6 +197,19 @@ async function getProfessionalId(email) {
   return ids[email] ?? null;
 }
 
+/**
+ * Gets one professional's credentials in front of staff, from whatever state the account is in.
+ *
+ * The catch is that `verifiedStatus` already reads PENDING on a profile nobody has filled in:
+ * promoting somebody to PROFESSIONAL leaves an empty stub row behind. This used to see PENDING,
+ * call it "ready for staff approval" and return. Against the shared database the demo
+ * professionals were verified long ago so it never showed; against a database seeded ninety
+ * seconds ago the staff queue came back empty and the approval loop below had nothing to approve.
+ *
+ * So decide on the fields the queue itself filters on rather than on the status. listPending() in
+ * backend/src/professionals/professionals.service.ts wants a regulatory body, a licence number and
+ * both documents, and a profile missing any one of them is invisible to staff.
+ */
 async function ensureProfessionalProfile({ email, regulatoryBody, licenseNumber }) {
   const login = await loginAs(email);
   if (!login.ok) {
@@ -202,30 +218,51 @@ async function ensureProfessionalProfile({ email, regulatoryBody, licenseNumber 
   }
 
   const existing = await req("/professionals/me/profile");
-  const current = existing.json?.data;
-  if (current?.verifiedStatus === "VERIFIED") {
+  let profile = existing.json?.data ?? null;
+  // Never write over a verified profile. Any edit resets the review state back to PENDING, so
+  // doing so would un-verify the three professionals the workflow steps are assigned to.
+  if (profile?.verifiedStatus === "VERIFIED") {
     record(`credentials.profile.${email}`, "pass", "already VERIFIED");
-    return current;
-  }
-  if (current?.verifiedStatus === "PENDING") {
-    record(`credentials.profile.${email}`, "pass", "PENDING — ready for staff approval");
-    return current;
+    return profile;
   }
 
-  const { ok, json, status } = await req("/professionals/me/profile", {
-    method: "PUT",
-    body: JSON.stringify({
-      regulatoryBody,
-      licenseNumber,
-      licenseExpiry: "2030-12-31T00:00:00.000Z",
-    }),
-  });
-  record(
-    `credentials.profile.${email}`,
-    ok ? "pass" : "fail",
-    ok ? "profile submitted (PENDING)" : `HTTP ${status}`,
-  );
-  return ok ? json?.data : null;
+  if (!profile?.regulatoryBody || !profile?.licenseNumber) {
+    const { ok, json, status } = await req("/professionals/me/profile", {
+      method: "PUT",
+      body: JSON.stringify({
+        regulatoryBody,
+        licenseNumber,
+        licenseExpiry: "2030-12-31T00:00:00.000Z",
+      }),
+    });
+    if (!ok) {
+      record(`credentials.profile.${email}`, "fail", `licence details HTTP ${status}`);
+      return null;
+    }
+    profile = json?.data ?? profile;
+  }
+
+  for (const { kind, field } of [
+    { kind: "license", field: "licenseDocumentKey" },
+    { kind: "id", field: "idDocumentKey" },
+  ]) {
+    if (profile?.[field]) continue;
+    const form = new FormData();
+    const body = `${kind} document for ${email}, written by the listing lifecycle run ${STAMP}.\n`;
+    form.set("file", new Blob([body], { type: "text/plain" }), `${kind}-${STAMP}.txt`);
+    const upload = await req(`/professionals/me/documents?kind=${kind}`, {
+      method: "POST",
+      body: form,
+    });
+    if (!upload.ok) {
+      record(`credentials.profile.${email}`, "fail", `${kind} document HTTP ${upload.status}`);
+      return null;
+    }
+    profile = upload.json?.data ?? profile;
+  }
+
+  record(`credentials.profile.${email}`, "pass", "submitted, awaiting staff approval");
+  return profile;
 }
 
 async function prepareProfessionalCredentials() {
@@ -497,7 +534,11 @@ async function main() {
   const pass = results.filter((r) => r.status === "pass").length;
   console.log(`\n--- Summary: ${pass} pass, ${partial} partial, ${fails} fail ---`);
   console.log(`Listing ID: ${listingId}\n`);
-  process.exit(fails > 0 ? 1 : 0);
+  if (STRICT && partial > 0) {
+    console.log(`Strict mode: ${partial} partial result(s) counted as failures.`);
+    results.filter((r) => r.status === "partial").forEach((r) => console.log(`  ${r.id}`));
+  }
+  process.exit(fails > 0 || (STRICT && partial > 0) ? 1 : 0);
 }
 
 main().catch((e) => {

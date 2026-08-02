@@ -17,6 +17,10 @@ dist-ssr
 *.local
 .vercel/*
 
+# End-to-end run output: per-journey logs, screenshots and the downloaded PDF. Written on every
+# run and uploaded by CI as an artifact, so it is evidence, not source.
+artifacts/
+
 # Coverage output, at any depth — the frontend writes ./coverage, backend writes backend/coverage.
 # No leading slash, so one line covers both and anything added later.
 coverage/
