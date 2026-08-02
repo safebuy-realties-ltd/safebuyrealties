@@ -14,9 +14,17 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/due-diligence/")({
   component: DueDiligenceLandingPage,
+  head: () =>
+    seoHead({
+      title: "Property due diligence in Nigeria",
+      description:
+        "Order an independent title search, survey validation and physical inspection on a Nigerian property, carried out by verified professionals and returned as a written report.",
+      path: "/due-diligence",
+    }),
 });
 
 const schedules = [

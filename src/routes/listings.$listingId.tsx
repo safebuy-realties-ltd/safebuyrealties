@@ -25,6 +25,8 @@ import { useListingDocumentsQuery } from "@/hooks/use-documents";
 import { useVerificationListingQuery, type VerificationStepDto } from "@/hooks/use-verification";
 import { formatListingSpecSummary, formatBuildType } from "@/lib/listing-spec";
 import { listingIsPubliclyViewable, statusBadgeClass, statusLabel } from "@/lib/listing-status";
+import { listingRouteHead } from "@/lib/seo";
+import { ssrListing } from "@/lib/ssr-data";
 import { ListingSaveButton } from "@/components/ListingSaveButton";
 import { ScheduleInspectionDialog } from "@/components/ScheduleInspectionDialog";
 import { useListingInspectionsQuery } from "@/hooks/use-inspections";
@@ -50,6 +52,11 @@ function uploadAssetUrl(storageKey: string): string {
 
 export const Route = createFileRoute("/listings/$listingId")({
   component: ListingDetail,
+  // E8-S4 criteria 1, 2 and 4. `import.meta.env.SSR` is a Vite compile-time constant, so the server
+  // branch is dropped from the client bundle rather than shipped and skipped at runtime.
+  loader: ({ params }) =>
+    import.meta.env.SSR ? ssrListing(process.env, params.listingId, fetch) : undefined,
+  head: ({ params, loaderData }) => listingRouteHead(params.listingId, loaderData),
 });
 
 function formatMoney(amount: string, currency: string) {
@@ -105,7 +112,15 @@ function listingPhotos(media: ListingMediaDto[] | undefined) {
 function ListingDetail() {
   const { listingId } = Route.useParams();
   const { user, isAuthenticated, isReady } = useAuth();
-  const { data: listing, isLoading, isError, error, refetch } = useListingQuery(listingId);
+  // Whatever the server render fetched, so the first paint is the listing rather than `Loading…`.
+  const serverRendered = Route.useLoaderData();
+  const {
+    data: listing,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useListingQuery(listingId, serverRendered);
   const verificationSectionId = "listing-verification-milestones";
 
   const isPublicListing =

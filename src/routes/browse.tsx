@@ -10,9 +10,21 @@ import { Badge } from "@/components/ui/badge";
 import { usePublicListingsQuery, type ListingsQueryOptions } from "@/hooks/use-listings";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { listingDtoToCard } from "@/lib/listing-card-map";
+import { seoHead } from "@/lib/seo";
+import { BROWSE_PAGE_SIZE, isSsrBrowseQuery, ssrBrowseListings } from "@/lib/ssr-data";
 
 export const Route = createFileRoute("/browse")({
   component: BrowsePage,
+  head: () =>
+    seoHead({
+      title: "Browse verified properties",
+      description:
+        "Live property listings with title checks, survey validation and escrow-ready payments. Filter by location, price and bedrooms; no account needed to look.",
+      path: "/browse",
+    }),
+  // E8-S4 criterion 1. `import.meta.env.SSR` is a Vite compile-time constant, so the server branch
+  // is dropped from the client bundle rather than shipped and skipped at runtime.
+  loader: () => (import.meta.env.SSR ? ssrBrowseListings(process.env, fetch) : undefined),
 });
 
 type ListingFilters = {
@@ -51,7 +63,7 @@ function formatNgn(amount: number): string {
 }
 
 function filtersToQuery(filters: ListingFilters): ListingsQueryOptions {
-  const query: ListingsQueryOptions = { pageSize: 24 };
+  const query: ListingsQueryOptions = { pageSize: BROWSE_PAGE_SIZE };
   const location = filters.location.trim();
   if (location) query.location = location;
 
@@ -71,8 +83,13 @@ function BrowsePage() {
   const [filters, setFilters] = useState<ListingFilters>(EMPTY_FILTERS);
   const debouncedFilters = useDebouncedValue(filters, 300);
   const queryOptions = useMemo(() => filtersToQuery(debouncedFilters), [debouncedFilters]);
-  const { data, isLoading, isFetching, isError, error, refetch } =
-    usePublicListingsQuery(queryOptions);
+  // The server render answered one question, the unfiltered first page, so its rows seed that query
+  // and no other. A filtered query gets nothing and shows its own loading state.
+  const serverRendered = Route.useLoaderData();
+  const { data, isLoading, isFetching, isError, error, refetch } = usePublicListingsQuery(
+    queryOptions,
+    isSsrBrowseQuery(queryOptions) ? serverRendered : undefined,
+  );
 
   const cards = useMemo(() => (data?.listings ?? []).map(listingDtoToCard), [data?.listings]);
 
