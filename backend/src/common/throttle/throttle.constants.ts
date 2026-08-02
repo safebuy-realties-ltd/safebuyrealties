@@ -50,6 +50,16 @@ export const THROTTLE_POLICIES = {
     limit: 10,
     windowSeconds: 300,
   },
+  refresh: {
+    description:
+      "POST /auth/refresh. Sized for browsers rather than for people: one tab asks roughly every " +
+      "fifteen minutes and a machine waking with eight tabs open asks eight times at once, so a " +
+      "tight limit here signs innocent people out. The real defence on this route is reuse " +
+      "detection, which revokes the whole family on the first replayed token, so a grinder gets " +
+      "one attempt rather than the ceiling. This is here to stop the pointless volume.",
+    limit: 60,
+    windowSeconds: 60,
+  },
   password_reset: {
     description:
       "Password reset request and redemption. Declared ahead of the routes: E5-S3 builds them " +

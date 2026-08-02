@@ -4,6 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { SessionsService } from "../auth/sessions.service";
 import { KycService } from "./kyc.service";
 import { KycStatus } from "./kyc.constants";
 
@@ -32,6 +33,7 @@ describe("KycService", () => {
   };
   let storage: { upload: jest.Mock; getSignedUrl: jest.Mock };
   let notifications: { create: jest.Mock };
+  let sessions: { revokeAllForUser: jest.Mock };
 
   beforeEach(async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-05-27T15:00:00.000Z"));
@@ -48,6 +50,7 @@ describe("KycService", () => {
       getSignedUrl: jest.fn().mockResolvedValue("/uploads/kyc/buyer-1/id.pdf"),
     };
     notifications = { create: jest.fn().mockResolvedValue(undefined) };
+    sessions = { revokeAllForUser: jest.fn().mockResolvedValue(0) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,6 +62,7 @@ describe("KycService", () => {
           useValue: { getMaxUploadBytes: jest.fn().mockResolvedValue(15 * 1024 * 1024) },
         },
         { provide: NotificationsService, useValue: notifications },
+        { provide: SessionsService, useValue: sessions },
       ],
     }).compile();
 
@@ -223,6 +227,43 @@ describe("KycService", () => {
     expect(notifications.create).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "buyer-1", type: "KYC_REJECTED" }),
     );
+  });
+
+  it("reject ends every session the account has open", async () => {
+    prisma.kycRecord.findUnique.mockResolvedValue({
+      ...baseRecord,
+      status: KycStatus.SUBMITTED,
+    });
+    prisma.kycRecord.update.mockResolvedValue({
+      ...baseRecord,
+      status: KycStatus.REJECTED,
+      reviewerId: "staff-1",
+      reviewNote: "Documents belong to somebody else",
+      reviewedAt: new Date("2026-05-27T15:00:00.000Z"),
+    });
+
+    await service.reject("buyer-1", "staff-1", "Documents belong to somebody else");
+
+    // E5-S5, criterion 4. The usual reason for a rejection is that the documents were not the
+    // submitter's, and the account is then as likely to be held by somebody else as by its owner.
+    expect(sessions.revokeAllForUser).toHaveBeenCalledWith("buyer-1", "kyc_rejected");
+  });
+
+  it("verify leaves the sessions alone", async () => {
+    prisma.kycRecord.findUnique.mockResolvedValue({
+      ...baseRecord,
+      status: KycStatus.SUBMITTED,
+    });
+    prisma.kycRecord.update.mockResolvedValue({
+      ...baseRecord,
+      status: KycStatus.VERIFIED,
+      reviewerId: "staff-1",
+      reviewedAt: new Date("2026-05-27T15:00:00.000Z"),
+    });
+
+    await service.verify("buyer-1", "staff-1");
+
+    expect(sessions.revokeAllForUser).not.toHaveBeenCalled();
   });
 
   it("verify throws when record is missing", async () => {
