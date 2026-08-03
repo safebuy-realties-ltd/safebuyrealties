@@ -35,6 +35,7 @@ import {
 } from "@prisma/client";
 import { JwtPayload } from "../../auth/jwt.strategy";
 import { PrismaService } from "../../prisma/prisma.service";
+import { DD_ASSIGNMENT_STATUS, DD_ORDER_STATUS, DD_SOURCE } from "../../dd-core/dd-case.constants";
 
 export type Row = Record<string, unknown>;
 export type Store = Record<string, Row[]>;
@@ -134,6 +135,7 @@ export function buildStore(): Store {
   const draft = listing("listing-draft", ListingStatus.DRAFT, false);
   const live = listing("listing-live", ListingStatus.LIVE, true);
   const buyerA = user("buyer-a", UserRole.BUYER);
+  const proA = user("pro-a", UserRole.PROFESSIONAL, ProfessionalType.SURVEYOR);
 
   const transaction: Row = {
     id: "transaction-a",
@@ -147,13 +149,58 @@ export function buildStore(): Store {
     powerOfAttorney: null,
   };
 
+  // E1-S1. A listing due diligence case with one assignment on it, so the report route has an
+  // assignee to allow and everybody else to refuse. The case and the assignment point at each other
+  // the way `include` would have joined them, which is the inlining this file already relies on.
+  const ddCase: Row = {
+    id: "dd-case-a",
+    serviceId: null,
+    caseId: "SBR-DD-0001",
+    source: DD_SOURCE.LISTING,
+    status: DD_ORDER_STATUS.PAID,
+    buyerId: "buyer-a",
+    listingId: "listing-live",
+    externalPropertyId: null,
+    transactionId: null,
+    bundleId: null,
+    itemIds: [],
+    checklistSelections: {},
+    subtotal: 150_000,
+    vatAmount: 11_250,
+    total: 161_250,
+    verdict: null,
+    staffNotes: null,
+    completedAt: null,
+    reportStorageKeys: [],
+    createdAt: T0,
+    updatedAt: T0,
+    listing: live,
+    externalProperty: null,
+    transaction: null,
+  };
+  const ddAssignment: Row = {
+    id: "dd-assignment-a",
+    dueDiligenceOrderId: "dd-case-a",
+    professionalId: "pro-a",
+    scheduleCode: "A",
+    title: "Root of title search",
+    status: DD_ASSIGNMENT_STATUS.PENDING,
+    notes: null,
+    reportStorageKey: null,
+    createdAt: T0,
+    updatedAt: T0,
+    professional: proA,
+    dueDiligenceOrder: ddCase,
+  };
+  ddCase.assignments = [ddAssignment];
+
   return {
     user: [
       buyerA,
       user("buyer-b", UserRole.BUYER),
       user("seller-a", UserRole.SELLER),
       user("seller-b", UserRole.SELLER),
-      user("pro-a", UserRole.PROFESSIONAL, ProfessionalType.SURVEYOR),
+      proA,
       user("pro-b", UserRole.PROFESSIONAL, ProfessionalType.LAWYER),
       user("staff-a", UserRole.STAFF),
       user("admin-a", UserRole.ADMIN),
@@ -257,7 +304,8 @@ export function buildStore(): Store {
     inspectionSlot: [],
     auditLog: [],
     professionalProfile: [],
-    dueDiligenceOrder: [],
+    dueDiligenceOrder: [ddCase],
+    dueDiligenceAssignment: [ddAssignment],
     adminRole: [],
   };
 }
