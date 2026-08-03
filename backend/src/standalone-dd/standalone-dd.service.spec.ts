@@ -14,6 +14,7 @@ import { DdCmsService } from "../dd-cms/dd-cms.service";
 import { DdCoreService } from "../dd-core/dd-core.service";
 import { DdCaseSerializer } from "../dd-core/dd-case.serializer";
 import { TransactionStateService } from "../transactions/transaction-state.service";
+import { transactionPredecessors } from "../transactions/transaction-state.constants";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -662,11 +663,12 @@ describe("StandaloneDdService", () => {
     );
 
     // E1-S2. The move is a conditional write carrying the statuses it is allowed to move from,
-    // so the check and the write are one statement rather than a read followed by a hope.
+    // so the check and the write are one statement rather than a read followed by a hope. The list
+    // comes from the table, so E1-S4 adding PURCHASE_PENDING to it did not need an edit here.
     expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
       where: {
         id: "tx-1",
-        status: { in: [TransactionStatus.DD_PURCHASED, TransactionStatus.DD_IN_PROGRESS] },
+        status: { in: transactionPredecessors(TransactionStatus.DD_COMPLETE) },
       },
       data: { status: TransactionStatus.DD_COMPLETE },
     });

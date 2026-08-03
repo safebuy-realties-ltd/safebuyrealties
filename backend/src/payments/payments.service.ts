@@ -2,6 +2,7 @@ import {
   Injectable,
   Logger,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
@@ -29,6 +30,17 @@ import { InitiatePaymentDto } from "./dto/initiate-payment.dto";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
 import { MOCK_REFERENCE_PREFIX, isMockReference } from "../config/payments-guard";
 import { MoneyFields, withMoneyOperation } from "../common/logging/money-operation";
+import { TransactionStateService } from "../transactions/transaction-state.service";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
+import {
+  PURCHASE_BLOCK,
+  PURCHASE_FACTS_INCLUDE,
+  evaluatePurchaseReadiness,
+  purchaseFactsFrom,
+  purchaseFlagsFrom,
+  type PurchaseReadiness,
+} from "../transactions/purchase-readiness";
+import { StartPurchaseDto } from "./dto/start-purchase.dto";
 import {
   assessFreshness,
   claimPaymentForSuccess,
@@ -64,6 +76,8 @@ export class PaymentsService {
     private paystack: PaystackService,
     private guestCheckout: GuestCheckoutService,
     private standaloneDd: StandaloneDdService,
+    private transactionState: TransactionStateService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   private async notifyDdPaymentSucceeded(transactionId: string) {
@@ -173,6 +187,176 @@ export class PaymentsService {
     );
   }
 
+  /**
+   * E1-S4. Starts the purchase of the property a transaction is against.
+   *
+   * It is a route of its own rather than an intent on `initiate` for two reasons. The amount is the
+   * full price of the listing and the server has to be the one that says so, and the whole step is
+   * behind the `property_purchase` flag, so the route can be dark while `initiate` stays open.
+   *
+   * The order below is the story's second criterion. Readiness is decided first, the transaction is
+   * moved to `PURCHASE_PENDING` second, and only then is the gateway called. A buyer who opens a
+   * checkout and closes the tab therefore leaves a transaction that says a purchase was started and
+   * never finished, which is a different thing from one that was never started at all, and the
+   * failure paths below know how to unwind it.
+   */
+  async startPurchase(dto: StartPurchaseDto, actor: JwtPayload) {
+    return withMoneyOperation(
+      this.logger,
+      "payment.purchase.initialize",
+      {
+        provider: "paystack",
+        intent: PaymentIntent.PROPERTY_PURCHASE,
+        transactionId: dto.transactionId,
+        subjectUserId: actor.sub,
+      },
+      (record) => this.startPropertyPurchase(dto, actor, record),
+    );
+  }
+
+  private async startPropertyPurchase(
+    dto: StartPurchaseDto,
+    actor: JwtPayload,
+    record: (extra: MoneyFields) => void,
+  ) {
+    if (actor.role !== UserRole.BUYER && !this.isStaff(actor.role)) {
+      throw new ForbiddenException("Only buyers can initiate payments");
+    }
+
+    const tx = await this.prisma.transaction.findUnique({
+      where: { id: dto.transactionId },
+      include: { listing: true, ...PURCHASE_FACTS_INCLUDE },
+    });
+    if (!tx) throw new NotFoundException("Transaction not found");
+    if (tx.buyerId !== actor.sub && !this.isStaff(actor.role)) {
+      throw new ForbiddenException();
+    }
+
+    // The same call the transaction serializer makes, so the button the buyer was shown and the
+    // decision taken here cannot disagree. This is the one that matters: the other only hides a
+    // button, and a hidden button is a courtesy rather than a control.
+    const readiness = evaluatePurchaseReadiness(
+      purchaseFactsFrom(tx, purchaseFlagsFrom(this.featureFlags)),
+    );
+    if (!readiness.canPurchase) {
+      record({ outcome: `blocked-${readiness.blockedBy}` });
+      throw this.purchaseRefusal(readiness);
+    }
+
+    if (!tx.listing) throw new NotFoundException("Listing not found");
+    const amount = tx.listing.price;
+    if (Number(amount) <= 0) {
+      throw new BadRequestException("This property has no price set, so it cannot be purchased");
+    }
+    record({ amount: amount.toString(), amountMinor: Math.round(Number(amount) * 100) });
+
+    // Criterion 2. Before the payment row and before the gateway, because this is the record that an
+    // attempt happened at all, and a checkout the buyer walks away from writes nothing else.
+    await this.transactionState.advance(
+      this.prisma,
+      tx.id,
+      TransactionStatus.PURCHASE_PENDING,
+    );
+
+    return this.initiatePayment(
+      {
+        amount: Number(amount),
+        currency: tx.listing.currency,
+        transactionId: tx.id,
+        listingId: tx.listingId ?? undefined,
+        callbackUrl: dto.callbackUrl,
+        intent: PaymentIntent.PROPERTY_PURCHASE,
+      },
+      actor,
+      record,
+    );
+  }
+
+  /**
+   * Turns a refusal into the status code that describes it, keeping the machine-readable code.
+   *
+   * The browser needs to tell these apart to say anything useful, and prose in a message is not
+   * something a client should be parsing, so `blockedBy` travels in the body alongside the reason.
+   *
+   * A dark flag answers 404 rather than 403, which is what `FeatureGuard` does on the route itself.
+   * It is repeated here because this method is also reachable from a request that raced the flag
+   * being turned off, and a feature that is off should not confirm it exists.
+   */
+  private purchaseRefusal(readiness: PurchaseReadiness) {
+    const body = { message: readiness.reason, blockedBy: readiness.blockedBy };
+    if (readiness.blockedBy === PURCHASE_BLOCK.FEATURE_OFF) {
+      return new NotFoundException(body);
+    }
+    if (
+      readiness.blockedBy === PURCHASE_BLOCK.VERDICT_AGAINST ||
+      readiness.blockedBy === PURCHASE_BLOCK.KYC_REQUIRED
+    ) {
+      return new ForbiddenException(body);
+    }
+    // Everything else is a disagreement about where the transaction is, which is a conflict rather
+    // than a bad request: the same call would have been fine a status earlier or later.
+    return new ConflictException(body);
+  }
+
+  /**
+   * Criterion 4. Puts a transaction back where it was when a purchase checkout does not complete.
+   *
+   * Called from every place a payment can stop short: the gateway refusing to open a checkout, a
+   * verify that comes back failed, a `charge.failed` delivery, and the buyer closing the window. It
+   * is keyed off the payment row rather than the caller, so none of those four has to remember what
+   * kind of payment it was holding.
+   *
+   * Nothing is deleted, because nothing was created. An escrow hold is only ever placed by a
+   * successful charge, so a purchase that failed leaves no escrow row to clean up.
+   */
+  private async returnAbandonedPurchase(payment: {
+    intent: PaymentIntent;
+    transactionId: string | null;
+  }) {
+    if (payment.intent !== PaymentIntent.PROPERTY_PURCHASE || !payment.transactionId) return;
+    await this.transactionState.revertIfAt(
+      this.prisma,
+      payment.transactionId,
+      TransactionStatus.PURCHASE_PENDING,
+      TransactionStatus.DD_COMPLETE,
+    );
+  }
+
+  /**
+   * The buyer closed the checkout window. E1-S4 criterion 4.
+   *
+   * The gateway says nothing when a buyer dismisses the popup, so without this the transaction sits
+   * at `PURCHASE_PENDING` with no payment behind it and no way back to the button. The browser calls
+   * this on cancel and the transaction returns to `DD_COMPLETE`.
+   *
+   * It refuses anything that is not a property purchase on purpose. A due diligence payment that is
+   * abandoned changes no transaction status, so there would be nothing for this to do, and a route
+   * that silently does nothing is worse than one that says what it is for.
+   */
+  async abandonPayment(paymentId: string, actor: JwtPayload) {
+    const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment) throw new NotFoundException("Payment not found");
+    if (payment.payerId !== actor.sub && !this.isStaff(actor.role)) {
+      throw new ForbiddenException();
+    }
+    if (payment.intent !== PaymentIntent.PROPERTY_PURCHASE) {
+      throw new BadRequestException("Only a property purchase checkout can be abandoned");
+    }
+
+    // Conditional for the same reason the webhook's failed branch is. The buyer closing the window
+    // a moment after paying is an ordinary race, and the money landing has to win it.
+    const marked = await this.prisma.payment.updateMany({
+      where: { id: payment.id, status: { not: PaymentStatus.SUCCEEDED } },
+      data: { status: PaymentStatus.FAILED },
+    });
+    if (marked.count > 0) {
+      await this.returnAbandonedPurchase(payment);
+    }
+
+    const updated = await this.prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    return this.serializePayment(updated);
+  }
+
   private async initiatePayment(
     dto: InitiatePaymentDto,
     actor: JwtPayload,
@@ -184,10 +368,16 @@ export class PaymentsService {
     if (!dto.listingId && !dto.transactionId) {
       throw new BadRequestException("Provide listingId or transactionId");
     }
+    const intent = dto.intent ?? PaymentIntent.DD_SERVICE;
     if (dto.listingId) {
       const listing = await this.prisma.listing.findUnique({ where: { id: dto.listingId } });
       if (!listing) throw new NotFoundException("Listing not found");
-      if (listing.status !== ListingStatus.LIVE && !this.isStaff(actor.role)) {
+      // A property being bought is not live and should not be. Paying for due diligence is what
+      // took it to UNDER_OFFER in the first place, so insisting on LIVE here would mean the only
+      // buyer entitled to purchase is the one buyer the listing is now closed to. The purchase has
+      // its own gate a few methods up, and that one reads the transaction rather than the listing.
+      const mustBeLive = intent !== PaymentIntent.PROPERTY_PURCHASE;
+      if (mustBeLive && listing.status !== ListingStatus.LIVE && !this.isStaff(actor.role)) {
         throw new BadRequestException("Payments are only allowed for live listings");
       }
     }
@@ -203,7 +393,6 @@ export class PaymentsService {
     }
 
     const currency = dto.currency ?? "NGN";
-    const intent = dto.intent ?? PaymentIntent.DD_SERVICE;
     const payment = await this.prisma.payment.create({
       data: {
         payerId: actor.sub,
@@ -272,6 +461,9 @@ export class PaymentsService {
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED, metadata: { error: message } as object },
       });
+      // The gateway never opened a checkout, so the buyer never saw one. Leaving them at
+      // PURCHASE_PENDING would read as a purchase in flight when nothing was ever in flight.
+      await this.returnAbandonedPurchase(payment);
       if (message.includes("fetch") || message.includes("network")) {
         throw new ServiceUnavailableException(
           "Could not reach the payment provider. Please try again.",
@@ -366,15 +558,20 @@ export class PaymentsService {
         }
       } else if (p.intent === PaymentIntent.PROPERTY_PURCHASE) {
         if (p.transactionId) {
-          await tx.transaction.updateMany({
-            where: {
-              id: p.transactionId,
-              status: {
-                notIn: [TransactionStatus.COMPLETED, TransactionStatus.PURCHASE_IN_ESCROW],
-              },
-            },
-            data: { status: TransactionStatus.PURCHASE_IN_ESCROW },
-          });
+          // E1-S4 criterion 3, and the gap E1-S2 recorded, closed for the purchase path. It is the
+          // state machine that moves this now, through the same client the claim was made on, so
+          // the payment and the transaction commit together or not at all.
+          //
+          // The machine refuses a transaction that has already completed, where the loose update it
+          // replaces quietly matched nothing and then let the escrow hold below run anyway, putting
+          // fresh money against a released purchase. A refusal here rolls the claim back with it,
+          // the payment stays unclaimed, and the money is left visibly unreconciled rather than
+          // invisibly misapplied. That is the right way round for somebody to notice.
+          await this.transactionState.advance(
+            tx,
+            p.transactionId,
+            TransactionStatus.PURCHASE_IN_ESCROW,
+          );
         }
       }
       return true;
@@ -478,6 +675,8 @@ export class PaymentsService {
         where: { id: payment.id },
         data: { status: PaymentStatus.FAILED },
       });
+      // Criterion 4. The card was declined, so the buyer goes back to the button they pressed.
+      await this.returnAbandonedPurchase(payment);
     }
 
     const updated = await this.prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
@@ -565,6 +764,12 @@ export class PaymentsService {
         where: { id: payment.id, status: { not: PaymentStatus.SUCCEEDED } },
         data: { status: PaymentStatus.FAILED },
       });
+      // Hung off the same count for the same reason. A charge.failed that arrived after the money
+      // landed changed no payment and must change no transaction either, or a late delivery would
+      // drag a purchase out of escrow and hand the buyer the button back with their money held.
+      if (marked.count > 0) {
+        await this.returnAbandonedPurchase(payment);
+      }
       record({ outcome: marked.count > 0 ? "charge-failed" : "duplicate-ignored" });
     } else {
       record({ outcome: "ignored" });

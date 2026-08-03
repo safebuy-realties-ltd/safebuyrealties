@@ -8,6 +8,8 @@ import { EscrowService } from "../escrow/escrow.service";
 import { PaystackService } from "./paystack.service";
 import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
+import { TransactionStateService } from "../transactions/transaction-state.service";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
 import { assessFreshness, claimPaymentForSuccess, webhookMaxAgeMs } from "./webhook-idempotency";
 
 /**
@@ -261,6 +263,10 @@ describe("PaymentsService webhook idempotency", () => {
         { provide: PaystackService, useValue: { isConfigured: jest.fn().mockReturnValue(true) } },
         { provide: GuestCheckoutService, useValue: guestCheckout },
         { provide: StandaloneDdService, useValue: { completePayment: jest.fn() } },
+        // E1-S4. The real state service, because the purchase move is now its job and a stub here
+        // would let a duplicate delivery move a transaction the second time round.
+        TransactionStateService,
+        { provide: FeatureFlagsService, useValue: { isEnabled: () => true } },
       ],
     }).compile();
 

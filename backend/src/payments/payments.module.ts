@@ -6,6 +6,7 @@ import { EscrowModule } from "../escrow/escrow.module";
 import { PaystackModule } from "./paystack.module";
 import { GuestCheckoutModule } from "../guest-checkout/guest-checkout.module";
 import { StandaloneDdModule } from "../standalone-dd/standalone-dd.module";
+import { TransactionsModule } from "../transactions/transactions.module";
 
 @Module({
   imports: [
@@ -13,6 +14,9 @@ import { StandaloneDdModule } from "../standalone-dd/standalone-dd.module";
     PaystackModule,
     forwardRef(() => GuestCheckoutModule),
     StandaloneDdModule,
+    // For TransactionStateService. Plain rather than forwardRef because TransactionsModule imports
+    // nothing, so there is no cycle to break.
+    TransactionsModule,
   ],
   controllers: [PaymentsController, WebhooksController],
   providers: [PaymentsService],

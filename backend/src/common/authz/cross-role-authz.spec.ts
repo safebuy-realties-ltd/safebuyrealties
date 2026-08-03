@@ -133,6 +133,7 @@ const RESOURCE_SCOPED = [
   "PATCH /tasks/:id",
   "GET /payments/:id",
   "POST /payments/:id/verify",
+  "POST /payments/:id/abandon",
   "GET /transactions/:id",
   "GET /escrow/:transactionId",
   "DELETE /auth/sessions/:id",
@@ -174,6 +175,7 @@ GET /tasks/me/:id                                     | 403   403   403   403   
 PATCH /tasks/:id                                      | 403   403   403   403   allow 403   allow allow allow 401
 GET /payments/:id                                     | allow 403   403   403   403   403   allow allow allow 401
 POST /payments/:id/verify                             | allow 403   403   403   403   403   allow allow allow 401
+POST /payments/:id/abandon                            | allow 403   403   403   403   403   allow allow allow 401
 GET /transactions/:id                                 | allow 403   403   403   403   403   allow allow allow 401
 GET /escrow/:transactionId                            | allow 403   allow 403   403   403   allow allow allow 401
 DELETE /auth/sessions/:id (buyer-a)                   | allow 404   404   404   404   404   404   404   404   401
@@ -379,6 +381,15 @@ const CASES: Case[] = [
     run: (s, a) => s.payments.verifyTransaction("payment-a", a),
   },
   {
+    label: "POST /payments/:id/abandon",
+    route: "POST /payments/:id/abandon",
+    denial:
+      "403, the same ownership check as the read and the verify. Abandoning is what puts a " +
+      "transaction back to DD_COMPLETE, so a stranger reaching it could walk somebody else's " +
+      "purchase backwards out of checkout while they were still on the gateway's page.",
+    run: (s, a) => s.payments.abandonPayment("payment-a", a),
+  },
+  {
     label: "GET /transactions/:id",
     route: "GET /transactions/:id",
     denial:
@@ -499,7 +510,7 @@ describe("path-parameter route census (criterion 5)", () => {
   it("holds the buckets at the sizes they were reviewed at", () => {
     const operator = paramRoutes.filter(isOperatorRoute).length;
     expect(operator).toBe(25);
-    expect(RESOURCE_SCOPED.length).toBe(25);
+    expect(RESOURCE_SCOPED.length).toBe(26);
     expect(Object.keys(PUBLIC_BY_DESIGN).length).toBe(7);
     expect(operator + RESOURCE_SCOPED.length + Object.keys(PUBLIC_BY_DESIGN).length + 1).toBe(
       paramRoutes.length,

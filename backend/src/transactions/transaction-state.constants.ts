@@ -21,11 +21,15 @@ import { TransactionStatus } from "@prisma/client";
  * shortcut for convenience, it is what a small case looks like. An operator can sign off a case
  * that was answered from documents already on file, and no professional was ever assigned to it.
  *
- * `PURCHASE_PENDING` has an edge in and an edge out and nothing in the codebase writes it today.
- * `EscrowService` reads it as one of the statuses that satisfy the due diligence release condition,
- * so the value is live in a decision even though no path sets it. It is declared here rather than
- * dropped, because dropping it would make the release condition read against a status this table
- * says cannot exist.
+ * `PURCHASE_PENDING` is the only status with an edge that goes backwards, and E1-S4 is why. A buyer
+ * who starts a property purchase is moved there before the gateway is called, so an abandoned
+ * checkout is distinguishable from one that never started. An abandoned checkout then has to lead
+ * somewhere, and the only honest destination is the status the buyer was in before they pressed the
+ * button. Without that edge the alternative is leaving them parked at `PURCHASE_PENDING` forever
+ * with no way to try again, which reads as a stuck transaction rather than a payment they walked
+ * away from. It is the one reversal in the table and it is narrow on purpose: it returns a buyer to
+ * a decision they had already earned, and it moves no money, because a checkout that never
+ * succeeded never created an escrow row.
  */
 export const TRANSACTION_TRANSITIONS: Readonly<
   Record<TransactionStatus, readonly TransactionStatus[]>
@@ -35,7 +39,7 @@ export const TRANSACTION_TRANSITIONS: Readonly<
   DD_PURCHASED: [TransactionStatus.DD_IN_PROGRESS, TransactionStatus.DD_COMPLETE],
   DD_IN_PROGRESS: [TransactionStatus.DD_COMPLETE],
   DD_COMPLETE: [TransactionStatus.PURCHASE_PENDING, TransactionStatus.PURCHASE_IN_ESCROW],
-  PURCHASE_PENDING: [TransactionStatus.PURCHASE_IN_ESCROW],
+  PURCHASE_PENDING: [TransactionStatus.PURCHASE_IN_ESCROW, TransactionStatus.DD_COMPLETE],
   PURCHASE_IN_ESCROW: [TransactionStatus.COMPLETED],
   COMPLETED: [],
 } as const;

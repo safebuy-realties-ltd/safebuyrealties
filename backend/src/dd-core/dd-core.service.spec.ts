@@ -7,6 +7,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
 import { TransactionStateService } from "../transactions/transaction-state.service";
+import { transactionPredecessors } from "../transactions/transaction-state.constants";
 import { DD_ORDER_STATUS, LISTING_DD_TRANSITIONS, type DdOrderStatus } from "./dd-case.constants";
 
 const ALL_STATUSES = Object.values(DD_ORDER_STATUS);
@@ -463,10 +464,13 @@ describe("DdCoreService", () => {
         where: { id: "order-1" },
         data: { verdict: "Title is clean" },
       });
+      // The guard clause is the table's predecessor set, read from the table rather than restated
+      // here. E1-S4 added PURCHASE_PENDING to it, and a hand-written list would have made that a
+      // failure in this file instead of a decision in the table.
       expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
         where: {
           id: "txn-1",
-          status: { in: [TransactionStatus.DD_PURCHASED, TransactionStatus.DD_IN_PROGRESS] },
+          status: { in: transactionPredecessors(TransactionStatus.DD_COMPLETE) },
         },
         data: { status: TransactionStatus.DD_COMPLETE },
       });

@@ -97,7 +97,20 @@ export function buildServices(prisma: PrismaService): Services {
     inspections: new InspectionsService(prisma),
     listings,
     notifications,
-    payments: new PaymentsService(prisma, notifications, escrow, stub(), stub(), stub()),
+    // E1-S4 adds the last two. The state service is the real one, because it is the thing that
+    // decides whether a purchase may move at all and stubbing it would let a wrong-role actor
+    // through a check the matrix is here to measure. The flag stub says on for the same reason
+    // `sessions` does: a route that answers 404 to everybody proves nothing about ownership.
+    payments: new PaymentsService(
+      prisma,
+      notifications,
+      escrow,
+      stub(),
+      stub(),
+      stub(),
+      new TransactionStateService(),
+      stub({ isEnabled: () => true }),
+    ),
     // E5-S5. The flag stub says on, because a matrix row for a route that answers 404 to everybody
     // while the flag is off would prove nothing about ownership. The config stub answers nothing so
     // the service falls back to its own defaults, which is the shape a deployment without the
@@ -109,7 +122,7 @@ export function buildServices(prisma: PrismaService): Services {
       stub({ get: () => undefined }),
     ),
     tasks: new TasksService(prisma, notifications),
-    transactions: new TransactionsService(prisma),
+    transactions: new TransactionsService(prisma, stub({ isEnabled: () => true })),
     users: new UsersService(prisma, stub()),
     verification: new VerificationService(prisma, stub(), notifications, listings),
   };

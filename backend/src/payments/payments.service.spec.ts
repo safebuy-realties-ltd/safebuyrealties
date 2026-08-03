@@ -7,6 +7,8 @@ import { EscrowService } from "../escrow/escrow.service";
 import { PaystackService } from "./paystack.service";
 import { GuestCheckoutService } from "../guest-checkout/guest-checkout.service";
 import { StandaloneDdService } from "../standalone-dd/standalone-dd.service";
+import { TransactionStateService } from "../transactions/transaction-state.service";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -76,6 +78,8 @@ describe("PaymentsService paystack integration", () => {
         { provide: PaystackService, useValue: paystack },
         { provide: GuestCheckoutService, useValue: { completePayment: jest.fn() } },
         { provide: StandaloneDdService, useValue: { completePayment: jest.fn() } },
+        TransactionStateService,
+        { provide: FeatureFlagsService, useValue: { isEnabled: () => true } },
       ],
     }).compile();
 
