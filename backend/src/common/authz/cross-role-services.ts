@@ -25,6 +25,7 @@ import { PaymentsService } from "../../payments/payments.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import type { StorageService } from "../../storage/storage.service";
 import { TasksService } from "../../tasks/tasks.service";
+import { TransactionStateService } from "../../transactions/transaction-state.service";
 import { TransactionsService } from "../../transactions/transactions.service";
 import { UsersService } from "../../users/users.service";
 import { VerificationService } from "../../verification/verification.service";
@@ -66,6 +67,9 @@ export function buildServices(prisma: PrismaService): Services {
   // because the report write runs through both before the response is built, and a stub there would
   // hide a reload that a wrong actor should never have reached. The checklist CMS answers with an
   // empty catalogue: it decides what a case says, never who may say it.
+  //
+  // E1-S2. `TransactionStateService` is real for the same reason and it holds no state of its own,
+  // so a fresh one here behaves exactly as the injected one does.
   const storage = stub<StorageService>({
     upload: async () => undefined,
     getSignedUrl: async (key: string) => `https://storage.test/${key}`,
@@ -79,7 +83,7 @@ export function buildServices(prisma: PrismaService): Services {
   return {
     ddCases: new DueDiligenceCaseService(
       prisma,
-      new DdCoreService(prisma, storage, ddCms, ddSerializer),
+      new DdCoreService(prisma, storage, ddCms, ddSerializer, new TransactionStateService()),
       ddSerializer,
       notifications,
       stub(),

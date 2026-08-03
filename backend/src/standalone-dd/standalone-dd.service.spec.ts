@@ -13,6 +13,7 @@ import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
 import { DdCoreService } from "../dd-core/dd-core.service";
 import { DdCaseSerializer } from "../dd-core/dd-case.serializer";
+import { TransactionStateService } from "../transactions/transaction-state.service";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -60,7 +61,8 @@ describe("StandaloneDdService", () => {
       transaction: {
         create: jest.fn(),
         update: jest.fn(),
-        updateMany: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUnique: jest.fn(),
       },
       dueDiligenceAssignment: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
       dueDiligenceOrder: {
@@ -68,6 +70,7 @@ describe("StandaloneDdService", () => {
         create: jest.fn(),
         upsert: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       payment: {
         create: jest.fn(),
@@ -150,6 +153,7 @@ describe("StandaloneDdService", () => {
         // service, and a stubbed serialiser would prove nothing at all.
         DdCaseSerializer,
         DdCoreService,
+        TransactionStateService,
       ],
     }).compile();
 
@@ -646,8 +650,6 @@ describe("StandaloneDdService", () => {
       },
       transaction: { id: "tx-1", payments: [] },
     });
-    (prisma.transaction.update as jest.Mock).mockResolvedValue({});
-
     const result = await service.updateOrder(
       "dd-1",
       { status: "COMPLETE", verdict: "PROCEED", staffNotes: "All clear." },
@@ -659,8 +661,13 @@ describe("StandaloneDdService", () => {
       },
     );
 
-    expect(prisma.transaction.update).toHaveBeenCalledWith({
-      where: { id: "tx-1" },
+    // E1-S2. The move is a conditional write carrying the statuses it is allowed to move from,
+    // so the check and the write are one statement rather than a read followed by a hope.
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "tx-1",
+        status: { in: [TransactionStatus.DD_PURCHASED, TransactionStatus.DD_IN_PROGRESS] },
+      },
       data: { status: TransactionStatus.DD_COMPLETE },
     });
     expect(result.status).toBe("COMPLETE");

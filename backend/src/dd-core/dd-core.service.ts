@@ -1,11 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Prisma, TransactionStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
+import { TransactionStateService } from "../transactions/transaction-state.service";
 import {
   DD_ASSIGNMENT_STATUS,
   DD_ORDER_STATUS,
+  DD_STATUS_TO_TRANSACTION_STATUS,
   type DdOrderStatus,
   allowedDdTransitions,
   canTransitionDd,
@@ -40,6 +47,19 @@ export type DdStatusChange = {
 };
 
 /**
+ * What a status write actually did, as opposed to what was asked for.
+ *
+ * Both flags are false when a request repeats a move that has already happened, which is how a
+ * caller tells a genuine sign-off from a second click on the same button. Notifications hang off
+ * these rather than off the request, because a request is what somebody wanted and these are what
+ * the database agreed to.
+ */
+export type DdStatusChangeResult = {
+  statusChanged: boolean;
+  transactionChanged: boolean;
+};
+
+/**
  * The due diligence case machinery, shared by the listing path and the standalone path.
  *
  * Every method here is a write or a read against a `DueDiligenceOrder` and nothing more. Policy
@@ -55,6 +75,7 @@ export class DdCoreService {
     private readonly storage: StorageService,
     private readonly ddCms: DdCmsService,
     private readonly serializer: DdCaseSerializer,
+    private readonly transactionState: TransactionStateService,
   ) {}
 
   /** Reads one case with every relation the serialiser needs, or 404. */
@@ -186,6 +207,11 @@ export class DdCoreService {
    *
    * Assigning the second professional to a case already in progress leaves the status alone, which
    * is why the flip is conditional rather than unconditional.
+   *
+   * All three writes are one unit of work. An assignment that exists against a case still reading
+   * `PAID` is a professional holding work nobody can see they are holding, and a case reading
+   * `IN_PROGRESS` whose transaction is still `DD_PURCHASED` is a buyer whose journey has stalled
+   * with no way to tell from the transaction that it has not.
    */
   async createAssignment(
     order: DdOrderWithRelations,
@@ -196,64 +222,129 @@ export class DdCoreService {
     const title =
       input.title?.trim() ||
       `Due diligence — ${scheduleCode.replace(/_/g, " ")} (${order.serviceId ?? order.caseId ?? order.id})`;
+    const startsWork =
+      order.status === DD_ORDER_STATUS.PAID || order.status === DD_ORDER_STATUS.SUBMITTED;
 
-    const assignment = await this.prisma.dueDiligenceAssignment.create({
-      data: {
-        dueDiligenceOrderId: order.id,
-        professionalId,
-        scheduleCode,
-        title,
-        notes: input.notes?.trim() || null,
-        status: DD_ASSIGNMENT_STATUS.PENDING,
-      },
-    });
-
-    if (order.status === DD_ORDER_STATUS.PAID || order.status === DD_ORDER_STATUS.SUBMITTED) {
-      await this.prisma.dueDiligenceOrder.update({
-        where: { id: order.id },
-        data: { status: DD_ORDER_STATUS.IN_PROGRESS },
+    return this.prisma.$transaction(async (db) => {
+      const assignment = await db.dueDiligenceAssignment.create({
+        data: {
+          dueDiligenceOrderId: order.id,
+          professionalId,
+          scheduleCode,
+          title,
+          notes: input.notes?.trim() || null,
+          status: DD_ASSIGNMENT_STATUS.PENDING,
+        },
       });
-      if (order.transactionId) {
-        await this.prisma.transaction.update({
-          where: { id: order.transactionId },
-          data: { status: TransactionStatus.DD_IN_PROGRESS },
-        });
-      }
-    }
 
-    return assignment;
+      if (startsWork) {
+        await db.dueDiligenceOrder.update({
+          where: { id: order.id },
+          data: { status: DD_ORDER_STATUS.IN_PROGRESS },
+        });
+        if (order.transactionId) {
+          await this.transactionState.advance(
+            db,
+            order.transactionId,
+            TransactionStatus.DD_IN_PROGRESS,
+          );
+        }
+      }
+
+      return assignment;
+    });
   }
 
   /**
    * Writes a status, a verdict and staff notes, and carries the transaction along with it.
    *
    * Each field is written only when the caller supplied it, so a `PATCH` carrying notes alone does
-   * not silently blank a verdict somebody else recorded.
+   * not silently blank a verdict somebody else recorded. The status is written separately from the
+   * other two for the same reason in reverse: a second sign-off must not move the case again, but it
+   * may perfectly well be carrying a corrected verdict, and dropping both together would lose the
+   * correction along with the move nobody wanted.
+   *
+   * The case write and the transaction move share one database transaction, because the two of them
+   * are one fact. A sign-off that reached the case and not the transaction would show a buyer a
+   * completed report while escrow still refuses to release against it, and nothing in the system
+   * would say which of the two rows was the one telling the truth.
+   *
+   * The status write carries the status it expects to find, so it is the same conditional update the
+   * transaction move uses and it is safe against the same race. Two operators signing off the same
+   * case at once produce one move and one set of notifications, because only one of the two writes
+   * finds the case where it left it. The other reads the case back to see what happened to it: at
+   * the status it was aiming for, which is a replay and returns quietly, or somewhere else entirely,
+   * which is a 409 rather than a silent overwrite of a decision somebody else made.
    */
-  async applyStatusChange(order: DdOrderWithRelations, change: DdStatusChange) {
-    await this.prisma.dueDiligenceOrder.update({
-      where: { id: order.id },
-      data: {
-        ...(change.status ? { status: change.status } : {}),
+  async applyStatusChange(
+    order: DdOrderWithRelations,
+    change: DdStatusChange,
+  ): Promise<DdStatusChangeResult> {
+    const nextStatus = (change.status as DdOrderStatus | undefined) ?? null;
+    const nextTransactionStatus = nextStatus
+      ? (DD_STATUS_TO_TRANSACTION_STATUS[nextStatus] ?? null)
+      : null;
+
+    return this.prisma.$transaction(async (db) => {
+      const statusChanged = nextStatus ? await this.writeStatus(db, order, nextStatus) : false;
+
+      const fields = {
         ...(change.verdict !== undefined ? { verdict: change.verdict.trim() || null } : {}),
         ...(change.staffNotes !== undefined
           ? { staffNotes: change.staffNotes.trim() || null }
           : {}),
-        ...(change.status === DD_ORDER_STATUS.COMPLETE ? { completedAt: new Date() } : {}),
+      };
+      if (Object.keys(fields).length > 0) {
+        await db.dueDiligenceOrder.update({ where: { id: order.id }, data: fields });
+      }
+
+      if (!order.transactionId || !nextTransactionStatus) {
+        return { statusChanged, transactionChanged: false };
+      }
+
+      const move = await this.transactionState.advance(
+        db,
+        order.transactionId,
+        nextTransactionStatus,
+      );
+      return { statusChanged, transactionChanged: move.changed };
+    });
+  }
+
+  /**
+   * Moves the case to `next` if it is still where the caller found it, and says whether it moved.
+   *
+   * `completedAt` is stamped by the same statement that writes `COMPLETE`, so a case cannot be
+   * completed without a completion time and a replayed sign-off cannot restamp one. The read on the
+   * failure path is the only read here, and it exists to tell a replay from a collision.
+   */
+  private async writeStatus(
+    db: Pick<Prisma.TransactionClient, "dueDiligenceOrder">,
+    order: DdOrderWithRelations,
+    next: DdOrderStatus,
+  ): Promise<boolean> {
+    if (next === order.status) return false;
+
+    const moved = await db.dueDiligenceOrder.updateMany({
+      where: { id: order.id, status: order.status },
+      data: {
+        status: next,
+        ...(next === DD_ORDER_STATUS.COMPLETE && !order.completedAt
+          ? { completedAt: new Date() }
+          : {}),
       },
     });
+    if (moved.count > 0) return true;
 
-    if (order.transactionId && change.status) {
-      await this.prisma.transaction.update({
-        where: { id: order.transactionId },
-        data: {
-          status:
-            change.status === DD_ORDER_STATUS.COMPLETE
-              ? TransactionStatus.DD_COMPLETE
-              : TransactionStatus.DD_IN_PROGRESS,
-        },
-      });
-    }
+    const current = await db.dueDiligenceOrder.findUnique({
+      where: { id: order.id },
+      select: { status: true },
+    });
+    if (!current) throw new NotFoundException("Case not found");
+    if (current.status === next) return false;
+    throw new ConflictException(
+      `Case moved to ${current.status} while this change was being made, so it cannot move to ${next}`,
+    );
   }
 
   /** Uploads an operator's report against the case and appends its key. */
@@ -274,9 +365,14 @@ export class DdCoreService {
   /**
    * Uploads a professional's report against their assignment.
    *
-   * The assignment and the case move together in one transaction. A report that marked the
-   * assignment submitted but failed to reach the case would leave a professional believing they had
-   * delivered and an operator seeing nothing to review.
+   * The assignment, the case and the transaction move together in one transaction. A report that
+   * marked the assignment submitted but failed to reach the case would leave a professional
+   * believing they had delivered and an operator seeing nothing to review.
+   *
+   * The first report on a paid case starts the work as surely as the first assignment does, so it
+   * carries the transaction to `DD_IN_PROGRESS` the same way. Without this a case can reach
+   * `IN_PROGRESS` through a report while its transaction still reads `DD_PURCHASED`, and the two
+   * rows disagree about whether anything is happening.
    */
   async attachAssignmentReport(
     order: DdOrderWithRelations,
@@ -286,24 +382,31 @@ export class DdCoreService {
     if (!file) throw new BadRequestException("Report file is required");
     const storageKey = `due-diligence/${order.id}/assignments/${assignment.id}/${Date.now()}-${this.safeName(file)}`;
     await this.storage.upload(file.buffer, storageKey, file.mimetype);
+    const startsWork = order.status === DD_ORDER_STATUS.PAID;
 
-    await this.prisma.$transaction([
-      this.prisma.dueDiligenceAssignment.update({
+    await this.prisma.$transaction(async (db) => {
+      await db.dueDiligenceAssignment.update({
         where: { id: assignment.id },
         data: {
           reportStorageKey: storageKey,
           status: DD_ASSIGNMENT_STATUS.SUBMITTED,
         },
-      }),
-      this.prisma.dueDiligenceOrder.update({
+      });
+      await db.dueDiligenceOrder.update({
         where: { id: order.id },
         data: {
           reportStorageKeys: [...this.reportKeys(order), storageKey] as Prisma.InputJsonValue,
-          status:
-            order.status === DD_ORDER_STATUS.PAID ? DD_ORDER_STATUS.IN_PROGRESS : order.status,
+          status: startsWork ? DD_ORDER_STATUS.IN_PROGRESS : order.status,
         },
-      }),
-    ]);
+      });
+      if (startsWork && order.transactionId) {
+        await this.transactionState.advance(
+          db,
+          order.transactionId,
+          TransactionStatus.DD_IN_PROGRESS,
+        );
+      }
+    });
     return storageKey;
   }
 

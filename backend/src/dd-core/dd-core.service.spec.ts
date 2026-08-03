@@ -1,11 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Prisma, TransactionStatus, UserRole } from "@prisma/client";
 import { DdCoreService } from "./dd-core.service";
 import { DdCaseSerializer, type DdOrderWithRelations } from "./dd-case.serializer";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
+import { TransactionStateService } from "../transactions/transaction-state.service";
 import { DD_ORDER_STATUS, LISTING_DD_TRANSITIONS, type DdOrderStatus } from "./dd-case.constants";
 
 const ALL_STATUSES = Object.values(DD_ORDER_STATUS);
@@ -82,19 +83,35 @@ describe("DdCoreService", () => {
 
   beforeEach(async () => {
     prisma = {
-      dueDiligenceOrder: { findUnique: jest.fn(), update: jest.fn() },
+      dueDiligenceOrder: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
       dueDiligenceAssignment: {
         create: jest.fn(),
         update: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
       },
-      transaction: { update: jest.fn() },
+      transaction: {
+        update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUnique: jest.fn(),
+      },
       user: { findUnique: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
       serviceRequest: { findUnique: jest.fn() },
       serviceBundle: { findUnique: jest.fn() },
       serviceCatalogItem: { findMany: jest.fn().mockResolvedValue([]) },
-      $transaction: jest.fn().mockResolvedValue([]),
+      // The interactive form hands the callback a client to write through, and every write in this
+      // service now goes through one. The double runs the callback against itself, so a test reads
+      // the same mocks whether the call was wrapped in a transaction or not. The array form is kept
+      // for the callers that still use it.
+      $transaction: jest.fn(async (arg: unknown) =>
+        typeof arg === "function"
+          ? (arg as (db: unknown) => Promise<unknown>)(prisma)
+          : Promise.all(arg as Promise<unknown>[]),
+      ),
     };
     storage = {
       upload: jest.fn().mockResolvedValue(undefined),
@@ -105,6 +122,7 @@ describe("DdCoreService", () => {
       providers: [
         DdCoreService,
         DdCaseSerializer,
+        TransactionStateService,
         { provide: PrismaService, useValue: prisma },
         { provide: StorageService, useValue: storage },
         {
@@ -351,10 +369,23 @@ describe("DdCoreService", () => {
         where: { id: "order-1" },
         data: { status: DD_ORDER_STATUS.IN_PROGRESS },
       });
-      expect(prisma.transaction.update).toHaveBeenCalledWith({
-        where: { id: "txn-1" },
+      expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+        where: { id: "txn-1", status: { in: [TransactionStatus.DD_PURCHASED] } },
         data: { status: TransactionStatus.DD_IN_PROGRESS },
       });
+    });
+
+    // E1-S2 criterion 4. All three writes are one unit of work, so an assignment cannot exist
+    // against a case that still reads PAID, and a case cannot read IN_PROGRESS while its
+    // transaction still says the buyer is waiting for somebody to pick the work up.
+    it("puts the assignment, the case and the transaction in one database transaction", async () => {
+      await service.createAssignment(orderFixture({ status: DD_ORDER_STATUS.PAID }), "pro-1", {
+        professionalId: "pro-1",
+        scheduleCode: "LEGAL_CHECK",
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(typeof prisma.$transaction.mock.calls[0][0]).toBe("function");
     });
 
     it("leaves a case already in progress where it is", async () => {
@@ -366,7 +397,21 @@ describe("DdCoreService", () => {
       });
 
       expect(prisma.dueDiligenceOrder.update).not.toHaveBeenCalled();
-      expect(prisma.transaction.update).not.toHaveBeenCalled();
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+    });
+
+    // A standalone case bought by a guest has no transaction to carry, and the assignment must
+    // still be written. Reaching for a transaction id that is null would fail the whole write.
+    it("assigns work on a case that has no transaction behind it", async () => {
+      const order = orderFixture({ status: DD_ORDER_STATUS.PAID, transactionId: null });
+
+      const assignment = await service.createAssignment(order, "pro-1", {
+        professionalId: "pro-1",
+        scheduleCode: "LEGAL_CHECK",
+      });
+
+      expect(assignment.id).toBe("assign-1");
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
     });
 
     it("upper-cases the schedule code and builds a title when none is given", async () => {
@@ -392,7 +437,7 @@ describe("DdCoreService", () => {
 
   describe("applyStatusChange", () => {
     it("writes only the fields the caller supplied", async () => {
-      await service.applyStatusChange(orderFixture({ verdict: "Title is clean" }), {
+      const result = await service.applyStatusChange(orderFixture({ verdict: "Title is clean" }), {
         staffNotes: "Chased the survey plan",
       });
 
@@ -400,23 +445,91 @@ describe("DdCoreService", () => {
         where: { id: "order-1" },
         data: { staffNotes: "Chased the survey plan" },
       });
-      expect(prisma.transaction.update).not.toHaveBeenCalled();
+      expect(prisma.dueDiligenceOrder.updateMany).not.toHaveBeenCalled();
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ statusChanged: false, transactionChanged: false });
     });
 
     it("stamps completedAt and closes the transaction on completion", async () => {
-      await service.applyStatusChange(orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }), {
-        status: DD_ORDER_STATUS.COMPLETE,
-        verdict: "Title is clean",
-      });
+      const result = await service.applyStatusChange(
+        orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }),
+        { status: DD_ORDER_STATUS.COMPLETE, verdict: "Title is clean" },
+      );
 
-      const data = prisma.dueDiligenceOrder.update.mock.calls[0][0].data;
+      const data = prisma.dueDiligenceOrder.updateMany.mock.calls[0][0].data;
       expect(data.status).toBe(DD_ORDER_STATUS.COMPLETE);
-      expect(data.verdict).toBe("Title is clean");
       expect(data.completedAt).toBeInstanceOf(Date);
-      expect(prisma.transaction.update).toHaveBeenCalledWith({
-        where: { id: "txn-1" },
+      expect(prisma.dueDiligenceOrder.update).toHaveBeenCalledWith({
+        where: { id: "order-1" },
+        data: { verdict: "Title is clean" },
+      });
+      expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: "txn-1",
+          status: { in: [TransactionStatus.DD_PURCHASED, TransactionStatus.DD_IN_PROGRESS] },
+        },
         data: { status: TransactionStatus.DD_COMPLETE },
       });
+      expect(result).toEqual({ statusChanged: true, transactionChanged: true });
+    });
+
+    // E1-S2 criterion 4. The case write and the transaction move are one unit of work, so a
+    // completed case whose transaction never moved cannot survive a failure between the two.
+    it("puts the case write and the transaction move in one database transaction", async () => {
+      await service.applyStatusChange(orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }), {
+        status: DD_ORDER_STATUS.COMPLETE,
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(typeof prisma.$transaction.mock.calls[0][0]).toBe("function");
+    });
+
+    // E1-S2 criterion 5. The second sign-off writes nothing and says so, which is what the caller
+    // reads to decide that nobody needs telling twice.
+    it("is idempotent when the same completion is replayed", async () => {
+      const order = orderFixture({
+        status: DD_ORDER_STATUS.COMPLETE,
+        completedAt: new Date("2026-07-17T10:00:00.000Z"),
+      });
+      prisma.transaction.updateMany.mockResolvedValue({ count: 0 });
+      prisma.transaction.findUnique.mockResolvedValue({ status: TransactionStatus.DD_COMPLETE });
+
+      const result = await service.applyStatusChange(order, { status: DD_ORDER_STATUS.COMPLETE });
+
+      expect(prisma.dueDiligenceOrder.updateMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ statusChanged: false, transactionChanged: false });
+    });
+
+    // E1-S2 criterion 3, on the case row rather than the transaction row. Two operators signing
+    // off at once must not both believe they did it, and the loser gets a 409 rather than a 500.
+    it("rejects a case that moved somewhere else while the change was being made", async () => {
+      prisma.dueDiligenceOrder.updateMany.mockResolvedValue({ count: 0 });
+      prisma.dueDiligenceOrder.findUnique.mockResolvedValue({
+        status: DD_ORDER_STATUS.CANCELLED,
+      });
+
+      await expect(
+        service.applyStatusChange(orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }), {
+          status: DD_ORDER_STATUS.COMPLETE,
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+    });
+
+    // The bug this story fixes. The write this replaced was a ternary whose else branch was
+    // unconditional, so cancelling a case marked its transaction as in progress.
+    it("leaves the transaction alone when a case is cancelled", async () => {
+      const result = await service.applyStatusChange(
+        orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }),
+        { status: DD_ORDER_STATUS.CANCELLED },
+      );
+
+      expect(prisma.dueDiligenceOrder.updateMany).toHaveBeenCalledWith({
+        where: { id: "order-1", status: DD_ORDER_STATUS.IN_PROGRESS },
+        data: { status: DD_ORDER_STATUS.CANCELLED },
+      });
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ statusChanged: true, transactionChanged: false });
     });
 
     it("blanks a verdict that was explicitly sent as empty", async () => {
@@ -446,10 +559,11 @@ describe("DdCoreService", () => {
       expect(key).toContain("due-diligence/order-1/assignments/assign-1/");
       expect(key).toContain("survey_report.pdf");
 
-      // Both writes go into one $transaction call. A report that marked the assignment submitted
-      // but failed to reach the case would leave the professional believing they had delivered.
+      // All three writes go into one $transaction call. A report that marked the assignment
+      // submitted but failed to reach the case would leave the professional believing they had
+      // delivered and an operator seeing nothing to review.
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(prisma.$transaction.mock.calls[0][0]).toHaveLength(2);
+      expect(typeof prisma.$transaction.mock.calls[0][0]).toBe("function");
       expect(prisma.dueDiligenceAssignment.update).toHaveBeenCalledWith({
         where: { id: "assign-1" },
         data: { reportStorageKey: key, status: "SUBMITTED" },
@@ -461,6 +575,26 @@ describe("DdCoreService", () => {
           status: DD_ORDER_STATUS.IN_PROGRESS,
         },
       });
+      // E1-S2 criterion 1. The first report starts the work as surely as the first assignment
+      // does, so it carries the transaction the same way.
+      expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+        where: { id: "txn-1", status: { in: [TransactionStatus.DD_PURCHASED] } },
+        data: { status: TransactionStatus.DD_IN_PROGRESS },
+      });
+    });
+
+    it("leaves the transaction alone on a report against a case already in progress", async () => {
+      await service.attachAssignmentReport(
+        orderFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }),
+        { id: "assign-1" },
+        {
+          originalname: "survey.pdf",
+          buffer: Buffer.from("pdf"),
+          mimetype: "application/pdf",
+        } as Express.Multer.File,
+      );
+
+      expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
     });
 
     it("refuses an upload with no file", async () => {
