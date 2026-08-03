@@ -1,3 +1,5 @@
+import { TransactionStatus } from "@prisma/client";
+
 /**
  * The due diligence case vocabulary, declared once for both paths that use it.
  *
@@ -71,6 +73,33 @@ export const LISTING_DD_TRANSITIONS: Readonly<Record<DdOrderStatus, readonly DdO
  * written to bring the two together.
  */
 export const STANDALONE_DD_TRANSITIONS = null;
+
+/**
+ * What a case status means for the transaction the case hangs off, where it means anything at all.
+ *
+ * Only two of the six say anything. A case that goes to work puts its transaction in progress, a
+ * case that is signed off completes it, and the other four leave it alone. `PENDING`, `SUBMITTED`
+ * and `PAID` are the transaction's own business and it is already ahead of them: by the time a case
+ * reads `PAID` the money has landed and the transaction says `DD_PURCHASED`, so a case status
+ * cannot tell it anything it does not know.
+ *
+ * `CANCELLED` mapping to nothing is the correction this table exists to make. The write it replaces
+ * was a ternary whose else branch was unconditional, so every status that was not `COMPLETE` wrote
+ * `DD_IN_PROGRESS`, and cancelling a case marked its transaction as in progress. There is no
+ * cancelled status on the transaction enum to move to instead, and inventing one would be a schema
+ * change in a story that has no business making one, so an abandoned case leaves its transaction
+ * where it stands and the buyer's journey is closed by whoever closes journeys.
+ */
+export const DD_STATUS_TO_TRANSACTION_STATUS: Readonly<
+  Record<DdOrderStatus, TransactionStatus | null>
+> = {
+  PENDING: null,
+  SUBMITTED: null,
+  PAID: null,
+  IN_PROGRESS: TransactionStatus.DD_IN_PROGRESS,
+  COMPLETE: TransactionStatus.DD_COMPLETE,
+  CANCELLED: null,
+} as const;
 
 /** Whether a case has reached a status it cannot leave. */
 export function isTerminalDdStatus(status: string): boolean {

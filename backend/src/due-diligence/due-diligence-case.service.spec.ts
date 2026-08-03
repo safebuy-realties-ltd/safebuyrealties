@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { Prisma, ProfessionalType, UserRole } from "@prisma/client";
+import { Prisma, ProfessionalType, TransactionStatus, UserRole } from "@prisma/client";
 import { DueDiligenceCaseService } from "./due-diligence-case.service";
 import { DdCoreService } from "../dd-core/dd-core.service";
 import {
@@ -17,6 +17,7 @@ import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { TransactionStateService } from "../transactions/transaction-state.service";
 import { AuditAction } from "../audit/audit-actions.constants";
 import { NotificationType } from "../notifications/notification-types.constants";
 import { DD_ORDER_STATUS, DD_SOURCE } from "../dd-core/dd-case.constants";
@@ -146,15 +147,27 @@ describe("DueDiligenceCaseService", () => {
         findMany: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       dueDiligenceAssignment: { create: jest.fn(), update: jest.fn(), findUnique: jest.fn() },
-      transaction: { update: jest.fn() },
+      transaction: {
+        update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUnique: jest.fn(),
+      },
       user: { findUnique: jest.fn() },
       listing: { findUnique: jest.fn().mockResolvedValue({ sellerId: "seller-1" }) },
       serviceRequest: { findUnique: jest.fn().mockResolvedValue(null) },
       serviceBundle: { findUnique: jest.fn() },
       serviceCatalogItem: { findMany: jest.fn().mockResolvedValue([]) },
-      $transaction: jest.fn().mockResolvedValue([]),
+      // The interactive form hands the callback a client to write through. The double runs the
+      // callback against itself, so a test reads the same mocks either way. `list` overrides this
+      // with its own paged result, which is why the array form still has to work.
+      $transaction: jest.fn(async (arg: unknown) =>
+        typeof arg === "function"
+          ? (arg as (db: unknown) => Promise<unknown>)(prisma)
+          : Promise.all(arg as Promise<unknown>[]),
+      ),
     };
     notifications = { create: jest.fn(), createForStaff: jest.fn() };
     audit = { log: jest.fn() };
@@ -164,6 +177,7 @@ describe("DueDiligenceCaseService", () => {
         DueDiligenceCaseService,
         DdCoreService,
         DdCaseSerializer,
+        TransactionStateService,
         { provide: PrismaService, useValue: prisma },
         {
           provide: StorageService,
@@ -512,6 +526,52 @@ describe("DueDiligenceCaseService", () => {
         staff,
       );
 
+      expect(notifications.create).not.toHaveBeenCalled();
+    });
+
+    // E1-S2 criterion 5, at the level where the notifications actually live. An operator who signs
+    // the same case off twice is a double-clicked button, not an error, and the buyer must not be
+    // told twice that their report is ready.
+    it("does not tell anybody again when the same completion is replayed", async () => {
+      prisma.dueDiligenceOrder.findUnique.mockResolvedValue(
+        caseFixture({ status: DD_ORDER_STATUS.COMPLETE, verdict: "Title is clean" }),
+      );
+      prisma.transaction.updateMany.mockResolvedValue({ count: 0 });
+      prisma.transaction.findUnique.mockResolvedValue({ status: TransactionStatus.DD_COMPLETE });
+
+      await service.updateStatus(
+        "order-1",
+        { status: DD_ORDER_STATUS.COMPLETE, verdict: "Title is clean" },
+        staff,
+      );
+
+      expect(notifications.create).not.toHaveBeenCalled();
+      // The case is not moved a second time either, so `completedAt` keeps the time of the first
+      // sign-off rather than sliding forward on every retry.
+      expect(prisma.dueDiligenceOrder.updateMany).not.toHaveBeenCalled();
+    });
+
+    // The same criterion under the race it exists for. Two operators sign off within a second of
+    // each other: the first write moves the case, the second finds it already where it was sending
+    // it. That second request is not a conflict and it is not a second notification.
+    it("tells nobody when another operator got there first", async () => {
+      prisma.dueDiligenceOrder.findUnique
+        .mockResolvedValueOnce(caseFixture({ status: DD_ORDER_STATUS.IN_PROGRESS }))
+        .mockResolvedValue(
+          caseFixture({ status: DD_ORDER_STATUS.COMPLETE, verdict: "Title is clean" }),
+        );
+      // Nothing matched the conditional write, because the row had already left IN_PROGRESS.
+      prisma.dueDiligenceOrder.updateMany.mockResolvedValue({ count: 0 });
+      prisma.transaction.updateMany.mockResolvedValue({ count: 0 });
+      prisma.transaction.findUnique.mockResolvedValue({ status: TransactionStatus.DD_COMPLETE });
+
+      await service.updateStatus(
+        "order-1",
+        { status: DD_ORDER_STATUS.COMPLETE, verdict: "Title is clean" },
+        staff,
+      );
+
+      expect(prisma.dueDiligenceOrder.updateMany).toHaveBeenCalledTimes(1);
       expect(notifications.create).not.toHaveBeenCalled();
     });
 

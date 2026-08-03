@@ -164,6 +164,11 @@ export class DueDiligenceCaseService {
    * is still `PENDING` is wrong because of where the case is, not because of a missing verdict, and
    * being told to supply a verdict would send the operator off to write one for a case that is not
    * going to accept it.
+   *
+   * Who gets told is decided by what the write did, not by what the request asked for. An operator
+   * who signs a case off twice, or two operators who sign the same case off within a second of each
+   * other, produce one set of notifications, because the second write finds the case already where
+   * it was being sent and reports back that it moved nothing.
    */
   async updateStatus(id: string, dto: UpdateDdOrderDto, actor: JwtPayload) {
     const order = await this.loadListingCase(id, actor);
@@ -175,7 +180,7 @@ export class DueDiligenceCaseService {
       }
     }
 
-    await this.core.applyStatusChange(order, dto);
+    const change = await this.core.applyStatusChange(order, dto);
 
     await this.audit.log({
       actorId: actor.sub,
@@ -189,7 +194,7 @@ export class DueDiligenceCaseService {
       },
     });
 
-    if (dto.status && dto.status !== order.status) {
+    if (change.statusChanged) {
       await this.notifyCaseParticipants(order, this.messageForStatus(order, dto));
     }
 
