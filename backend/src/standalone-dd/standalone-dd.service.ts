@@ -36,6 +36,8 @@ import { UpdateStandaloneDdOrderDto } from "./dto/update-standalone-dd-order.dto
 import { AssignStandaloneDdDto } from "./dto/assign-standalone-dd.dto";
 import { type DdChecklistSelections, type DdScheduleCode } from "./dd-schedule-checklists";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
+import { DdCoreService } from "../dd-core/dd-core.service";
+import { DdCaseSerializer } from "../dd-core/dd-case.serializer";
 
 const REQUEST_STATUS = {
   PENDING_PAYMENT: "PENDING_PAYMENT",
@@ -95,77 +97,6 @@ type StandaloneServiceRequest = Prisma.ServiceRequestGetPayload<{
   };
 }>;
 
-type DueDiligenceOrderWithRelations = Prisma.DueDiligenceOrderGetPayload<{
-  include: {
-    listing: {
-      select: {
-        id: true;
-        title: true;
-        location: true;
-        propertyId: true;
-        currency: true;
-      };
-    };
-    externalProperty: true;
-    transaction: {
-      include: {
-        payments: {
-          orderBy: { createdAt: "desc" };
-          take: 1;
-        };
-      };
-    };
-    assignments: {
-      include: {
-        professional: {
-          select: {
-            id: true;
-            email: true;
-            firstName: true;
-            lastName: true;
-            professionalType: true;
-          };
-        };
-      };
-    };
-  };
-}>;
-
-const ddOrderInclude = {
-  listing: {
-    select: {
-      id: true,
-      title: true,
-      location: true,
-      propertyId: true,
-      currency: true,
-    },
-  },
-  externalProperty: true,
-  transaction: {
-    include: {
-      payments: {
-        orderBy: { createdAt: "desc" as const },
-        take: 1,
-      },
-    },
-  },
-  assignments: {
-    include: {
-      professional: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          professionalType: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "asc" as const },
-  },
-} satisfies Prisma.DueDiligenceOrderInclude;
-
 @Injectable()
 export class StandaloneDdService {
   constructor(
@@ -178,6 +109,8 @@ export class StandaloneDdService {
     private readonly sbrId: SbrIdService,
     private readonly storage: StorageService,
     private readonly ddCms: DdCmsService,
+    private readonly ddCore: DdCoreService,
+    private readonly caseSerializer: DdCaseSerializer,
   ) {}
 
   private isListingPubliclyVisible(listing: {
@@ -245,27 +178,6 @@ export class StandaloneDdService {
     return items;
   }
 
-  private async normalizeChecklistSelections(
-    raw: Record<string, string[]> | null | undefined,
-  ): Promise<DdChecklistSelections> {
-    const normalized: DdChecklistSelections = {};
-    if (!raw || typeof raw !== "object") return normalized;
-    const defs = await this.ddCms.getActiveDefinitions();
-    const byCode = new Map(defs.map((d) => [d.code, d]));
-    for (const [key, value] of Object.entries(raw)) {
-      const schedule = byCode.get(key.trim().toUpperCase());
-      if (!schedule || !Array.isArray(value)) continue;
-      const allowed = new Set(schedule.items.map((item) => item.code));
-      const codes = value
-        .map((code) => String(code).trim().toUpperCase())
-        .filter((code) => allowed.has(code));
-      if (codes.length > 0) {
-        normalized[schedule.code as DdScheduleCode] = Array.from(new Set(codes));
-      }
-    }
-    return normalized;
-  }
-
   private async resolveScheduleCatalogItems(scheduleCodes: string[]) {
     const items = await this.prisma.serviceCatalogItem.findMany({
       where: { code: { in: scheduleCodes }, active: true },
@@ -276,59 +188,6 @@ export class StandaloneDdService {
       throw new BadRequestException(`Unknown or inactive schedule(s): ${missing.join(", ")}`);
     }
     return items;
-  }
-
-  private async parseChecklistSelections(value: Prisma.JsonValue): Promise<DdChecklistSelections> {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-    return this.normalizeChecklistSelections(value as Record<string, string[]>);
-  }
-
-  private async buildChecklistSummary(selections: DdChecklistSelections) {
-    const defs = await this.ddCms.getActiveDefinitions();
-    return defs
-      .filter((schedule) => (selections[schedule.code as DdScheduleCode]?.length ?? 0) > 0)
-      .map((schedule) => ({
-        code: schedule.code,
-        name: schedule.name,
-        shortName: schedule.shortName,
-        letter: schedule.letter,
-        items: (selections[schedule.code as DdScheduleCode] ?? []).map((itemCode) => {
-          const item = schedule.items.find((entry) => entry.code === itemCode);
-          return {
-            code: itemCode,
-            label: item?.label ?? itemCode,
-          };
-        }),
-      }));
-  }
-
-  private async buildSuggestedProfessionals(scheduleCodes: string[]) {
-    const suggestedTypes = await this.ddCms.suggestedTypesForSchedules(scheduleCodes);
-    if (suggestedTypes.length === 0) return [];
-    const rows = await this.prisma.user.findMany({
-      where: {
-        role: UserRole.PROFESSIONAL,
-        isActive: true,
-        professionalType: { in: suggestedTypes as never[] },
-        professionalProfile: { verifiedStatus: "VERIFIED" },
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        professionalType: true,
-      },
-      orderBy: [{ professionalType: "asc" }, { lastName: "asc" }],
-      take: 40,
-    });
-    return rows.map((row) => ({
-      id: row.id,
-      email: row.email,
-      name: `${row.firstName} ${row.lastName}`.trim(),
-      professionalType: row.professionalType,
-      suggested: true as const,
-    }));
   }
 
   private async findOrCreateGuestBuyer(email: string, name: string, phone: string) {
@@ -370,40 +229,6 @@ export class StandaloneDdService {
     return publicId;
   }
 
-  private buildPropertySummary(order: {
-    listing?: { title: string; location: string; propertyId: string | null } | null;
-    externalProperty?: {
-      address: string;
-      state: string;
-      lga: string | null;
-      propertyType: string | null;
-      titleRef: string | null;
-    } | null;
-  }) {
-    if (order.listing) {
-      return {
-        kind: "LISTING" as const,
-        title: order.listing.title,
-        location: order.listing.location,
-        propertyId: order.listing.propertyId,
-      };
-    }
-
-    if (!order.externalProperty) {
-      return null;
-    }
-
-    const external = order.externalProperty;
-    return {
-      kind: "EXTERNAL" as const,
-      title: external.propertyType
-        ? `${external.propertyType} due diligence`
-        : "Standalone property due diligence",
-      location: [external.address, external.lga, external.state].filter(Boolean).join(", "),
-      propertyId: external.titleRef,
-    };
-  }
-
   private async serializeServiceRequest(order: StandaloneServiceRequest) {
     const latestPayment = order.transaction?.payments?.[0] ?? null;
     let ddOrder = order.transaction?.dueDiligenceOrder ?? null;
@@ -438,22 +263,25 @@ export class StandaloneDdService {
         url: await this.storage.getSignedUrl(key),
       })),
     );
-    const property = this.buildPropertySummary({
+    const property = this.caseSerializer.buildPropertySummary({
       listing: order.listing,
       externalProperty: order.externalProperty,
     });
-    const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
+    const services = await this.caseSerializer.resolveServiceLabels(order.bundleId, order.itemIds);
     const assignments = await Promise.all(
-      (ddOrder?.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
+      (ddOrder?.assignments ?? []).map((assignment) =>
+        this.caseSerializer.serializeAssignment(assignment),
+      ),
     );
-    const checklistSelections = await this.parseChecklistSelections(
+    const checklistSelections = await this.caseSerializer.parseChecklistSelections(
       (ddOrder?.checklistSelections as Prisma.JsonValue | undefined) ??
         (order as { checklistSelections?: Prisma.JsonValue }).checklistSelections ??
         {},
     );
-    const checklistSummary = await this.buildChecklistSummary(checklistSelections);
+    const checklistSummary = await this.caseSerializer.buildChecklistSummary(checklistSelections);
     const scheduleCodes = Object.keys(checklistSelections);
-    const suggestedProfessionals = await this.buildSuggestedProfessionals(scheduleCodes);
+    const suggestedProfessionals =
+      await this.caseSerializer.buildSuggestedProfessionals(scheduleCodes);
 
     return {
       id: ddOrder?.id ?? order.id,
@@ -477,7 +305,8 @@ export class StandaloneDdService {
       subtotal: order.subtotal.toFixed(2),
       vatAmount: order.vatAmount.toFixed(2),
       total: order.total.toFixed(2),
-      pricingNote: "Quote pending — SafeBuyRealties will confirm pricing based on your selected checks.",
+      pricingNote:
+        "Quote pending — SafeBuyRealties will confirm pricing based on your selected checks.",
       currency: order.listing?.currency ?? "NGN",
       listingId: order.listingId,
       externalPropertyId: order.externalPropertyId,
@@ -490,104 +319,6 @@ export class StandaloneDdService {
       verdict: ddOrder?.verdict ?? null,
       staffNotes: ddOrder?.staffNotes ?? null,
       completedAt: ddOrder?.completedAt?.toISOString() ?? null,
-      reportStorageKeys: reportKeys,
-      reports,
-      assignments,
-      property,
-      listing: order.listing,
-      externalProperty: order.externalProperty,
-      createdAt: order.createdAt.toISOString(),
-      updatedAt: order.updatedAt.toISOString(),
-    };
-  }
-
-  private async serializeAssignment(
-    assignment: DueDiligenceOrderWithRelations["assignments"][number],
-  ) {
-    return {
-      id: assignment.id,
-      dueDiligenceOrderId: assignment.dueDiligenceOrderId,
-      professionalId: assignment.professionalId,
-      scheduleCode: assignment.scheduleCode,
-      title: assignment.title,
-      status: assignment.status,
-      notes: assignment.notes,
-      reportStorageKey: assignment.reportStorageKey,
-      reportUrl: assignment.reportStorageKey
-        ? await this.storage.getSignedUrl(assignment.reportStorageKey)
-        : null,
-      professional: assignment.professional
-        ? {
-            id: assignment.professional.id,
-            email: assignment.professional.email,
-            name: `${assignment.professional.firstName} ${assignment.professional.lastName}`.trim(),
-            professionalType: assignment.professional.professionalType,
-          }
-        : null,
-      createdAt: assignment.createdAt.toISOString(),
-      updatedAt: assignment.updatedAt.toISOString(),
-    };
-  }
-
-  private async serializeDueDiligenceOrder(order: DueDiligenceOrderWithRelations) {
-    const reportKeys =
-      Array.isArray(order.reportStorageKeys) && order.reportStorageKeys.length > 0
-        ? (order.reportStorageKeys as string[])
-        : [];
-    const reports = await Promise.all(
-      reportKeys.map(async (key) => ({
-        key,
-        url: await this.storage.getSignedUrl(key),
-      })),
-    );
-    const property = this.buildPropertySummary({
-      listing: order.listing,
-      externalProperty: order.externalProperty,
-    });
-    const services = await this.resolveServiceLabels(order.bundleId, order.itemIds);
-    const assignments = await Promise.all(
-      (order.assignments ?? []).map((assignment) => this.serializeAssignment(assignment)),
-    );
-    const guestRequest = order.serviceId
-      ? await this.prisma.serviceRequest.findUnique({
-          where: { serviceId: order.serviceId },
-          select: { guestName: true, guestEmail: true, guestPhone: true },
-        })
-      : null;
-    const checklistSelections = await this.parseChecklistSelections(order.checklistSelections);
-    const checklistSummary = await this.buildChecklistSummary(checklistSelections);
-    const suggestedProfessionals = await this.buildSuggestedProfessionals(
-      Object.keys(checklistSelections),
-    );
-
-    return {
-      id: order.id,
-      serviceId: order.serviceId,
-      caseId: order.caseId,
-      source: order.source,
-      status: order.status,
-      buyerId: order.buyerId,
-      guestName: guestRequest?.guestName ?? "",
-      guestEmail: guestRequest?.guestEmail ?? "",
-      guestPhone: guestRequest?.guestPhone ?? "",
-      bundleId: order.bundleId,
-      itemIds: order.itemIds,
-      checklistSelections,
-      checklistSummary,
-      services,
-      suggestedProfessionals,
-      subtotal: order.subtotal.toFixed(2),
-      vatAmount: order.vatAmount.toFixed(2),
-      total: order.total.toFixed(2),
-      pricingNote: "Quote pending — SafeBuyRealties will confirm pricing based on selected checks.",
-      currency: order.listing?.currency ?? "NGN",
-      listingId: order.listingId,
-      externalPropertyId: order.externalPropertyId,
-      transactionId: order.transactionId,
-      transactionStatus: order.transaction?.status ?? null,
-      verdict: order.verdict,
-      staffNotes: order.staffNotes,
-      completedAt: order.completedAt?.toISOString() ?? null,
       reportStorageKeys: reportKeys,
       reports,
       assignments,
@@ -651,7 +382,9 @@ export class StandaloneDdService {
       throw new BadRequestException("Provide exactly one of listingId or externalProperty");
     }
 
-    const checklistSelections = await this.normalizeChecklistSelections(dto.checklistSelections);
+    const checklistSelections = await this.caseSerializer.normalizeChecklistSelections(
+      dto.checklistSelections,
+    );
     const validation = await this.ddCms.validateChecklistSelections(checklistSelections);
     if (!validation.ok) {
       throw new BadRequestException(validation.message);
@@ -765,11 +498,11 @@ export class StandaloneDdService {
       });
     });
 
-    const property = this.buildPropertySummary({
+    const property = this.caseSerializer.buildPropertySummary({
       listing: created.listing,
       externalProperty: created.externalProperty,
     });
-    const services = await this.resolveServiceLabels(null, storedItemIds);
+    const services = await this.caseSerializer.resolveServiceLabels(null, storedItemIds);
     const propertyTitle = property?.title ?? "Standalone due diligence";
     const propertyLocation = property?.location ?? locationHint;
 
@@ -825,7 +558,10 @@ export class StandaloneDdService {
     }
 
     if (query.status) {
-      where.OR = [{ status: query.status }, { transaction: { is: { dueDiligenceOrder: { is: { status: query.status } } } } }];
+      where.OR = [
+        { status: query.status },
+        { transaction: { is: { dueDiligenceOrder: { is: { status: query.status } } } } },
+      ];
     }
 
     const rows = await this.prisma.serviceRequest.findMany({
@@ -1036,38 +772,22 @@ export class StandaloneDdService {
     };
   }
 
+  /**
+   * No transition table in front of `applyStatusChange`, unlike the listing path.
+   *
+   * A standalone case is driven by a staff member reading an inbox, and the order the work arrives in
+   * is not the order the states were designed in. Imposing the listing table here would start
+   * rejecting moves that operations have been making since the path shipped, which is a behaviour
+   * change dressed up as a refactor. `STANDALONE_DD_TRANSITIONS` is null for exactly that reason.
+   */
   async updateOrder(id: string, dto: UpdateStandaloneDdOrderDto, actor: JwtPayload) {
     this.assertStaffActor(actor);
-    const existing = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id },
-      include: ddOrderInclude,
-    });
-    if (!existing) throw new NotFoundException("Due diligence order not found");
-    if (dto.status === "COMPLETE" && !(dto.verdict?.trim() || existing.verdict)) {
-      throw new BadRequestException("Verdict is required when completing a due diligence case");
+    const existing = await this.ddCore.findOrderOrThrow(id);
+    if (dto.status === "COMPLETE") {
+      this.ddCore.assertVerdictOnCompletion(existing.verdict, dto.verdict);
     }
 
-    await this.prisma.dueDiligenceOrder.update({
-      where: { id },
-      data: {
-        ...(dto.status ? { status: dto.status } : {}),
-        ...(dto.verdict !== undefined ? { verdict: dto.verdict.trim() || null } : {}),
-        ...(dto.staffNotes !== undefined ? { staffNotes: dto.staffNotes.trim() || null } : {}),
-        ...(dto.status === "COMPLETE" ? { completedAt: new Date() } : {}),
-      },
-    });
-
-    if (existing.transactionId && dto.status) {
-      await this.prisma.transaction.update({
-        where: { id: existing.transactionId },
-        data: {
-          status:
-            dto.status === "COMPLETE"
-              ? TransactionStatus.DD_COMPLETE
-              : TransactionStatus.DD_IN_PROGRESS,
-        },
-      });
-    }
+    await this.ddCore.applyStatusChange(existing, dto);
 
     if (dto.status === "COMPLETE") {
       void this.notifications.create({
@@ -1080,15 +800,7 @@ export class StandaloneDdService {
       });
     }
 
-    const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id },
-      include: ddOrderInclude,
-    });
-    if (!refreshed) {
-      throw new NotFoundException("Due diligence order not found after update");
-    }
-
-    return this.serializeDueDiligenceOrder(refreshed);
+    return this.caseSerializer.serializeOrder(await this.ddCore.reloadOrder(id));
   }
 
   async uploadReport(id: string, file: Express.Multer.File, actor: JwtPayload) {
@@ -1097,205 +809,75 @@ export class StandaloneDdService {
       throw new BadRequestException("Report file is required");
     }
 
-    const existing = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id },
-      include: ddOrderInclude,
-    });
-    if (!existing) throw new NotFoundException("Due diligence order not found");
-
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = `due-diligence/${existing.id}/reports/${Date.now()}-${safeName}`;
-    await this.storage.upload(file.buffer, storageKey, file.mimetype);
-
-    const currentKeys =
-      Array.isArray(existing.reportStorageKeys) && existing.reportStorageKeys.length > 0
-        ? (existing.reportStorageKeys as string[])
-        : [];
-    const updated = await this.prisma.dueDiligenceOrder.update({
-      where: { id },
-      data: {
-        reportStorageKeys: [...currentKeys, storageKey] as Prisma.InputJsonValue,
-      },
-      include: ddOrderInclude,
-    });
-
-    return this.serializeDueDiligenceOrder(updated);
+    const existing = await this.ddCore.findOrderOrThrow(id);
+    await this.ddCore.attachOrderReport(existing, file);
+    return this.caseSerializer.serializeOrder(await this.ddCore.reloadOrder(id));
   }
 
   async listAssignableProfessionals(actor: JwtPayload, scheduleCode?: string) {
     this.assertStaffActor(actor);
-    const code = scheduleCode?.trim().toUpperCase();
-    const defs = code ? await this.ddCms.getActiveDefinitions() : [];
-    const schedule = code ? defs.find((d) => d.code === code) : undefined;
-    const suggestedTypeSet = new Set(schedule?.suggestedProfessionalTypes ?? []);
-    const rows = await this.prisma.user.findMany({
-      where: {
-        role: UserRole.PROFESSIONAL,
-        isActive: true,
-        professionalProfile: { verifiedStatus: "VERIFIED" },
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        professionalType: true,
-      },
-      orderBy: [{ professionalType: "asc" }, { lastName: "asc" }],
-    });
-    const mapped = rows.map((row) => {
-      const type = row.professionalType ?? "";
-      const suggested = suggestedTypeSet.size === 0 ? false : suggestedTypeSet.has(type);
-      return {
-        id: row.id,
-        email: row.email,
-        name: `${row.firstName} ${row.lastName}`.trim(),
-        professionalType: row.professionalType,
-        suggested,
-      };
-    });
-    return mapped.sort((a, b) => Number(b.suggested) - Number(a.suggested));
+    return this.ddCore.listAssignableProfessionals(scheduleCode);
   }
 
+  /**
+   * The rejection stays a 400, and the message it carries gets better.
+   *
+   * `resolveAssignableProfessional` applies the same gate this method always applied and returns a
+   * reason that names the missing credential rather than "Professional must be verified before
+   * assignment", which told an operations officer nothing they could act on. Nothing that used to be
+   * accepted is now refused and nothing that used to be refused is now accepted.
+   */
   async assignProfessional(orderId: string, dto: AssignStandaloneDdDto, actor: JwtPayload) {
     this.assertStaffActor(actor);
-    const order = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id: orderId },
-      include: ddOrderInclude,
-    });
-    if (!order) throw new NotFoundException("Due diligence order not found");
+    const order = await this.ddCore.findOrderOrThrow(orderId);
     if (order.status === ORDER_STATUS.PENDING || order.status === ORDER_STATUS.CANCELLED) {
       throw new BadRequestException("Only submitted or paid due diligence cases can be assigned");
     }
 
-    const professional = await this.prisma.user.findUnique({
-      where: { id: dto.professionalId },
-      include: { professionalProfile: true },
-    });
-    if (!professional || professional.role !== UserRole.PROFESSIONAL) {
-      throw new BadRequestException("professionalId must be a professional");
-    }
-    if (professional.professionalProfile?.verifiedStatus !== "VERIFIED") {
-      throw new BadRequestException("Professional must be verified before assignment");
+    const resolution = await this.ddCore.resolveAssignableProfessional(dto.professionalId);
+    if (!resolution.ok) {
+      throw new BadRequestException(resolution.reason);
     }
 
-    const scheduleCode = dto.scheduleCode.trim().toUpperCase();
-    const title =
-      dto.title?.trim() ||
-      `Due diligence — ${scheduleCode.replace(/_/g, " ")} (${order.serviceId ?? order.caseId ?? order.id})`;
-
-    const assignment = await this.prisma.dueDiligenceAssignment.create({
-      data: {
-        dueDiligenceOrderId: order.id,
-        professionalId: professional.id,
-        scheduleCode,
-        title,
-        notes: dto.notes?.trim() || null,
-        status: "PENDING",
-      },
-    });
-
-    if (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.SUBMITTED) {
-      await this.prisma.dueDiligenceOrder.update({
-        where: { id: order.id },
-        data: { status: ORDER_STATUS.IN_PROGRESS },
-      });
-      if (order.transactionId) {
-        await this.prisma.transaction.update({
-          where: { id: order.transactionId },
-          data: { status: TransactionStatus.DD_IN_PROGRESS },
-        });
-      }
-    }
+    const assignment = await this.ddCore.createAssignment(order, resolution.professional.id, dto);
 
     void this.notifications.create({
-      userId: professional.id,
+      userId: resolution.professional.id,
       type: NotificationType.TASK_ASSIGNED,
       title: "Due diligence assignment",
-      body: title,
+      body: assignment.title,
       entityId: assignment.id,
       entityType: NotificationEntityType.Task,
     });
 
-    const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id: order.id },
-      include: ddOrderInclude,
-    });
-    if (!refreshed) throw new NotFoundException("Due diligence order not found after assign");
-    return this.serializeDueDiligenceOrder(refreshed);
+    return this.caseSerializer.serializeOrder(
+      await this.ddCore.reloadOrder(order.id, "after assign"),
+    );
   }
 
   async listMyAssignments(actor: JwtPayload) {
     if (actor.role !== UserRole.PROFESSIONAL) {
       throw new ForbiddenException("Only professionals have due diligence assignments");
     }
-    const rows = await this.prisma.dueDiligenceAssignment.findMany({
-      where: { professionalId: actor.sub },
-      include: {
-        professional: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            professionalType: true,
-          },
-        },
-        dueDiligenceOrder: { include: ddOrderInclude },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return Promise.all(
-      rows.map(async (row) => ({
-        ...(await this.serializeAssignment(row)),
-        order: await this.serializeDueDiligenceOrder(row.dueDiligenceOrder),
-      })),
-    );
+    return this.ddCore.listAssignmentsForProfessional(actor.sub);
   }
 
-  async uploadAssignmentReport(
-    assignmentId: string,
-    file: Express.Multer.File,
-    actor: JwtPayload,
-  ) {
+  /**
+   * Staff can file a report against somebody else's assignment here, and on the listing path they
+   * cannot. That is not an oversight in either place. A standalone case is often worked by a
+   * professional who emails a PDF to the office, and somebody has to put it on the case. A listing
+   * case is worked in the product, so a report arriving from anyone but the assignee is a mistake.
+   */
+  async uploadAssignmentReport(assignmentId: string, file: Express.Multer.File, actor: JwtPayload) {
     if (!file) throw new BadRequestException("Report file is required");
-    const assignment = await this.prisma.dueDiligenceAssignment.findUnique({
-      where: { id: assignmentId },
-      include: {
-        dueDiligenceOrder: { include: ddOrderInclude },
-      },
-    });
+    const assignment = await this.ddCore.findAssignment(assignmentId);
     if (!assignment) throw new NotFoundException("Assignment not found");
     if (assignment.professionalId !== actor.sub && !isInternalRole(actor.role)) {
       throw new ForbiddenException();
     }
 
     const order = assignment.dueDiligenceOrder;
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = `due-diligence/${order.id}/assignments/${assignment.id}/${Date.now()}-${safeName}`;
-    await this.storage.upload(file.buffer, storageKey, file.mimetype);
-
-    const currentKeys =
-      Array.isArray(order.reportStorageKeys) && order.reportStorageKeys.length > 0
-        ? (order.reportStorageKeys as string[])
-        : [];
-
-    await this.prisma.$transaction([
-      this.prisma.dueDiligenceAssignment.update({
-        where: { id: assignment.id },
-        data: {
-          reportStorageKey: storageKey,
-          status: "SUBMITTED",
-        },
-      }),
-      this.prisma.dueDiligenceOrder.update({
-        where: { id: order.id },
-        data: {
-          reportStorageKeys: [...currentKeys, storageKey] as Prisma.InputJsonValue,
-          status: order.status === "PAID" ? "IN_PROGRESS" : order.status,
-        },
-      }),
-    ]);
+    await this.ddCore.attachAssignmentReport(order, assignment, file);
 
     void this.notifications.createForStaff({
       type: NotificationType.TASK_ASSIGNED,
@@ -1305,12 +887,9 @@ export class StandaloneDdService {
       entityType: NotificationEntityType.DueDiligenceOrder,
     });
 
-    const refreshed = await this.prisma.dueDiligenceOrder.findUnique({
-      where: { id: order.id },
-      include: ddOrderInclude,
-    });
-    if (!refreshed) throw new NotFoundException("Due diligence order not found");
-    return this.serializeDueDiligenceOrder(refreshed);
+    return this.caseSerializer.serializeOrder(
+      await this.ddCore.reloadOrder(order.id, "after report"),
+    );
   }
 
   async completePayment(paymentId: string) {
@@ -1456,8 +1035,11 @@ export class StandaloneDdService {
       }
     });
 
-    const services = await this.resolveServiceLabels(serviceRequest.bundleId, serviceRequest.itemIds);
-    const property = this.buildPropertySummary({
+    const services = await this.caseSerializer.resolveServiceLabels(
+      serviceRequest.bundleId,
+      serviceRequest.itemIds,
+    );
+    const property = this.caseSerializer.buildPropertySummary({
       listing: serviceRequest.listing,
       externalProperty: serviceRequest.externalProperty,
     });
@@ -1528,10 +1110,7 @@ export class StandaloneDdService {
       throw new BadRequestException("No payment found for this order");
     }
 
-    if (
-      latestPayment.status === PaymentStatus.SUCCEEDED ||
-      order.status === REQUEST_STATUS.PAID
-    ) {
+    if (latestPayment.status === PaymentStatus.SUCCEEDED || order.status === REQUEST_STATUS.PAID) {
       return this.getOrder(serviceId);
     }
 
@@ -1558,7 +1137,9 @@ export class StandaloneDdService {
     }
 
     if (paystackStatus !== "success") {
-      throw new BadRequestException(`Payment not successful (status: ${paystackStatus ?? "unknown"})`);
+      throw new BadRequestException(
+        `Payment not successful (status: ${paystackStatus ?? "unknown"})`,
+      );
     }
 
     await this.prisma.payment.update({
@@ -1567,24 +1148,5 @@ export class StandaloneDdService {
     });
     await this.completePayment(latestPayment.id);
     return this.getOrder(serviceId);
-  }
-
-  private async resolveServiceLabels(
-    bundleId: string | null,
-    itemIds: Prisma.JsonValue,
-  ): Promise<string[]> {
-    const labels: string[] = [];
-    if (bundleId) {
-      const bundle = await this.prisma.serviceBundle.findUnique({ where: { id: bundleId } });
-      if (bundle) labels.push(bundle.name);
-    } else if (Array.isArray(itemIds) && itemIds.length > 0) {
-      const items =
-        (await this.prisma.serviceCatalogItem.findMany({
-          where: { id: { in: itemIds as string[] } },
-          select: { name: true },
-        })) ?? [];
-      labels.push(...items.map((item) => item.name));
-    }
-    return labels;
   }
 }

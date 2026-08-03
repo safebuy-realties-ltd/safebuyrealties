@@ -136,6 +136,7 @@ const RESOURCE_SCOPED = [
   "GET /transactions/:id",
   "GET /escrow/:transactionId",
   "DELETE /auth/sessions/:id",
+  "POST /due-diligence-assignments/:id/report",
 ];
 
 /* ------------------------------------------------------------------ the matrix */
@@ -176,6 +177,7 @@ POST /payments/:id/verify                             | allow 403   403   403   
 GET /transactions/:id                                 | allow 403   403   403   403   403   allow allow allow 401
 GET /escrow/:transactionId                            | allow 403   allow 403   403   403   allow allow allow 401
 DELETE /auth/sessions/:id (buyer-a)                   | allow 404   404   404   404   404   404   404   404   401
+POST /due-diligence-assignments/:id/report            | 404   404   404   404   allow 404   404   404   404   401
 `.trim();
 
 interface Case {
@@ -191,6 +193,13 @@ interface Case {
 }
 
 const SCHEDULED_AT = "2026-02-01T10:00:00.000Z";
+
+/** Enough of an upload for the report route. The parts the service reads are the parts spelled out. */
+const REPORT_FILE = {
+  originalname: "root-of-title.pdf",
+  mimetype: "application/pdf",
+  buffer: Buffer.from("fixture report"),
+} as unknown as Express.Multer.File;
 
 const CASES: Case[] = [
   {
@@ -410,6 +419,19 @@ const CASES: Case[] = [
       return revoked;
     },
   },
+  {
+    label: "POST /due-diligence-assignments/:id/report",
+    route: "POST /due-diligence-assignments/:id/report",
+    denial:
+      "404 for everybody except the professional the work was assigned to, operators included. A " +
+      "role check would answer some of these callers 403, and 403 on an assignment id is the " +
+      "difference between telling a stranger they cannot have this and telling them it exists. " +
+      "Operators are refused the same way rather than given a bypass, because filing the report is " +
+      "the assignee's signature on a piece of work and staff have their own route for moving the " +
+      "case on. The one allow is PRO-A, who holds the assignment; PRO-B is the same role on the " +
+      "wrong row, which is the pair this matrix exists to separate.",
+    run: (s, a) => s.ddCases.submitAssignmentReport("dd-assignment-a", REPORT_FILE, a),
+  },
 ];
 
 /* ------------------------------------------------------------------ table parse */
@@ -476,8 +498,8 @@ describe("path-parameter route census (criterion 5)", () => {
 
   it("holds the buckets at the sizes they were reviewed at", () => {
     const operator = paramRoutes.filter(isOperatorRoute).length;
-    expect(operator).toBe(22);
-    expect(RESOURCE_SCOPED.length).toBe(24);
+    expect(operator).toBe(25);
+    expect(RESOURCE_SCOPED.length).toBe(25);
     expect(Object.keys(PUBLIC_BY_DESIGN).length).toBe(7);
     expect(operator + RESOURCE_SCOPED.length + Object.keys(PUBLIC_BY_DESIGN).length + 1).toBe(
       paramRoutes.length,

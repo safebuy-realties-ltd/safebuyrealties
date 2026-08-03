@@ -11,6 +11,8 @@ import { ConfigService } from "@nestjs/config";
 import { SbrIdService } from "../sbr-id/sbr-id.service";
 import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
+import { DdCoreService } from "../dd-core/dd-core.service";
+import { DdCaseSerializer } from "../dd-core/dd-case.serializer";
 
 const buyerActor = {
   sub: "buyer-1",
@@ -143,6 +145,11 @@ describe("StandaloneDdService", () => {
             suggestedTypesForSchedules: jest.fn().mockResolvedValue(["LAWYER"]),
           },
         },
+        // The real dd-core providers, not doubles. These tests are the regression net proving the
+        // standalone responses did not change shape when the case machinery moved out of this
+        // service, and a stubbed serialiser would prove nothing at all.
+        DdCaseSerializer,
+        DdCoreService,
       ],
     }).compile();
 

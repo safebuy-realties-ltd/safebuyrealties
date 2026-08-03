@@ -44,6 +44,14 @@ export const AuditAction = {
   SESSION_ISSUED: "SESSION_ISSUED",
   SESSION_REVOKED: "SESSION_REVOKED",
   SESSION_REUSE_DETECTED: "SESSION_REUSE_DETECTED",
+  /**
+   * E1-S1. The three ways a listing due diligence case moves. A buyer pays for a verdict and acts on
+   * it, so the question "who said this case was complete, and when" has to have an answer that does
+   * not depend on the case row, which only ever holds the latest state.
+   */
+  DD_CASE_STATUS_CHANGED: "DD_CASE_STATUS_CHANGED",
+  DD_CASE_ASSIGNED: "DD_CASE_ASSIGNED",
+  DD_CASE_REPORT_SUBMITTED: "DD_CASE_REPORT_SUBMITTED",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];

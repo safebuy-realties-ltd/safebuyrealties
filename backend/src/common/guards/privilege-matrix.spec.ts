@@ -51,6 +51,11 @@ const CELL_COLUMN = 8;
  * The three `/feature-flags` rows read the same as `PATCH /platform-config` because they are the
  * same privilege. Switching a feature off is a platform configuration change, so CH-1 reused
  * `PLATFORM_CONFIG` rather than minting a privilege that would have to be granted to somebody.
+ *
+ * The four `/due-diligence-orders` rows read the same as the `/standalone-dd` rows for the same
+ * reason: E1-S1 put the listing path on `dd.orders.read` and `dd.orders.write`, the two privileges
+ * the standalone path was already gated on. An operator who may work a standalone case may work a
+ * listing case, which is the answer the Due Diligence Lead role was seeded to give.
  */
 const EXPECTED_MATRIX = `
 route                                           SUPER   PLATFORMOPS     DD-LEAD FINANCE CONTENT |
@@ -70,6 +75,10 @@ PATCH /admin/roles/:id                          allow   DENY    DENY    DENY    
 GET /admin/roles/privileges                     allow   DENY    DENY    DENY    DENY    DENY    |
 GET /admin/roles                                allow   allow   allow   allow   allow   DENY    |
 POST /admin/roles                               allow   DENY    DENY    DENY    DENY    DENY    |
+POST /due-diligence-orders/:id/assignments      allow   allow   allow   allow   DENY    DENY    |
+GET /due-diligence-orders/:id                   allow   allow   allow   allow   DENY    DENY    |
+PATCH /due-diligence-orders/:id                 allow   allow   allow   allow   DENY    DENY    |
+GET /due-diligence-orders                       allow   allow   allow   allow   DENY    DENY    |
 POST /escrow/:transactionId/refund              allow   allow   DENY    DENY    allow   DENY    |
 POST /escrow/:transactionId/release             allow   allow   DENY    DENY    allow   DENY    |
 GET /escrow/held                                allow   allow   DENY    DENY    allow   DENY    |

@@ -14,6 +14,11 @@ export const NotificationType = {
   PROFESSIONAL_CREDENTIAL_REJECTED: "PROFESSIONAL_CREDENTIAL_REJECTED",
   SAVED_LISTING_LIVE: "SAVED_LISTING_LIVE",
   SAVED_LISTING_UNDER_OFFER: "SAVED_LISTING_UNDER_OFFER",
+  /**
+   * E1-S1. A listing due diligence case changed hands or changed state. `Notification.type` is a
+   * plain string column rather than an enum, so this entry needs no migration.
+   */
+  DD_CASE_STATUS_CHANGED: "DD_CASE_STATUS_CHANGED",
 } as const;
 
 export type NotificationTypeValue = (typeof NotificationType)[keyof typeof NotificationType];

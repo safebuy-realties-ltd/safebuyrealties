@@ -7,6 +7,7 @@ import { EmailModule } from "../email/email.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { StorageModule } from "../storage/storage.module";
 import { DdCmsModule } from "../dd-cms/dd-cms.module";
+import { DdCoreModule } from "../dd-core/dd-core.module";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DdCmsModule } from "../dd-cms/dd-cms.module";
     NotificationsModule,
     StorageModule,
     DdCmsModule,
+    DdCoreModule,
   ],
   controllers: [StandaloneDdController],
   providers: [StandaloneDdService],
