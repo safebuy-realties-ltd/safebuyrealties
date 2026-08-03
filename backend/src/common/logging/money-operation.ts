@@ -17,6 +17,9 @@ import { LoggerService } from "@nestjs/common";
 
 export const MONEY_OPERATIONS = [
   "payment.initialize",
+  // E1-S4. Its own name rather than a field on `payment.initialize`, because this is the operation
+  // that moves the full price of a property and it is the one an operator will want to select on.
+  "payment.purchase.initialize",
   "payment.verify",
   "payment.webhook",
   "escrow.hold",

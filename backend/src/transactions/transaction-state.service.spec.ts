@@ -51,9 +51,13 @@ describe("TransactionStateService", () => {
     });
 
     it("derives predecessors from the table rather than restating them", () => {
+      // E1-S4 added the third one. A purchase that was started and then abandoned comes back here,
+      // which is exactly why the abandon path cannot use `advance`: three predecessors would let a
+      // failed due diligence payment drag a transaction out of DD_PURCHASED as well.
       expect(transactionPredecessors(TransactionStatus.DD_COMPLETE)).toEqual([
         TransactionStatus.DD_PURCHASED,
         TransactionStatus.DD_IN_PROGRESS,
+        TransactionStatus.PURCHASE_PENDING,
       ]);
       expect(transactionPredecessors(TransactionStatus.INITIATED)).toEqual([]);
     });

@@ -137,6 +137,26 @@ export function buildStore(): Store {
   const buyerA = user("buyer-a", UserRole.BUYER);
   const proA = user("pro-a", UserRole.PROFESSIONAL, ProfessionalType.SURVEYOR);
 
+  // E1-S4. The due diligence payment against the transaction, hoisted so it can be inlined on the
+  // transaction as well as listed in the store. Every read of a transaction now carries its newest
+  // payment, and a fixture that returned an empty list here would be a shape Prisma never returns.
+  const payment: Row = {
+    id: "payment-a",
+    listingId: "listing-live",
+    transactionId: "transaction-a",
+    payerId: "buyer-a",
+    transactionPublicId: null,
+    amount: 250_000,
+    currency: "NGN",
+    provider: "paystack",
+    providerReference: "ref-a",
+    status: PaymentStatus.SUCCEEDED,
+    intent: "DD_SERVICE",
+    metadata: {},
+    createdAt: T0,
+    updatedAt: T0,
+  };
+
   const transaction: Row = {
     id: "transaction-a",
     listingId: "listing-live",
@@ -147,6 +167,9 @@ export function buildStore(): Store {
     listing: live,
     buyer: buyerA,
     powerOfAttorney: null,
+    // E1-S4. What the purchase decision is read off, inlined the way `include` would have joined it.
+    dueDiligenceOrder: null,
+    payments: [payment],
   };
 
   // E1-S1. A listing due diligence case with one assignment on it, so the report route has an
@@ -226,24 +249,7 @@ export function buildStore(): Store {
         transaction,
       },
     ],
-    payment: [
-      {
-        id: "payment-a",
-        listingId: "listing-live",
-        transactionId: "transaction-a",
-        payerId: "buyer-a",
-        transactionPublicId: null,
-        amount: 250_000,
-        currency: "NGN",
-        provider: "paystack",
-        providerReference: "ref-a",
-        status: PaymentStatus.SUCCEEDED,
-        intent: "DD_SERVICE",
-        metadata: {},
-        createdAt: T0,
-        updatedAt: T0,
-      },
-    ],
+    payment: [payment],
     document: [
       {
         id: "document-a",

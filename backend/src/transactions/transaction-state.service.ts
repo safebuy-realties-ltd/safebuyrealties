@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 import { TransactionStatus } from "@prisma/client";
 import {
   allowedTransactionTransitions,
+  canTransitionTransaction,
   isTerminalTransactionStatus,
   transactionPredecessors,
 } from "./transaction-state.constants";
@@ -87,6 +88,37 @@ export class TransactionStateService {
       return { status: to, changed: false };
     }
     throw new ConflictException(this.describeRejection(current.status, to));
+  }
+
+  /**
+   * Moves a transaction back, and only from the one status where moving back means anything.
+   *
+   * `advance` is the wrong tool for an abandoned checkout twice over. It would accept any legal
+   * predecessor, and `DD_COMPLETE` has three of them, so a due diligence payment that failed would
+   * drag a case out of `DD_PURCHASED` and mark it signed off. And it throws on a row that has moved
+   * on, which is exactly what a rival delivery does when the buyer's payment succeeded a moment
+   * before the failure notice arrived. A webhook handler that answers 500 because the money already
+   * landed is worse than one that does nothing.
+   *
+   * So this is narrow and quiet. `from` is the only status it will act on, the table still decides
+   * whether that move is legal at all, and a transaction that is somewhere else comes back `null`
+   * rather than as an exception. It is still one conditional update, so a success committing at the
+   * same moment cannot be overwritten by it.
+   */
+  async revertIfAt(
+    db: TransactionStateWriter,
+    transactionId: string,
+    from: TransactionStatus,
+    to: TransactionStatus,
+  ): Promise<TransactionMove | null> {
+    if (from === to || !canTransitionTransaction(from, to)) {
+      throw new ConflictException(this.describeRejection(from, to));
+    }
+    const moved = await db.transaction.updateMany({
+      where: { id: transactionId, status: { in: [from] } },
+      data: { status: to },
+    });
+    return moved.count > 0 ? { status: to, changed: true } : null;
   }
 
   /** The message on a rejected move, which names what would have been legal instead. */

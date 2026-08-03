@@ -97,7 +97,7 @@ That is a real product. The remaining work is narrower than the checklist histor
 
 | Milestone | Outcome | Stories | Estimate | Merged since | Remaining |
 | --- | --- | --- | --- | --- | --- |
-| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | E1-S1 | 3 stories, 6 to 9 days |
+| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | E1-S1, E1-S2, E1-S4 | 1 story, 2 to 3 days |
 | **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4, E2-S2 | 3 stories, 9 to 11 days |
 | **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days | E3-S1, E3-S4 | 2 stories, 4 to 7 days |
 | **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | E4-S1, E4-S3 | 1 story, 2 to 3 days |
@@ -106,9 +106,9 @@ That is a real product. The remaining work is narrower than the checklist histor
 | **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5, E7-S1, E7-S3; E7-S2b and E7-S6b found, both merged | 1 story, 2 to 4 days |
 | **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | E8-S4 | 3 stories, 5 to 9 days plus external lead time |
 
-It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Eighteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5). DOCS-4 was a fourth chore the week added to itself, and with it in there is no chore left. **E1-S1** and **E1-S2** have merged since, the first two of E1's four and the first engineering the ADR-0001 answer released, so **17 milestone stories, roughly 34 to 53 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 11 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Eighteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5). DOCS-4 was a fourth chore the week added to itself, and with it in there is no chore left. **E1-S1**, **E1-S2** and **E1-S4** have merged since, three of E1's four and the engineering the ADR-0001 answer released, so **16 milestone stories, roughly 32 to 50 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 11 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
 
-**The floor above used to be 32, DOCS-4 settled it at 41, and E1-S1 merging has taken it to 36.** Worth recording how it drifted, because the mechanism matters more than the ten days. The **Remaining** column subtracts each merged story from that milestone's own range, and its ceilings have always agreed exactly with the per-epic bars on `docs/mvp-board.html`, because a check on the board derives the tile's ceiling from those bars and fails the build when the two disagree. The floor had no such check. It was kept by hand as a single running subtraction against the pre-week 72, so every merge asked somebody to remember a number rather than to add up a column, and by this week it sat ten days below what the eight milestone rows came to, counting the chore day that was still open on both sides of the comparison. Nobody made an error; nothing was ever going to catch one. The rows are the source, with the chore merged they added up to 41, and with E1-S1 merged they add up to 36, which is the figure in both places. Each effort bar on the board carries a floor beside its ceiling, the Full backlog tile sums both ends from those bars, and `npm run validate:board` fails if either drifts again. Plan against the ceiling, as before. The difference is that the floor is now checkable rather than remembered.
+**The floor above used to be 32, DOCS-4 settled it at 41, E1-S1 merging took it to 36, and E1-S2 and E1-S4 have taken it to 32 again by a route that can be checked.** Worth recording how it drifted, because the mechanism matters more than the ten days. The **Remaining** column subtracts each merged story from that milestone's own range, and its ceilings have always agreed exactly with the per-epic bars on `docs/mvp-board.html`, because a check on the board derives the tile's ceiling from those bars and fails the build when the two disagree. The floor had no such check. It was kept by hand as a single running subtraction against the pre-week 72, so every merge asked somebody to remember a number rather than to add up a column, and by this week it sat ten days below what the eight milestone rows came to, counting the chore day that was still open on both sides of the comparison. Nobody made an error; nothing was ever going to catch one. The rows are the source, with the chore merged they added up to 41, with E1-S1 merged they added up to 36, and with E1-S2 and E1-S4 merged they add up to 32, which is the figure in both places. Each effort bar on the board carries a floor beside its ceiling, the Full backlog tile sums both ends from those bars, and `npm run validate:board` fails if either drifts again. Plan against the ceiling, as before. The difference is that the floor is now checkable rather than remembered.
 
 **A week of merging bought four days off the floor and two off the ceiling, and found three stories doing it.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the seven milestone stories, six were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. M5 went up by a day because writing the environment matrix found the one credential in this application that does not fail closed, which is now E5-S6. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
 
@@ -183,8 +183,8 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E1-S1 🔴 | Loop | Listing DD case lifecycle: queue, assign, report, complete | `dd_case_lifecycle` | L | ✅ #138, flag off | none, D1 answered |
 | E1-S2 🔴 | Loop | Transaction state machine, DD_PURCHASED to DD_COMPLETE | `dd_case_lifecycle` | M | ✅ #139, flag off | E1-S1 |
 | E1-S3 🔴 | Loop | Buyer DD report delivery, access controlled | `dd_case_lifecycle` | M | 📋 startable | E1-S1, E3-S1 |
-| E1-S4 🔴 | Loop | Property purchase step wired to the state machine | `property_purchase` | M | 📋 startable | E1-S2 |
-| E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | 📋 | E1-S4, D2 |
+| E1-S4 🔴 | Loop | Property purchase step wired to the state machine | `property_purchase` | M | ✅ #140, flag off | E1-S2 |
+| E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | 📋 | D2 |
 | E2-S2 🔴 | Money | Webhook idempotency, replay and freshness guard | — | M | ✅ #123 | none |
 | E2-S3 | Money | Gateway refunds, not ledger-only | `payouts` | M | 📋 | E2-S1 |
 | E2-S4 🔴 | Money | Production guard on payment mock mode | — | S | ✅ #99 | none |
@@ -194,7 +194,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E3-S3 | Trust | Upload hardening: type allow-list, magic bytes, AV hook | `secure_docs` | M | 📋 | E3-S2 |
 | E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
 | E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | ✅ #121 | none |
-| E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 | E1-S4, D3 |
+| E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 startable | D3 |
 | E4-S3 | Access | Cross-role authorization test suite | — | M | ✅ #125 | E4-S1 |
 | E5-S1 🔴 | Security | Rate limiting and lockout on auth and payments | — | M | ✅ #129 | none |
 | E5-S2 🔴 | Security | CORS allow-list from configuration | — | S | ✅ #97, tightened by E5-S2a #102 | none |
@@ -238,6 +238,8 @@ E3-S2 (durable storage)
 > **Reconciled 2026-08-03.** `E1-S1` has merged as #138, so the path now starts at `E1-S2`. The graph puts `E3-S2` in front of `E1-S1` and that edge turned out not to bind: reports go through the existing `StorageService` seam, so whichever provider D4 picks is a change behind that seam and not a change to the case lifecycle. `E3-S2` still gates going live with real documents. It did not gate building the lifecycle that files them.
 >
 > **Reconciled again on 2026-08-03, later the same day.** `E1-S2` has merged as #139, so the path now forks rather than continues: `E1-S3` and `E1-S4` are both free, they do not depend on each other, and they can be taken in either order or together. The next single point on the path is `E2-S1`, which waits on `E1-S4` and on ADR-0002, so getting `E1-S4` in is what turns that decision from a queue position into a start.
+>
+> **Reconciled a third time on 2026-08-03.** `E1-S4` has merged as #140, and it was the last dependency any row in this document had on the E1 chain. `E2-S1` now waits on ADR-0002 alone, so answering that decision starts the work rather than buying a queue position, and it is the largest single answer left. `E4-S2`, the KYC gate, listed `E1-S4` as its only story dependency and is startable now; D3 shapes it rather than blocking it, because manual review is what ships. What is left of the critical path is `E1-S3`, which stands on its own rather than in front of anything, then `E2-S1` when ADR-0002 comes back.
 
 ### 3.2 Go-live gates
 
@@ -377,7 +379,7 @@ The design decision worth reading is that a move is a single conditional write a
 
 > **As** a buyer whose due diligence came back clean, **I want** to pay for the property through the platform, **so that** my money sits in escrow rather than going directly to a stranger.
 
-**Size** M · **Flag** `property_purchase` · **Deps** E1-S2
+**Size** M · **Flag** `property_purchase` · **Deps** E1-S2 · **Merged** PR #140
 
 **Evidence of the gap**
 
@@ -394,6 +396,12 @@ The design decision worth reading is that a move is a single conditional write a
 
 **Technical note.** `src/routes/dashboard.buyer.transactions.tsx:236` to `:237` pays a computed `deposit` for due diligence and the full listing price for purchase, and `:112` and `:254` store and read the payment id from `localStorage`. Move that association server side while this story is open, since a cleared browser currently loses the link between a transaction and its payment.
 
+**Delivered** in PR #140, with the flag off. Whether a buyer may purchase is now one function, `evaluatePurchaseReadiness` in `backend/src/transactions/purchase-readiness.ts`, and both the serializer that draws the button and the endpoint that takes the money read it, so there is no second copy of the rule for a browser to disagree with. Six refusals are declared in `PURCHASE_BLOCK` and checked in a fixed order, each carrying a reason written for the buyer rather than a code: the flag off, due diligence unfinished, a verdict of concern, KYC not approved, an escrow hold already standing, the transaction closed. That covers criteria 1 and 6, and the mapped statuses are part of the design: the flag being off answers 404, so a feature switched off is indistinguishable from one never built; a verdict of concern and a failed KYC answer 403; everything else answers 409, so a buyer who is merely early gets a different answer from a buyer who is refused.
+
+Criteria 2, 3 and 4 are the state machine covering the whole of the payment. `POST /payments/purchase` moves the transaction to `PURCHASE_PENDING` through `TransactionStateService.advance` before it calls the gateway, a verified payment moves it to `PURCHASE_IN_ESCROW` and holds the full listing price rather than the deposit, and a failed or abandoned payment returns it to `DD_COMPLETE` and leaves no escrow row. That last path needed a new edge, `PURCHASE_PENDING` back to `DD_COMPLETE`, in `TRANSACTION_TRANSITIONS`, and a route for the browser to report it, `POST /payments/:id/abandon`, because Paystack says nothing at all when a buyer closes its window. Without that call the transaction would sit pending with no button to try again. Criterion 5 is the escrow panel on the buyer's transaction card, which shows the state, the held amount and each unmet release condition by name, and the empty case says every condition has been met rather than showing nothing.
+
+Two things beyond the criteria are worth recording. There is no amount in the request body and no amount field in `StartPurchaseDto`; the server reads the price off the listing the transaction points at, because a browser that can name its own price is criterion 3 undone rather than a rounding difference. And the technical note above is closed: the payment id now travels on the transaction as `latestPayment`, nothing is written to `localStorage`, and the card's test asserts the store is empty after a render that displays a payment reference, so the association cannot quietly move back into the browser.
+
 ---
 
 ### Epic E2, money integrity
@@ -406,7 +414,7 @@ The design decision worth reading is that a move is a single conditional write a
 
 > **As** a seller, **I want** my escrow release to arrive in my own bank account, **so that** selling through the platform actually pays me.
 
-**Size** L · **Flag** `payouts` · **Deps** E1-S4, D2
+**Size** L · **Flag** `payouts` · **Deps** D2. E1-S4 was the other one and it merged as #140, so ADR-0002 is now the only thing in front of this row
 
 **Evidence of the gap**
 
@@ -670,11 +678,11 @@ The design decision E3-S1d-3 arrived at is not the one the proposal anticipated 
 
 > **As** a compliance officer, **I want** identity verification required before a buyer moves money or signs a Power of Attorney, **so that** the KYC we collect actually gates something.
 
-**Size** M · **Flag** `kyc_gate` · **Deps** E1-S4, D3
+**Size** M · **Flag** `kyc_gate` · **Deps** D3, which shapes this row rather than blocking it, because manual review is what ships. E1-S4 was the story dependency and it merged as #140, so this is startable
 
 **Evidence of the gap**
 
-`KycRecord` exists at `prisma/schema.prisma:538` with a full submit and review flow in `backend/src/kyc/`. Outside that module the only reference in the entire backend is a dashboard count at `backend/src/admin/admin.service.ts:38`. No guard, service, or controller checks KYC status before payment, PoA execution, or payout.
+`KycRecord` exists at `prisma/schema.prisma:538` with a full submit and review flow in `backend/src/kyc/`. Outside that module the only reference in the entire backend was a dashboard count at `backend/src/admin/admin.service.ts:38`. **E1-S4 has since made one thing read it**: `evaluatePurchaseReadiness` refuses a property purchase with `KYC_REQUIRED` when the buyer's KYC is not approved, which is the first half of criterion 1 delivered in one place. Nothing else checks KYC before PoA execution or payout, and there is no policy deciding which actions need it, so what this row does now is generalise a pattern that already exists rather than invent one.
 
 **Acceptance criteria**
 
