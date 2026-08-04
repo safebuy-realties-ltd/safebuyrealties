@@ -121,9 +121,7 @@ describe("PoAExecutionScreen when the KYC gate refuses", () => {
     render(<PoAExecutionScreen transactionId="tx-1" returnTo="/purchase/listing-1" />);
 
     expect(screen.queryByTestId("poa-kyc-blocked")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: /verify your identity/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /verify your identity/i })).not.toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(/already been executed/i);
   });
 

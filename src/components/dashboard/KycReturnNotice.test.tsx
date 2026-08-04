@@ -61,9 +61,7 @@ describe("KycReturnNotice", () => {
   });
 
   it("takes the query string back with it", () => {
-    render(
-      <KycReturnNotice status="VERIFIED" redirect="/dashboard/buyer/transactions?mock=1" />,
-    );
+    render(<KycReturnNotice status="VERIFIED" redirect="/dashboard/buyer/transactions?mock=1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /back to where you left off/i }));
 
