@@ -10,16 +10,24 @@ You are a senior full-stack engineer working on **SafeBuyRealties**, a Nigerian 
 
 Read `docs/DEVELOPMENT_GUIDE.md` for TDD, PR/CI, and full-stack validation layers.
 
-1. Read `docs/BUILD_CHECKLIST.md` — first `[ ]` or `[~]`
+1. Read `docs/MVP_OUTSTANDING_BACKLOG.md` — the first story with no unmet dependency. That is the
+   queue. `docs/BUILD_CHECKLIST.md` is the historical record of what was built, and every box in it
+   is already ticked, so it will not tell you what to start
 2. Create a feature branch from `main` (never commit on `main`)
 3. **TDD:** write failing tests first, then implement (backend + frontend as needed)
 4. Validate: `npm run validate:tsc`, `npm test`, local API smoke + browser on localhost (see `docs/LOCAL_DEVELOPMENT.md`)
-5. **Bring the whole of `docs/mvp-board.html` up to date in the same commit range** — the row, its
-   day card, the counter tiles, the header, the review queue, and any prose quoting a count you
-   moved — then `npm run validate:board`. CI fails a PR that changes the work without it
-   (`docs/HANDOVER_WEEK.md`, rule 8, has the full table and the `no-board-update:` escape hatch)
+5. **Bring all three record documents up to date in the same commit range.** CI fails a PR that
+   changes the work without all three (`docs/HANDOVER_WEEK.md`, rule 8, has the full tables and the
+   `no-board-update:` and `no-remaining-update:` escape hatches)
+   - `docs/mvp-board.html` — the row, its day card, the counter tiles, the header, the review queue,
+     and any prose quoting a count you moved, then `npm run validate:board`
+   - `docs/MVP_OUTSTANDING_BACKLOG.md` — the epic-table row's status and PR number, the story
+     entry's **Merged** line, a **Delivered** section saying what you did not deliver as well as what
+     you did, and a dated reconciliation note under section 3.1 if a dependency moved
+   - `docs/BUILD_CHECKLIST.md` — **Last Session Notes** at the top, and the audit-correction row if
+     your story closed one
 6. Push branch, open PR, ensure **CI is green** before marking done
-7. After merge: mark item `[x]`, update Last Session Notes
+7. After merge: update Last Session Notes with what landed and what the next session should start on
 8. Repeat until context limit; hand off per Handoff Protocol
 
 ## Validation Rules
@@ -66,10 +74,14 @@ Optional after merge: Vercel deploy smoke — `docs/VERCEL_VALIDATION.md`.
 Before stopping:
 1. Commit everything you have completed and validated
 2. If you are mid-item, commit with prefix `WIP:` and describe exactly where you stopped
-3. Update `docs/BUILD_CHECKLIST.md` — mark completed items `[x]`, mark the in-progress item `[~]`
-4. Add a `## Last Session Notes` section at the top of the checklist with: date, tool used, last completed item, next item to start, any blockers or decisions that need input
+3. Update `docs/MVP_OUTSTANDING_BACKLOG.md` — the story's row and entry if it merged, and a dated
+   reconciliation note if what you learned changes what is startable
+4. Update the `## Last Session Notes` section at the top of `docs/BUILD_CHECKLIST.md` with: date,
+   tool used, last completed story in enough detail that the next session need not read the diff,
+   what to start next and why it is next, any blockers or decisions that need input
 
-The next tool or session picks up by reading the checklist, finding `[~]` or the first `[ ]`, and continuing.
+The next tool or session picks up by reading those notes, then reading the backlog for the first
+story with no unmet dependency, and continuing.
 
 ## Git workflow (required)
 
@@ -84,8 +96,15 @@ The next tool or session picks up by reading the checklist, finding `[~]` or the
   same fact is restated in the day card, the tiles, the header and the queue, and moving one of them
   leaves the rest quietly false. CI enforces this; the only way past it is a
   `no-board-update: <reason>` line the reviewer reads
-- Never modify files outside the scope of the current checklist item, **except the board**, which
-  every story PR updates by rule
+- Never land work without updating `docs/MVP_OUTSTANDING_BACKLOG.md` and `docs/BUILD_CHECKLIST.md`
+  in the same diff. The backlog is where the next session picks its work from, so a row left reading
+  `📋 startable` after your story merged hands somebody work that is already built. CI enforces this
+  too, past a `no-remaining-update: <reason>` line
+- Say what you did **not** deliver. If an acceptance criterion is not met, write which one and why in
+  the backlog entry and tell the person reading your PR. A criterion quietly skipped is found later
+  by whoever depended on it
+- Never modify files outside the scope of the current story, **except the three record documents**,
+  which every story PR updates by rule
 - Never invent a new pattern when an existing one is in the codebase — match what is already there
 - Never install a new package without noting it explicitly in the commit message
 - Never run `prisma migrate reset` or any destructive database command
@@ -95,10 +114,11 @@ The next tool or session picks up by reading the checklist, finding `[~]` or the
 ## Read order (in-repo sessions)
 
 1. `docs/AGENT_PROMPT.md` (this file)
-2. `docs/BUILD_CHECKLIST.md` — first `[ ]` or `[~]` only
-3. Relevant code paths named in that checklist item
+2. `docs/BUILD_CHECKLIST.md` — the **Last Session Notes** block at the top only
+3. `docs/MVP_OUTSTANDING_BACKLOG.md` — the story that block points at, and its acceptance criteria
+4. Relevant code paths cited in that story's gap analysis
 
-Do not re-implement work already present; validate first, then mark `[x]`.
+Do not re-implement work already present; validate first, then record it in all three documents.
 
 ## Milestone validation (not every item)
 

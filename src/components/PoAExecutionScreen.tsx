@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExecutePoaMutation, type PowerOfAttorneyDto } from "@/hooks/use-poa";
+import { isKycRequiredError, kycGateSearch, KYC_SCREEN_PATH } from "@/lib/kyc-gate";
 import {
   POA_CONSENT_ITEMS,
   POA_INSTRUMENT_SECTIONS,
@@ -21,6 +22,14 @@ export type PoAExecutionScreenProps = {
   listingTitle?: string;
   listingAddress?: string;
   className?: string;
+  /**
+   * Where to send the buyer back to after they have verified their identity (E4-S2).
+   *
+   * This screen is rendered inside a wizard and does not know which step of which listing it is
+   * part of, so the page that renders it says. Left off, the KYC link still works and simply
+   * arrives with no way back.
+   */
+  returnTo?: string;
   onSuccess?: (poa: PowerOfAttorneyDto) => void;
 };
 
@@ -30,6 +39,13 @@ const EMPTY_CONSENTS: PoaConsentFlags = {
   landRegistryRegistration: false,
   irrevocability: false,
 };
+
+/** The gate's own words, with a fallback for a refusal that somehow arrived without any. */
+function kycRefusalMessage(error: unknown): string {
+  return error instanceof Error && error.message.trim()
+    ? error.message
+    : "Your identity needs to be verified before you can execute a Power of Attorney.";
+}
 
 function SignatureCanvas({ onChange }: { onChange: (hasSignature: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,6 +142,7 @@ export function PoAExecutionScreen({
   listingTitle,
   listingAddress,
   className,
+  returnTo,
   onSuccess,
 }: PoAExecutionScreenProps) {
   const executePoa = useExecutePoaMutation();
@@ -144,6 +161,17 @@ export function PoAExecutionScreen({
   const allConsentsChecked = POA_CONSENT_ITEMS.every((item) => consents[item.key]);
   const signatureReady = signatureTab === "draw" ? hasDrawnSignature : typedName.trim().length >= 2;
   const canExecute = allConsentsChecked && signatureReady && !executePoa.isPending;
+
+  /**
+   * E4-S2. A 403 from the KYC gate is not a failure to retry, it is a step this buyer has not taken
+   * yet, so it gets a block of its own with the way to fix it in it rather than the red line the
+   * other errors share. The sentence is the server's, not one written again here, so what the buyer
+   * reads is what the gate actually decided.
+   */
+  const kycRefusal =
+    executePoa.isError && isKycRequiredError(executePoa.error)
+      ? kycRefusalMessage(executePoa.error)
+      : null;
 
   const handleExecute = async () => {
     const signatureName =
@@ -296,7 +324,25 @@ export function PoAExecutionScreen({
         </Tabs>
       </section>
 
-      {executePoa.isError && (
+      {kycRefusal && (
+        <div
+          data-testid="poa-kyc-blocked"
+          role="alert"
+          className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4"
+        >
+          <p className="text-sm text-destructive">{kycRefusal}</p>
+          <Link
+            to={KYC_SCREEN_PATH}
+            search={kycGateSearch(returnTo)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            <ShieldCheck className="h-4 w-4" aria-hidden />
+            Verify your identity
+          </Link>
+        </div>
+      )}
+
+      {executePoa.isError && !kycRefusal && (
         <p className="text-sm text-destructive" role="alert">
           {executePoa.error instanceof Error
             ? executePoa.error.message

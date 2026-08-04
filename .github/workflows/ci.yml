@@ -20,8 +20,6 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
-      board: ${{ steps.filter.outputs.board }}
-      story: ${{ steps.filter.outputs.story }}
       e2e: ${{ steps.filter.outputs.e2e }}
     steps:
       - uses: actions/checkout@v4
@@ -48,23 +46,16 @@ jobs:
               - '.github/workflows/ci.yml'
             backend:
               - 'backend/**'
-            board:
-              - 'docs/mvp-board.html'
-            # Work a reader would expect to find on the board. Deliberately broad: the board is the
-            # index of what this repository is doing, and a change nobody can find from it is a
-            # change the next team discovers by accident.
-            story:
-              - 'src/**'
-              - 'backend/**'
-              - 'scripts/**'
-              - 'prisma/**'
-              - '.github/workflows/**'
-              - '.github/actions/**'
-              - 'docs/**'
-              - '!docs/mvp-board.html'
+            # The board's own filters used to live here and no longer do. They needed to say "work,
+            # but not the three documents that record it", and a negated pattern does not subtract
+            # on any released version of this action: the exclusion quantifier is on its main branch
+            # and unreleased, so `- '!docs/mvp-board.html'` matched every other file rather than
+            # removing that one. Harmless while one document was gated, wrong once three are, so the
+            # `board` job works the list out with one git call instead.
+
             # Anything that could change what a journey does or whether it still passes. Narrower
-            # than `story` because these two jobs cost roughly ten runner-minutes between them and
-            # a documentation change should not buy them.
+            # than the board job's list because these two jobs cost roughly ten runner-minutes
+            # between them and a documentation change should not buy them.
             e2e:
               - 'src/**'
               - 'backend/**'
@@ -297,15 +288,16 @@ jobs:
           if-no-files-found: warn
 
   # The board is the repository's index of what is done, open and deferred. It went stale twice in
-  # the handover week and a person caught it both times, so it is a check now. Two parts: the board
-  # must not contradict itself, and a pull request that changes the work must say so on the board.
+  # the handover week and a person caught it both times, so it is a check now. Three parts: the
+  # board must not contradict itself, a pull request that changes the work must say so on the board,
+  # and it must say so in the two documents that record what is left. Rule 8, docs/HANDOVER_WEEK.md.
   board:
-    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          # check-board.mjs verifies the commit named in the board header actually exists.
+          # check-board.mjs verifies the commit named in the board header actually exists, and the
+          # step below diffs against the pull request's base.
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -313,11 +305,42 @@ jobs:
       # No npm ci: the check is plain Node against one file, and it should stay that cheap.
       - run: node scripts/check-board.mjs
 
+      # Work out what this pull request touched, here rather than in the `changes` job, because the
+      # question these gates ask is "work, but not the documents that record it" and paths-filter
+      # cannot subtract on any released version. Deliberately broad on what counts as work: the
+      # board is the index of what this repository is doing, and a change nobody can find from it is
+      # a change the next team discovers by accident.
+      - name: What this pull request touched
+        id: touched
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          RECORD='docs/mvp-board.html docs/MVP_OUTSTANDING_BACKLOG.md docs/BUILD_CHECKLIST.md'
+          FILES=$(git diff --name-only "$BASE_SHA...HEAD")
+          has() { printf '%s\n' "$FILES" | grep -qxF "$1"; }
+          WORK=false
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            case " $RECORD " in *" $f "*) continue ;; esac
+            case "$f" in
+              src/*|backend/*|scripts/*|prisma/*|.github/workflows/*|.github/actions/*|docs/*)
+                WORK=true; break ;;
+            esac
+          done <<< "$FILES"
+          {
+            echo "work=$WORK"
+            has docs/mvp-board.html && echo "board=true" || echo "board=false"
+            has docs/MVP_OUTSTANDING_BACKLOG.md && echo "backlog=true" || echo "backlog=false"
+            has docs/BUILD_CHECKLIST.md && echo "checklist=true" || echo "checklist=false"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Board must record this change
         if: >-
           github.event_name == 'pull_request' &&
-          needs.changes.outputs.story == 'true' &&
-          needs.changes.outputs.board != 'true'
+          steps.touched.outputs.work == 'true' &&
+          steps.touched.outputs.board != 'true'
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
@@ -334,6 +357,48 @@ jobs:
           echo
           echo "If this change genuinely has no board row, put a line in the PR description:"
           echo "  no-board-update: <reason>"
+          exit 1
+
+      # The board says what happened. These two say what is left, and the backlog is what the next
+      # session picks its work from, so a row still reading "startable" after the story merged hands
+      # somebody work that is already built. They were kept current by habit for five waves; habit
+      # is what rule 8 exists to replace.
+      - name: The remaining-work documents must record this change
+        if: >-
+          github.event_name == 'pull_request' &&
+          steps.touched.outputs.work == 'true' &&
+          (steps.touched.outputs.backlog != 'true' || steps.touched.outputs.checklist != 'true')
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BACKLOG: ${{ steps.touched.outputs.backlog }}
+          CHECKLIST: ${{ steps.touched.outputs.checklist }}
+        run: |
+          # Same escape hatch and the same reasoning as the board's: a waiver the reviewer reads is
+          # a decision, a waiver nobody sees is a hole.
+          if printf '%s' "$PR_BODY" | grep -qiE '^[[:space:]]*no-remaining-update:[[:space:]]*\S'; then
+            printf '%s\n' "$PR_BODY" | grep -iE '^[[:space:]]*no-remaining-update:' | head -1
+            exit 0
+          fi
+          if [ "$BACKLOG" != "true" ]; then
+            echo "::error file=docs/MVP_OUTSTANDING_BACKLOG.md::This pull request changes the work but not docs/MVP_OUTSTANDING_BACKLOG.md."
+            echo
+            echo "Set the epic-table row's status to the PR number and the flag state, put Merged on"
+            echo "the story entry's Size line, and add a Delivered section saying what you did not"
+            echo "deliver as well as what you did. If a dependency moved, date a reconciliation note"
+            echo "under section 3.1 rather than rewriting the last one."
+            echo
+          fi
+          if [ "$CHECKLIST" != "true" ]; then
+            echo "::error file=docs/BUILD_CHECKLIST.md::This pull request changes the work but not docs/BUILD_CHECKLIST.md."
+            echo
+            echo "Update Last Session Notes at the top: date, last completed in enough detail that"
+            echo "the next session need not read the diff, what is next, and blockers. If you closed"
+            echo "one of the audit corrections, say so in its row and name the PR."
+            echo
+          fi
+          echo "If this change genuinely has no row and no session to record, put a line in the PR"
+          echo "description:"
+          echo "  no-remaining-update: <reason>"
           exit 1
 
   # Rule 10 in docs/HANDOVER_WEEK.md: nothing in this repository names the assistant product that

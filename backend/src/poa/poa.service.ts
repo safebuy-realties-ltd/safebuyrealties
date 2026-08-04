@@ -12,6 +12,9 @@ import * as QRCode from "qrcode";
 import * as path from "path";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { resolveVerifyBaseUrl } from "../config/poa-verify-config";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
+import { assertKycGate } from "../kyc/kyc-gate";
+import { KycStatus } from "../kyc/kyc.constants";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { ExecutePoaDto } from "./dto/execute-poa.dto";
@@ -57,6 +60,7 @@ export class PoaService {
   constructor(
     private prisma: PrismaService,
     private storage: StorageService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   computeDocumentHash(buffer: Buffer): string {
@@ -185,7 +189,9 @@ export class PoaService {
       where: { id: dto.transactionId },
       include: {
         listing: true,
-        buyer: true,
+        // The KYC status rides along with the buyer the PDF is going to name anyway, so the gate
+        // below costs no second query.
+        buyer: { include: { kycRecord: { select: { status: true } } } },
         powerOfAttorney: true,
       },
     });
@@ -199,6 +205,16 @@ export class PoaService {
     if (!transaction.listing || !transaction.listingId) {
       throw new BadRequestException("Power of Attorney requires a transaction linked to a listing");
     }
+
+    // E4-S2. Signing away the authority to act on someone's behalf in a property purchase is the
+    // last place to be taking their name on trust, so the gate sits here, in front of the generator,
+    // rather than in the controller: nothing is drafted, hashed or stored for a buyer we cannot
+    // name. Whether it bites at all is the KYC registry's call, not this file's.
+    assertKycGate(
+      "POA_EXECUTION",
+      transaction.buyer.kycRecord?.status ?? KycStatus.NOT_SUBMITTED,
+      this.featureFlags,
+    );
 
     const buyerName = `${transaction.buyer.firstName} ${transaction.buyer.lastName}`.trim();
     const executedAt = new Date();

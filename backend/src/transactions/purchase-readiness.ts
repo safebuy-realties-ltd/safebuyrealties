@@ -1,6 +1,10 @@
 import { Prisma, TransactionStatus } from "@prisma/client";
+import { KYC_BLOCK_CODE, KYC_GATED_ACTIONS, KYC_GATE_FLAG, kycRequiredFor } from "../kyc/kyc-gate";
 import { KycStatus } from "../kyc/kyc.constants";
-import type { FeatureFlagKey } from "../feature-flags/feature-flags.constants";
+import type {
+  FeatureFlagKey,
+  FeatureFlagReader,
+} from "../feature-flags/feature-flags.constants";
 
 /**
  * The include both callers pass, so neither can read a fact the other cannot see.
@@ -32,7 +36,9 @@ export const PURCHASE_BLOCK = {
   FEATURE_OFF: "FEATURE_OFF",
   DUE_DILIGENCE_UNFINISHED: "DUE_DILIGENCE_UNFINISHED",
   VERDICT_AGAINST: "VERDICT_AGAINST",
-  KYC_REQUIRED: "KYC_REQUIRED",
+  // The same string the API refuses with when a buyer posts to the endpoint anyway, taken from the
+  // gate rather than typed again, so the browser needs one branch and not two.
+  KYC_REQUIRED: KYC_BLOCK_CODE,
   ALREADY_IN_ESCROW: "ALREADY_IN_ESCROW",
   TRANSACTION_CLOSED: "TRANSACTION_CLOSED",
 } as const;
@@ -55,7 +61,7 @@ export type PurchaseFacts = {
   kycStatus: string;
   /** The `property_purchase` flag. Off means the whole step is not offered. */
   featureEnabled: boolean;
-  /** The `kyc_gate` flag. E4-S2 owns it and arming it is what makes the KYC clause bite. */
+  /** Whether the KYC registry demands a verified identity to pay for a property, gate armed and all. */
   kycEnforced: boolean;
 };
 
@@ -97,17 +103,20 @@ export type PurchaseFlags = {
  */
 export const PURCHASE_FLAG_KEYS = {
   feature: "property_purchase",
-  kyc: "kyc_gate",
+  kyc: KYC_GATE_FLAG,
 } as const satisfies Record<string, FeatureFlagKey>;
 
-/** Whatever can answer a flag. Structural, so a spec can pass a two-line stub. */
-export type FeatureFlagReader = { isEnabled(key: FeatureFlagKey): boolean };
+/** Whatever can answer a flag. Re-exported from where it now lives, so existing importers hold. */
+export type { FeatureFlagReader };
 
 /** Resolves both flags in one place, so the two callers cannot read a different pair. */
 export function purchaseFlagsFrom(flags: FeatureFlagReader): PurchaseFlags {
   return {
     featureEnabled: flags.isEnabled(PURCHASE_FLAG_KEYS.feature),
-    kycEnforced: flags.isEnabled(PURCHASE_FLAG_KEYS.kyc),
+    // Asked of the KYC policy rather than read off the flag directly. The flag arms the gate; the
+    // registry at `kyc/kyc-gate.ts` decides that paying for a property is one of the things it bites
+    // on. Reading the flag here would make this file a second opinion on that.
+    kycEnforced: kycRequiredFor("PROPERTY_PURCHASE", flags),
   };
 }
 
@@ -179,13 +188,13 @@ export function evaluatePurchaseReadiness(facts: PurchaseFacts): PurchaseReadine
         "Purchase is blocked. Read the report, and speak to us if you believe this is wrong.",
     );
   }
-  // E4-S2 owns the kyc_gate flag and the identity work behind it. The clause is wired here because
-  // the decision belongs in the one place that decides, not because this story implements KYC:
-  // with the flag off the check passes for everybody, and turning it on is what makes it bite.
+  // E1-S4 wired this clause and E4-S2 gave it a policy behind it. `kycEnforced` is now the KYC
+  // registry's answer for PROPERTY_PURCHASE rather than the raw flag, and the sentence the buyer
+  // reads is the registry's too, so the button and the endpoint refuse in the same words.
   if (facts.kycEnforced && facts.kycStatus !== KycStatus.VERIFIED) {
     return blocked(
       PURCHASE_BLOCK.KYC_REQUIRED,
-      "Your identity verification needs to be approved before you can pay for a property.",
+      KYC_GATED_ACTIONS.PROPERTY_PURCHASE.blockedReason,
     );
   }
 

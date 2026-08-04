@@ -112,6 +112,61 @@ describe("KycService", () => {
     expect(result.status).toBe(KycStatus.SUBMITTED);
   });
 
+  /**
+   * E4-S2 criterion 5. A rejection has to be a door rather than a wall, because with the gate armed
+   * a buyer whose documents were turned down for being blurred is a buyer who cannot pay for a
+   * property, and the only way out is to send better ones.
+   */
+  describe("resubmitting after a rejection (E4-S2 criterion 5)", () => {
+    const rejected = {
+      status: KycStatus.REJECTED,
+      reviewerId: "staff-1",
+      reviewNote: "The ID photograph is too blurred to read.",
+      reviewedAt: new Date("2026-05-26T09:00:00.000Z"),
+    };
+
+    beforeEach(() => {
+      prisma.kycRecord.findUnique.mockResolvedValue({ ...baseRecord, ...rejected });
+      prisma.kycRecord.upsert.mockImplementation(({ update }) =>
+        Promise.resolve({ ...baseRecord, ...rejected, ...update }),
+      );
+    });
+
+    it("hands the buyer back the reviewer's note, so they know what to fix", async () => {
+      const record = await service.getMy("buyer-1");
+
+      expect(record.status).toBe(KycStatus.REJECTED);
+      expect(record.reviewNote).toBe(rejected.reviewNote);
+    });
+
+    it("accepts a second submission rather than refusing it", async () => {
+      const result = await service.submit("buyer-1", {
+        documentKeys: ["kyc/buyer-1/id-v2.pdf"],
+      });
+
+      expect(result.status).toBe(KycStatus.SUBMITTED);
+      expect(result.documentKeys).toEqual(["kyc/buyer-1/id-v2.pdf"]);
+    });
+
+    it("clears the previous rejection instead of leaving it beside the new documents", async () => {
+      const result = await service.submit("buyer-1", {
+        documentKeys: ["kyc/buyer-1/id-v2.pdf"],
+      });
+
+      expect(result.reviewNote).toBeNull();
+      expect(result.reviewerId).toBeNull();
+      expect(result.reviewedAt).toBeNull();
+    });
+
+    it("puts it back in the queue with the resubmission time, not the original one", async () => {
+      const result = await service.submit("buyer-1", {
+        documentKeys: ["kyc/buyer-1/id-v2.pdf"],
+      });
+
+      expect(result.submittedAt).toBe("2026-05-27T15:00:00.000Z");
+    });
+  });
+
   it("submit rejects when status is already SUBMITTED", async () => {
     prisma.kycRecord.findUnique.mockResolvedValue({
       ...baseRecord,

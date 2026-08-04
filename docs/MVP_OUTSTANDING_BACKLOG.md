@@ -124,7 +124,7 @@ These are product and commercial decisions. **D1 came back answered on 2026-08-0
 | --- | --- | --- | --- | --- |
 | D1 | Is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? | Two due diligence paths exist and only one is complete. Answering "standalone only" removes most of E1 and E2 and cuts about 20 days | Confirm on-platform is in scope, since escrow and PoA only pay off there. If it is not, retire the wizard rather than leaving it half-wired | ✅ **Answered 2026-08-02: on-platform purchase is in the MVP.** The recommendation was taken. `docs/adr/0001-mvp-scope-envelope.md` is Accepted, E1's four stories are startable, and they are wave 4 on the board |
 | D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts | ⏳ Open. It is the other half of EXT-7, and now the only thing between the platform and a real seller being paid |
-| D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam | ⏳ Open |
+| D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam | ⏳ Open, and cheaper to answer late than it was. E4-S2 (#142) shipped on manual review and reads one field, `KycRecord.status`, through one registry. A provider changes who writes that field, not who reads it |
 | D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⏳ Open |
 | D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 | ⏳ Open |
 
@@ -194,7 +194,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E3-S3 | Trust | Upload hardening: type allow-list, magic bytes, AV hook | `secure_docs` | M | 📋 | E3-S2 |
 | E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
 | E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | ✅ #121 | none |
-| E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | 📋 startable | D3 |
+| E4-S2 | Access | KYC gate on money-moving actions | `kyc_gate` | M | ✅ #142, flag off, criterion 4 deferred to E2-S1 | D3 |
 | E4-S3 | Access | Cross-role authorization test suite | — | M | ✅ #125 | E4-S1 |
 | E5-S1 🔴 | Security | Rate limiting and lockout on auth and payments | — | M | ✅ #129 | none |
 | E5-S2 🔴 | Security | CORS allow-list from configuration | — | S | ✅ #97, tightened by E5-S2a #102 | none |
@@ -242,6 +242,8 @@ E3-S2 (durable storage)
 > **Reconciled a third time on 2026-08-03.** `E1-S4` has merged as #140, and it was the last dependency any row in this document had on the E1 chain. `E2-S1` now waits on ADR-0002 alone, so answering that decision starts the work rather than buying a queue position, and it is the largest single answer left. `E4-S2`, the KYC gate, listed `E1-S4` as its only story dependency and is startable now; D3 shapes it rather than blocking it, because manual review is what ships. What is left of the critical path is `E1-S3`, which stands on its own rather than in front of anything, then `E2-S1` when ADR-0002 comes back.
 >
 > **Reconciled a fourth time on 2026-08-03.** `E1-S3` has merged as #141, so every box in the graph above except `E3-S2` and `E2-S1` is closed, and the E1 chain is finished end to end: a listing case is opened, worked, signed off, paid for into escrow, and the report is delivered to the buyer who paid for it. Nothing on the critical path is startable by a developer today. `E2-S1` waits on ADR-0002 and `E3-S2` waits on ADR-0004 and EXT-2, so the path now moves when a stakeholder answers and not before. The one row left on the schedule, `E4-S2`, is off the path rather than on it.
+>
+> **Reconciled a fifth time on 2026-08-04.** `E4-S2` has merged as #142, and with it the schedule is empty: every remaining story in this document waits on a decision, an external party or a story that does. The reconcile worth recording is not that one, it is what E4-S2 could not finish. Its fourth acceptance criterion says a seller needs verified KYC before a payout account can be verified, and there is no payout destination in this codebase to gate. `E2-S1` builds one and waits on ADR-0002, so the action is declared in `KYC_GATED_ACTIONS` as `SELLER_PAYOUT_ACCOUNT` with `story: "E2-S1"` on it and reaches no request. That is one line for whoever takes `E2-S1` rather than a rediscovery: call `assertKycGate` on the way into the verify step and the criterion is met. `E2-S1` now carries two things ADR-0002 releases, its own scope and somebody else's criterion.
 
 ### 3.2 Go-live gates
 
@@ -690,7 +692,7 @@ The design decision E3-S1d-3 arrived at is not the one the proposal anticipated 
 
 > **As** a compliance officer, **I want** identity verification required before a buyer moves money or signs a Power of Attorney, **so that** the KYC we collect actually gates something.
 
-**Size** M · **Flag** `kyc_gate` · **Deps** D3, which shapes this row rather than blocking it, because manual review is what ships. E1-S4 was the story dependency and it merged as #140, so this is startable
+**Size** M · **Flag** `kyc_gate` · **Deps** D3, which shaped this row rather than blocking it, because manual review is what ships. E1-S4 was the story dependency · **Merged** PR #142
 
 **Evidence of the gap**
 
@@ -704,6 +706,18 @@ The design decision E3-S1d-3 arrived at is not the one the proposal anticipated 
 4. Sellers require verified KYC before a payout account can be verified, per E2-S1.
 5. Rejected KYC shows the reviewer's note and allows resubmission, and resubmission clears the previous rejection.
 6. Behind `kyc_gate`, so the gate can be turned off for a demo without a deploy.
+
+**Delivered** in PR #142, with the flag off, and with criterion 4 declared rather than wired. The policy is `KYC_GATED_ACTIONS` in `backend/src/kyc/kyc-gate.ts`, four actions, each declaring whether an armed gate demands `VERIFIED`, the sentence a buyer reads when it refuses, and the story that owns the answer. `describeKycAction` reports the source alongside the answer, because an action reading *not required* because the gate is disarmed and one reading it because the registry says so look identical to a caller and mean opposite things to an operator about to arm it. That is criteria 1 and 6 together: turning the gate off is a flag, changing which actions it covers is a change to that file and a review, which is the right way round for a policy on a money path.
+
+**The negative half of criterion 1 is the part with a test rather than a comment.** `DUE_DILIGENCE_PURCHASE` declares `requiresVerified: false`, and `payments.service.spec.ts` drives a buyer with no KYC record at all through a due diligence payment with the gate armed and expects it to complete. Due diligence is the step that earns the trust, and demanding identity documents before a buyer has seen anything of value is how the funnel never starts. Everything downstream of it moves real money or signs a real instrument, and `PROPERTY_PURCHASE` and `POA_EXECUTION` both require verification.
+
+**Criterion 2 is a code the frontend routes on, not a sentence it matches.** `KycRequiredException` answers **403** carrying `KYC_REQUIRED` with `details: { action, kycStatus }`, and `PURCHASE_BLOCK.KYC_REQUIRED` is now that same constant rather than a second spelling of it, so one browser code path serves both surfaces. On the frontend, `src/lib/kyc-gate.ts` reads the code and builds the search params, `TransactionCard` and `PoAExecutionScreen` render the link, and `/dashboard/buyer/kyc` takes a `redirect` param through the same `isSafeInternalRedirect` guard `/login` uses, because a search param arrives from the URL bar as readily as from our own link. The check sits in `KycReturnNotice` rather than in the route file, which is what makes it testable at all: route files here export nothing but their `Route`.
+
+**Criterion 3 put the PoA gate further in than a controller.** `assertKycGate("POA_EXECUTION", …)` is in `PoaService.execute`, in front of the PDF generator, so nothing is drafted, hashed or stored for a buyer this platform cannot name, and `poa.service.spec.ts` drives it through the service rather than through a guard. `NOT_SUBMITTED`, `SUBMITTED` and `REJECTED` are all refused: a record sitting in review is not a lesser kind of verified, it is an unanswered question, and letting it through would make the gate something anybody clears by uploading a file.
+
+**Criterion 5 needed no new code, and the tests are the deliverable.** `kycStatusMessage` already returned the reviewer's note on `REJECTED`, `kycCanSubmit` already admitted a resubmission, and `KycService.submit` already nulled `reviewNote`, `reviewerId` and `reviewedAt`. Four tests in `kyc.service.spec.ts` now hold each of those, on the argument that the gate is what makes this load-bearing: before this row a rejection cost a buyer nothing, and after it a rejection that cannot be cleared is a buyer who cannot complete a purchase.
+
+**Criterion 4 is not delivered, and it is not deferrable by this row.** It says a seller needs verified KYC before a payout account can be verified, *per E2-S1*, and E2-S1 has not started: there is no payout destination in this codebase, no verify step and therefore nothing to gate. `SELLER_PAYOUT_ACCOUNT` is declared in the registry with `story: "E2-S1"` and reaches no request, so whoever takes that story finds the policy already made and the wiring is one call to `assertKycGate` on the way into the verify step. E2-S1 waits on ADR-0002.
 
 ---
 
@@ -1193,7 +1207,7 @@ Every story above is done when all of the following hold. This is the reference 
 
 **Two developers, about 8 to 10 weeks.**
 
-- Developer A owns the loop and the money: E1 in full, then E2, then E4-S2 and E2-S5.
+- Developer A owns the loop and the money: E1 in full, then E2, then E2-S5. E1 and E4-S2 are done, so A starts at E2-S1 and waits on ADR-0002 to do it.
 - Developer B owns trust, access, and platform: E3 in full, then E4-S1 and E4-S3, then E5, E6, E7.
 - They meet at E7-S3, which needs both halves working, and at the go-live gates.
 - The only hard cross-dependency is E1-S3 needing E3-S1, so B should land E3-S1 in week one.

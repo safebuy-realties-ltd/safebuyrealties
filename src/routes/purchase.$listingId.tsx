@@ -717,6 +717,7 @@ function PoaExecutionStep({
         listingTitle={listingTitle}
         listingAddress={listingAddress}
         className="px-6 pb-6 pt-2"
+        returnTo={`/purchase/${listingId}`}
         onSuccess={(poa) => onExecuted({ poaId: poa.id, poaDocumentHash: poa.documentHash })}
       />
       <div className="border-t border-border/60 px-6 py-4">

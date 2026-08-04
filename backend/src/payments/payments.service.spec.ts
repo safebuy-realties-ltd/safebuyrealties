@@ -109,6 +109,28 @@ describe("PaymentsService paystack integration", () => {
     expect(result.reference).toBe("ref_1");
   });
 
+  /**
+   * E4-S2 criterion 1, the half that says what the gate must not touch. Due diligence is the step
+   * that earns the trust, and asking for identity documents before a buyer has seen anything of
+   * value is how you lose the buyer. The flags stub above answers on to every key, `kyc_gate`
+   * included, and the transaction double carries no KYC record at all, so this is a fully armed gate
+   * looking at a buyer it knows nothing about and letting the payment through.
+   */
+  it("takes a due diligence payment from a buyer with no KYC, with the gate armed", async () => {
+    const result = await service.initiate(
+      {
+        amount: 5000,
+        currency: "NGN",
+        transactionId: "tx-1",
+        callbackUrl: "http://localhost:8080/callback",
+      },
+      buyerActor,
+    );
+
+    expect(result.reference).toBe("ref_1");
+    expect(prisma.payment.create).toHaveBeenCalled();
+  });
+
   describe("payments are identifiable as mock", () => {
     function storedPayment(providerReference: string | null) {
       return {
