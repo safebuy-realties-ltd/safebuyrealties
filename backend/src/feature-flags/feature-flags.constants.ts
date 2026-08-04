@@ -115,6 +115,15 @@ export function isFeatureFlagKey(value: string): value is FeatureFlagKey {
 }
 
 /**
+ * Whatever can answer a flag.
+ *
+ * Structural rather than the service itself, so a rule that depends on a flag stays a pure function
+ * and its spec can pass a two-line stub instead of standing up a testing module. `FeatureFlagsService`
+ * satisfies it without being told to.
+ */
+export type FeatureFlagReader = { isEnabled(key: FeatureFlagKey): boolean };
+
+/**
  * The environment variable that sets a flag, derived rather than declared.
  *
  * Deriving it means the registry cannot disagree with the deployment: there is no second column to

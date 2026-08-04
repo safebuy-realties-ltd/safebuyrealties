@@ -1,10 +1,13 @@
-import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, HttpStatus } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { UserRole } from "@prisma/client";
 import { createHash } from "crypto";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { JwtPayload } from "../auth/jwt.strategy";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
+import { KYC_GATED_ACTIONS, KYC_GATE_FLAG, KycRequiredException } from "../kyc/kyc-gate";
+import { KycStatus } from "../kyc/kyc.constants";
 import { PrismaService } from "../prisma/prisma.service";
 import { isPrivateDocumentKey, resolvePrivateDocumentTarget } from "../storage/private-documents";
 import { StorageService } from "../storage/storage.service";
@@ -34,6 +37,7 @@ const consentFlags = {
 describe("PoaService", () => {
   let service: PoaService;
   let storage: { upload: jest.Mock; getSignedUrl: jest.Mock };
+  let flags: { isEnabled: jest.Mock };
   let prisma: {
     transaction: { findUnique: jest.Mock };
     powerOfAttorney: { create: jest.Mock; findUnique: jest.Mock };
@@ -52,12 +56,16 @@ describe("PoaService", () => {
       transaction: { findUnique: jest.fn() },
       powerOfAttorney: { create: jest.fn(), findUnique: jest.fn() },
     };
+    // Off is the registry default for kyc_gate, so this is what production reads today and what the
+    // rest of this file assumes. The gate's own describe block arms it.
+    flags = { isEnabled: jest.fn().mockReturnValue(false) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PoaService,
         { provide: PrismaService, useValue: prisma },
         { provide: StorageService, useValue: storage },
+        { provide: FeatureFlagsService, useValue: flags },
       ],
     }).compile();
 
@@ -294,6 +302,120 @@ describe("PoaService", () => {
         seller,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  /**
+   * E4-S2 criterion 3. The purchase wizard hides this step behind a button it will not render for an
+   * unverified buyer, and that is worth exactly nothing to anyone holding the URL. These tests drive
+   * `execute()` directly, which is the path the request takes, and prove the answer is the same.
+   */
+  describe("the KYC gate on execution (E4-S2 criterion 3)", () => {
+    function transactionWithKyc(status: string | null): Record<string, unknown> {
+      return {
+        id: "tx-1",
+        buyerId: "buyer-1",
+        listingId: "listing-1",
+        powerOfAttorney: null,
+        buyer: {
+          firstName: "Ada",
+          lastName: "Obi",
+          kycRecord: status === null ? null : { status },
+        },
+        listing: { title: "4-Bed Duplex", location: "Lekki Phase 1, Lagos" },
+      };
+    }
+
+    function executeAsBuyer(): Promise<PowerOfAttorneyResponse> {
+      prisma.powerOfAttorney.create.mockImplementation(({ data }) =>
+        Promise.resolve({ id: "poa-1", ...data, ipAddress: null, userAgent: null }),
+      );
+      return service.execute(
+        { transactionId: "tx-1", signatureMethod: "TYPED", signatureName: "Ada Obi", consentFlags },
+        buyer,
+      );
+    }
+
+    describe("with the gate armed", () => {
+      beforeEach(() => {
+        flags.isEnabled.mockReturnValue(true);
+      });
+
+      it.each([KycStatus.NOT_SUBMITTED, KycStatus.SUBMITTED, KycStatus.REJECTED])(
+        "refuses a buyer whose KYC is %s",
+        async (status) => {
+          prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(status));
+
+          await expect(executeAsBuyer()).rejects.toBeInstanceOf(KycRequiredException);
+        },
+      );
+
+      it("treats a buyer with no KYC record at all as not submitted rather than as fine", async () => {
+        prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(null));
+
+        await expect(executeAsBuyer()).rejects.toBeInstanceOf(KycRequiredException);
+      });
+
+      it("refuses with 403 and a reason naming the step, not the policy", async () => {
+        prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.SUBMITTED));
+
+        await executeAsBuyer().then(
+          () => fail("expected the gate to refuse"),
+          (error: KycRequiredException) => {
+            expect(error.getStatus()).toBe(HttpStatus.FORBIDDEN);
+            expect(error.getResponse()).toMatchObject({
+              error: "KYC_REQUIRED",
+              message: KYC_GATED_ACTIONS.POA_EXECUTION.blockedReason,
+              details: { action: "POA_EXECUTION", kycStatus: KycStatus.SUBMITTED },
+            });
+          },
+        );
+      });
+
+      it("signs nothing, stores nothing and uploads nothing when it refuses", async () => {
+        prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.REJECTED));
+
+        await expect(executeAsBuyer()).rejects.toBeInstanceOf(KycRequiredException);
+
+        expect(storage.upload).not.toHaveBeenCalled();
+        expect(prisma.powerOfAttorney.create).not.toHaveBeenCalled();
+      });
+
+      it("executes for a verified buyer", async () => {
+        prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.VERIFIED));
+
+        await expect(executeAsBuyer()).resolves.toMatchObject({ id: "poa-1" });
+      });
+
+      it("reads the buyer's KYC status in the query it was already making", async () => {
+        prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.VERIFIED));
+
+        await executeAsBuyer();
+
+        expect(prisma.transaction.findUnique).toHaveBeenCalledTimes(1);
+        expect(prisma.transaction.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({
+            include: expect.objectContaining({
+              buyer: { include: { kycRecord: { select: { status: true } } } },
+            }),
+          }),
+        );
+      });
+    });
+
+    it("lets an unverified buyer through with the gate off, which is the demo setting", async () => {
+      flags.isEnabled.mockReturnValue(false);
+      prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.NOT_SUBMITTED));
+
+      await expect(executeAsBuyer()).resolves.toMatchObject({ id: "poa-1" });
+    });
+
+    it("reads one flag to decide, and it is the one the story named", async () => {
+      prisma.transaction.findUnique.mockResolvedValue(transactionWithKyc(KycStatus.VERIFIED));
+
+      await executeAsBuyer();
+
+      expect(flags.isEnabled.mock.calls).toEqual([[KYC_GATE_FLAG]]);
+    });
   });
 
   it("verifyByHash returns confirmation for a known hash", async () => {

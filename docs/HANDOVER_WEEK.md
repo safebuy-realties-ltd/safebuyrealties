@@ -182,12 +182,52 @@ a record of where it was first planned; the day cards carry that history in pros
   `data-total="backlog"` for the sum, and the check verifies those against `EPICS`. Rewrite the
   sentence around a tagged figure however you like. What you cannot do is leave the figure behind.
 - CI runs the same script on every pull request, and **fails a PR that changes `src/`, `backend/`,
-  `scripts/`, `docs/` or the workflows without touching `docs/mvp-board.html`.**
+  `scripts/`, `docs/` or the workflows without touching `docs/mvp-board.html`.** That list of paths
+  used to be a `dorny/paths-filter` rule ending in `- '!docs/mvp-board.html'`, on the assumption that
+  a leading `!` subtracts. It does not, on any released version of that action: subtraction only
+  happens under a `predicate-quantifier: some-with-excludes` setting that exists on the action's main
+  branch and has never been tagged. So the pattern matched every file that was not the board, the
+  filter was true whenever anything changed at all, and the gate had been firing on every pull
+  request rather than on the ones it describes. It went unnoticed because a PR that changes nothing
+  but the board is not a thing anyone here opens. The `board` job works the list out with one
+  `git diff` instead, which is also the only way to express "not these three" now that three
+  documents are gated rather than one.
 - The escape hatch is a line in the PR description reading `no-board-update: <reason>`. It is
   deliberately visible: a waiver the reviewer reads is a decision, a waiver nobody sees is a hole.
 
+**The board is not the only document a story leaves behind.**
+
+Three files carry the state of this project, and they answer different questions. The board says what
+happened, when, and in what order. `docs/MVP_OUTSTANDING_BACKLOG.md` says what is left, with
+acceptance criteria and a file-and-line citation behind every claimed gap, and it is where an agent
+picks its next row from. `docs/BUILD_CHECKLIST.md` is the historical record of what was built, and it
+carries the audit corrections and the session notes the next session starts from.
+
+Rule 8 named only the board because the board was the one that had gone stale in front of a person.
+The other two were kept current every story by habit, which held for the handover week and four
+waves, and habit is exactly what this rule exists to replace. A backlog row still reading `📋
+startable` after the story merged does not merely mislead a reader; it hands the next agent work that
+is already done. So the gate covers all three now.
+
+| Your change | What the remaining-work documents need |
+| --- | --- |
+| A story merged | `MVP_OUTSTANDING_BACKLOG.md`: the epic-table row's status becomes `✅ #NNN` with the flag state and any criterion you did not deliver, the story entry's **Size** line gains a `**Merged** PR #NNN` clause, and the entry gets a **Delivered** section saying what was built and what was not |
+| A dependency discharged, or one you found | A reconciliation note under section 3.1, dated, saying what moved and what it unblocks. Do not rewrite the old note; add the next one. The record of what was believed and when is the point |
+| A decision or external item that shifted | Its row in §1.4 or the EXT list, with what changed. A decision that got cheaper to answer is worth as much to a stakeholder as one that got urgent |
+| Anything at all | `BUILD_CHECKLIST.md`: the **Last Session Notes** block at the top. Date, last completed with enough detail that the next session does not re-read the diff, what is next, and blockers. If your story closes one of the audit corrections, mark that row closed and say which PR did it |
+
+- The same CI job enforces it, and **fails a PR that changes the work without touching both
+  `docs/MVP_OUTSTANDING_BACKLOG.md` and `docs/BUILD_CHECKLIST.md`.** It names the one you missed.
+- The escape hatch is the same shape and the same reasoning: a line in the PR description reading
+  `no-remaining-update: <reason>`. Some changes genuinely have no row and no session to record, and
+  the price of skipping is one sentence a reviewer reads.
+- There is no structural validator behind these two. They are prose, and a check that fired on
+  wording would be routed around within a week, so what CI enforces is that you opened them. The
+  reviewer enforces that you were honest in them.
+
 A gate that blocks honest work gets disabled within a week, so if the check is wrong, say so in the
-PR and fix `scripts/check-board.mjs`. What it must never become is a step people route around.
+PR and fix `scripts/check-board.mjs` or the `board` job in `.github/workflows/ci.yml`. What it must
+never become is a step people route around.
 
 ### Rule 9, and what "like a person" means here
 

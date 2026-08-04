@@ -37,8 +37,25 @@ vi.mock("@/lib/auth", async () => {
   };
 });
 
+// Enough of a `Link` to assert where it points. The real one needs a router, and the destination
+// and its search params are the whole of what E4-S2 added here, so a mock that threw them away
+// would let a link to nowhere pass.
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => <a href="/listing">{children}</a>,
+  Link: ({
+    to,
+    search,
+    children,
+    className,
+  }: {
+    to: string;
+    search?: Record<string, unknown>;
+    children: ReactNode;
+    className?: string;
+  }) => (
+    <a href={to} data-search={JSON.stringify(search ?? {})} className={className}>
+      {children}
+    </a>
+  ),
 }));
 
 function transaction(overrides: Partial<TransactionDto> = {}): TransactionDto {
@@ -218,6 +235,57 @@ describe("criterion 6: a verdict of concern is explained, not silently obeyed", 
 
     expect(screen.queryByTestId("purchase-blocked")).not.toBeInTheDocument();
     expect(screen.getByText("Purchase In Escrow")).toBeInTheDocument();
+  });
+});
+
+/**
+ * E4-S2 criterion 2. The card already said why the purchase was refused. What it did not do was
+ * say what to do about it, and of the refusals it shows this is the only one the buyer can clear
+ * themselves.
+ */
+describe("E4-S2: a purchase blocked on identity says where to go", () => {
+  function kycBlocked() {
+    return transaction({
+      purchase: {
+        canPurchase: false,
+        blockedBy: "KYC_REQUIRED",
+        reason: "Your identity verification needs to be approved before you can purchase.",
+        caution: null,
+      },
+    });
+  }
+
+  it("routes the buyer to the KYC screen and carries the way back", () => {
+    renderCard(kycBlocked());
+
+    const link = screen.getByRole("link", { name: /verify your identity/i });
+    expect(link).toHaveAttribute("href", "/dashboard/buyer/kyc");
+    expect(JSON.parse(link.getAttribute("data-search") ?? "{}")).toEqual({
+      redirect: "/dashboard/buyer/transactions",
+    });
+  });
+
+  it("still shows the server's reason above the link", () => {
+    renderCard(kycBlocked());
+
+    expect(screen.getByTestId("purchase-blocked")).toHaveTextContent(
+      /identity verification needs to be approved/i,
+    );
+  });
+
+  it("offers nothing to click on a refusal the buyer cannot clear", () => {
+    renderCard(
+      transaction({
+        purchase: {
+          canPurchase: false,
+          blockedBy: "VERDICT_AGAINST",
+          reason: "Due diligence returned do not proceed on this property.",
+          caution: null,
+        },
+      }),
+    );
+
+    expect(screen.queryByRole("link", { name: /verify your identity/i })).not.toBeInTheDocument();
   });
 });
 

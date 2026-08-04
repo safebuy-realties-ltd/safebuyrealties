@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/DashboardLayout";
+import { KycReturnNotice } from "@/components/dashboard/KycReturnNotice";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,20 @@ import {
 } from "@/lib/kyc-status";
 import { ApiError } from "@/lib/api";
 
+type KycSearch = {
+  redirect?: string;
+};
+
 export const Route = createFileRoute("/dashboard/buyer/kyc")({
+  /**
+   * E4-S2. The KYC gate sends a blocked buyer here with the page they were on in `redirect`, the
+   * same param and the same shape `/login` uses. It is read raw here and checked in
+   * `KycReturnNotice`, because a search param arrives from the URL bar as readily as from our own
+   * link and neither one is trusted.
+   */
+  validateSearch: (search: Record<string, unknown>): KycSearch => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: BuyerKyc,
 });
 
@@ -30,6 +44,7 @@ const INITIAL_SLOTS: UploadSlot[] = [
 ];
 
 function BuyerKyc() {
+  const { redirect } = Route.useSearch();
   const { data: kyc, isLoading } = useMyKycQuery();
   const submit = useSubmitKycMutation();
   const [slots, setSlots] = useState<UploadSlot[]>(INITIAL_SLOTS);
@@ -77,6 +92,8 @@ function BuyerKyc() {
         title="Verify Your Identity"
         description="Complete KYC verification before purchasing property on SafeBuyRealties."
       />
+
+      <KycReturnNotice status={status} redirect={redirect} />
 
       <div className="mb-6 rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap items-center gap-3">

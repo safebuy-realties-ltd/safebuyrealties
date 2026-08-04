@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type TransactionDto } from "@/hooks/use-transactions";
@@ -14,6 +14,7 @@ import { useEscrowQuery, escrowStatusLabel } from "@/hooks/use-escrow";
 import { openPaystackCheckout } from "@/lib/paystack";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
+import { KYC_REQUIRED_CODE, KYC_SCREEN_PATH, kycGateSearch } from "@/lib/kyc-gate";
 
 /**
  * One transaction on the buyer's dashboard: where it has got to, what may be paid next, and what
@@ -123,7 +124,7 @@ const DD_PAYMENT_STATUSES = new Set(["INITIATED", "IN_PROGRESS", "DD_PURCHASED",
  * itself, and unfinished due diligence, money already in escrow and a transaction that has closed
  * are all things the status badge and the escrow panel on this card already say.
  */
-const SHOWN_PURCHASE_BLOCKS = new Set(["VERDICT_AGAINST", "KYC_REQUIRED"]);
+const SHOWN_PURCHASE_BLOCKS = new Set(["VERDICT_AGAINST", KYC_REQUIRED_CODE]);
 
 export function depositAmountForListing(priceStr: string) {
   const n = Number(priceStr);
@@ -156,6 +157,12 @@ export function TransactionCard({ tx }: { tx: TransactionDto }) {
     tx.purchase.blockedBy && SHOWN_PURCHASE_BLOCKS.has(tx.purchase.blockedBy)
       ? tx.purchase.reason
       : null;
+  /**
+   * E4-S2. Of the two refusals this card shows, one is the buyer's to fix. A verdict against the
+   * property is the end of the road, but an unverified identity is a screen away, so that one gets
+   * the way to it rather than only the bad news.
+   */
+  const kycBlocked = tx.purchase.blockedBy === KYC_REQUIRED_CODE;
 
   const callbackUrl = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -279,12 +286,22 @@ export function TransactionCard({ tx }: { tx: TransactionDto }) {
 
       <div className="p-5">
         {refusal && (
-          <p
+          <div
             data-testid="purchase-blocked"
-            className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            className="mb-5 space-y-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
           >
-            {refusal}
-          </p>
+            <p className="text-sm text-destructive">{refusal}</p>
+            {kycBlocked && (
+              <Link
+                to={KYC_SCREEN_PATH}
+                search={kycGateSearch("/dashboard/buyer/transactions")}
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                <ShieldCheck className="h-4 w-4" aria-hidden />
+                Verify your identity
+              </Link>
+            )}
+          </div>
         )}
         {tx.purchase.caution && (
           <p
