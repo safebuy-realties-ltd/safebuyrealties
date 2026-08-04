@@ -123,18 +123,20 @@
 
 <header class="top">
   <h1>Remaining work: the six things only the stakeholder can do</h1>
-  <p class="sub">Nineteen stories are left on the MVP. Five of them a developer can start this morning.
-    The other fourteen are waiting on six items that no amount of engineering can produce, because they
-    are decisions, purchases, accounts and documents that belong to somebody outside this team.</p>
-  <p class="sub" style="margin-top:8px;">This is the third edition. The first was written on 1 August.
-    The second was written on the morning of 2 August, when one stakeholder answer was still holding
-    back a third of the build. That answer came back the same day, which is why this edition exists:
-    it released seventeen developer-days, it turned a report about a stalled project into a report
-    about a schedule, and it is the clearest evidence in this document of what one sentence from a
-    stakeholder is worth here.</p>
-  <p class="meta">Generated 2026-08-02, after PRs 134, 135 and 136 merged. Every figure below is derived
-    from <code>docs/mvp-board.html</code> and <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at
-    <code>main</code> @ <code>5be4b6b</code>, and the derivation is described under <b>Method</b> at the foot
+  <p class="sub">Fourteen stories are left on the MVP and not one of them is a developer's to start.
+    Every one is waiting on six items that no amount of engineering can produce, because they are
+    decisions, purchases, accounts and documents that belong to somebody outside this team.</p>
+  <p class="sub" style="margin-top:8px;">This is the fourth edition, and it is the shortest interval
+    between two of them yet. The third edition, written on 2 August, reported that one stakeholder
+    answer had just released five stories and seventeen developer-days, and it drew a schedule with
+    four calendar days of building in front of it that needed nobody's permission. Those four days
+    took two. All five stories merged as PRs 138 to 142, the free lane is empty, and the runway this
+    report measures is back to zero. That is not a setback. It is the same evidence as last time, read in
+    the other direction: the code moves as fast as the answers arrive, and there is no unspent answer
+    left.</p>
+  <p class="meta">Generated 2026-08-04, after PRs 138, 139, 140, 141 and 142 merged. Every figure below
+    is derived from <code>docs/mvp-board.html</code> and <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at
+    <code>main</code> @ <code>41c90f3</code>, and the derivation is described under <b>Method</b> at the foot
     of the page.</p>
 </header>
 
@@ -144,23 +146,25 @@
 
 <section>
   <div class="card red">
-    <p><b>The position in one paragraph.</b> Forty of the fifty-nine rows on the board are closed. Of the
-      nineteen that remain, five are free: a developer can pick up the first of them this morning and
-      nobody has to be asked for anything. The other fourteen carry forty-four developer-days and every
-      one of them is stopped in front of the same six items. Those items are not engineering work and
-      they cannot be worked around. They are one decision about money, one decision about where documents
-      live, a mail domain, two legal documents and a booked security test.</p>
-    <p><b>What changed since the second edition, and it changed the shape of the report.</b> The stakeholder
-      confirmed that buying a property on the platform is part of the MVP. That is ADR-0001, and answering
-      it released five stories and seventeen developer-days in a single sentence, at a cost to the person
-      answering of one reply. Before it, this page reported a runway of zero: there was literally nothing a
-      developer could begin. Now there are four calendar days of building in front of the team that need
-      nobody's permission.</p>
+    <p><b>The position in one paragraph.</b> Forty-six of the sixty rows on the board are closed. The
+      fourteen that remain carry forty-four developer-days, and every one of them is stopped in front of
+      the same six items. Nothing is free. There is no story on this board a developer can pick up
+      tomorrow morning without somebody outside this team acting first. Those six items are not
+      engineering work and they cannot be worked around. They are one decision about money, one decision
+      about where documents live, a mail domain, two legal documents and a booked security test.</p>
+    <p><b>What changed since the third edition, and it took two days.</b> That edition reported five free
+      stories and seventeen developer-days, released by one stakeholder sentence answering ADR-0001. All
+      five have merged: the listing due diligence lifecycle, the transaction state machine, the buyer's
+      report delivery, the property purchase step and the KYC gate, as PRs 138 to 142. The schedule that
+      edition drew allowed four calendar days for them. They took two. The green lane on every figure
+      below is now empty, and that is the honest reading of it rather than a bad one.</p>
     <p><b>What has not changed, and it is now the whole story.</b> Every one of the remaining six items has
-      a lead time attached to it, and five of the six will arrive after the day the code in front of them is
-      ready. Three of them take between two and three weeks to obtain, and between them they hold nine
-      developer-days, which is about one day of building. So the finish date of this MVP is not being set by
-      how much code is left. It is being set by when six emails get sent.</p>
+      a lead time attached to it, and every one of them will arrive after the day the code in front of it is
+      ready, because there is no longer any other code to be writing while they come. Three of them take
+      between two and three weeks to obtain, and between them they hold nine developer-days, which is about
+      one day of building. So the finish date of this MVP is not being set by how much code is left. It is
+      being set by when six emails get sent, and until one of them is, the build rate of this project is
+      zero for reasons that have nothing to do with the team.</p>
   </div>
 </section>
 
@@ -191,8 +195,8 @@
         <dt>D1 to D5</dt><dd><b>Decision</b> awaiting an answer. Each one maps to an ADR.</dd>
         <dt>G1 to G6</dt><dd><b>Go-live gate.</b> A condition that must be demonstrably true before launch.
           Listed on the right.</dd>
-        <dt>W1 to W4</dt><dd><b>Wave.</b> A batch of stories a developer works through together. Waves 1, 2
-          and 3 are closed. Wave 4 is open.</dd>
+        <dt>W1 to W4</dt><dd><b>Wave.</b> A batch of stories a developer works through together. All four
+          waves are closed, and no wave 5 can be scheduled until an item on the stakeholder list arrives.</dd>
         <dt>QA-nnn</dt><dd>A numbered finding from the quality audit that produced this backlog.</dd>
         <dt>DOCS-n, CH-n</dt><dd><b>Documentation and chore rows.</b> Real pull requests that carry no
           engineering days, so they never move the totals in this report.</dd>
@@ -306,28 +310,32 @@
 
 <section>
   <div class="fignum">Figure 1</div>
-  <h2>Where the work stands, against where it stood two mornings ago</h2>
+  <h2>Where the work stands, against the three mornings before it</h2>
   <p class="cap">Each bar is the whole MVP backlog at that moment, in developer-days. Green is work a
     developer could have picked up without asking anybody. Red is work stopped in front of somebody else's
-    decision or purchase. The bars shrink because delivered work leaves the chart.</p>
+    decision or purchase. The bars shrink because delivered work leaves the chart. Read the last two
+    together: the green that appeared on 2 August is gone from the bottom bar not because it was taken away
+    but because it was built.</p>
   <div class="card"><div id="fig1"></div></div>
 </section>
 
 <section>
   <div class="fignum">Figure 2</div>
   <h2>Everything delivered so far, and the one delivery no developer made</h2>
-  <p class="cap">Twelve stories and thirty-eight developer-days closed across three waves in two days. Then
-    wave 4 opened, and its first three pull requests carried one engineering day between them. The block at
-    the bottom is not a pull request. It is a stakeholder answering a question, and it moved more than any
-    single wave on this chart.</p>
+  <p class="cap">Thirteen rows and thirty-nine developer-days closed across three waves in two days. Wave 4
+    added seventeen more across five stories, in two days again, and four of its nine pull requests carry no
+    engineering days at all because they are records rather than code. The block underneath the waves is not
+    a pull request. It is a stakeholder answering a question, and every developer-day it released is now
+    inside the wave above it.</p>
   <div class="card"><div id="fig2"></div></div>
 </section>
 
 <section>
   <div class="fignum">Figure 3</div>
   <h2>Every remaining story, matched to the one item holding it</h2>
-  <p class="cap">Nineteen rows. Each is sized in developer-days and grouped under the item that has to
-    arrive before anybody can start it. The green group at the top is held by nobody.</p>
+  <p class="cap">Fourteen rows. Each is sized in developer-days and grouped under the item that has to
+    arrive before anybody can start it. The previous edition of this figure opened with a green group of
+    five held by nobody. That group is gone, because it was built.</p>
   <div class="card"><div id="fig3"></div></div>
   <div class="keyrow" id="key3"></div>
 </section>
@@ -369,25 +377,30 @@
 
 <section>
   <div class="fignum">Figure 6</div>
-  <h2>What sixty-one developer-days is worth in calendar time</h2>
+  <h2>What forty-four developer-days is worth in calendar time</h2>
   <p class="cap">A developer-day is a unit of scope, not a unit of elapsed time, and on this project the two
     are far apart. One developer running many agents in parallel, with a second developer reviewing and
     merging, does not spend those days one after another. The evidence is this repository's own history.</p>
   <div class="grid2">
-    <div class="card"><h3>Sixty-one developer-days of scope</h3><div id="fig6a"></div></div>
+    <div class="card"><h3>Forty-four developer-days of scope</h3><div id="fig6a"></div></div>
     <div class="card"><h3>The same work, in calendar days</h3><div id="fig6b"></div></div>
   </div>
   <div class="card" style="margin-top:14px;">
     <p><b>Where the rate comes from.</b> Eleven pull requests merged into <code>main</code> on 31 July and
       eleven more on 1 August. Wave 1 was four stories and eight published developer-days, and it merged as
-      PRs 119 to 122 inside a single afternoon. Wave 3 was four stories and eighteen developer-days in a
-      day. The ceiling this report plans against is <b>six merges and nineteen developer-days in a calendar
+      PRs 119 to 122 inside a single afternoon. Wave 3 was five rows and nineteen developer-days in a day.
+      The ceiling this report plans against is <b>six merges and nineteen developer-days in a calendar
       day</b>, which is the highest the repository has actually sustained, and every day in figure 7 sits
       under it.</p>
-    <p><b>What that rate cannot buy.</b> It cannot compress a chain. Wave 4 is four stories deep and each
-      one waits on the one before it, so it takes four calendar days no matter how many agents are pointed
-      at it. Adding people or agents to a chain of four does not make it a chain of one. This is why the
-      runway figure at the top of the page is four days rather than one.</p>
+    <p><b>The last edition tested that ceiling and the ceiling held.</b> It said wave 4 was a chain four
+      stories deep, that a chain cannot be parallelised, and that it would therefore take four calendar days
+      whatever was pointed at it. It took two. PRs 138 to 142 merged on 3 and 4 August and carried seventeen
+      developer-days between them. The chain argument was sound and the arithmetic on top of it was
+      pessimistic, so read every calendar figure below as an outer bound rather than a forecast.</p>
+    <p><b>What the rate still cannot buy.</b> It cannot buy a decision, and it cannot shorten the post. Of
+      the twenty-two calendar days this report ends on, five are days somebody writes code and seventeen are
+      days spent waiting for something to arrive in an inbox. Doubling the team changes the five. It does
+      nothing at all to the seventeen.</p>
   </div>
 </section>
 
@@ -400,16 +413,18 @@
   <div class="card"><div id="fig7"></div></div>
   <div class="keyrow" id="key7"></div>
   <div class="card green" style="margin-top:14px;">
-    <p><b>Sixteen of the nineteen stories and fifty-two of the sixty-one developer-days close inside five
-      calendar days.</b> The busiest day is day four at five merges and eighteen developer-days, which is
+    <p><b>Eleven of the fourteen stories and thirty-five of the forty-four developer-days close inside five
+      calendar days.</b> The busiest day is day four at four merges and fifteen developer-days, which is
       under the ceiling the repository has already sustained. Nothing in this schedule requires the team to
-      go faster than it has gone.</p>
+      go faster than it has gone. Day one is blank, and that is the whole finding of this edition: the free
+      lane that used to fill it was built on 3 and 4 August, so the first day of this plan is now a day the
+      team spends waiting.</p>
     <p><b>The last three stories are nine developer-days, and they are one build day.</b> E8-S1 is seven of
       those nine on its own. They are not on the chart above because they cannot be scheduled: they start
       when a privacy notice, a counsel-approved document and a booked penetration test arrive, and those are
       fourteen to twenty-one calendar days out from whenever somebody begins them.</p>
-    <p><b>End to end, if all six items are started this morning: about twenty-two calendar days.</b> Six of
-      those are days on which code is written. Sixteen are days spent waiting for post. If the three
+    <p><b>End to end, if all six items are started this morning: about twenty-two calendar days.</b> Five of
+      those are days on which code is written. Seventeen are days spent waiting for post. If the three
       long-lead items are not started this morning, the finish date moves out by exactly as long as they are
       left, and no amount of engineering changes that.</p>
   </div>
@@ -440,24 +455,36 @@
 </section>
 
 <section>
-  <h2>Five stories nobody is blocking <span class="note">the whole of the free lane</span></h2>
-  <p class="cap">These are the seventeen developer-days that answering ADR-0001 handed back. Four of them
-    are wave 4 on the board. The fifth, E4-S2, is not on a wave yet: it has no stakeholder in front of it
-    either, only E1-S4, so it becomes startable the moment wave 4's chain reaches its fourth link. The board
-    schedules waves conservatively and has not added it. This report counts it as free because it is.</p>
+  <h2>No stories nobody is blocking <span class="note">the free lane, and what became of it</span></h2>
+  <p class="cap">The previous edition put five stories and seventeen developer-days in this section, released
+    the morning ADR-0001 was answered. The section is empty now, and not because anything was cancelled.</p>
   <div class="tblwrap">
     <table>
       <thead><tr>
-        <th>Story</th><th>Title</th><th>Size</th><th style="text-align:right">Days</th>
-        <th>Waits on</th><th>What is true today</th>
+        <th>Story</th><th>Title</th><th style="text-align:right">Days</th><th>Merged</th>
       </tr></thead>
       <tbody id="freeRows"></tbody>
     </table>
   </div>
+  <div class="card blue" style="margin-top:14px;">
+    <p><b>Seventeen developer-days, five stories, two calendar days.</b> The lane opened on 2 August and
+      closed on 4 August. What it bought is the whole buyer loop end to end: a listing due diligence case is
+      opened and worked, a transaction moves through one state machine rather than four scattered status
+      writes, the buyer pays for the property step, the finished report is delivered to the buyer who paid
+      for it and to nobody else, and money-moving actions are gated on verified identity.</p>
+    <p><b>All five shipped behind a flag that is off.</b> <code>FEATURE_DD_CASE_LIFECYCLE</code>,
+      <code>FEATURE_PROPERTY_PURCHASE</code> and <code>FEATURE_KYC_GATE</code> default to off, so none of
+      this is reachable by a user until somebody sets three values on the hosting dashboard. That is the
+      seventh tile at the top of this page, and it is the cheapest item on the whole report.</p>
+    <p><b>What replaces this section is nothing.</b> There is no work in this codebase that a developer can
+      pick up this morning without an answer from outside the team. That has not been true at any point in
+      this project's history before today, and it is the single number worth taking away from this
+      edition.</p>
+  </div>
 </section>
 
 <section>
-  <h2>Nine things already built that need a setting changed <span class="note">no engineering, no
+  <h2>Ten things already built that need a setting changed <span class="note">no engineering, no
     developer-days, an operator with a dashboard login</span></h2>
   <p class="cap">None of these appear in any total on this page, because there is no code to write. They are
     listed because each one is a piece of finished, tested work that is doing nothing until somebody with
@@ -473,9 +500,11 @@
 <section>
   <h2>Findings that belong to nobody yet</h2>
   <p class="cap">Real problems found during the audit that are not on the board, because each one needs a
-    decision about scope before it can be written as a story. Two entries from the last edition have gone:
-    the seeder that deleted rows from a tracked file and the review-queue check that assumed merge order
-    were both fixed by DOCS-4, merged as PR 134.</p>
+    decision about scope before it can be written as a story. Nothing has left this table since the last
+    edition. All five were re-read against the code on 4 August, after PRs 138 to 142 merged, and all five
+    are still true, including the two marked serious. Wave 4 was a large delivery and it touched none of
+    them, which is what you would expect: each one is waiting on a scope decision rather than on a
+    developer.</p>
   <div class="tblwrap">
     <table>
       <thead><tr><th style="width:90px">Severity</th><th>Finding</th><th>What it needs</th></tr></thead>
@@ -495,16 +524,19 @@
 <section>
   <h2>What to do this week</h2>
   <div class="grid2">
-    <div class="card green">
+    <div class="card red">
       <h3>The developer, starting this morning</h3>
       <ul class="tight">
-        <li><b>E1-S1</b> today. It is the only row in wave 4 with nothing in front of it, and nothing else
-          in the wave can start until it lands.</li>
-        <li><b>E1-S2 and E1-S3</b> next, side by side, both behind E1-S1.</li>
-        <li><b>E1-S4</b> after E1-S2. This is the row a stakeholder should care about most: it is where
-          escrow and the Power of Attorney stop being code with no journey that reaches them.</li>
-        <li><b>E4-S2</b> behind E1-S4, and then the free lane is empty and everything depends on the list
-          on the right.</li>
+        <li><b>Nothing.</b> There is no story on this board that a developer can open today. The last one
+          that did not need an answer from outside the team merged on 4 August as PR 142.</li>
+        <li><b>The one exception is not engineering.</b> Somebody with a hosting login can set
+          <code>FEATURE_DD_CASE_LIFECYCLE</code>, <code>FEATURE_PROPERTY_PURCHASE</code> and
+          <code>FEATURE_KYC_GATE</code> and make seventeen developer-days of finished work reachable. That
+          is a dashboard, not a branch.</li>
+        <li><b>Then the queue starts at E6-S1</b>, two developer-days, and it starts the hour
+          <code>EXT-3</code> lands. Everything behind it in figure 7 is stacked and waiting.</li>
+        <li><b>Read the right-hand column as the build plan.</b> On this page the stakeholder list is not a
+          list of blockers alongside the work. Since 4 August it is the work.</li>
       </ul>
     </div>
     <div class="card red">
@@ -537,8 +569,11 @@
     <p><b>How per-story days are derived.</b> The backlog publishes effort as a range per epic, not per
       story. Each epic's upper bound is apportioned across its remaining stories in proportion to size, with
       Small counting one, Medium three and Large five, and any remainder given to the largest story in the
-      epic. Every allocation lands inside its published size band. The result sums to sixty-one, which is
-      exactly the board's published ceiling.</p>
+      epic. Every allocation lands inside its published size band. The result summed to sixty-one across the
+      nineteen stories the last edition measured, which was exactly the board's published ceiling. Five of
+      those stories have since merged and took seventeen days with them, so the fourteen that remain sum to
+      forty-four. Nothing was re-estimated to get there; the same per-story figures are simply added up over
+      a shorter list.</p>
     <p><b>A two-day difference from the last edition, and it is not new work.</b> The second edition's
       per-story figures summed to fifty-nine against a published ceiling of sixty-one, and it called the
       gap drift and left it. The gap has now been located: it was two developer-days lost to rounding, one
@@ -560,7 +595,7 @@
 </section>
 
 <footer class="meta" style="margin-top:28px;">
-  SafeBuyRealties MVP, remaining work, third edition, 2026-08-02. Companion documents in
+  SafeBuyRealties MVP, remaining work, fourth edition, 2026-08-04. Companion documents in
   <code>docs/</code>: <b>mvp-board.html</b> (the live schedule, with the same legend),
   <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story),
   <b>HANDOVER_WEEK.md</b> (the working agreement), <b>adr/0001</b> to <b>0005</b>.
@@ -634,7 +669,8 @@ const ASKS = [
       "obligations under CBN and AML rules. Building one and discovering the other was intended is not a " +
       "refactor, it is a rewrite.",
     extra:"This is the half of EXT-7 still outstanding. The other half was D1, and answering it on " +
-      "2 August is what released the five stories a developer is starting this morning.",
+      "2 August released five stories that were built and merged within two days. This half has been " +
+      "open for the same length of time and has released nothing.",
     ifno:"Gate G6 cannot be closed, gate G2 cannot be demonstrated, and the platform can take a buyer's " +
       "money but cannot pay a real seller."
   },
@@ -710,22 +746,12 @@ const ASKS = [
 const askOf = k => ASKS.find(a => a.key === k);
 
 /* ------------------------------------------------------------------ *
- * THE NINETEEN REMAINING STORIES                                      *
+ * THE FOURTEEN REMAINING STORIES                                      *
  *   [id, title, size, days, ask, hold, today]                         *
- *   ask "" means nothing outside the team is holding it               *
+ *   ask "" means nothing outside the team is holding it, and as of    *
+ *   this edition no row is left with an empty one                     *
  * ------------------------------------------------------------------ */
 const STORIES = [
-  ["E1-S1","Listing DD case lifecycle: queue, assign, report, complete","L",5,"","",
-   "The service has one method. ADR-0001 was all that held this row and it was answered on 2 August, so it is startable today."],
-  ["E1-S2","Transaction state machine, DD_PURCHASED to DD_COMPLETE","M",3,"","E1-S1",
-   "Only the standalone path sets these statuses, so listing transactions stop dead."],
-  ["E1-S3","Buyer DD report delivery, access controlled","M",3,"","E1-S1",
-   "Report keys are never written or read for listing orders. Its other dependency closed in the handover week."],
-  ["E1-S4","Property purchase step wired to the state machine","M",3,"","E1-S2",
-   "The buyer UI gates on a status nothing reaches, so the branch is dead code. This is the row that gives escrow and the Power of Attorney a journey that reaches them."],
-  ["E4-S2","KYC gate on money-moving actions","M",3,"","E1-S4",
-   "Identity records are never read outside their own module and a dashboard count."],
-
   ["E6-S1","SMTP configuration and delivery observability","S",1,"EXT3","names it",
    "The dispatch function returns early with no mail host, and no environment defines one."],
   ["E6-S2","Email channel for notification types","M",3,"EXT3","behind E6-S1",
@@ -766,8 +792,9 @@ const FREE = STORIES.filter(r => !r[4]);
 const WAVES = [
   { n:1, day:"1 August", items:[["E5-S6",1,119],["E7-S6b",1,120],["E4-S1",3,121],["E7-S1",3,122]] },
   { n:2, day:"1 to 2 August", items:[["E2-S2",3,123],["E4-S3",3,125],["E7-S2b",3,127],["CH-1",3,128]] },
-  { n:3, day:"2 August", items:[["E5-S1",3,129],["E8-S4",4,130],["E5-S5",5,131],["E7-S3",6,132]] },
-  { n:4, day:"2 August", open:true, items:[["DOCS-4",1,134],["DOCS-7",0,135],["CH-7",0,136],["DOCS-8",0,137]] }
+  { n:3, day:"2 August", items:[["E5-S1",3,129],["E8-S4",4,130],["E5-S5",5,131],["E7-S3",6,132],["DOCS-4",1,134]] },
+  { n:4, day:"2 to 4 August", items:[["DOCS-7",0,135],["CH-7",0,136],["DOCS-8",0,137],["E1-S1",5,138],
+                                     ["E1-S2",3,139],["E1-S4",3,140],["E1-S3",3,141],["E4-S2",3,142],["DOCS-9",0,143]] }
 ];
 
 const OPS = [
@@ -788,7 +815,9 @@ const OPS = [
   ["Decide the storage driver setting","Render hosting",
    "It still defaults to local disk. It changes when the storage item above lands, and it is the switch that makes uploaded documents survive a deploy."],
   ["Retire the superseded backend project","Vercel hosting",
-   "A second deployment target exists that no longer serves anything. Confirm nothing points at it, then delete it, so no future deploy goes to the wrong place."]
+   "A second deployment target exists that no longer serves anything. Confirm nothing points at it, then delete it, so no future deploy goes to the wrong place."],
+  ["Decide when to lift the three new flags","Render hosting",
+   "Everything the stakeholder answer released shipped switched off: <code>FEATURE_DD_CASE_LIFECYCLE</code>, <code>FEATURE_PROPERTY_PURCHASE</code> and <code>FEATURE_KYC_GATE</code> are all off by default. The due diligence loop, the purchase step and the identity gate are built, tested and inert, and production behaves exactly as it did on 2 August until somebody sets them. Lifting them is one decision rather than three, because a purchase step without a KYC gate is a worse position than either state, and it wants a rehearsal on a real listing first. This is the largest single piece of value in this repository currently sitting behind a setting."]
 ];
 
 const FINDINGS = [
@@ -809,20 +838,24 @@ const FINDINGS = [
  * ------------------------------------------------------------------ */
 const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
 const BD       = sum(BLOCKED, r => r[3]);   // 44 developer-days behind a stakeholder
-const FREE_D   = sum(FREE, r => r[3]);      // 17 developer-days a developer can start
-const TOTAL    = BD + FREE_D;               // 61, the board's published ceiling
-const ROWS     = 59, ROWS_DONE = 40;
+const FREE_D   = sum(FREE, r => r[3]);      // 0 developer-days a developer can start
+const TOTAL    = BD + FREE_D;               // 44, the board's published ceiling
+const ROWS     = 60, ROWS_DONE = 46;
 const DELIVERED = sum(WAVES, w => sum(w.items, i => i[1]));
 const RATE_MERGES = 6, RATE_DAYS = 19;      // the ceiling this repository has sustained
-const RUNWAY   = 4;                         // calendar days of building that need nobody
-const SCHED_DAYS = 5, SCHED_STORIES = 16;
-const SCHED_D  = 52;
+const RUNWAY   = 0;                         // calendar days of building that need nobody
+const SCHED_DAYS = 5, SCHED_STORIES = 11;
+const SCHED_D  = 35;
 const TAIL_STORIES = 3, TAIL_D = TOTAL - SCHED_D;   // 9
 const END_TO_END = 22;
+/* What ADR-0001 released on 2 August. Held as a constant rather than read off FREE, because FREE is
+   now empty and the fact it records is historical: all seventeen days have since been delivered. */
+const RELEASED = 17;
 const WAS = [
-  { when:"1 August",             blocked:59, free:39 },
-  { when:"2 August, morning",    blocked:59, free:1  },
-  { when:"Now, after the answer",blocked:BD, free:FREE_D }
+  { when:"1 August",              blocked:59, free:39 },
+  { when:"2 August, morning",     blocked:59, free:1  },
+  { when:"2 August, the answer",  blocked:44, free:17 },
+  { when:"Now, 4 August",         blocked:BD, free:FREE_D }
 ];
 const AXIS = Math.max(...WAS.map(w => w.blocked + w.free));   // 98
 
@@ -831,15 +864,15 @@ const AXIS = Math.max(...WAS.map(w => w.blocked + w.free));   // 98
  * ------------------------------------------------------------------ */
 const TILES = [
   ["Board rows closed", `${ROWS_DONE} / ${ROWS}`, `${Math.round((ROWS_DONE / ROWS) * 100)}% of everything ever scheduled`, ""],
-  ["Stories left", "19", `${BLOCKED.length} blocked, ${FREE.length} a developer can start`, ""],
-  ["Blocked on a stakeholder", String(BLOCKED.length), `${Math.round((BLOCKED.length / 19) * 100)}% of what is left`, "red"],
-  ["Free to start this morning", String(FREE.length), "wave 4, and the story behind it", "green"],
+  ["Stories left", String(STORIES.length), `${BLOCKED.length} blocked, ${FREE.length} a developer can start`, ""],
+  ["Blocked on a stakeholder", String(BLOCKED.length), `${Math.round((BLOCKED.length / STORIES.length) * 100)}% of what is left`, "red"],
+  ["Free to start this morning", String(FREE.length), "the free lane emptied on 4 August", "red"],
   ["Days behind a stakeholder", String(BD), "developer-days nobody may begin", "red"],
-  ["Days free to build", String(FREE_D), "the whole of the free lane", "green"],
-  ["Released by one sentence", String(FREE_D), "what answering ADR-0001 handed back", "green"],
-  ["Runway", String(RUNWAY), "calendar days of building that need nobody", "green"],
+  ["Days free to build", String(FREE_D), "nothing left that needs no permission", "red"],
+  ["Built and switched off", "3", "flags holding the whole of what wave 4 delivered", "red"],
+  ["Runway", String(RUNWAY), "calendar days of building that need nobody", "red"],
   ["Items only a stakeholder can clear", String(ASKS.length), "two decisions, and four things to obtain", "red"],
-  ["Closed by build day five", `${SCHED_STORIES} / 19`, `${SCHED_D} of ${TOTAL} days, if the decisions take three`, "green"],
+  ["Closed by build day five", `${SCHED_STORIES} / ${STORIES.length}`, `${SCHED_D} of ${TOTAL} days, if the decisions take three`, "green"],
   ["Then all that is left", "1", `build day: ${TAIL_STORIES} stories, ${TAIL_D} developer-days`, ""],
   ["Calendar days to the end", String(END_TO_END), "if all six are started this morning", "red"]
 ];
@@ -867,9 +900,9 @@ document.getElementById("fig1").innerHTML = (() => {
       o += T(L + px(w.blocked) + px(w.free) + 6, y + H / 2 + 4.5, String(w.free), { fs: 12, fill: C.good, w: 620 });
     o += T(W - RGT + 78, y + H / 2 + 4.5, `${tot} days`, { fs: 12.5, a: "end", fill: C.mut });
   });
-  const yl = 26 + 3 * (H + G) - G + 12;
+  const yl = 26 + WAS.length * (H + G) - G + 12;
   o += R(L, yl, BW, 1, C.grid, { r: 0 });
-  o += T(L, yl + 18, "The middle bar is the report this replaces. One sentence from a stakeholder moved sixteen developer-days from red to green, and delivering DOCS-4 moved one more.", { fs: 12, fill: C.mut });
+  o += T(L, yl + 18, "The third bar is the report this replaces: one sentence from a stakeholder moved sixteen developer-days from red to green, and delivering DOCS-4 moved one more. The bottom bar is what two days of building did with them, and it is the first bar on this page with no green in it at all.", { fs: 12, fill: C.mut });
   return svg(W, yl + 30, o);
 })();
 
@@ -878,7 +911,7 @@ document.getElementById("fig1").innerHTML = (() => {
  * ------------------------------------------------------------------ */
 document.getElementById("fig2").innerHTML = (() => {
   const W = 1100, L = 150, RGT = 130, BW = W - L - RGT;
-  const maxW = Math.max(...WAVES.map(w => sum(w.items, i => i[1])), FREE_D);
+  const maxW = Math.max(...WAVES.map(w => sum(w.items, i => i[1])), RELEASED);
   const px = d => (d / maxW) * BW;
   const H = 34, G = 20;
   let o = "", y = 20;
@@ -907,11 +940,11 @@ document.getElementById("fig2").innerHTML = (() => {
   o += R(L, y - 12, BW, 1, C.grid, { r: 0 });
   o += T(0, y + 20 + 4, "The answer", { fs: 13, w: 620, fill: C.good });
   o += T(0, y + 20 + 19, "2 August", { fs: 11, fill: C.mut });
-  o += R(L, y + 6, px(FREE_D), 34, C.good, { op: 0.85 });
-  o += T(L + px(FREE_D) / 2, y + 6 + 21, `ADR-0001 answered &middot; ${FREE_D} developer-days released`, { fs: 12.5, a: "middle", fill: "#fff", w: 620 });
+  o += R(L, y + 6, px(RELEASED), 34, C.good, { op: 0.85 });
+  o += T(L + px(RELEASED) / 2, y + 6 + 21, `ADR-0001 answered &middot; ${RELEASED} developer-days released, all now merged`, { fs: 12.5, a: "middle", fill: "#fff", w: 620 });
   o += T(L + BW + 8, y + 6 + 21, "0 PRs", { fs: 12, fill: C.mut });
   y += 58;
-  o += T(0, y + 14, `${DELIVERED} developer-days delivered by engineering across ${sum(WAVES, w => w.items.length)} pull requests, against ${FREE_D} developer-days released by a single reply. The green bar cost the person who sent it about a minute.`, { fs: 12, fill: C.mut });
+  o += T(0, y + 14, `${DELIVERED} developer-days delivered by engineering across ${sum(WAVES, w => w.items.length)} pull requests, of which the last ${RELEASED} sat inside the green bar. The green bar cost the person who sent it about a minute, and the wave underneath it took two days.`, { fs: 12, fill: C.mut });
   return svg(W, y + 24, o);
 })();
 
@@ -922,7 +955,11 @@ document.getElementById("fig3").innerHTML = (() => {
   const W = 1100, L = 250, RGT = 60, BW = W - L - RGT;
   const maxD = Math.max(...STORIES.map(r => r[3]));
   const px = d => (d / maxD) * BW;
-  const groups = [{ key: "", label: "Held by nobody", sub: "a developer starts this morning", rows: FREE, col: C.good }];
+  /* The free group is drawn only when there is one. It emptied on 4 August, and a group heading
+     over no bars reads as a rendering fault rather than as the finding it is. */
+  const groups = FREE.length
+    ? [{ key: "", label: "Held by nobody", sub: "a developer starts this morning", rows: FREE, col: C.good }]
+    : [];
   ASKS.forEach(a => {
     const rows = BLOCKED.filter(r => r[4] === a.key);
     if (rows.length) groups.push({ key: a.key, label: a.code, sub: a.short, rows, col: C.crit });
@@ -947,7 +984,9 @@ document.getElementById("fig3").innerHTML = (() => {
 })();
 
 document.getElementById("key3").innerHTML =
-  `<div class="r"><b>Held by nobody</b> <code>&mdash;</code> a developer can start it today</div>` +
+  (FREE.length
+    ? `<div class="r"><b>Held by nobody</b> <code>&mdash;</code> a developer can start it today</div>`
+    : `<div class="r"><b>Held by nobody</b> <code>&mdash;</code> no group: every remaining row has an owner outside the team</div>`) +
   ASKS.map(a => `<div class="r"><b>${esc(a.short)}</b> <code>${esc(a.code)}</code> ${esc(a.kind)}</div>`).join("");
 
 /* ------------------------------------------------------------------ *
@@ -1022,14 +1061,16 @@ const pips = (id, n, per, col, note) => {
   document.getElementById(id).innerHTML = svg(W, y + 22, o);
 };
 pips("fig6a", TOTAL, 20, i => (i < FREE_D ? C.good : C.crit),
-  `${FREE_D} green squares a developer may start today, ${BD} red ones nobody may touch. One square is one developer-day.`);
+  `${BD} red squares nobody may touch and ${FREE_D} green ones. One square is one developer-day. ` +
+  `The previous edition of this figure had seventeen green squares in it; they were all built inside two days.`);
 const calCol = i => {
   if (i < RUNWAY) return C.good;
-  if (i < SCHED_DAYS) return C.s1;
-  return i === END_TO_END - 1 ? C.warn : C.grid;
+  if (i === END_TO_END - 1) return C.warn;
+  return i >= RUNWAY + 1 && i < SCHED_DAYS ? C.s1 : C.grid;
 };
 pips("fig6b", END_TO_END, 20, calCol,
-  `${END_TO_END} calendar days. Green is building that needs nobody, blue is building unlocked by an answer, grey is waiting for post, amber is the last build day.`);
+  `${END_TO_END} calendar days. Blue is building unlocked by an answer, grey is waiting for post, amber is the last build day. ` +
+  `There is no green left, and day one is grey for that reason: with the runway at zero the first day of this plan is spent waiting.`);
 
 /* ------------------------------------------------------------------ *
  * FIGURE 7  the five build days                                       *
@@ -1037,8 +1078,6 @@ pips("fig6b", END_TO_END, 20, calCol,
  *            assumption for decisions                                 *
  * ------------------------------------------------------------------ */
 const SCHED = [
-  { key:"",     label:"Held by nobody",  code:"free lane", arrives:0,
-    items:[["E1-S1",1],["E1-S2",2],["E1-S3",2],["E1-S4",3],["E4-S2",4]] },
   { key:"EXT3", label:"Email",           code:"EXT-3",     arrives:1,
     items:[["E6-S1",2],["E6-S2",3],["E5-S3",3],["E5-S4",3],["E6-S3",4]] },
   { key:"D4",   label:"Storage",         code:"ADR-0004",  arrives:2,
@@ -1097,7 +1136,7 @@ document.getElementById("fig7").innerHTML = (() => {
 })();
 
 document.getElementById("key7").innerHTML =
-  `<div class="r"><b>Free lane</b> <code>&mdash;</code> released by ADR-0001 on 2 August</div>` +
+  `<div class="r"><b>Day 1</b> <code>&mdash;</code> empty: the free lane ADR-0001 opened was spent on 3 and 4 August</div>` +
   SCHED.filter(g => g.key).map(g => {
     const a = askOf(g.key);
     return `<div class="r"><b>${esc(g.label)}</b> <code>${esc(a.code)}</code> ${esc(a.kind)}, ${a.lead} day${a.lead === 1 ? "" : "s"} to obtain</div>`;
@@ -1212,13 +1251,20 @@ document.getElementById("blockedRows").innerHTML = BLOCKED.map(r => {
   </tr>`;
 }).join("");
 
-document.getElementById("freeRows").innerHTML = FREE.map(r => `<tr>
-  <td class="id">${esc(r[0])}</td>
-  <td>${esc(r[1])}</td>
-  <td>${esc(r[2])}</td>
-  <td style="width:96px">${dayCell(r[3])}</td>
-  <td class="id" style="color:${C.good}">${r[5] ? esc(r[5]) : "nothing"}</td>
-  <td>${esc(r[6])}</td>
+/* The free lane emptied on 4 August. The table under that heading now records what was in it and where
+   each row went, rather than rendering FREE, which is empty and would print a table with no body. */
+const WAS_FREE = [
+  ["E1-S1","Listing due diligence case lifecycle",5,138],
+  ["E1-S2","Transaction state machine",3,139],
+  ["E1-S4","Property purchase step",3,140],
+  ["E1-S3","Buyer due diligence report delivery",3,141],
+  ["E4-S2","KYC gate on money-moving actions",3,142]
+];
+document.getElementById("freeRows").innerHTML = WAS_FREE.map(([id, title, d, pr]) => `<tr>
+  <td class="id">${esc(id)}</td>
+  <td>${esc(title)}</td>
+  <td style="width:96px">${dayCell(d)}</td>
+  <td class="id" style="color:${C.good}">#${pr}</td>
 </tr>`).join("");
 
 document.getElementById("opsRows").innerHTML = OPS.map(([w, where, why]) =>

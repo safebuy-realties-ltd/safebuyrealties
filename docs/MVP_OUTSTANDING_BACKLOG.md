@@ -184,13 +184,13 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E1-S2 🔴 | Loop | Transaction state machine, DD_PURCHASED to DD_COMPLETE | `dd_case_lifecycle` | M | ✅ #139, flag off | E1-S1 |
 | E1-S3 🔴 | Loop | Buyer DD report delivery, access controlled | `dd_case_lifecycle` | M | ✅ #141, flag off | E1-S1, E3-S1 |
 | E1-S4 🔴 | Loop | Property purchase step wired to the state machine | `property_purchase` | M | ✅ #140, flag off | E1-S2 |
-| E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | 📋 | D2 |
+| E2-S1 🔴 | Money | Seller payout destination, per-seller bank account | `payouts` | L | ⛔ | D2, EXT-1 |
 | E2-S2 🔴 | Money | Webhook idempotency, replay and freshness guard | — | M | ✅ #123 | none |
 | E2-S3 | Money | Gateway refunds, not ledger-only | `payouts` | M | 📋 | E2-S1 |
 | E2-S4 🔴 | Money | Production guard on payment mock mode | — | S | ✅ #99 | none |
-| E2-S5 | Money | Finance reconciliation view | — | M | 📋 | E2-S1, E4-S1 |
+| E2-S5 | Money | Finance reconciliation view | — | M | 📋 | E2-S1 |
 | E3-S1 🔴 | Trust | Authorized document access, retire the public static route | `secure_docs` | M | ✅ #103–112, six sub-stories | none |
-| E3-S2 🔴 | Trust | Durable object storage in production | — | M | 📋 | D4 |
+| E3-S2 🔴 | Trust | Durable object storage in production | — | M | ⛔ | D4, EXT-2 |
 | E3-S3 | Trust | Upload hardening: type allow-list, magic bytes, AV hook | `secure_docs` | M | 📋 | E3-S2 |
 | E3-S4 | Trust | Public PoA verification page | — | S | ✅ #98 | none |
 | E4-S1 🔴 | Access | Enforce PermissionsGuard on every privileged endpoint | — | M | ✅ #121 | none |
@@ -202,7 +202,7 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E5-S4 | Security | Email verification on self-registration | `auth_signup` | M | 📋 | E6-S1 |
 | E5-S5 | Security | Session management: refresh rotation and revocation | `auth_sessions` | L | ✅ #131, flag off until a client refreshes | none |
 | E5-S6 🔴 | Security | Fail closed when `JWT_SECRET` is unset | — | S | ✅ #119 | none |
-| E6-S1 🔴 | Comms | SMTP configuration and delivery observability | — | S | 📋 | none |
+| E6-S1 🔴 | Comms | SMTP configuration and delivery observability | — | S | ⛔ | EXT-3 |
 | E6-S2 | Comms | Email channel for notification types | `email_notifications` | M | 📋 | E6-S1 |
 | E6-S3 | Comms | Transactional email templates for the core journeys | `email_notifications` | M | 📋 | E6-S2 |
 | E7-S1 | Ops | Structured logging, correlation id, error tracking | — | M | ✅ #122 | none |
@@ -213,9 +213,9 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E7-S5 | Ops | Runbook, environment matrix, secrets checklist | — | S | ✅ #117 | none |
 | E7-S6 | Ops | Health and readiness probes with dependency checks | — | S | ✅ #101 | none |
 | E7-S6b | Ops | Container healthcheck polls the readiness probe | — | S | ✅ #120 | E7-S6 |
-| E8-S1 | Compliance | NDPR consent, retention, and erasure | `privacy_centre` | L | 📋 | E5-S5 |
-| E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | external |
-| E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | external, E4-S3 |
+| E8-S1 | Compliance | NDPR consent, retention, and erasure | `privacy_centre` | L | ⛔ | EXT-5 |
+| E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | EXT-4 |
+| E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | EXT-6 |
 | E8-S4 | Compliance | Public web surface: robots, sitemap, per-route metadata | — | M | ✅ #130 | none |
 
 ### 3.1 Critical path
@@ -244,6 +244,8 @@ E3-S2 (durable storage)
 > **Reconciled a fourth time on 2026-08-03.** `E1-S3` has merged as #141, so every box in the graph above except `E3-S2` and `E2-S1` is closed, and the E1 chain is finished end to end: a listing case is opened, worked, signed off, paid for into escrow, and the report is delivered to the buyer who paid for it. Nothing on the critical path is startable by a developer today. `E2-S1` waits on ADR-0002 and `E3-S2` waits on ADR-0004 and EXT-2, so the path now moves when a stakeholder answers and not before. The one row left on the schedule, `E4-S2`, is off the path rather than on it.
 >
 > **Reconciled a fifth time on 2026-08-04.** `E4-S2` has merged as #142, and with it the schedule is empty: every remaining story in this document waits on a decision, an external party or a story that does. The reconcile worth recording is not that one, it is what E4-S2 could not finish. Its fourth acceptance criterion says a seller needs verified KYC before a payout account can be verified, and there is no payout destination in this codebase to gate. `E2-S1` builds one and waits on ADR-0002, so the action is declared in `KYC_GATED_ACTIONS` as `SELLER_PAYOUT_ACCOUNT` with `story: "E2-S1"` on it and reaches no request. That is one line for whoever takes `E2-S1` rather than a rediscovery: call `assertKycGate` on the way into the verify step and the criterion is met. `E2-S1` now carries two things ADR-0002 releases, its own scope and somebody else's criterion.
+>
+> **Reconciled a sixth time on 2026-08-04.** No story merged into this note. Re-deriving the remaining-work report against the board turned up seven rows in the table above whose dependency column had quietly gone false, and this is the correction. Four of them still named a story that has already merged: `E2-S5` waited on `E4-S1`, which merged as #121; `E8-S1` waited on `E5-S5`, which merged as #131; `E8-S3` waited on `E4-S3`, which merged as #125; and `E2-S1` waited on `E1-S4`, which merged as #140. Two more named a dependency that was not written down anywhere a reader could act on it, `E8-S2` and `E8-S3` both reading `external`, and one, `E6-S1`, read `none` while the story body had already said it waits on SMTP credentials. Every one of them now names the external item that actually holds it: EXT-1 the merchant and settlement accounts, EXT-2 the object-storage bucket, EXT-3 the SMTP credentials, EXT-4 counsel, EXT-5 the DPO registration, EXT-6 the security reviewer. What changes for whoever picks up the queue is the count of rows a developer can start alone, which reads as zero and is zero, rather than four rows that looked startable because the story in front of them had shipped and nobody had gone back to the column.
 
 ### 3.2 Go-live gates
 
@@ -332,7 +334,7 @@ Two differences from standalone are deliberate rather than oversights. Standalon
 
 > **As** a buyer, **I want** my transaction to advance as the due diligence work progresses, **so that** I can see where my purchase stands and move on to buying the property.
 
-**Size** M · **Flag** `dd_case_lifecycle` · **Deps** E1-S1
+**Size** M · **Flag** `dd_case_lifecycle` · **Deps** E1-S1 · **Merged** PR #139
 
 **Evidence of the gap**
 
@@ -428,7 +430,7 @@ Two things beyond the criteria are worth recording. There is no amount in the re
 
 > **As** a seller, **I want** my escrow release to arrive in my own bank account, **so that** selling through the platform actually pays me.
 
-**Size** L · **Flag** `payouts` · **Deps** D2. E1-S4 was the other one and it merged as #140, so ADR-0002 is now the only thing in front of this row
+**Size** L · **Flag** `payouts` · **Deps** D2, then EXT-1. E1-S4 was the other story dependency and it merged as #140, so no developer is in front of this row. ADR-0002 decides whether the platform holds client funds, and EXT-1, a live merchant account and a settlement account with a business verification behind it, cannot be started until that answer exists. The decision is the long pole and the account is the lead time behind it
 
 **Evidence of the gap**
 
@@ -514,7 +516,7 @@ Two things beyond the criteria are worth recording. There is no amount in the re
 
 > **As** a finance manager, **I want** one screen reconciling payments in, escrow held, payouts out, and platform fees, **so that** I can close a period without exporting the database.
 
-**Size** M · **Flag** none · **Deps** E2-S1, E4-S1
+**Size** M · **Flag** none · **Deps** E2-S1 (E4-S1 merged as #121)
 
 **Evidence of the gap**
 
@@ -600,7 +602,7 @@ The design decision E3-S1d-3 arrived at is not the one the proposal anticipated 
 
 > **As** a buyer, **I want** the report I downloaded yesterday to still be there today, **so that** the platform's documents are permanent records.
 
-**Size** M · **Flag** none · **Deps** D4
+**Size** M · **Flag** none · **Deps** D4, then EXT-2. ADR-0004 decides how a private document is served, and EXT-2, the bucket and the region it is served from, is bought to match the answer rather than before it
 
 **Evidence of the gap**
 
@@ -1118,7 +1120,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 #### E8-S1, NDPR consent, retention, and erasure
 
-**Size** L · **Flag** `privacy_centre` · **Deps** E5-S5, EXT-5
+**Size** L · **Flag** `privacy_centre` · **Deps** EXT-5 (E5-S5 merged as #131)
 
 **Evidence of the gap.** No consent model, no retention policy, and no erasure path exist in the schema or the codebase. The platform stores government identity documents, selfies, and professional credentials. The reference project treats the equivalent as `FR-A6` and `FR-A7` with a dedicated privacy centre, and its own `docs/adr/0004-auth-and-account-portal.md` is worth reading before designing this.
 
@@ -1135,7 +1137,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 #### E8-S2, legal review of the PoA instrument and terms
 
-**Size** S · **Status** ⛔ blocked on EXT-4 · **Deps** external
+**Size** S · **Status** ⛔ blocked on EXT-4 · **Deps** EXT-4
 
 **Evidence of the gap.** `backend/src/poa/poa.service.ts` generates an instrument whose clauses were written in the build checklist, not by counsel. The consent copy in `src/components/PoAExecutionScreen.tsx` includes an irrevocability acknowledgement. The client is a firm of lawyers, and `docs/inputs/client-legal-comments.docx` already asks for a security review.
 
@@ -1150,7 +1152,7 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 #### E8-S3, pre-launch security review
 
-**Size** S to schedule, variable to remediate · **Status** ⛔ blocked on EXT-6 · **Deps** E4-S3
+**Size** S to schedule, variable to remediate · **Status** ⛔ blocked on EXT-6 · **Deps** EXT-6 (E4-S3 merged as #125)
 
 **Acceptance criteria**
 
