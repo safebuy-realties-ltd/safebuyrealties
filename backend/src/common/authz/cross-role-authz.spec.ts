@@ -509,7 +509,7 @@ describe("path-parameter route census (criterion 5)", () => {
 
   it("holds the buckets at the sizes they were reviewed at", () => {
     const operator = paramRoutes.filter(isOperatorRoute).length;
-    expect(operator).toBe(25);
+    expect(operator).toBe(26);
     expect(RESOURCE_SCOPED.length).toBe(26);
     expect(Object.keys(PUBLIC_BY_DESIGN).length).toBe(7);
     expect(operator + RESOURCE_SCOPED.length + Object.keys(PUBLIC_BY_DESIGN).length + 1).toBe(

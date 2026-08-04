@@ -1,10 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseFilters,
+  UseGuards,
+} from "@nestjs/common";
 import { UserRole } from "@prisma/client";
+import type { Request } from "express";
 import { DueDiligenceService } from "./due-diligence.service";
 import { DueDiligenceCaseService } from "./due-diligence-case.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { PermissionsGuard } from "../common/guards/permissions.guard";
+import { AnonymousNotFoundFilter } from "../common/filters/anonymous-not-found.filter";
 import { Roles } from "../common/decorators/roles.decorator";
 import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { RequiresFeature } from "../common/decorators/feature.decorator";
@@ -61,6 +74,30 @@ export class DueDiligenceController {
   @RequirePermissions(PERMISSIONS.DD_ORDERS_READ)
   getOne(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
     return this.cases.getOne(id, user);
+  }
+
+  /**
+   * GET /due-diligence-orders/:id/reports — the links to the documents this buyer paid for (E1-S3).
+   *
+   * Separate from `getOne` because it does something `getOne` does not: every call mints new
+   * credentials and writes an audit row per link. Folding it into the case response would mean
+   * signing fresh links and recording an issue every time any screen read a case for any reason,
+   * which would make the audit trail useless for the question it exists to answer.
+   *
+   * The guard stack is the one every operator-reachable route here carries. `AnonymousNotFoundFilter`
+   * is the only addition, and it exists because criterion 3 asks for one answer to two questions:
+   * a caller with no session and a caller who is the wrong buyer both hear that there is nothing
+   * here. Without it the first would hear 401 and the second 404, and the difference between those
+   * two answers is a working directory of which order ids are real.
+   */
+  @Get(":id/reports")
+  @RequiresFeature("dd_case_lifecycle")
+  @UseGuards(PermissionsGuard)
+  @UseFilters(AnonymousNotFoundFilter)
+  @Roles(UserRole.BUYER, ...OPERATOR_ROLES)
+  @RequirePermissions(PERMISSIONS.DD_ORDERS_READ)
+  listReports(@Param("id") id: string, @CurrentUser() user: JwtPayload, @Req() req: Request) {
+    return this.cases.listReports(id, user, req.ip ?? null);
   }
 
   @Post(":id/assignments")

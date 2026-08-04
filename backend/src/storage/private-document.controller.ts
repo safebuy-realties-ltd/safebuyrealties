@@ -15,6 +15,7 @@ import { JwtPayload } from "../auth/jwt.strategy";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { AuditService } from "../audit/audit.service";
 import { AuditAction } from "../audit/audit-actions.constants";
+import { DocumentGrantService } from "./document-grant.service";
 import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { StorageService } from "./storage.service";
 import {
@@ -63,6 +64,14 @@ import {
  * document, 404 for a key that names nothing readable. Authorization is decided before storage is
  * touched, so a caller who is refused never learns whether the object exists — and a refusal is
  * 403 even when the subject entity does not exist, so the endpoint is not an id oracle either.
+ *
+ * **Grants are an extra constraint, never a substitute (E1-S3).** A URL may carry a `grant`, and
+ * when it does it has to check out before anything else is considered: the right key, the right
+ * reader, still inside its fifteen minutes. When it does not, the request is 403 and stops here.
+ * A caller who deletes the parameter is not let through some side door, they simply fall back to
+ * the session check every other request gets, which is the same check they would have faced with
+ * the grant in place. So a grant can only ever narrow what a session already allows, which is why
+ * adding one costs `listings/` public media nothing: those URLs carry no grant and never will.
  */
 @Controller(PRIVATE_DOCUMENT_ROUTE)
 @UseGuards(OptionalJwtAuthGuard)
@@ -70,18 +79,39 @@ export class PrivateDocumentController {
   constructor(
     private storage: StorageService,
     private authorizer: PrivateDocumentAuthorizer,
+    private grants: DocumentGrantService,
     private audit: AuditService,
   ) {}
 
   @Get()
   async read(
     @Query("key") key: string | undefined,
+    @Query("grant") grant: string | undefined,
     @CurrentUser() user: JwtPayload | null,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
     const target = resolvePrivateDocumentTarget(key);
     if (!target) throw new NotFoundException("Document not found");
+
+    if (grant !== undefined) {
+      // An anonymous caller is verified as the empty actor, which no issued grant names, so a
+      // forwarded link fails here rather than reaching the reader. The refusal is 403 and not 401
+      // on purpose: the person holding an expired link is not short of a session, they are holding
+      // something that has stopped working, and E1-S3 criterion 2 asks for exactly that answer.
+      const verdict = this.grants.verify(grant, target.key, user?.sub ?? "");
+      if (!verdict.ok) {
+        void this.audit.log({
+          actorId: user?.sub ?? null,
+          action: AuditAction.PRIVATE_DOCUMENT_READ_DENIED,
+          entity: target.policy.auditEntity,
+          entityId: target.key,
+          after: { reason: `grant-${verdict.reason}`, role: user?.role ?? null },
+          ipAddress: req.ip ?? null,
+        });
+        throw new ForbiddenException("This download link has expired");
+      }
+    }
 
     const access = await this.authorizer.decide(target, user ?? null);
     if (!access.allowed) {

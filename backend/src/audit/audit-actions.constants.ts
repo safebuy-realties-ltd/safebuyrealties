@@ -52,6 +52,16 @@ export const AuditAction = {
   DD_CASE_STATUS_CHANGED: "DD_CASE_STATUS_CHANGED",
   DD_CASE_ASSIGNED: "DD_CASE_ASSIGNED",
   DD_CASE_REPORT_SUBMITTED: "DD_CASE_REPORT_SUBMITTED",
+  /**
+   * E1-S3. One row each time a download link is handed out, `entity` "DueDiligenceReport",
+   * `entityId` the storage key, the order and the expiry in `after`.
+   *
+   * PRIVATE_DOCUMENT_READ above records the fetch, which is not the same event. A link is issued
+   * to somebody who asked for one; whether they then used it, used it four times, or never used it
+   * is a separate fact. The report is the thing the buyer paid for, so "who was given the means to
+   * read this, and when did that permission run out" has to be answerable on its own.
+   */
+  DD_REPORT_LINK_ISSUED: "DD_REPORT_LINK_ISSUED",
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];
