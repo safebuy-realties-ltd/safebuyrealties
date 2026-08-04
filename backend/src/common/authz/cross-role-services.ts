@@ -23,6 +23,7 @@ import { ListingsService } from "../../listings/listings.service";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { PaymentsService } from "../../payments/payments.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { DocumentGrantService } from "../../storage/document-grant.service";
 import type { StorageService } from "../../storage/storage.service";
 import { TasksService } from "../../tasks/tasks.service";
 import { TransactionStateService } from "../../transactions/transaction-state.service";
@@ -87,6 +88,10 @@ export function buildServices(prisma: PrismaService): Services {
       ddSerializer,
       notifications,
       stub(),
+      // E1-S3. The real grant service, because the report route signs a link per report and the
+      // matrix is asserting who gets one. A stub would return the same token to every caller and
+      // the wrong-buyer row would pass for the wrong reason.
+      new DocumentGrantService(),
     ),
     documents: new DocumentsService(
       prisma,

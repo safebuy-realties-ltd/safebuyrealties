@@ -17,6 +17,7 @@ import request from "supertest";
 import { configureApp } from "../app-bootstrap";
 import { AuditService } from "../audit/audit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { DocumentGrantService } from "./document-grant.service";
 import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { PrivateDocumentController } from "./private-document.controller";
 import { StorageService } from "./storage.service";
@@ -89,6 +90,9 @@ const noPublicDocuments = {
   providers: [
     StorageService,
     PrivateDocumentAuthorizer,
+    // The real one. It signs with the development secret and reads nothing, and no request here
+    // gets far enough to present a grant anyway: the guard refuses them all, which is the probe.
+    DocumentGrantService,
     { provide: PrismaService, useValue: noPublicDocuments },
     { provide: AuditService, useValue: { log: () => Promise.resolve() } },
     { provide: APP_GUARD, useClass: DenyEveryRequestGuard },

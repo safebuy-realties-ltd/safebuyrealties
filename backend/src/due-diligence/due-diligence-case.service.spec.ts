@@ -17,6 +17,7 @@ import { StorageService } from "../storage/storage.service";
 import { DdCmsService } from "../dd-cms/dd-cms.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { DocumentGrantService } from "../storage/document-grant.service";
 import { TransactionStateService } from "../transactions/transaction-state.service";
 import { AuditAction } from "../audit/audit-actions.constants";
 import { NotificationType } from "../notifications/notification-types.constants";
@@ -195,6 +196,9 @@ describe("DueDiligenceCaseService", () => {
         },
         { provide: NotificationsService, useValue: notifications },
         { provide: AuditService, useValue: audit },
+        // The real grant service. It signs with the development secret here and holds nothing else,
+        // so a stub would only make the report tests assert against a fiction.
+        DocumentGrantService,
       ],
     }).compile();
 

@@ -17,6 +17,7 @@ import {
 } from "../documents/document-categories";
 import { JwtPayload } from "../auth/jwt.strategy";
 import { PrismaService } from "../prisma/prisma.service";
+import { DocumentGrantService } from "./document-grant.service";
 import { PrivateDocumentAuthorizer } from "./private-document-authorizer";
 import { PrivateDocumentController } from "./private-document.controller";
 import { StorageService } from "./storage.service";
@@ -258,6 +259,10 @@ const prismaStub = {
   providers: [
     StorageService,
     PrivateDocumentAuthorizer,
+    // The real grant service, so the cases below exercise the same signature check a browser
+    // would. Every URL here is grant-free, which is the point: a grant narrows a session, it never
+    // stands in for one, so removing the parameter has to leave every one of these answers alone.
+    DocumentGrantService,
     {
       provide: AuditService,
       useValue: {
@@ -1067,6 +1072,119 @@ describe("authorized private document access (E3-S1c, E3-S1d-1, E3-S1d-2)", () =
 
       expect(response.status).toBe(200);
       expect(response.headers["cache-control"]).toBe("private, no-store, max-age=0");
+    });
+  });
+
+  /**
+   * E1-S3 criterion 2. A grant is the extra key stapled to a download link, and these cases ask
+   * what happens when somebody presents one that is not theirs, not for this file, or no longer
+   * good. The answer has to be 403 from this endpoint rather than the bytes, because the whole
+   * point of a fifteen-minute link is that the sixteenth minute is different from the first.
+   *
+   * Every other test in this file sends no grant at all, which is the other half of the contract:
+   * the parameter narrows a session and never replaces one.
+   */
+  describe("download grants (E1-S3)", () => {
+    const grants = new DocumentGrantService();
+    const granted = (key: string, token: string) =>
+      `${url(key)}&grant=${encodeURIComponent(token)}`;
+
+    it("serves the report when the buyer presents the grant they were issued", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+      const grant = grants.issue(DD_REPORT_KEY, DD_BUYER);
+
+      const response = await request(app.getHttpServer())
+        .get(granted(DD_REPORT_KEY, grant.token))
+        .responseType("blob");
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_REPORT_BYTES);
+    });
+
+    it("refuses an expired grant, and does not serve the file", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+      const anHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const stale = grants.issue(DD_REPORT_KEY, DD_BUYER, anHourAgo);
+
+      const response = await request(app.getHttpServer()).get(granted(DD_REPORT_KEY, stale.token));
+
+      expect(response.status).toBe(403);
+      expect(response.text).not.toContain(DD_REPORT_BYTES);
+    });
+
+    it("refuses a grant minted for a different file on the same order", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+      const forAssignment = grants.issue(DD_ASSIGNMENT_KEY, DD_BUYER);
+
+      const response = await request(app.getHttpServer()).get(
+        granted(DD_REPORT_KEY, forAssignment.token),
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it("refuses a grant issued to somebody else, even from a session that would otherwise pass", async () => {
+      // An operator may read this report on their own session. Presenting the buyer's grant is a
+      // forwarded link, and a forwarded link is the thing criterion 2 exists to stop.
+      currentUser = session(OTHER, UserRole.STAFF);
+      const buyersGrant = grants.issue(DD_REPORT_KEY, DD_BUYER);
+
+      const response = await request(app.getHttpServer()).get(
+        granted(DD_REPORT_KEY, buyersGrant.token),
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it.each([
+      ["nonsense", "not-a-grant"],
+      ["an expiry with no signature", `${Date.now() + 60000}.`],
+      ["a signature with no expiry", ".c2lnbmF0dXJl"],
+      ["an expiry edited forward", `${Date.now() + 86400000}.c2lnbmF0dXJl`],
+    ])("refuses %s", async (_label, token) => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+
+      const response = await request(app.getHttpServer()).get(granted(DD_REPORT_KEY, token));
+
+      expect(response.status).toBe(403);
+    });
+
+    it("is not a substitute for signing in", async () => {
+      // No session, a perfectly good grant. Grants name an actor, and the actor on an anonymous
+      // request is nobody, so this fails the signature check before the reader is ever consulted.
+      currentUser = null;
+      const grant = grants.issue(DD_REPORT_KEY, DD_BUYER);
+
+      const response = await request(app.getHttpServer()).get(granted(DD_REPORT_KEY, grant.token));
+
+      expect(response.status).toBe(403);
+      expect(response.text).not.toContain(DD_REPORT_BYTES);
+    });
+
+    it("records the refusal, naming the key and why the grant failed", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+      const stale = grants.issue(DD_REPORT_KEY, DD_BUYER, new Date(Date.now() - 60 * 60 * 1000));
+
+      await request(app.getHttpServer()).get(granted(DD_REPORT_KEY, stale.token));
+
+      expect(auditRows).toEqual([
+        expect.objectContaining({
+          actorId: DD_BUYER,
+          action: AuditAction.PRIVATE_DOCUMENT_READ_DENIED,
+          entity: "DueDiligenceReport",
+          entityId: DD_REPORT_KEY,
+          after: expect.objectContaining({ reason: "grant-expired" }),
+        }),
+      ]);
+    });
+
+    it("leaves the answer to a request that carries no grant exactly as it was", async () => {
+      currentUser = session(DD_BUYER, UserRole.BUYER);
+
+      const response = await download(DD_REPORT_KEY);
+
+      expect(response.status).toBe(200);
+      expect(bytesOf(response)).toBe(DD_REPORT_BYTES);
     });
   });
 });

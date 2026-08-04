@@ -27,11 +27,26 @@ import {
   LISTING_DD_TRANSITIONS,
   isTerminalDdStatus,
 } from "../dd-core/dd-case.constants";
+import { DocumentGrantService } from "../storage/document-grant.service";
+import { privateDocumentUrl } from "../storage/private-documents";
 import { ListDdOrdersQueryDto } from "./dto/list-dd-orders.query";
 import { AssignDdProfessionalDto } from "./dto/assign-dd-professional.dto";
 import { UpdateDdOrderDto } from "./dto/update-dd-order.dto";
 
 type CaseMessage = { type: string; title: string; body: string };
+
+/**
+ * The name to show a buyer for a stored report.
+ *
+ * Keys are minted as `<epoch millis>-<original name>` so two uploads of "report.pdf" cannot
+ * collide. That prefix is for the object store, not for the person who paid for the document, so it
+ * comes off here. If a report genuinely starts with digits and a hyphen the name survives, because
+ * the pattern only matches a plausible timestamp rather than any leading number.
+ */
+function reportFileName(key: string): string {
+  const base = key.split("/").pop() ?? key;
+  return base.replace(/^\d{13}-/, "") || base;
+}
 
 /**
  * The lifecycle of a due diligence case raised against a platform listing.
@@ -50,6 +65,7 @@ export class DueDiligenceCaseService {
     private readonly serializer: DdCaseSerializer,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
+    private readonly grants: DocumentGrantService,
   ) {}
 
   /**
@@ -87,6 +103,73 @@ export class DueDiligenceCaseService {
   async getOne(id: string, actor: JwtPayload) {
     const order = await this.loadListingCase(id, actor);
     return this.serializer.serializeOrder(order);
+  }
+
+  /**
+   * The download links for the reports on one case, good for fifteen minutes (E1-S3).
+   *
+   * The buyer paid for a document and this is where they collect it, so the answer is deliberately
+   * small: what exists, what it is called, where to fetch it and when that stops working. The case
+   * itself is `getOne`, and a screen that only wants to download does not need the whole case to do
+   * it.
+   *
+   * **This one reads both kinds of case, unlike everything else in this class.** `loadListingCase`
+   * refuses a standalone order because the rest of these methods are about the seller, the listing
+   * and the transaction, none of which a standalone case has. Collecting a report involves none of
+   * those things: a buyer who paid for a search on a property the platform does not list is owed
+   * their document on the same terms as a buyer who paid for one on a listing. Restricting this
+   * route to listing cases would have left the buyer due diligence screen, which shows standalone
+   * orders, with no route to call.
+   *
+   * Nothing is widened by that. The scope is still the owning buyer or an operator, checked here
+   * rather than in a decorator, and `dd_case_lifecycle` still gates the route.
+   */
+  async listReports(id: string, actor: JwtPayload, ipAddress: string | null) {
+    const order = await this.loadOwnedCase(id, actor);
+    const keys =
+      Array.isArray(order.reportStorageKeys) && order.reportStorageKeys.length > 0
+        ? (order.reportStorageKeys as string[])
+        : [];
+
+    // One instant for the whole response, so every link in it expires together and the window the
+    // interface displays is the window that was actually signed.
+    const issuedAt = new Date();
+
+    const reports = keys.map((key) => {
+      const grant = this.grants.issue(key, actor.sub, issuedAt);
+
+      // E1-S3 criterion 4: the actor, the order and the key, one row per link. Fired per link
+      // rather than once per request because a caller who is given four links has been given four
+      // separate ways in, and a single row would leave three of them unaccounted for.
+      void this.audit.log({
+        actorId: actor.sub,
+        action: AuditAction.DD_REPORT_LINK_ISSUED,
+        entity: "DueDiligenceReport",
+        entityId: key,
+        after: {
+          orderId: order.id,
+          role: actor.role,
+          expiresAt: grant.expiresAt.toISOString(),
+        },
+        ipAddress,
+      });
+
+      return {
+        key,
+        fileName: reportFileName(key),
+        url: `${privateDocumentUrl(key)}&grant=${encodeURIComponent(grant.token)}`,
+        expiresAt: grant.expiresAt.toISOString(),
+      };
+    });
+
+    return {
+      orderId: order.id,
+      status: order.status,
+      // Repeated at the top level so a screen with no reports still knows how long its answer is
+      // good for, and so an empty list is not mistaken for a failed one.
+      expiresAt: new Date(issuedAt.getTime() + this.grants.ttlSeconds * 1000).toISOString(),
+      reports,
+    };
   }
 
   /**
@@ -271,6 +354,20 @@ export class DueDiligenceCaseService {
     if (order.source !== DD_SOURCE.LISTING) {
       throw new NotFoundException("Due diligence order not found");
     }
+    if (!isInternalRole(actor.role) && order.buyerId !== actor.sub) {
+      throw new NotFoundException("Due diligence order not found");
+    }
+    return order;
+  }
+
+  /**
+   * Reads a case of either kind that belongs to the actor, or 404.
+   *
+   * The same ownership rule as `loadListingCase` without the source restriction, and the same 404
+   * for the same reason: a 403 would confirm the id is real to somebody who guessed it.
+   */
+  private async loadOwnedCase(id: string, actor: JwtPayload): Promise<DdOrderWithRelations> {
+    const order = await this.core.findOrderOrThrow(id);
     if (!isInternalRole(actor.role) && order.buyerId !== actor.sub) {
       throw new NotFoundException("Due diligence order not found");
     }

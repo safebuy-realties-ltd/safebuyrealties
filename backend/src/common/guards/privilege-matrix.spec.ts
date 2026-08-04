@@ -52,10 +52,12 @@ const CELL_COLUMN = 8;
  * same privilege. Switching a feature off is a platform configuration change, so CH-1 reused
  * `PLATFORM_CONFIG` rather than minting a privilege that would have to be granted to somebody.
  *
- * The four `/due-diligence-orders` rows read the same as the `/standalone-dd` rows for the same
+ * The five `/due-diligence-orders` rows read the same as the `/standalone-dd` rows for the same
  * reason: E1-S1 put the listing path on `dd.orders.read` and `dd.orders.write`, the two privileges
  * the standalone path was already gated on. An operator who may work a standalone case may work a
- * listing case, which is the answer the Due Diligence Lead role was seeded to give.
+ * listing case, which is the answer the Due Diligence Lead role was seeded to give. `:id/reports`
+ * joined them at E1-S3 on `dd.orders.read`, because reading a case and reading the report the case
+ * produced are the same job, and a separate privilege would be one more thing to forget to grant.
  */
 const EXPECTED_MATRIX = `
 route                                           SUPER   PLATFORMOPS     DD-LEAD FINANCE CONTENT |
@@ -76,6 +78,7 @@ GET /admin/roles/privileges                     allow   DENY    DENY    DENY    
 GET /admin/roles                                allow   allow   allow   allow   allow   DENY    |
 POST /admin/roles                               allow   DENY    DENY    DENY    DENY    DENY    |
 POST /due-diligence-orders/:id/assignments      allow   allow   allow   allow   DENY    DENY    |
+GET /due-diligence-orders/:id/reports           allow   allow   allow   allow   DENY    DENY    |
 GET /due-diligence-orders/:id                   allow   allow   allow   allow   DENY    DENY    |
 PATCH /due-diligence-orders/:id                 allow   allow   allow   allow   DENY    DENY    |
 GET /due-diligence-orders                       allow   allow   allow   allow   DENY    DENY    |
