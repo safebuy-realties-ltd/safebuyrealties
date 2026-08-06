@@ -97,18 +97,21 @@ That is a real product. The remaining work is narrower than the checklist histor
 
 | Milestone | Outcome | Stories | Estimate | Merged since | Remaining |
 | --- | --- | --- | --- | --- | --- |
-| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | E1-S1, E1-S2, E1-S4 | 1 story, 2 to 3 days |
+| **M1 Close the loop** | A buyer can complete a purchase on-platform, end to end | E1 (4) | 11 to 14 days | E1-S1, E1-S2, E1-S4, E1-S3 | none, the epic is closed |
 | **M2 Money integrity** | Real sellers get paid, real refunds are repaid, no double processing | E2 (5) | 12 to 15 days | E2-S4, E2-S2 | 3 stories, 9 to 11 days |
 | **M3 Document trust** | Private documents stay private and survive deployment | E3 (4) | 7 to 10 days | E3-S1, E3-S4 | 2 stories, 4 to 7 days |
-| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | E4-S1, E4-S3 | 1 story, 2 to 3 days |
+| **M4 Access correctness** | Privileges are enforced by the API, not only by the menu | E4 (3) | 6 to 9 days | E4-S1, E4-S3, E4-S2 | none, the epic is closed |
 | **M5 Account security** | Rate limits, real sessions, password reset, verified email | E5 (5) | 11 to 15 days | E5-S2, and E5-S2a on top of it; E5-S6 found and merged; E5-S1; E5-S5, shipped with its flag off | 2 stories, 3 to 6 days |
 | **M6 Communications** | Email actually leaves the building | E6 (3) | 5 to 7 days | none | 3 stories, 5 to 7 days |
 | **M7 Operability** | Failures are visible, regressions are caught before merge | E7 (6) | 10 to 14 days | E7-S2, E7-S6, E7-S5, E7-S1, E7-S3; E7-S2b and E7-S6b found, both merged | 1 story, 2 to 4 days |
 | **M8 Go-live compliance** | NDPR, legal review, security review, public web surface | E8 (4) | 8 to 12 days plus external lead time | E8-S4 | 3 stories, 5 to 9 days plus external lead time |
+| **M9 Financial governance** | Every naira the platform touches is coded, ring-fenced and reconcilable | E9 (4) | 11 to 19 days | E9-S1 | 3 stories, 9 to 15 days |
 
-It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Eighteen milestone stories and both chores have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5). DOCS-4 was a fourth chore the week added to itself, and with it in there is no chore left. All four of **E1** have merged since, which is the whole of the engineering the ADR-0001 answer released, so **15 milestone stories, roughly 30 to 47 developer-days remain.** Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 11 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
+**M9 is the one row here whose Estimate was not struck before the handover week**, because the work did not exist then. It arrived with SBR-FIN-DEV-SPEC-20260803-V1.5, approved for implementation by the CFO and relayed on 2026-08-05, and it is sized on the same key as everything above it rather than on a separate one. Saying that in the table would have been tidier and less true: the column means "the figure this milestone was first scoped at", and for M9 that figure is five days old.
 
-**The floor above used to be 32, DOCS-4 settled it at 41, E1-S1 merging took it to 36, and E1-S2 and E1-S4 have taken it to 32 again by a route that can be checked.** Worth recording how it drifted, because the mechanism matters more than the ten days. The **Remaining** column subtracts each merged story from that milestone's own range, and its ceilings have always agreed exactly with the per-epic bars on `docs/mvp-board.html`, because a check on the board derives the tile's ceiling from those bars and fails the build when the two disagree. The floor had no such check. It was kept by hand as a single running subtraction against the pre-week 72, so every merge asked somebody to remember a number rather than to add up a column, and by this week it sat ten days below what the eight milestone rows came to, counting the chore day that was still open on both sides of the comparison. Nobody made an error; nothing was ever going to catch one. The rows are the source, with the chore merged they added up to 41, with E1-S1 merged they added up to 36, and with E1-S2 and E1-S4 merged they add up to 32, which is the figure in both places. Each effort bar on the board carries a floor beside its ceiling, the Full backlog tile sums both ends from those bars, and `npm run validate:board` fails if either drifts again. Plan against the ceiling, as before. The difference is that the floor is now checkable rather than remembered.
+It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 in all, roughly 72 to 100 developer-days. Twenty-three milestone stories and every chore have merged, and three more stories were discovered inside them (E7-S2b inside E7-S2, E5-S6 and E7-S6b inside E7-S5). DOCS-4 was a fourth chore the week added to itself, and with it in there is no chore left. All four of **E1** have merged, which is the whole of the engineering the ADR-0001 answer released, and all three of **E4** with them, so two epics are closed and 14 of the original stories remain, 28 to 44 days. **M9 then adds four stories that were not in the original 34 at all**, one of which merges with this document, so **17 milestone stories, roughly 37 to 59 developer-days remain.** This is the first time the total has gone up by more than a story found inside another one, and it should be read as new scope rather than as a slipped estimate: the specification that created E9 was approved on 2026-08-03 and reached engineering on 2026-08-05, six days after this backlog was written. Each merged story is subtracted at its published size rather than re-estimated, which is the same arithmetic `docs/mvp-board.html` shows on its Full backlog tile. One developer lands what is left in about 6 to 11 calendar weeks. Two developers working the split in section 6 land it in about 4 to 7 weeks, because M1 and M3 parallelise cleanly and M2 depends on M1 only at the final story. One developer running many agents in parallel, with a second reviewing, lands it a good deal faster than either: the board has the evidence from the handover week.
+
+**The floor above used to be 32, DOCS-4 settled it at 41, E1-S1 merging took it to 36, E1-S2 and E1-S4 took it to 32 again, E1-S3 and E4-S2 have taken it to 28, and E9 arriving has put it up to 37, all by a route that can be checked.** Worth recording how it drifted, because the mechanism matters more than the ten days. The **Remaining** column subtracts each merged story from that milestone's own range, and its ceilings have always agreed exactly with the per-epic bars on `docs/mvp-board.html`, because a check on the board derives the tile's ceiling from those bars and fails the build when the two disagree. The floor had no such check. It was kept by hand as a single running subtraction against the pre-week 72, so every merge asked somebody to remember a number rather than to add up a column, and by this week it sat ten days below what the eight milestone rows came to, counting the chore day that was still open on both sides of the comparison. Nobody made an error; nothing was ever going to catch one. The rows are the source, with the chore merged they added up to 41, with E1-S1 merged they added up to 36, with E1-S2 and E1-S4 merged 32, with E1-S3 and E4-S2 merged 28, and with **M9** on the table they add up to 37, which is the figure in both places. Each effort bar on the board carries a floor beside its ceiling, the Full backlog tile sums both ends from those bars, and `npm run validate:board` fails if either drifts again. That check is what makes the E9 addition safe to make in one sitting: a new bar that did not agree with the tile would fail the build rather than sit there reading plausibly. Plan against the ceiling, as before. The difference is that the floor is now checkable rather than remembered.
 
 **A week of merging bought four days off the floor and two off the ceiling, and found three stories doing it.** That is the shape of the week rather than a mis-estimate. What shipped was landmine work: of the seven milestone stories, six were S, and the one M turned into six sub-stories. M7 went from 10-to-14 up to 10-to-16 because measuring the coverage floor found the half of the criterion a floor cannot express, which is now E7-S2b. M5 went up by a day because writing the environment matrix found the one credential in this application that does not fail closed, which is now E5-S6. An audit week that reveals work is an audit week doing its job, and an estimate that moves when it does is the estimate doing the same.
 
@@ -116,16 +119,16 @@ It was 34 milestone stories plus two chores (DOCS-1 and CH-1, about 4 days), 36 
 
 **Demo-safe subset.** If the near-term need is a credible client demo rather than a public launch, M1 plus what is left of M3 is enough, roughly 10 to 16 days, down from 22 to 28 because E2-S4, E2-S2, the document authorization half of M3 and now E1-S1 have all landed. That subset used to name E2-S2 as well; it merged in wave 1 and now costs nothing, and DOCS-4 corrected the total here at the same time as the floor above, since both were being carried by hand. That produces a complete buyer journey with private documents and no way to accidentally show a fake payout as real. It is not enough to invite real users onto real naira.
 
-### 1.4 Decisions, one answered and four open
+### 1.4 Decisions, two answered and three open
 
-These are product and commercial decisions. **D1 came back answered on 2026-08-02**, and it is the first of the five to move since they were raised. The other four are open, so engineering can start M1 now, can proceed on nothing else in M2 until D2 lands, and still cannot start M3.
+These are product and commercial decisions. **D1 came back answered on 2026-08-02 and D2 on 2026-08-05.** Three are open, and one of those three is now blocked on an answer of its own rather than merely undecided: D4 cannot be taken until counsel says which of two contradictory data-transfer rules governs, because the two produce different bucket regions. M1 is finished, M2's largest story is released by D2 and held only by an external account, and M3 still cannot start.
 
 | # | Decision | Why it blocks | Recommendation | Status |
 | --- | --- | --- | --- | --- |
 | D1 | Is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? | Two due diligence paths exist and only one is complete. Answering "standalone only" removes most of E1 and E2 and cuts about 20 days | Confirm on-platform is in scope, since escrow and PoA only pay off there. If it is not, retire the wizard rather than leaving it half-wired | ✅ **Answered 2026-08-02: on-platform purchase is in the MVP.** The recommendation was taken. `docs/adr/0001-mvp-scope-envelope.md` is Accepted, E1's four stories are startable, and they are wave 4 on the board |
-| D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts | ⏳ Open. It is the other half of EXT-7, and now the only thing between the platform and a real seller being paid |
+| D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts | ✅ **Answered 2026-08-05: SafeBuyRealties holds client funds.** SBR-FIN-DEV-SPEC-20260803-V1.5 §11.1 obliges the platform to reconcile an escrow bank balance, which only its operator can be asked to do, and §1.3 and §11.3 make that balance a liability rather than income. `docs/adr/0002-escrow-fund-holding-model.md` is Accepted. E2-S1 is a regulated flow, and it now waits on EXT-1 alone. **Approval to build is not approval to operate:** §14.2 withholds production activation, which is a second gate |
 | D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam | ⏳ Open, and cheaper to answer late than it was. E4-S2 (#142) shipped on manual review and reads one field, `KycRecord.status`, through one registry. A provider changes who writes that field, not who reads it |
-| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⏳ Open |
+| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⛔ Open **and now blocked**, 2026-08-05. The region half cannot be decided until EXT-11 comes back: the client's internal data protection policy §12 forbids any transfer outside Nigeria except on a closed list of three conditions, while the published privacy policy §10 promises only "reasonable steps". Those two rules produce different buckets, and the platform already runs on non-Nigerian infrastructure |
 | D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 | ⏳ Open |
 
 ---
@@ -158,12 +161,20 @@ Auth, users, listings, documents, verification, tasks, transactions, payments an
 | `docs/PARALLEL_AGENT_PROMPTS.md` | ✅ Bannered, DOCS-4 · stale, 2026-05-26 | A wave plan for Steps 3 to 5, all merged. It hands out `cursor/<topic>-e4ea` branch names, tells an agent to tick `[x]` in the checklist, and predates the diff coverage bar and the board check. Dangerous because it reads like a live instruction rather than a record |
 | `docs/VISUAL_QA_AGENT_PROMPT.md` | ✅ Bannered, DOCS-4 · stale, 2026-05-26 | The prompt that ran the stabilization sprint. The sprint finished and its output is `QA_FINDINGS.md`. Its standing order, do not start Step 6 and later, is spent: PoA, escrow and the DD wizard all shipped after it |
 | `docs/demo-script-checklist.md` | ✅ Bannered, DOCS-4 · usable but partial | Not stale. Every route in it still exists and the seed password still works. It covers none of standalone DD, escrow, PoA, KYC or notifications, and it names 5 of the 27 accounts in `DEMO_TEST_ACCOUNTS.csv`. Bannered as a subset of the demo rather than the demo |
+| `docs/SafeBuy_Financial_Governance_Developer_Implementation_Specification_v1.5_Core_Accounts_Escrow_IDs.docx` | ⚠️ Client source, authoritative, E9-S1 | SBR-FIN-DEV-SPEC-20260803-V1.5, sha256 `49978541698407936fce29e489070dc22fd7fd76e22293084ab3e816f6a22f75`. Approved by the CFO for implementation and **not** for production activation, per its own §14.2. Where this specification and any story brief disagree, the specification wins |
+| `docs/SafeBuy Realties ID Standard.docx` | ⚠️ Client source, authoritative, **and it contradicts itself** | sha256 `42c78808dd768a93b97b82356918a321ab800d89fd80084f157e6fe5f7ca80c0`, tracked since 2026-06-16. §2.0 rule 6 implies the national register throughout, §3.0 and §4.0 give Lagos examples, §7.0 gives national ones. That is EXT-8's fourth conflict, and it is why E9-S2 implements the property register only. A Word lock file beside it says somebody has it open, so re-check the hash before relying on it |
+| `docs/inputs/SBR TERMS AND CONDITIONS SAFEBUY.docx` | ⚠️ Client source, **incomplete** | The file stops at §10, Intellectual Property, and ends mid-clause. Nine clause families a platform holding client money needs are absent; the table under EXT-4 in section 3.3 lists them. §10 also vests site content in an individual rather than the company. Do not quote this document as the platform's terms |
+| `docs/inputs/SBR -POWER OF ATTORNEY.docx` | ⚠️ Client source, complete instrument, **narrower than the code assumes** | Clause 5 authorises a 10% deduction at source for brokerage and says nothing about VAT, which is the withholding FinGov §4 and Appendix C both perform. The body is dated 2017 in two places and carries no attestation, stamping, registration or Governor's consent clause. EXT-10 |
+| `docs/inputs/SB DATA PROTECTION POLICY.docx` | ⚠️ Client source, **"SUBJECT TO BOARD APPROVAL"** | Its own first line. Stricter than the published privacy policy on cross-border transfer, and it names no DPO. Its §9 DPCO engagement, §10.1 fifteen-month audit, §13 DPIA and §14 RoPA are now in E8-S1's scope. EXT-11 |
+| `docs/inputs/SBR PRIVACY POLICY.docx` | ⚠️ Client source, **published, and weaker than the internal policy** | §10 promises "reasonable steps" where the internal policy's §12 sets a closed list of three conditions. It also treats browser settings as cookie consent and continued browsing as consent. Which document governs is EXT-11, and it is blocking |
 
 **First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the reference project's paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
 
 > **Done, 2026-07-29, and the reason it was first still holds.** DOCS-1 reconciled the checklist and DOCS-2 bannered six documents, all six pointing at `HANDOVER.md` for current state and here for current gaps. What the row above cannot say is what the reconcile cost: the checklist had been `[x]` on the listing DD lifecycle for long enough that two later documents inherited the claim. The banners are deliberately loud and deliberately non-destructive. Nothing was deleted, because a stale document is evidence of what was believed and when, and the only thing wrong with it is a reader who cannot tell.
 >
 > **Finished, 2026-08-02, by DOCS-4.** Six documents had been missed. Three were agent-facing, two prompt packs that read as live instructions and a demo walkthrough that is still correct but no longer complete, and that is the worse half of the problem: a stale audit misleads a reader, a stale prompt misleads a worker. One was `PRD.md`, the original one-page brief, still sitting in `docs/` under a name that invites a reader to treat it as the requirements. The last two, `01_SOURCE_SYNTHESIS.md` and `02_MASTER_PRD.md`, are not stale at all, and the reason to banner them is the same reason in reverse: three of the five analysis files carried a warning and two did not, so silence could mean current or could mean unchecked and a reader had no way to tell.
+>
+> **Six client source documents added, 2026-08-05.** They are the bottom six rows and they are a different kind of entry from everything above them. A `.docx` cannot carry a banner, and nobody on this side may edit a document the client owns, so **this table is the only place a reader can be warned** that the terms of service file is unfinished or that the data protection policy is unapproved. Each row therefore says what is wrong with the document rather than what is stale about it, and every finding points at the external item that resolves it. The five new files were committed with E9-S1; the ID Standard has been tracked since June and only its warning is new.
 >
 > Twelve files now carry a banner, up from six, and **this table is the inventory**. If a file in `docs/` is not listed here, it is live and current. Three live files were corrected rather than bannered, because the fault was a stale sentence rather than a stale document: `DEVELOPMENT_GUIDE.md` still called `BUILD_CHECKLIST.md` the work queue, and `GIT_WORKFLOW.md` and `BRANCH_PROTECTION.md` both described the required gate as three jobs when six now sit behind it, the two end-to-end suites and the board check having been added since.
 
@@ -217,6 +228,10 @@ A merged row carries the pull request that closed it, so every ✅ is traceable 
 | E8-S2 | Compliance | Legal review of the PoA instrument and terms | — | S | ⛔ | EXT-4 |
 | E8-S3 | Compliance | Pre-launch security review | — | S | ⛔ | EXT-6 |
 | E8-S4 | Compliance | Public web surface: robots, sitemap, per-route metadata | — | M | ✅ #130 | none |
+| E9-S1 | FinGov | Chart-of-accounts and ID-register tables, no rates and no postings | `financial_governance` | M | ✅ this PR, flag off | none |
+| E9-S2 | FinGov | Location register and property ID issuance against the standard | `financial_governance` | M | ⛔ | E9-S1, EXT-8, EXT-12 |
+| E9-S3 | FinGov | Six main accounts, sub-codes, commission and VAT rates, postings | `financial_governance` | L | ⛔ | E9-S1, EXT-9, EXT-10 |
+| E9-S4 | FinGov | Escrow sub-ledger and the section 11.1 reconciliation | `financial_governance` | M | 📋 | E9-S3, E2-S1 |
 
 ### 3.1 Critical path
 
@@ -246,6 +261,10 @@ E3-S2 (durable storage)
 > **Reconciled a fifth time on 2026-08-04.** `E4-S2` has merged as #142, and with it the schedule is empty: every remaining story in this document waits on a decision, an external party or a story that does. The reconcile worth recording is not that one, it is what E4-S2 could not finish. Its fourth acceptance criterion says a seller needs verified KYC before a payout account can be verified, and there is no payout destination in this codebase to gate. `E2-S1` builds one and waits on ADR-0002, so the action is declared in `KYC_GATED_ACTIONS` as `SELLER_PAYOUT_ACCOUNT` with `story: "E2-S1"` on it and reaches no request. That is one line for whoever takes `E2-S1` rather than a rediscovery: call `assertKycGate` on the way into the verify step and the criterion is met. `E2-S1` now carries two things ADR-0002 releases, its own scope and somebody else's criterion.
 >
 > **Reconciled a sixth time on 2026-08-04.** No story merged into this note. Re-deriving the remaining-work report against the board turned up seven rows in the table above whose dependency column had quietly gone false, and this is the correction. Four of them still named a story that has already merged: `E2-S5` waited on `E4-S1`, which merged as #121; `E8-S1` waited on `E5-S5`, which merged as #131; `E8-S3` waited on `E4-S3`, which merged as #125; and `E2-S1` waited on `E1-S4`, which merged as #140. Two more named a dependency that was not written down anywhere a reader could act on it, `E8-S2` and `E8-S3` both reading `external`, and one, `E6-S1`, read `none` while the story body had already said it waits on SMTP credentials. Every one of them now names the external item that actually holds it: EXT-1 the merchant and settlement accounts, EXT-2 the object-storage bucket, EXT-3 the SMTP credentials, EXT-4 counsel, EXT-5 the DPO registration, EXT-6 the security reviewer. What changes for whoever picks up the queue is the count of rows a developer can start alone, which reads as zero and is zero, rather than four rows that looked startable because the story in front of them had shipped and nobody had gone back to the column.
+>
+> **Reconciled a seventh time on 2026-08-05.** Two things moved and neither of them is a story finishing. **ADR-0002 is answered**, so `E2-S1` no longer waits on a decision at all: it waits on EXT-1, and EXT-1 is now a larger ask than it was, because the answer is that SafeBuyRealties holds client funds and the account it needs is a ring-fenced client-funds account rather than a merchant settlement account. The graph above is unchanged in shape and one of its two remaining boxes changed owner, from the stakeholder who had to decide to the client who has to open an account. **And a new epic arrived that is not on this path.** `E9` implements SBR-FIN-DEV-SPEC-20260803-V1.5 and it is deliberately drawn off the critical path: its first story ships tables and no behaviour, everything in it sits behind `financial_governance` with the flag off, and section 14.2 of the specification withholds production activation as a second gate that this project does not hold. So E9 lengthens the backlog without lengthening the path to a launchable product, which is the honest way to read the total going from 28 days to 37. The one edge E9 does have into the path is at the far end: `E9-S4` reconciles an escrow bank balance and cannot be finished without the account `E2-S1` needs, so EXT-1 now blocks two epics rather than one.
+>
+> The other half of this note is what E9 discovered rather than what it built. Reading the two controlling documents against each other produced five identifier conflicts, an unauthorised VAT withholding, a commission rate that appears in four sources with three readings, and a data-transfer rule the internal policy and the published one disagree about. Those are EXT-8 to EXT-12 below. **Two of them reach back into rows that already looked merely queued: `D4` is now blocked rather than open, because EXT-11 decides which region a bucket may sit in, and `E3-S2` therefore inherits a second external dependency it did not have this morning.**
 
 ### 3.2 Go-live gates
 
@@ -254,15 +273,17 @@ E3-S2 (durable storage)
 | G1 | A buyer completes the on-platform journey on staging without staff intervention | Engineering | E1 |
 | G2 | A test payout reaches a distinct seller account and a test refund is repaid by the gateway | Engineering plus Finance | E2 |
 | G3 | No private document is reachable without authorization, verified by an unauthenticated probe suite | Security | E3, E4-S3 |
-| G4 | Signed PoA instrument and terms of service approved by counsel | Client, external | E8-S2 |
+| G4 | Signed PoA instrument and terms of service approved by counsel | Client, external | E8-S2, EXT-4 |
 | G5 | Independent security review closed with no high findings outstanding | External | E8-S3 |
-| G6 | Escrow and settlement model confirmed against CBN and AML obligations | Client, external | D2 |
+| G6 | Escrow and settlement model confirmed against CBN and AML obligations | Client, external | EXT-1, and the section 14.2 activation approval |
 
 > **G3 is half-earned, 2026-07-31.** The probe suite it asks for exists — `backend/src/storage/uploads-exposure.spec.ts`, written red in #103 and green since #112 — and no private document is reachable without authorization through the route it probes. The gate stays open because it is blocked by E3 and E4-S3, not by E3-S1: **E3-S2** is unstarted, and a document store that authorizes correctly and then loses the file on the next deploy does not pass a gate worded *no private document is reachable without authorization* in spirit, only in letter. Read the probe suite as the evidence G3 will eventually be closed with, not as the closing of it.
 >
 > **E4-S3 landed, 2026-08-01.** The other half of the gate's E4 dependency is now covered: `backend/src/common/authz/cross-role-authz.spec.ts` classifies all 51 path-parameter routes and drives 240 cross-role cells against the real services. G3 still waits on E3-S2, which is the storage half and has not started.
 >
 > **G1 is reachable now, 2026-08-02.** It did not move, and that is the point. Until D1 was answered, G1 asked engineering to demonstrate a journey nobody was allowed to build, so it was a gate against a decision rather than against work. E1 is scheduled, so from today G1 measures progress instead of standing in for a missing answer. G6 still names D2, which is the half of EXT-7 still outstanding.
+>
+> **G4 moved further out and G6 changed what it is waiting for, 2026-08-05.** Reading the client's own documents for E9 turned up that neither half of EXT-4 is where the schedule assumed it was. The terms of service file stops at section 10 and ends mid-clause, and what is missing from it is not decoration: limitation of liability, indemnity, governing law, jurisdiction, dispute resolution, fees, refunds, termination and every escrow term, from the contract of a platform that holds client money and runs a dispute flow. The Power of Attorney is a complete instrument but its clause 5 authorises a 10% deduction at source and says nothing about VAT, which is the withholding the specification's own worked example performs. **So G4 is not one review of two finished documents, it is a drafting job on one and a variation on the other, and it should be planned as weeks with counsel rather than a sign-off.** G6 no longer names D2, because D2 is answered; it names EXT-1, which is now a ring-fenced client-funds account rather than a merchant one, and it names section 14.2's production activation approval, which is a separate permission from the approval to build that engineering already has. **A gate that reads closed because the code is finished would be wrong here: G6 closes when somebody outside engineering signs the activation, and nothing in this repository can produce that signature.**
 
 ### 3.3 External inputs
 
@@ -270,13 +291,67 @@ Work the team cannot do with code.
 
 | ID | Input | Owner | Blocks |
 | --- | --- | --- | --- |
-| EXT-1 | Production Paystack live keys and a settlement account | Client | E2-S1, G2 |
-| EXT-2 | S3-compatible bucket, credentials, region decision | Client or Corne Labs | E3-S2 |
+| EXT-1 | Production Paystack live keys, and a **ring-fenced client-funds escrow account** with its own mandate, held apart from operating money | Client | E2-S1, E9-S4, G2, G6. **Restated 2026-08-05.** This used to read "a settlement account", which was the right ask while D2 was open and both readings were live. ADR-0002 closed it the other way: the platform holds client money, so the account is a liability account it reconciles under section 11.1 rather than a merchant account it sweeps. Same external party, materially larger ask, and it now blocks two epics |
+| EXT-2 | S3-compatible bucket, credentials, region decision | Client or Corne Labs | E3-S2. **The region half is downstream of EXT-11**, which decides whether a non-Nigerian region is permitted at all |
 | EXT-3 | Transactional email domain, SPF, DKIM, DMARC, SMTP credentials | Client | E6-S1 |
-| EXT-4 | Counsel-approved PoA instrument text and terms of service | Client | E8-S2, G4 |
+| EXT-4 | Counsel-approved PoA instrument text and terms of service | Client | E8-S2, G4. **Partial on both halves, 2026-08-05.** See below |
 | EXT-5 | NDPR privacy notice and retention policy | Client | E8-S1 |
 | EXT-6 | Penetration test vendor and window | Corne Labs | E8-S3, G5 |
-| EXT-7 | Confirmation of D1 and D2 | Client | E2. **Half discharged on 2026-08-02**: D1 came back as on-platform purchase is in the MVP, which released E1. What is left of EXT-7 is D2, the escrow money model |
+| EXT-7 | Confirmation of D1 and D2 | Client | ~~E2~~. **Discharged 2026-08-05.** D1 came back on 2026-08-02 as on-platform purchase is in the MVP, which released E1. D2 came back on 2026-08-05 as SafeBuyRealties holds client funds, recorded in `docs/adr/0002-escrow-fund-holding-model.md`. This row is closed; what E2-S1 waits on now is EXT-1, which is an account and not an answer |
+| EXT-8 | Digital Records to resolve five conflicts between the SafeBuy Realties ID Standard and SBR-FIN-DEV-SPEC-20260803-V1.5 | Client, Digital Records | E9-S2. See below |
+| EXT-9 | Finance to confirm the commission basis: one-sided or two-sided, collected or withheld, floor or rate | Client, Finance | E9-S3. See below |
+| EXT-10 | Finance **and** counsel to confirm what authorises VAT withholding from seller proceeds | Client, Finance, counsel | E9-S3, G4. See below |
+| EXT-11 | Legal to say which data-transfer rule governs, the internal policy's or the published one's | Client, legal | D4, E3-S2, E8-S1. **Blocking**, see below |
+| EXT-12 | Management to settle the entity name, registered address and canonical domain, and to say whether the ID Standard is currently under revision | Client, management | E9-S2, E8-S2, and **any further PoA generation**. See below |
+
+#### EXT-4, partial on both halves
+
+The schedule assumed EXT-4 was a review of two finished documents. It is not. The Power of Attorney is a complete instrument with a clause that does not cover what the platform does, and the terms of service is not a complete document at all: `docs/inputs/SBR TERMS AND CONDITIONS SAFEBUY.docx` stops at section 10, Intellectual Property, and ends mid-clause. **The table below is the request to counsel.** It is what a platform that holds client money and runs a dispute flow does not currently promise or reserve anywhere.
+
+| Absent | Why it matters here |
+| --- | --- |
+| Limitation of liability | No cap on a due diligence report that misses an encumbrance |
+| Indemnity | Nothing shifts user-uploaded forged-document risk |
+| Governing law and jurisdiction | No forum for any dispute |
+| Dispute resolution | E5's dispute flow has no contractual basis |
+| Fees, payment and refund terms | Escrow refunds have no stated contractual trigger |
+| **Any escrow terms at all** | The document never uses the word |
+| Termination and suspension of service | §4.5 covers accounts only |
+| Cross-reference to the Privacy Policy | Privacy §18 assumes acceptance flows through the Terms |
+| Amendment, severability, force majeure, entire agreement | Standard boilerplate, all absent |
+
+Two more items go to counsel in the same bundle. Section 10 vests site content in "the Founder of SafeBuy Realties International Limited", an individual rather than the company, which is a different owner from the one every other document names. And section 5(a) obliges users to charge "a minimum of 5% commission apiece from both buyers and seller cumulatively", which is the published promise the commission question below has to be reconciled against.
+
+#### EXT-8, the five identifier conflicts
+
+Sent to Digital Records. **Lead with this sentence, because it is the one with a user in it: the published terms promise users a professional category the platform cannot issue an identifier for.** Terms §2 and the privacy policy §1 both name nine categories, including plumbers, electricians and interior designers, and none of those three has a code in either coded list, while Valuer and Estate Agent are coded in both lists and named in neither. The other four:
+
+1. **`SBR-CASE-ENV` and `SBR-CASE-SEC` are defined in one document and absent from the other.** The ID Standard defines neither. FinGov §5 defines both, with worked examples, and §3.2 binds them to billing sub-codes 22 and 24. Sub-code 22 cannot be billed without an identifier format for the case it bills, so this is a billing blocker rather than a naming preference.
+2. **`SBR-SRV-BUY` versus `SBR-SRV-TYPE`.** The ID Standard hard-codes `BUY`; FinGov §5 writes `TYPE` with `BUY` as an example value. Every service request the platform issues today asserts it is a buyer request. If a service request can ever be a seller or due-diligence type, the whole issued estate is mis-asserting.
+3. **The standard contradicts itself on which register non-property identifiers draw from.** §2.0 rule 6 implies the national register throughout, but §3.0 and §4.0 give their formats and examples with Lagos codes, while §7.0 gives its examples with national ones. Until this is answered only the property register mapping is safe to implement, which is E9-S2's stated scope and the reason that story is deliberately narrow.
+4. **The professional category lists do not agree with each other or with the code.** Six coded categories in the standard, nine named categories in the terms and the privacy policy, and a different six in the repository.
+
+Until EXT-8 comes back, **no identifier format is to be changed except the property register mapping**, and every other location segment stays on its current behaviour behind a named gap rather than a guess.
+
+#### EXT-9, the commission basis
+
+Four sources, three readings. The repository charges 5% on the seller side only and has no buyer commission at all. The Power of Attorney clause 5 says the donee deducts 10% at source. The terms §5(a) say a minimum of 5% from buyer and seller cumulatively. FinGov sub-codes 11 and 12 exist separately for buyer and seller, which corroborates two-sided. The likeliest reconciliation is that 5% plus 5% is the PoA's 10% at source, and that is exactly the kind of thing that has to be confirmed rather than inferred. **Send Finance these three questions:**
+
+1. Is the commission one-sided or two-sided? The repo charges the seller side only and has **no buyer commission at all**, despite sub-code 11 existing for it.
+2. If two-sided, is the buyer's 5% collected from the buyer, or withheld from the seller's proceeds alongside the seller's 5%, which is what "deduct from source 10%" would mean?
+3. Is "minimum of 5%" a floor with a configurable actual rate, or the rate itself?
+
+#### EXT-10, the VAT withholding has no instrument behind it
+
+This goes to Finance and counsel as its own item rather than folded into EXT-9, because it is not a rate question. **No document the seller signs authorises the platform to withhold VAT from their proceeds.** PoA clause 5 authorises the 10% brokerage deduction and stops there. FinGov §4's formula and Appendix C's worked example both withhold VAT anyway: on a NGN 50,000,000 sale the example takes 2,500,000 commission and 187,500 VAT and pays the seller 47,312,500, where this repository would pay 47,500,000. The repository is the one that matches the signed instrument. The fix may be a drafting change to clause 5 rather than a configuration value, and either way it has to be answered before E9-S3 writes a rate down.
+
+#### EXT-11, which data-transfer rule governs, and it is blocking
+
+The client's internal data protection policy §12 says personal data **shall not** be transferred outside Nigeria unless one of three conditions is met: an adequacy decision, NDPC-approved standard contractual clauses, or a valid statutory exception. The published privacy policy §10 promises only that reasonable steps are taken. The internal document is the stricter of the two and the platform already runs on non-Nigerian infrastructure, so this is a live exposure and not a future one. **ADR-0004's region choice cannot be made until it is answered**, because "reasonable steps" and a closed list of three conditions produce different bucket configurations, and that is why D4 above now reads blocked. Two further conflicts go up with it: the published policy treats browser settings as cookie consent, and treats continued browsing as consent, neither of which the internal policy or the NDPA supports. Engineering's position in the meantime is to encode the stricter rule and let the tests be the record of which document won.
+
+#### EXT-12, whose company is this and is the standard moving
+
+Four documents give three spellings of the company name and two addresses, and the terms give a website, `safebuyrealtiesltd.com`, that is not the domain the code bakes into every Power of Attorney QR code, `safebuyrealties.com`. `RUNBOOK.md:420` already records that issued instruments cannot be recalled, so **generating further instruments is blocked on this answer** rather than merely inadvisable. In the same message, ask whether the ID Standard is currently being revised: a Word lock file beside it says the document is open on somebody's desk, and E9-S2 encodes 32 Lagos codes and 38 national codes from it. If it is under revision, E9-S2 waits for the revision instead of encoding a version about to be superseded. E9-S1 does not wait, because its tables contain no location code at all.
 
 ---
 
@@ -1120,18 +1195,24 @@ Small, but it is a deploy-path change and wants its own verification rather than
 
 #### E8-S1, NDPR consent, retention, and erasure
 
-**Size** L · **Flag** `privacy_centre` · **Deps** EXT-5 (E5-S5 merged as #131)
+**Size** L · **Flag** `privacy_centre` · **Deps** EXT-5, EXT-11 (E5-S5 merged as #131)
 
 **Evidence of the gap.** No consent model, no retention policy, and no erasure path exist in the schema or the codebase. The platform stores government identity documents, selfies, and professional credentials. The reference project treats the equivalent as `FR-A6` and `FR-A7` with a dedicated privacy centre, and its own `docs/adr/0004-auth-and-account-portal.md` is worth reading before designing this.
+
+**What reading the client's own policy added, 2026-08-05.** `docs/inputs/SB DATA PROTECTION POLICY.docx` is now in the repository and it is stricter and more specific than this story assumed. Four obligations in it are dated or nameable and belong in this scope rather than in a general intention to comply: a licensed **Data Protection Compliance Organisation must be engaged** under §9, which is an engagement and not the NDPC registration this backlog used to call it; an **initial compliance audit within fifteen months** under §10.1, with annual returns by 31 March under §10.2; a **DPIA** under §13, which is unavoidable rather than discretionary because `KycRecord` already stores identity documents; and a **record of processing activities** under §14 which must carry a retention period per purpose. The RoPA is what resolves the retention design: periods are configured per purpose with no default and a loud failure when one is unset, rather than a single global number. §4.5's six months and the financial retention this platform needs are then two entries in that record rather than a contradiction, which is a documentation gap for the DPO to close in writing. Note also that the policy is headed "SUBJECT TO BOARD APPROVAL" and names no DPO, so both are open questions to the client. **And §12 is the one that blocks: it forbids transfer outside Nigeria except on a closed list of three conditions, while the published privacy policy §10 promises only reasonable steps.** That is EXT-11, and until it comes back this story encodes the stricter of the two and lets the tests be the record of which document won.
 
 **Acceptance criteria**
 
 1. Consent is captured at registration with version, timestamp, and source address, and no account exists without a consent row.
 2. A published privacy notice is versioned, and a material change re-prompts.
-3. Retention periods are declared per data category and enforced by a scheduled sweep, with KYC documents and audit logs given explicit, separately justified periods.
+3. Retention periods are declared per data category and enforced by a scheduled sweep, with KYC documents and audit logs given explicit, separately justified periods. No category has a default period, and an unset one fails loudly rather than falling back.
 4. Data export returns a user's own data on request.
 5. Erasure honours a grace period, blocks deletion where a legal hold applies such as an executed PoA, and crypto-shreds rather than orphaning storage objects.
 6. Every privacy action is audited.
+7. A record of processing activities exists per DPP §14, and every retention period in criterion 3 is derived from it rather than declared twice.
+8. A DPIA covering KYC document storage is completed per DPP §13 and recorded in the repository.
+9. Cross-border transfer is enforced to DPP §12's closed list, and a test asserts the rule that was chosen so that a later relaxation is a visible diff rather than a silent one.
+10. Cookie consent is an affirmative action, not a browser setting, and continued browsing is not treated as consent. Both are conflicts with the published policy and both are recorded as such.
 
 ---
 
@@ -1186,6 +1267,95 @@ Two findings came out of the proof and are written up rather than fixed here, be
 
 ---
 
+### Epic E9, financial governance
+
+**What this epic is.** SBR-FIN-DEV-SPEC-20260803-V1.5, committed at `docs/SafeBuy_Financial_Governance_Developer_Implementation_Specification_v1.5_Core_Accounts_Escrow_IDs.docx`, sha256 `49978541698407936fce29e489070dc22fd7fd76e22293084ab3e816f6a22f75`. It defines six main account codes, their sub-codes, how escrow principal is held and reconciled, and which identifiers every financial record must carry. It arrived after this backlog was written, which is why the total in section 1.3 went up rather than down.
+
+**Two gates, and this project only holds one of them.** The CFO approved the specification for implementation, relayed on 2026-08-05. Section 14.2 withholds approval for production activation, which is a separate permission nobody in this repository can grant. **Every story in this epic ships behind `financial_governance`, default off**, and a story is done when it is correct and switched off, not when it is running.
+
+**Rules that apply to every story here, taken from the specification rather than from preference.** Money is `Decimal @db.Decimal(18,2)` or smaller currency units, and floating point is prohibited (section 8.2). Escrow principal is a client-funds liability and never revenue (sections 1.3 and 11.3). Every financial record carries its main code, its sub-code and the applicable SBR IDs (section 8.1). Posted ledger entries, confirmed escrow movements and issued receipts are immutable: a correction is a reversal plus a replacement, never an edit (section 8.2). No release or refund may exceed the verified available escrow balance (section 8.2).
+
+---
+
+#### E9-S1, chart-of-accounts and ID-register tables
+
+**Size** M · **Flag** `financial_governance` · **Deps** none
+
+**Evidence of the gap.** There is no chart of accounts in this codebase. `EscrowService` moves money between statuses on a single table with no account code on any row, so nothing distinguishes escrow principal from commission from VAT, and section 8.1's requirement that every financial record carry its codes cannot be satisfied by any existing column. There is no register of issued identifiers either: `sbr-id.service.ts` mints them from a counter table and nothing records what a given identifier means or which version of the identification standard coded it, which is what makes the location-code defect in `docs/HANDOVER.md` item four unmeasurable from inside the application.
+
+**Delivered.** Three tables, three nullable columns, one flag, and deliberately no behaviour. `id_register` records every identifier with the entity it names, the coding standard that issued it, and the source document and its SHA-256, so a later revision of the standard becomes a dated migration rather than a silent divergence. Rows predating this table default to `LEGACY_PRE_E9`, which labels the existing estate honestly instead of letting a backfill claim compliance it does not have. A reissued identifier is a new row plus a `supersededById` pointer, which is section 8.2's correction rule applied to identity. `main_accounts` and `account_subledgers` carry the shape of the six main codes and their fixed and dynamic sub-codes, **and none of the rows**: the rows are E9-S3 and they cannot be written until EXT-9 and EXT-10 come back. `isLiability` and `ringFenced` are two columns rather than one for the reason ADR-0002 gives. `entityType` is text rather than an enum because five identifier conflicts are open with Digital Records and an enum would freeze one reading of a disputed document into the database. `audit_logs` gains `reason`, `requestId` and `source`, nullable and defaultless, so a reversal says why it happened and one multi-table financial operation reads back as the single thing it was.
+
+This is a migration PR under the project's migration rule, so it carries the schema and the flag declaration and no code that uses them. The migration and its rollback were both rehearsed against a scratch PostgreSQL 14 cluster before this was opened, and the outputs are in the pull request. The `ALTER TABLE` on `audit_logs` sets `lock_timeout = '5s'` and adds nullable defaultless columns, so it is a catalog update rather than a rewrite and it refuses to queue behind a long transaction instead of blocking readers behind it.
+
+Three things were found rather than built, and they are recorded elsewhere in this document rather than fixed here: the location-register discontinuity that makes every property identifier ever issued wrongly coded (EXT-8, and `docs/sql/id-location-code-audit.sql` for whoever has database access), the unauthorised VAT withholding (EXT-10), and the commission basis (EXT-9). ADR-0002 moved to Accepted on the strength of section 11.1, which is what closed decision D2.
+
+**Acceptance criteria**
+
+1. ✅ The migration is additive only: new tables and new nullable columns, nothing dropped and nothing retyped.
+2. ✅ The migration applies cleanly to a scratch database at the current production major version, and the rollback runs against the same scratch database before the pull request is opened. Both outputs pasted.
+3. ✅ Money columns, when they arrive, have a decimal type available to them and no floating point type is introduced anywhere in the schema by this diff.
+4. ✅ `main_accounts` distinguishes an account being held apart from an account being owed, as two columns.
+5. ✅ No rate, category or account row is seeded, because the questions that decide them are open.
+6. ✅ The `financial_governance` flag exists, defaults off, and names the stories it covers.
+7. ✅ Both source documents are pinned by SHA-256 in the migration and in the pull request description.
+8. ✅ `validate:tsc`, both test suites and ESLint at zero warnings, pasted in the pull request.
+
+---
+
+#### E9-S2, location register and property ID issuance against the standard
+
+**Size** M · **Flag** `financial_governance` · **Deps** E9-S1, EXT-8, EXT-12
+
+**Evidence of the gap.** `docs/HANDOVER.md` item four, in full. Section 2.0 rule 7 of the ID Standard requires a property identifier's location segment to come from the property register in section 5.0, which holds 32 Lagos codes. `LOCATION_CODES` in `sbr-id.service.ts` is almost entirely the national register from section 6.0 instead, and Ikoyi, Lekki, Victoria Island, Ajah, Surulere and Yaba all collapse into a single `LOS`. Two entries are wrong in a second way and need different treatment: `IKY` is a collision, emitted only for `/ikorodu/i`, so every `-IKY-` identifier is an Ikorodu record wearing Ikoyi's code and the number of correctly coded Ikoyi identifiers is zero; `IBA` is an orphan, in neither register, where Ibadan is `IBD`. The counts are a named TODO rather than a figure, because nobody on this side has database access, and the queries are committed at `docs/sql/id-location-code-audit.sql` for whoever does.
+
+**Scope discipline.** This story implements **the property register mapping only**. The ID Standard contradicts itself on which register non-property identifiers draw from, so every other location segment stays on its current behaviour behind a named gap until EXT-8 answers. And **re-check the ID Standard's SHA-256 immediately before starting**: a Word lock file beside it says it is open on somebody's machine. If the hash has moved, stop and read the new document rather than diffing it against anyone's memory of the old one.
+
+**Acceptance criteria**
+
+1. A `location_register` table holds the codes, each row carrying `source_document` and `source_document_sha`, so every code in the database cites the exact version of the standard it came from.
+2. Property identifier issuance resolves its location segment from the property register, and a property address that resolves to no property code fails loudly rather than falling back to `LOS`.
+3. Non-property identifiers are unchanged, and a test asserts they are unchanged, so the EXT-8 gap is visible rather than assumed.
+4. The `IKY` collision and the `IBA` orphan are handled separately: the orphan is rewritten, the collision is reversed and replaced under section 8.2 with a reason on every row.
+5. Every reissue writes an `id_register` row pointing at the identifier it supersedes. No identifier is edited in place.
+6. The audit queries are re-run after the correction and the before and after counts recorded in `docs/HANDOVER.md`.
+
+---
+
+#### E9-S3, six main accounts, sub-codes, commission and VAT rates, postings
+
+**Size** L · **Flag** `financial_governance` · **Deps** E9-S1, EXT-9, EXT-10
+
+**Evidence of the gap.** The tables exist and are empty. Nothing in the platform posts a coded financial entry, and the rates that would drive one are the subject of two open questions: the commission basis appears in four sources with three readings, and no instrument the seller signs authorises the VAT withholding that section 4's formula and Appendix C's worked example both perform. The gap between the two readings is real money: on Appendix C's NGN 50,000,000 sale the specification pays the seller 47,312,500 and this repository pays 47,500,000.
+
+**This story cannot start on engineering's say-so.** It writes rates down, and writing a rate down is asserting an answer to EXT-9 and EXT-10. Both must come back first.
+
+**Acceptance criteria**
+
+1. The six main accounts are seeded with their codes, names and their liability and ring-fencing flags, each row citing the source document and its hash.
+2. Fixed sub-codes 11, 12 and 21 to 26 are seeded. Dynamic sub-codes `3-NNNNNN` and `4-NNNNNN` are minted per subject and carry the owner they belong to.
+3. Commission and VAT rates are configuration with a recorded effective date, never constants, and every rate cites the instrument that authorises it.
+4. Every posting carries its main code, its sub-code and the applicable SBR IDs.
+5. Posted entries are immutable. A correction is a reversal plus a replacement, and the reversal carries a reason.
+6. Money is decimal end to end, and a test proves the Appendix C worked example to the naira.
+
+---
+
+#### E9-S4, escrow sub-ledger and the section 11.1 reconciliation
+
+**Size** M · **Flag** `financial_governance` · **Deps** E9-S3, E2-S1
+
+**Evidence of the gap.** `EscrowService` holds, releases, refunds and pays out on one table with no account code and no reconciliation. Section 11.1 requires the escrow bank balance to equal the sum of the per-transaction escrow sub-ledgers, which is the obligation that decided ADR-0002 and which nothing in the codebase can currently compute or check.
+
+**Acceptance criteria**
+
+1. Every escrow movement posts to its transaction's dynamic `3-NNNNNN` sub-ledger, and the principal is carried as a liability rather than as income.
+2. The section 11.1 equation is computed on demand and on a schedule, and a break is surfaced to Finance rather than logged.
+3. No release or refund may exceed the verified available balance, proved by a test that attempts one.
+4. Confirmed movements are immutable. A correction is a reversal plus a replacement.
+5. The reconciliation reads a real bank balance, which is EXT-1, and degrades to an explicit "unreconciled, no bank feed" state rather than reporting a false match when it is absent.
+
+---
+
 ## 5. Cross-cutting definition of done
 
 Every story above is done when all of the following hold. This is the reference project's `rules.md` §1, ratcheted to new and touched code.
@@ -1217,6 +1387,8 @@ Every story above is done when all of the following hold. This is the reference 
 **First week, whoever is on shift.** DOCS-1, E2-S4, E5-S2, E6-S1, E3-S4. Five small stories, about four days, and between them they close the worst silent-failure mode in the money path, the credential-reflecting CORS policy, the silently dropped email, and the QR code that has always pointed at a 404.
 
 > **Reconciled 2026-07-31.** The handover week ran this first week and landed four of the five: DOCS-1, E2-S4 (#99), E5-S2 (#97, tightened by E5-S2a #102) and E3-S4 (#98). **E6-S1 is the one that did not**, and it did not because it needs a mail domain the client owns, which is EXT-3 and still outstanding — so the silently dropped email is the one item from this paragraph the next team inherits, and it is waiting on someone outside the repository rather than on a developer. The week also closed **E3-S1**, which is the two-developer plan's only hard cross-dependency and its week-one instruction for developer B: that constraint is now discharged, so B can start anywhere in E3 to E7 and A is no longer gated at E1-S3. What replaces it as the earliest scheduling decision is **E3-S2**, durable object storage, which is still on the critical path and still waits on ADR-0004.
+>
+> **Reconciled 2026-08-05.** Developer A's line above is out of date in the way that matters: ADR-0002 is answered, so A does not wait on a decision at E2-S1, A waits on the client opening a ring-fenced client-funds account, which is EXT-1. That is a different kind of wait and it should be started now rather than when a developer reaches the story. **E9 slots to developer A as well**, because it is the same subject matter and because its first story is the only startable row in this document: E9-S1 has no dependency, E9-S2 and E9-S3 wait on answers from Digital Records and Finance, and E9-S4 needs the same account E2-S1 does. So A's realistic order is E9-S1, then chase EXT-1 and the E9 escalations, then E2-S1 and E9-S3 whenever the answers land, and E9-S4 last because it needs both. Developer B is unchanged, except that E3-S2's region choice now waits on EXT-11 as well as on ADR-0004, and EXT-11 is with legal rather than with the client.
 
 ---
 

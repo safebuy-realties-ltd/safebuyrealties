@@ -30,6 +30,18 @@ export type FeatureFlagDefinition = {
 };
 
 export const FEATURE_FLAGS = {
+  financial_governance: {
+    description:
+      "Everything built on the FinGov chart of accounts: the ID register, the main accounts and " +
+      "their sub-ledgers, and the postings that will sit on top of them. Declared here by E9-S1, " +
+      "which ships the tables and nothing that reads them, so that the two-gate policy is visible " +
+      "in the diff rather than promised in a description. SBR-FIN-DEV-SPEC-20260803-V1.5 is " +
+      "approved for implementation and not for production activation, per its section 14.2, so " +
+      "this flag stays off until the second gate closes.",
+    defaultEnabled: false,
+    client: true,
+    story: "E9-S1, E9-S2, E9-S3",
+  },
   dd_case_lifecycle: {
     description: "The listing due diligence case lifecycle: queue, assignment, report, completion.",
     defaultEnabled: false,
