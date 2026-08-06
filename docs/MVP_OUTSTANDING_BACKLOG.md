@@ -289,6 +289,12 @@ E3-S2 (durable storage)
 
 Work the team cannot do with code.
 
+**EXT-8 through EXT-12 were sent on 2026-08-06 and the text as sent is in
+[docs/escalations/2026-08-06-ext-8-and-ext-12.md](escalations/2026-08-06-ext-8-and-ext-12.md).**
+Answers get recorded in that file, under the question they answer, with the date and who gave it.
+These go to people outside the team and come back days later, so the question has to be on record to
+check the answer against. Do not edit a question after it has been sent; add a dated entry beneath it.
+
 | ID | Input | Owner | Blocks |
 | --- | --- | --- | --- |
 | EXT-1 | Production Paystack live keys, and a **ring-fenced client-funds escrow account** with its own mandate, held apart from operating money | Client | E2-S1, E9-S4, G2, G6. **Restated 2026-08-05.** This used to read "a settlement account", which was the right ask while D2 was open and both readings were live. ADR-0002 closed it the other way: the platform holds client money, so the account is a liability account it reconciles under section 11.1 rather than a merchant account it sweeps. Same external party, materially larger ask, and it now blocks two epics |
@@ -324,12 +330,24 @@ Two more items go to counsel in the same bundle. Section 10 vests site content i
 
 #### EXT-8, the five identifier conflicts
 
-Sent to Digital Records. **Lead with this sentence, because it is the one with a user in it: the published terms promise users a professional category the platform cannot issue an identifier for.** Terms §2 and the privacy policy §1 both name nine categories, including plumbers, electricians and interior designers, and none of those three has a code in either coded list, while Valuer and Estate Agent are coded in both lists and named in neither. The other four:
+Sent to Digital Records 2026-08-06, copied to Finance because conflict 1 is a billing blocker.
+
+**Lead with this sentence, because it is the one with a user in it: the published terms promise users a professional category the platform cannot issue an identifier for.** Terms §2 and the privacy policy §1 both name nine categories, including plumbers, electricians and interior designers, and none of those three has a code in either coded list. That is conflict 4 below, stated the way a user meets it rather than the way a schema does, and it is the lead rather than a sixth item.
+
+**Second sentence: nothing has been issued yet.** The platform generates no professional identifier at all, so every conflict here is latent, and whatever Digital Records rules gets encoded once with nothing to correct. This is a decision that is still free.
+
+The five:
 
 1. **`SBR-CASE-ENV` and `SBR-CASE-SEC` are defined in one document and absent from the other.** The ID Standard defines neither. FinGov §5 defines both, with worked examples, and §3.2 binds them to billing sub-codes 22 and 24. Sub-code 22 cannot be billed without an identifier format for the case it bills, so this is a billing blocker rather than a naming preference.
 2. **`SBR-SRV-BUY` versus `SBR-SRV-TYPE`.** The ID Standard hard-codes `BUY`; FinGov §5 writes `TYPE` with `BUY` as an example value. Every service request the platform issues today asserts it is a buyer request. If a service request can ever be a seller or due-diligence type, the whole issued estate is mis-asserting.
 3. **The standard contradicts itself on which register non-property identifiers draw from.** §2.0 rule 6 implies the national register throughout, but §3.0 and §4.0 give their formats and examples with Lagos codes, while §7.0 gives its examples with national ones. Until this is answered only the property register mapping is safe to implement, which is E9-S2's stated scope and the reason that story is deliberately narrow.
-4. **The professional category lists do not agree with each other or with the code.** Six coded categories in the standard, nine named categories in the terms and the privacy policy, and a different six in the repository.
+4. **There are four professional category lists and no two agree.** The ID Standard §4.0 codes **six**: LAW, SUR, VAL, AGT, ARC, ENG. The repository's `ProfessionalType` enum has **seven**: LAWYER, SURVEYOR, VALUER, ARCHITECT, ENGINEER, BUILDER, QUANTITY\_SURVEYOR. FinGov §5.1 codes **thirteen**, the standard's six plus QSV, BLD, PLN, PJM, CON, SUP, SSP. Terms §2 and privacy §1 name **nine** in prose, three of them coded nowhere.
+
+   The counts are the least interesting part of this. **The repository crosses the ID Standard rather than nesting inside it.** It has BUILDER and QUANTITY\_SURVEYOR, which the ID Standard cannot issue identifiers for, and it lacks Estate Agent, which both controlling documents code. So the platform can already model two professional types it could never identify, and cannot model one that both documents expect, which for a real estate business is the strangest of the four gaps. FinGov is a strict superset of the standard on membership, so those two may be a versioning question rather than a disagreement, and the escalation asks which way round that is.
+
+   Two further readings of the same four sets. **`AGT` and `VAL` appear in no published document**: Estate Agent and Valuer are coded in both controlling documents and named in neither the terms nor the privacy policy, and Estate Agent is absent from the enum as well, so the escalation asks outright whether the platform serves that category at all. And **the enum looks derived from the marketing prose rather than from the standard**: the published nine is the enum's seven minus VALUER plus the three uncoded trades, which if it is what happened means the ID Standard has never been the source of the platform's category list. Both published lists also end "and other related professionals", so the prose never closes the set, and a coded list has to.
+
+5. **`SUR` means two things inside the same document.** §4.0 gives `SBR-SUR-...` for Surveyor; §5.0 gives `SUR` for Surulere. A reader holding a `SUR` segment cannot tell from the identifier alone which register it came from. Survivable if conflict 3 comes back with a hard per-type rule, live if it does not, so it goes up alongside it. Cheap to answer, which is the argument for asking rather than footnoting it.
 
 Until EXT-8 comes back, **no identifier format is to be changed except the property register mapping**, and every other location segment stays on its current behaviour behind a named gap rather than a guess.
 
