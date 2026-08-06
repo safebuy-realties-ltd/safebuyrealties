@@ -5,22 +5,25 @@ closed, in the exact form that would close it, matched to the stories that are w
 
 | Ref | Owner | Dispatched | Answer recorded |
 | --- | --- | --- | --- |
-| EXT-1 | Client, Finance | | |
-| EXT-2 | Client or Corne Labs | | |
-| EXT-3 | Client | | |
-| EXT-4 | Client, counsel | | |
-| EXT-5 | Client, board, DPO | | |
-| EXT-6 | Corne Labs | | |
-| EXT-8 | Digital Records, COO | | |
-| EXT-9 | Finance | | |
-| ADR-0003 | Product, client | | |
-| ADR-0004 | Product, client, security | | |
-| D3 | Client, product | | |
+| EXT-1 | Client, Finance | 2026-08-06 | |
+| EXT-2 | Client or Corne Labs | 2026-08-06 | |
+| EXT-3 | Client | 2026-08-06 | |
+| EXT-4 | Client, counsel | 2026-08-06 | |
+| EXT-5 | Client, board, DPO | 2026-08-06 | |
+| EXT-6 | Corne Labs | 2026-08-06 | |
+| EXT-8 | Digital Records, COO | 2026-08-06 | |
+| EXT-9 | Finance | 2026-08-06 | |
+| ADR-0003 | Product, client | 2026-08-06 | |
+| ADR-0004 | Product, client, security | 2026-08-06 | |
+| D3 | Client, product | 2026-08-06 | |
 
-**Status: not dispatched.** Every cell above is empty, so nothing here has gone out and nothing
-here has come back. Dispatch dates are stamped on the day they are sent and never backfilled.
-While a **Dispatched** cell is empty, nothing anywhere in this repository may say this schedule
-was sent. **Answer recorded is a separate column on purpose:** sending is not answering.
+**Status: dispatched 2026-08-06.** All eleven items went out that day, stamped on the day of
+sending rather than backfilled. **The Answer recorded column is empty in all eleven rows, and that
+is why it is a separate column:** sending is not answering. Nothing here has come back, nothing
+here is closed, and no story on the board moves on a dispatch date. Until a date appears in an
+item's **Answer recorded** cell, nothing anywhere in this repository may say that item is answered,
+closed or unblocked, and a partial answer is recorded in that word rather than as a bare date,
+because a bare date in that column reads as closed.
 
 **EXT-8 and EXT-9 joined this schedule on 2026-08-06, after they were answered.** That is not a
 contradiction. Both were answered the same day inside `ENG-DR-2026-08-06-01`, and both answers left
@@ -72,6 +75,22 @@ team's reading rather than the document's, and `YYXX` reading as a single `YYMM`
 printed as well as `YY` plus an undefined `XX` does. **Nothing was resolved toward either
 reading.** The item asks the same question it asked before, in a form that cannot come back
 answered by half. The count of items is unchanged at eleven and nothing else on the schedule moved.
+
+*Dispatched 2026-08-06.* **`ENG-CS-2026-08-06-01` is frozen from this line down.** The four
+revisions above were all made before it went out, which is what made them edits in place rather
+than reissues, and that latitude is spent. The next change to anything this schedule asks for is
+`ENG-CS-2026-08-06-02`, authored fresh, and not a fifth revision note. **Three things in this file
+were touched to record the dispatch and nothing else was:** the eleven **Dispatched** cells, the
+status line under the table, which stated the opposite of the truth from the moment the schedule
+went out, and this note. **The ask was not touched and now cannot be.** The `.docx` and its ten
+per-owner splits were not regenerated either, and that is deliberate: recipients are holding those
+bytes, and a document that changes underneath the person reading it is worth less than one that is
+out of date. The dispatch is recorded here, in the table this file opens with, because that table
+is the tracking record and the `.docx` is the artefact that was sent. **Dispatch moves no story and
+closes no item.** Eleven items went out, eleven are open, and the state of the project is what it
+was that morning until something comes back. The next entry in this file is a date in the **Answer
+recorded** column against one item, with the answer written under the question it answers and the
+person who gave it named.
 
 **Why the two new items are here rather than in `ENG-DR-2026-08-06-02`.** They are follow-ups to
 questions this project already asked, not new questions, and `-02` in the `ENG-DR-` series is
