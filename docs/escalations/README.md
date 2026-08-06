@@ -14,7 +14,18 @@ one.
 | File | What it is |
 | --- | --- |
 | `YYYY-MM-DD-<subject>.md` | **The record.** Markdown because we author and revise it, and because it has to diff. Answers, dispatch dates and follow-ups all land here |
-| `ENG-DR-YYYY-MM-DD-NN_<Subject>.docx` | **What was sent.** Written for a reader who does not work on the platform, with a response box under each question and a collation sheet. Frozen once issued |
+| `ENG-<SERIES>-YYYY-MM-DD-NN_<Subject>.docx` | **What was sent.** Written for a reader who does not work on the platform, with a response space under each item and a collation sheet at the back. Frozen once issued |
+
+Two series, and the distinction is what the document asks of its reader.
+
+| Series | What it is |
+| --- | --- |
+| `ENG-DR-` | **Decision request.** A question the team cannot answer for itself. The reader chooses |
+| `ENG-CS-` | **Closure schedule.** Not a new question. A specification of what an already-open item needs, in what form, so a stakeholder sees the whole outstanding list at once rather than discovering it one blocked story at a time |
+
+A reference number is spent when it is issued, whether or not it is used. `ENG-DR-2026-08-06-02` is
+reserved by the cover of `-01` for a revision of `-01`, so a document on a different subject takes a
+different series rather than the next free number in that one.
 
 The markdown carries detail the sent document does not, because it cites files and line
 numbers a recipient has no use for. The sent document frames some things better,
@@ -56,3 +67,8 @@ asking.
 | --- | --- | --- | --- |
 | [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) | 2026-08-06 | EXT-8 to EXT-12: identifiers, commission basis, VAT authority, data transfer, entity and domain | **Dispatched 2026-08-06**, all five, **no answers recorded** |
 | `ENG-DR-2026-08-06-01_Decision_Request.docx` | 2026-08-06 | The client-facing form of the above | Issued, frozen |
+| [2026-08-06-closure-schedule.md](2026-08-06-closure-schedule.md) | 2026-08-06 | EXT-1 to EXT-6, ADR-0003, ADR-0004 and D3: what each needs before it can close | **Not dispatched.** Every cell in its dispatch table is empty |
+| `ENG-CS-2026-08-06-01_Closure_Schedule.docx` | 2026-08-06 | The stakeholder-facing form of the above | Issued, frozen. **Not dispatched** |
+
+ADR-0005 is deliberately excluded from the closure schedule at the requester's instruction of
+2026-08-06, and the schedule says so in its own text rather than omitting it silently. D5 stays open.

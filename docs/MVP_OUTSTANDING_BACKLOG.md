@@ -302,6 +302,19 @@ in the same file, under the question they answer, with the date and who gave it.
 outside the team and come back days later, so the question has to be on record to check the answer
 against. Do not edit a question after it has been sent; add a dated entry beneath it.
 
+**EXT-1 to EXT-6 have never had a written ask behind them, only a row in this table, and a row is not
+something a stakeholder can answer.** What each one needs, in the exact form that would close it, is
+now on record in
+[docs/escalations/2026-08-06-closure-schedule.md](escalations/2026-08-06-closure-schedule.md), with
+the stakeholder-facing form in
+[ENG-CS-2026-08-06-01_Closure_Schedule.docx](escalations/ENG-CS-2026-08-06-01_Closure_Schedule.docx).
+It covers EXT-1 to EXT-6, the two decision records that are still marked Proposed for behaviour
+already running in production, ADR-0003 and ADR-0004, and D3. **It has not been dispatched**, and the
+dispatch table at the top of that file is the authority on that, not this paragraph. ADR-0005 is
+deliberately excluded from it at the requester's instruction of 2026-08-06 and D5 stays open. The
+three sections below carry the closure conditions for EXT-4, EXT-5 and EXT-6 in full, because those
+three are the ones where the ask is materially larger than the row suggests.
+
 | ID | Input | Owner | Blocks |
 | --- | --- | --- | --- |
 | EXT-1 | Production Paystack live keys, and a **ring-fenced client-funds escrow account** with its own mandate, held apart from operating money | Client | E2-S1, E9-S4, G2, G6. **Restated 2026-08-05.** This used to read "a settlement account", which was the right ask while D2 was open and both readings were live. ADR-0002 closed it the other way: the platform holds client money, so the account is a liability account it reconciles under section 11.1 rather than a merchant account it sweeps. Same external party, materially larger ask, and it now blocks two epics |
@@ -334,6 +347,92 @@ The schedule assumed EXT-4 was a review of two finished documents. It is not. Th
 | Amendment, severability, force majeure, entire agreement | Standard boilerplate, all absent |
 
 Two more items go to counsel in the same bundle. Section 10 vests site content in "the Founder of SafeBuy Realties International Limited", an individual rather than the company, which is a different owner from the one every other document names. And section 5(a) obliges users to charge "a minimum of 5% commission apiece from both buyers and seller cumulatively", which is the published promise the commission question below has to be reconciled against.
+
+#### EXT-4, what closes it
+
+**Three documents, not two.** The clause table above is the request to counsel on the terms of
+service. It is not the whole of EXT-4, and treating it as the whole of EXT-4 is how this row came to
+be sized at one developer-day.
+
+1. **The terms of service, completed.** The nine absent clause families in the table above, plus the
+   two corrections: §10 vests site content in "the Founder", an individual and not the company, and
+   §5(a)'s minimum 5% apiece has to be reconciled against whatever EXT-9 comes back with.
+2. **The seller Power of Attorney.** `docs/inputs/SBR -POWER OF ATTORNEY.docx` is dated 2017 in its
+   body, has a witness block with no attestation clause above it, and carries no stamping clause, no
+   Land Registry registration clause and no Governor's consent clause under the Land Use Act. Its
+   clause 5 authorises deducting 10% at source, which is EXT-9 and EXT-10 arriving inside a signed
+   instrument.
+3. **The instrument the platform generates**, `backend/src/poa/poa.service.ts` lines 103 to 159.
+   Counsel has never seen it. Its seven clauses were written in a build checklist, not by a lawyer,
+   and it is the document a real seller actually signs. **One question in it decides whether the
+   feature is lawful at all:** can an instrument granting authority over land be executed
+   electronically under the Evidence Act 2011 and the Electronic Transactions Act 2023, or is land
+   carved out? If it is carved out, the platform has to produce a print-and-execute pack instead,
+   which is a build change and not a wording change, and E8-S2 is not an L.
+
+**Sequencing, and it is the reason this cannot simply be started.** EXT-9, EXT-10 and EXT-12 all sit
+inside the text counsel would be approving: the commission basis, the VAT authority, and the
+registered entity name that appears on every page of all three documents. Instructing counsel before
+those three come back means paying for a review of text that then changes. `RUNBOOK.md:420` already
+records that issued instruments cannot be recalled, so **further PoA generation stays blocked** on
+EXT-12 regardless of where counsel is.
+
+What comes back closes this row: counsel's name and the date they were instructed, the expected
+return date, confirmation they hold all three documents rather than the first one, and their position
+on electronic execution of a land instrument.
+
+#### EXT-5, what closes it
+
+**Both documents already exist in the repository and both are structurally complete.** This is not a
+request for a privacy notice that has never been written. `docs/inputs/SBR PRIVACY POLICY.docx` and
+`docs/inputs/SB DATA PROTECTION POLICY.docx` are both there. It is a request for six things they do
+not contain, and reading the client's own internal policy widened the row rather than narrowing it:
+four of the six are obligations that policy creates for itself and then does not discharge.
+
+1. **Board adoption.** The internal policy's first line reads "SUBJECT TO BOARD APPROVAL". Encoding
+   retention rules against an unadopted policy means encoding something the board may still change.
+   Needed: the adoption date, the resolution reference, and that line coming off the adopted version.
+2. **A named DPO.** Internal §8 creates the role and appoints nobody. §8 also makes the DPO the
+   person who advises on data protection impact assessments, so **E8-S1 criterion 8 cannot be validly
+   signed off while the role is vacant**, and there is no DPIA in this repository at all.
+3. **A licensed data protection compliance organisation**, required by internal §9. None is engaged,
+   nothing has been procured, and this has a lead time measured in weeks rather than days.
+4. **The date business operations commenced.** Internal §10.1 sets the initial compliance audit at
+   fifteen months from that date. Nobody in this repository has the date, so nobody can say whether
+   the clock has already started. §10.2 also requires annual returns by 31 March, which is a calendar
+   obligation on the business and not a build task.
+5. **Whether erasure means deletion or crypto-shredding** where a record must be retained by law.
+   This decides what E8-S1's erasure feature does to a record it is not permitted to destroy, and it
+   cannot be inferred from either document.
+6. **Retention periods, one per data category.** Neither document states a period, in days or years,
+   for anything. Published §9.1 says "as long as is reasonably necessary" and internal §14 requires
+   the record of processing activities to carry periods it never supplies. **E8-S1 criterion 3 makes
+   an unset period a loud failure rather than a silent default**, so a missing number blocks that one
+   category and not the story. The eight categories are KYC identity documents, KYC selfie and
+   liveness images, professional credentials, transaction and payment records, audit and access logs,
+   marketing consent records, cookie and analytics data, and account data after closure. Internal
+   §4.5's six months has to be reconciled against whatever comes back, and that reconciliation is the
+   DPO's to make in writing rather than engineering's to assume.
+
+The cross-border half of this row is EXT-11 and is not restated here. **Six developer-days is the
+build, and it is not the lead time.** Engaging a DPCO and getting a policy through a board are the
+long poles, and neither has started.
+
+#### EXT-6, what closes it
+
+**The only external input on this list with no upstream dependency.** It waits on nothing, it could
+be booked today, and what is missing is the booking rather than the test. That makes it the cheapest
+thing on the critical path to move and the one most likely to be forgotten because it looks small.
+
+What has to come back: the vendor and a named contact; a scope of work naming all four areas E8-S3
+criterion 1 requires, being authentication, authorization, payments and document handling, and
+explicitly including the escrow payment path and the KYC document store; whether the engagement is
+black, grey or white box; the environment, which must not be production carrying live customer data;
+the start and end dates; rules of engagement covering the seeded test data set, any out-of-hours
+constraint and who to call when something breaks mid-test; the date the report is due; and **the date
+the re-test letter is due**, which is its own artifact under criterion 4. Gate G5 reads "no high
+findings outstanding", and only an independent party can attest to that, so the re-test letter is the
+thing that actually closes the gate rather than the first report.
 
 #### EXT-8, the five identifier conflicts
 
