@@ -54,5 +54,5 @@ asking.
 
 | Reference | Raised | Subject | Status |
 | --- | --- | --- | --- |
-| [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) | 2026-08-06 | EXT-8 to EXT-12: identifiers, commission basis, VAT authority, data transfer, entity and domain | Approved, cleared to send, **not dispatched yet** |
+| [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) | 2026-08-06 | EXT-8 to EXT-12: identifiers, commission basis, VAT authority, data transfer, entity and domain | **Dispatched 2026-08-06**, all five, **no answers recorded** |
 | `ENG-DR-2026-08-06-01_Decision_Request.docx` | 2026-08-06 | The client-facing form of the above | Issued, frozen |
