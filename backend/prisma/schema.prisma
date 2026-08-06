@@ -291,6 +291,14 @@ model AuditLog {
   before    Json?
   after     Json?
   ipAddress String?
+  /// Why the action was taken. FinGov 8.2 makes a correction a reversal plus a replacement rather
+  /// than an edit, and a reversal that does not say why it happened is not an audit trail. E9-S1.
+  reason    String?
+  /// Ties together every row one request wrote, so a multi-table financial operation reads back as
+  /// the single thing it was. E9-S1.
+  requestId String?
+  /// What wrote the row: the API, a scheduled job, an operator console, a migration. E9-S1.
+  source    String?
   createdAt DateTime @default(now())
 
   @@index([entity, entityId])
@@ -594,6 +602,95 @@ model IdSequence {
 
   @@unique([prefix, dateKey])
   @@map("id_sequences")
+}
+
+/// Every SBR identifier the platform has issued, and the version of the identification standard
+/// that issued it. FinGov 8.1 requires every financial record to carry its applicable SBR IDs,
+/// which is only auditable if one table says what each identifier means and where its coding came
+/// from. E9-S1.
+model IdRegister {
+  id                String       @id @default(uuid())
+  /// The full identifier, e.g. SBR-PROP-IKY-20260803-001
+  identifier        String       @unique
+  /// PROP, CASE-DD, SRV, PRO and so on. Deliberately not an enum: the ID Standard and FinGov 5
+  /// disagree on the closed set and five of those conflicts are open with Digital Records.
+  entityType        String
+  /// Which table `entityId` points into. The target varies by identifier kind, so there is no
+  /// foreign key to declare.
+  entityTable       String?
+  entityId          String?
+  /// Which register version produced the coding. Defaults to a legacy marker so that identifiers
+  /// issued before E9-S2's register mapping are labelled honestly rather than claiming compliance.
+  codingStandard    String       @default("LEGACY_PRE_E9")
+  sourceDocument    String?
+  sourceDocumentSha String?
+  issuedAt          DateTime     @default(now())
+  issuedById        String?
+  /// A reissue is a new row plus a pointer, never an edit. FinGov 8.2 applied to identity.
+  supersededById    String?
+  supersededBy      IdRegister?  @relation("IdRegisterSupersession", fields: [supersededById], references: [id])
+  supersedes        IdRegister[] @relation("IdRegisterSupersession")
+  supersededAt      DateTime?
+  supersededReason  String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([entityTable, entityId])
+  @@index([entityType])
+  @@index([codingStandard])
+  @@map("id_register")
+}
+
+/// The six main codes of FinGov 3. Rows are seeded by E9-S3, not here: the chart of accounts
+/// carries open questions to Finance that must be answered before any category is written down.
+model MainAccount {
+  id                      String   @id @default(uuid())
+  /// "1" through "6"
+  code                    String   @unique
+  name                    String
+  description             String?
+  /// Escrow principal is a client-funds liability and never revenue (FinGov 1.3, 11.3).
+  isLiability             Boolean  @default(false)
+  /// Held apart from operating money (FinGov 14.2). Separate from `isLiability` because they are
+  /// separate claims and an account must not be able to be ring-fenced and counted as income.
+  ringFenced              Boolean  @default(false)
+  /// True for main codes 3 and 4, which mint `3-NNNNNN` and `4-NNNNNN` per subject.
+  allowsDynamicSubledgers Boolean  @default(false)
+  sourceDocument          String?
+  sourceDocumentSha       String?
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  subledgers AccountSubledger[]
+
+  @@map("main_accounts")
+}
+
+/// Sub-codes under a main code. Declared ones are fixed by the specification (11, 12 under main 1;
+/// 21 to 26 under main 2). Dynamic ones are minted per subject and carry whose they are.
+model AccountSubledger {
+  id                String      @id @default(uuid())
+  mainAccountId     String
+  mainAccount       MainAccount @relation(fields: [mainAccountId], references: [id])
+  /// Unique across the table, not per main account: the specification's numbering makes the main
+  /// code the leading character of every sub-code.
+  code              String      @unique
+  name              String
+  description       String?
+  dynamic           Boolean     @default(false)
+  /// What a dynamic sub-ledger belongs to, e.g. ESCROW or PROFESSIONAL, and its id.
+  ownerType         String?
+  ownerId           String?
+  sourceDocument    String?
+  sourceDocumentSha String?
+  active            Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([mainAccountId])
+  @@index([ownerType, ownerId])
+  @@map("account_subledgers")
 }
 
 /// Guest / standalone service order created before payment (main order reference).

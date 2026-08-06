@@ -48,6 +48,18 @@ coverage/
 docs/reports/*.pdf
 docs/reports/*.png
 
+# Office lock files. Word writes `~$name.docx` beside a document while it is open and deletes it on
+# close; LibreOffice writes `.~lock.name.docx#` for the same reason. They are owner-and-machine
+# markers, not content, and committing one tells the repository a file is permanently open by
+# somebody who has long since closed it. `docs/inputs/` now takes source documents from the client,
+# so these appear whenever one is read, which is how `~$feBuy Realties ID Standard.docx` turned up
+# in `git status` while the standard was being read for E9. None are tracked, so these lines are
+# enough on their own; nothing needs removing from the index.
+~$*.docx
+~$*.doc
+~$*.xlsx
+.~lock.*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
