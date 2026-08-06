@@ -56,6 +56,15 @@ answering; and ADR-0004's region line moved from blocked to takeable. The schedu
 items to eleven. **The same freeze rule applies to this revision as to the first one.** It is
 allowed because nothing has been dispatched. The moment it is, the next change is a new reference.
 
+*Revised a third time 2026-08-06, still before dispatch.* Three of the four smaller gaps listed
+under EXT-8 that morning were answered the same afternoon, and the fourth follows from one of the
+three. Item EXT-8 now asks for three sentences and one instruction rather than for those and five
+more things. **The count of items is unchanged at eleven.** EXT-8 is still open, and it is open on
+exactly the three contradictions it was open on in the morning, none of which the three answers
+touch. The answers are recorded inside the item rather than deleted from it, because an item that
+quietly loses a line cannot show that the line was ever settled. They arrived with no name against
+them, which the item now asks for in one line.
+
 **Why the two new items are here rather than in `ENG-DR-2026-08-06-02`.** They are follow-ups to
 questions this project already asked, not new questions, and `-02` in the `ENG-DR-` series is
 reserved by the cover of `-01` for a revision of `-01`. Spending it on a different subject would
@@ -593,7 +602,7 @@ unsettled, and the recipient of this schedule is now the only person who can set
 
 | Ref | State after 6 August | What is still needed | Blocks |
 | --- | --- | --- | --- |
-| EXT-8 | Answered, not closed | Three contradictions inside the answer, plus four smaller gaps. **Item EXT-8 below** | E9-S2 |
+| EXT-8 | Answered, not closed | Three contradictions inside the answer. Four smaller gaps stood beside them and were answered on 6 August, so this ask is shorter than it was that morning. **Item EXT-8 below** | E9-S2 |
 | EXT-9 | Answered, not closed | The rate. The structure is settled and the number is not. **Item EXT-9 below** | E9-S3, and EXT-4 |
 | EXT-10 | Answered by Finance, not closed | Counsel's signature on the position drafted for it, and the CEO, COO and CFO approval of the configuration. Chased at **EXT-4 point 6**, because it is counsel's work | E9-S3, G4 |
 | EXT-11 | **Closed** | Nothing. It converted into an executed transfer instrument (**EXT-2 point 4**), an amended Privacy Policy and a copy of GAID 2025 (**EXT-5 points 7 and 8**) | Released D4's region half |
@@ -603,15 +612,17 @@ Full reasoning for each of the five, with what settles and what does not, is in
 [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) alongside the questions as they
 were asked.
 
-### EXT-8, three contradictions and four gaps inside an answer that mostly worked
+### EXT-8, three contradictions inside an answer that mostly worked
 
 **Owner:** Digital Records, COO · **Closes:** the identifier half of E9-S2 · **Answered
 2026-08-06 by** Adebiyi Emmanuel Babatope, COO, with Digital Records
 
 **This is a short note, not a document.** Four of the five EXT-8 questions came back settled: the
 fourteen professional categories with Estate Agent in scope, both case identifier formats, the move
-from `SBR-SRV-BUY` to `SBR-SRV-TYPE`, and the register split by identifier family. None of that is
-reopened here and none of it is asked again.
+from `SBR-SRV-BUY` to `SBR-SRV-TYPE`, and the register split by identifier family. Four smaller
+gaps stood on this page on the morning of 6 August and were answered that afternoon; they are
+recorded under **Answered 6 August, not asked again** below so that nobody answers them twice.
+None of that is reopened here.
 
 What follows is the part that cannot be built as written, because the document says two different
 things in two places and engineering cannot pick one. Three sentences would close all of it.
@@ -625,10 +636,11 @@ things in two places and engineering cannot pick one. Three sentences would clos
    `SUR` in the location position.
 2. **Whether UUID really replaces `NNN`.** The scoping box and the EXT-12 answer both say "we shall
    use UUID to replace the NNN at the end of the identifiers". Four identifier formats approved on
-   the same pages all end in `-NNN`. Neither corresponding collation row mentions UUID.
-   *Form:* one sentence. Either UUID replaces `NNN` in all four formats, in which case those
-   formats need reprinting, or the four printed formats stand and UUID applies to something narrower
-   that has to be named.
+   the same pages all end in `-NNN`, and the approval of `SBR-CASE-DD` on the afternoon of 6 August
+   makes it five. Neither corresponding collation row mentions UUID.
+   *Form:* one sentence. Either UUID replaces `NNN` in all of those formats, in which case they need
+   reprinting, or the printed formats stand and UUID applies to something narrower that has to be
+   named.
    **Why this is not a detail:** the stated reason is "to ensure there is no collision in
    identifiers", and `NNN` is not a random number. It is a per-prefix, per-day counter held in the
    database, so it cannot collide. If the concern was collision, it is already handled; if the
@@ -639,37 +651,47 @@ things in two places and engineering cannot pick one. Three sentences would clos
    *Form:* the format written the way the other four are written, with separators, and one line
    saying what `XX` stands for.
 
-**The four smaller gaps**
-
-4. **`SUP` against `ALD`.** `SUP` is Material Supplier in the thirteen-category list. ALD's
-   description covers "building material sellers". A material supplier could be coded either way.
-   *Form:* which code a building material seller takes.
-5. **The `TYPE` list is not closed.** Question 3 gives it as "a controlled list, including BUY, SEL,
-   DD, PRO and PRT". A controlled list introduced with "including" is not controlled, and validation
-   has to reject values that are not on it.
-   *Form:* the complete list, or "those five and no others for now".
-6. **`SBR-CASE-DD`.** Question 2 approves two case types, `ENV` and `SEC`. The platform issues
-   `SBR-CASE-DD` today, from `backend/src/sbr-id/sbr-id.service.ts`, and `DD` is not among the two.
-   *Form:* approved as a third case type, or the identifier it should have been.
-7. **The heading says three trades and the sentence names four.** "The three uncoded trades" is
-   followed by "plumbers, electricians and interior designers, building material sellers".
-   *Form:* confirmation that all four are in, which is what we have assumed.
-
 **And one instruction rather than a question.** "Run the production-impact query before
 remediation" came back addressed to us. Nobody in this repository has production database access,
 which is stated in the escalation the instruction is answering. `docs/sql/id-location-code-audit.sql`
 is written and ready.
 *Form:* name who runs it and when, or grant the access.
 
+**Answered 6 August, not asked again**
+
+Four smaller gaps stood on this page in the morning. Three were answered directly that afternoon
+and the fourth follows from one of the three, so none of them is a question any more. They are kept
+here because a schedule that quietly drops an item cannot show that it was ever settled.
+
+- **A building material seller is coded `ALD`**, not `SUP`. That was the one real collision in the
+  fourteen-category list. `SUP Material Supplier` stays in the list and now wants a description that
+  does not read as the same business, which is a wording point for ID Standard Version 2 rather than
+  a question for this note.
+- **The `TYPE` list is BUY, SEL, DD, PRO and PRT, and no others for now.** A validator can reject a
+  sixth value, which is exactly what it could not do while the list was introduced with the word
+  "including". The words "for now" are taken at face value: the five live somewhere they can be
+  extended without a schema change.
+- **`SBR-CASE-DD` is approved as a third case type.** The identifiers this platform has already
+  issued under it are valid rather than awaiting a disposition, and no remediation follows from it.
+  It is the one answer of the three with a retrospective effect, and the effect is that nothing has
+  to be undone.
+- **The fourth gap goes with the first.** The source row is headed "the three uncoded trades" and
+  names four, and the fourth is the building material seller. It is in scope, because it has just
+  been given a code.
+
+**These three answers carry no name and no role**, which every other answer recorded against EXT-8
+does. That is not a fourth question and it does not hold anything up, but a decision without a
+person on it is not a decision this record can cite later.
+*Form:* one name and one role covering the three.
+
 **Suggested wording**
 
 > Surveyor as a record-type segment is ____________________ and Surulere keeps SUR in the location
-> segment: yes / no. UUID replaces NNN in all four approved formats / applies only to
+> segment: yes / no. UUID replaces NNN in all the approved formats / applies only to
 > ____________________. The ALD identifier format is ____________________, where XX means
-> ____________________. A building material seller is coded ____________________. The complete TYPE
-> list is ____________________. SBR-CASE-DD is approved as a third case type / should have been
-> ____________________. All four uncoded trades are in scope: yes / no. The production-impact query
-> will be run by ____________________ on __________.
+> ____________________. The production-impact query will be run by ____________________ on
+> __________. The building material seller, TYPE list and SBR-CASE-DD answers of 6 August were given
+> by ____________________, role ____________________.
 
 **Documents updated when this lands:** the EXT-8 entry and the E9-S2 criteria in
 `docs/MVP_OUTSTANDING_BACKLOG.md`, the answer section in
