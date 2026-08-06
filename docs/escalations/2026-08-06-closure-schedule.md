@@ -20,6 +20,25 @@ here has come back. Dispatch dates are stamped on the day they are sent and neve
 While a **Dispatched** cell is empty, nothing anywhere in this repository may say this schedule
 was sent. **Answer recorded is a separate column on purpose:** sending is not answering.
 
+**Response requested by close of business today, 2026-08-06.** That is what the `.docx` cover asks
+for and it is what this file asks for, because a deadline that differs between the two is a
+deadline nobody is bound by. It is a deadline for what can be answered today rather than a request
+that any decision be rushed, and rule 1 below is what makes the difference workable: an item that
+cannot be settled today is answered `pending` with the date it is expected, which is a usable
+answer, because work can be planned against a date and cannot be planned against silence. **The
+deadline is not a dispatch date and does not become one.** If the schedule has not gone out by
+close of business, the correct state of the record is the one above, an empty column, and the
+deadline is the thing that has to move rather than the table.
+
+*Revised 2026-08-06, before dispatch.* The cover carried a blank for the sender to fill in at
+dispatch; it now carries the date above. This is an edit in place and it is allowed to be one:
+a sent document becomes a new reference rather than an edit, and this one has not been sent, so
+nobody is holding a copy that could change underneath them. The cover of the `.docx` used to say
+it was issued once and never revised in place, which stated the rule a step earlier than it
+applies, and it now says the freeze takes effect at dispatch. Once a date appears in the
+**Dispatched** column above, `ENG-CS-2026-08-06-01` stops being editable and a change becomes
+`ENG-CS-2026-08-06-02`, authored fresh.
+
 **Sent as** `ENG-CS-2026-08-06-01_Closure_Schedule.docx` in this directory, which is the
 stakeholder-facing form of everything below. The two are not copies of each other. This file
 carries file paths, line numbers and section references a recipient has no use for; the `.docx`

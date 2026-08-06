@@ -310,7 +310,14 @@ the stakeholder-facing form in
 [ENG-CS-2026-08-06-01_Closure_Schedule.docx](escalations/ENG-CS-2026-08-06-01_Closure_Schedule.docx).
 It covers EXT-1 to EXT-6, the two decision records that are still marked Proposed for behaviour
 already running in production, ADR-0003 and ADR-0004, and D3. **It has not been dispatched**, and the
-dispatch table at the top of that file is the authority on that, not this paragraph. ADR-0005 is
+dispatch table at the top of that file is the authority on that, not this paragraph. **It asks for a
+response by close of business today, 2026-08-06**, set on the cover on that date while the schedule
+was still drafting, which the record file notes as an edit in place because a document nobody is
+holding yet has no recipient to protect. The deadline is for what can be answered today: anything
+that cannot be settled today comes back as `pending` with the date it is expected, which is a usable
+answer because a story can be planned against a date and cannot be planned against silence. **A
+response deadline is not a dispatch date.** If close of business passes with the schedule unsent,
+the dispatch table stays empty and the deadline is what moves. ADR-0005 is
 deliberately excluded from it at the requester's instruction of 2026-08-06 and D5 stays open. The
 three sections below carry the closure conditions for EXT-4, EXT-5 and EXT-6 in full, because those
 three are the ones where the ask is materially larger than the row suggests.
