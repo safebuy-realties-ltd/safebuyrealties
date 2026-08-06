@@ -65,6 +65,14 @@ touch. The answers are recorded inside the item rather than deleted from it, bec
 quietly loses a line cannot show that the line was ever settled. They arrived with no name against
 them, which the item now asks for in one line.
 
+*Revised a fourth time 2026-08-06, still before dispatch.* Blocker 3 asked for the ALD format with
+separators and one line on what `XX` stands for. It now asks for one line each on `YY` and `XX`,
+and says why. `LOCYYXX` is seven unbroken characters, so the split into three segments is this
+team's reading rather than the document's, and `YYXX` reading as a single `YYMM` fits what is
+printed as well as `YY` plus an undefined `XX` does. **Nothing was resolved toward either
+reading.** The item asks the same question it asked before, in a form that cannot come back
+answered by half. The count of items is unchanged at eleven and nothing else on the schedule moved.
+
 **Why the two new items are here rather than in `ENG-DR-2026-08-06-02`.** They are follow-ups to
 questions this project already asked, not new questions, and `-02` in the `ENG-DR-` series is
 reserved by the cover of `-01` for a revision of `-01`. Spending it on a different subject would
@@ -647,9 +655,18 @@ things in two places and engineering cannot pick one. Three sentences would clos
    concern is something else, we should be told what, because the two answers lead to different
    builds.
 3. **The `SBR-ALD-LOCYYXX-NNN` format.** ALD is introduced as the fourteenth category and its
-   identifier is printed without separators, and `XX` is never defined anywhere in the document.
+   identifier is printed without separators, so where one segment ends and the next begins is a
+   guess. Neither `YY` nor `XX` is defined anywhere in the document, and **at least three readings
+   fit what is printed**: `YY` a two-digit year with `XX` an undefined code, `YYXX` a single
+   `YYMM` year and month, or a segment boundary somewhere else entirely, since `LOCYYXX` is seven
+   unbroken characters and the split into three is ours rather than the document's. The other four
+   approved formats carry `YYYYMMDD`, so `MM` is the token this document already uses for a month,
+   which is why `YYMM` is a candidate and not a conclusion. **The reading changes the build.**
+   `NNN` is a per-prefix, per-day counter in the database, so a year-scoped identifier and a
+   month-scoped one need different counters and give different ceilings before three digits run
+   out at one location.
    *Form:* the format written the way the other four are written, with separators, and one line
-   saying what `XX` stands for.
+   each on what `YY` and `XX` stand for.
 
 **And one instruction rather than a question.** "Run the production-impact query before
 remediation" came back addressed to us. Nobody in this repository has production database access,
@@ -688,8 +705,9 @@ person on it is not a decision this record can cite later.
 
 > Surveyor as a record-type segment is ____________________ and Surulere keeps SUR in the location
 > segment: yes / no. UUID replaces NNN in all the approved formats / applies only to
-> ____________________. The ALD identifier format is ____________________, where XX means
-> ____________________. The production-impact query will be run by ____________________ on
+> ____________________. The ALD identifier format is ____________________, where YY means
+> ____________________ and XX means ____________________. The production-impact query will be run
+> by ____________________ on
 > __________. The building material seller, TYPE list and SBR-CASE-DD answers of 6 August were given
 > by ____________________, role ____________________.
 
