@@ -122,22 +122,23 @@
 <div class="wrap">
 
 <header class="top">
-  <h1>Remaining work: the six things only the stakeholder can do</h1>
-  <p class="sub">Fourteen stories are left on the MVP and not one of them is a developer's to start.
-    Every one is waiting on six items that no amount of engineering can produce, because they are
-    decisions, purchases, accounts and documents that belong to somebody outside this team.</p>
-  <p class="sub" style="margin-top:8px;">This is the fourth edition, and it is the shortest interval
-    between two of them yet. The third edition, written on 2 August, reported that one stakeholder
-    answer had just released five stories and seventeen developer-days, and it drew a schedule with
-    four calendar days of building in front of it that needed nobody's permission. Those four days
-    took two. All five stories merged as PRs 138 to 142, the free lane is empty, and the runway this
-    report measures is back to zero. That is not a setback. It is the same evidence as last time, read in
-    the other direction: the code moves as fast as the answers arrive, and there is no unspent answer
-    left.</p>
-  <p class="meta">Generated 2026-08-04, after PRs 138, 139, 140, 141 and 142 merged. Every figure below
-    is derived from <code>docs/mvp-board.html</code> and <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at
-    <code>main</code> @ <code>41c90f3</code>, and the derivation is described under <b>Method</b> at the foot
-    of the page.</p>
+  <h1>Remaining work: the eight things only somebody outside this team can do</h1>
+  <p class="sub">Seventeen stories are left on the MVP and not one of them is a developer's to start.
+    Every one is waiting on eight items that no amount of engineering can produce, because they are
+    decisions, purchases, accounts, rates and documents that belong to somebody outside this team.</p>
+  <p class="sub" style="margin-top:8px;">This is the fifth edition, and it exists because two days
+    moved more than the four before them. On 5 August an approved financial governance specification
+    arrived from outside this repository, answered <code>ADR-0002</code> on its way past, and opened a
+    ninth epic worth eleven to nineteen developer-days that had never been counted. On 6 August five
+    escalations went out and all five came back the same day, which has not happened on this project
+    before. <b>Two of the five closed. Three did not.</b> The backlog is larger than the fourth edition
+    reported, the answer rate is the best it has ever been, and the number of stories a developer may
+    start this morning is still zero.</p>
+  <p class="meta">Generated 2026-08-06, after PR 144 merged and after the five answers of that day were
+    recorded. Every figure below is derived from <code>docs/mvp-board.html</code> and
+    <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at <code>main</code> @ <code>fc046f2</code> plus the
+    escalation records in <code>docs/escalations/</code>, and the derivation is described under
+    <b>Method</b> at the foot of the page.</p>
 </header>
 
 <section>
@@ -146,25 +147,41 @@
 
 <section>
   <div class="card red">
-    <p><b>The position in one paragraph.</b> Forty-six of the sixty rows on the board are closed. The
-      fourteen that remain carry forty-four developer-days, and every one of them is stopped in front of
-      the same six items. Nothing is free. There is no story on this board a developer can pick up
-      tomorrow morning without somebody outside this team acting first. Those six items are not
-      engineering work and they cannot be worked around. They are one decision about money, one decision
-      about where documents live, a mail domain, two legal documents and a booked security test.</p>
-    <p><b>What changed since the third edition, and it took two days.</b> That edition reported five free
-      stories and seventeen developer-days, released by one stakeholder sentence answering ADR-0001. All
-      five have merged: the listing due diligence lifecycle, the transaction state machine, the buyer's
-      report delivery, the property purchase step and the KYC gate, as PRs 138 to 142. The schedule that
-      edition drew allowed four calendar days for them. They took two. The green lane on every figure
-      below is now empty, and that is the honest reading of it rather than a bad one.</p>
-    <p><b>What has not changed, and it is now the whole story.</b> Every one of the remaining six items has
-      a lead time attached to it, and every one of them will arrive after the day the code in front of it is
-      ready, because there is no longer any other code to be writing while they come. Three of them take
-      between two and three weeks to obtain, and between them they hold nine developer-days, which is about
-      one day of building. So the finish date of this MVP is not being set by how much code is left. It is
-      being set by when six emails get sent, and until one of them is, the build rate of this project is
-      zero for reasons that have nothing to do with the team.</p>
+    <p><b>The position in one paragraph.</b> Forty-seven of the sixty-four rows on the board are closed.
+      The seventeen that remain carry fifty-nine developer-days at the ceiling and thirty-seven at the
+      floor, and every one of them is stopped in front of the same eight items. Nothing is free. There is
+      no story on this board a developer can pick up tomorrow morning without somebody outside this team
+      acting first. Those eight items are not engineering work and they cannot be worked around. They are
+      a settlement account, one decision about where documents live, a mail domain, a privacy notice, a
+      counsel-approved instrument, a booked security test, a set of identifier rules and a commission
+      rate with the tax treatment that goes with it.</p>
+    <p><b>What changed on 5 August: the backlog got bigger and no developer was slow.</b> An approved
+      Financial Governance Specification arrived from outside this repository. It is a whole epic, E9,
+      worth eleven to nineteen developer-days that had never been counted, so the published ceiling went
+      up from forty-four to fifty-nine rather than down. It also closed <code>ADR-0002</code> on its way
+      past: section 11.1 obliges the platform to reconcile an escrow bank balance against the
+      per-transaction sub-ledgers, and only the operator of an account can be put under that obligation.
+      E9-S1, the tables with no numbers in them, merged the same day as PR 144. That is new scope rather
+      than slippage, and it is worth saying plainly: nothing on this page got slower.</p>
+    <p><b>What changed on 6 August: five answers in one day, and two of them closed something.</b> Five
+      escalations were dispatched that morning and all five were answered by that evening, which is the
+      first time a deadline in one of these has been met. <code>EXT-11</code> closed on a second reply the
+      same day and released <code>ADR-0004</code>'s region to a decision rather than to a developer.
+      <code>EXT-12</code> closed on the company identity, the canonical domain and a date for version 2 of
+      the ID Standard. The other three are answered and open: <code>EXT-8</code> because the returned
+      document contradicts itself in three places, <code>EXT-9</code> because it gives the commission rate
+      as 5% per side in every response box and 10% per side in every collation row, and
+      <code>EXT-10</code> because a ruling that goes the platform's way is headed a recommended counsel
+      position for formal signature and carries no signature. <b>Answered and closed are different words
+      here on purpose, and no story on this board became startable.</b></p>
+    <p><b>What has not changed, and it is now the whole story.</b> Every one of the eight items has a lead
+      time attached to it, and seven of the eight will arrive after the day the code in front of them is
+      ready, because there is no other code to be writing while they come. Five of them take between one
+      and three weeks to obtain, and between them they hold thirty-one developer-days, which is more than
+      half of everything left on the board. So the finish date of
+      this MVP is not being set by how much code is left. It is being set by when eight emails get sent
+      and answered, and the evidence of 6 August is that they get answered the same day when they are
+      actually sent.</p>
   </div>
 </section>
 
@@ -184,9 +201,10 @@
           reasoning attached, instead of being made five times by whoever is typing. An ADR that is still
           open is a piece of engineering that nobody is allowed to start.</dd>
         <dt>EXT</dt><dd><b>External input.</b> Something the team cannot produce with code no matter how many
-          people are on it: an account with a supplier, a domain, a signed document, a booked appointment.
-          Numbered <code>EXT-1</code> to <code>EXT-7</code>.</dd>
-        <dt>E1 to E8</dt><dd><b>Epic.</b> A theme of work. The eight of them are listed on the right.</dd>
+          people are on it: an account with a supplier, a domain, a signed document, a booked appointment,
+          a rate somebody with authority has to confirm. Numbered <code>EXT-1</code> to <code>EXT-12</code>.
+          Nine of the twelve are open.</dd>
+        <dt>E1 to E9</dt><dd><b>Epic.</b> A theme of work. The nine of them are listed on the right.</dd>
         <dt>-S1, -S2</dt><dd><b>Story</b> within that epic. <code>E6-S2</code> is the second story of epic 6.
           A story is the unit that becomes one pull request.</dd>
         <dt>S, M, L</dt><dd><b>Size.</b> Small is about a day, Medium two to four days, Large about a week.
@@ -195,8 +213,10 @@
         <dt>D1 to D5</dt><dd><b>Decision</b> awaiting an answer. Each one maps to an ADR.</dd>
         <dt>G1 to G6</dt><dd><b>Go-live gate.</b> A condition that must be demonstrably true before launch.
           Listed on the right.</dd>
-        <dt>W1 to W4</dt><dd><b>Wave.</b> A batch of stories a developer works through together. All four
-          waves are closed, and no wave 5 can be scheduled until an item on the stakeholder list arrives.</dd>
+        <dt>W1 to W5</dt><dd><b>Wave.</b> A batch of stories a developer works through together. All five
+          waves are closed. Wave 5 held one story and was opened by a document arriving rather than by a
+          developer finding something, and no wave 6 can be scheduled until an item on the list below
+          arrives.</dd>
         <dt>QA-nnn</dt><dd>A numbered finding from the quality audit that produced this backlog.</dd>
         <dt>DOCS-n, CH-n</dt><dd><b>Documentation and chore rows.</b> Real pull requests that carry no
           engineering days, so they never move the totals in this report.</dd>
@@ -204,7 +224,7 @@
     </div>
 
     <div class="card">
-      <h3>The eight epics, in plain words</h3>
+      <h3>The nine epics, in plain words</h3>
       <dl class="gloss">
         <dt>E1 Loop</dt><dd><b>Close the loop.</b> Make buying a property on the platform actually work end
           to end. This is the wave that just opened.</dd>
@@ -221,21 +241,29 @@
           logging, a demo that can be reset.</dd>
         <dt>E8 Compliance</dt><dd><b>Compliance and go-live.</b> Privacy law, counsel-approved legal text,
           an independent security review.</dd>
+        <dt>E9 FinGov</dt><dd><b>Financial governance.</b> The ninth epic, and the only one that arrived
+          from outside this repository already approved. A chart of accounts, an identifier register that
+          records what every code was issued under, escrow sub-ledgers per transaction, and the commission
+          and tax postings that sit on top of them. Its first story merged on 5 August; its other three
+          wait on <code>EXT-8</code>, <code>EXT-9</code> and <code>EXT-10</code>.</dd>
       </dl>
       <h3 style="margin-top:16px;">The six go-live gates</h3>
       <dl class="gloss">
         <dt>G1</dt><dd>A buyer completes the on-platform journey on staging with no staff intervention.
-          <b>Now measurable</b>, because E1 is finally allowed to be built.</dd>
+          <b>Now buildable and built</b>, and sitting behind three flags that are off.</dd>
         <dt>G2</dt><dd>A test payout reaches a real, distinct seller account and a test refund is repaid by
-          the payment gateway. Waits on E2.</dd>
+          the payment gateway. Waits on E2, and E2 now waits on <code>EXT-1</code> alone.</dd>
         <dt>G3</dt><dd>No private document is reachable without authorization. Half earned: the probe suite
           exists and passes. Waits on E3-S2, the storage half.</dd>
         <dt>G4</dt><dd>Signed Power of Attorney instrument and terms of service approved by counsel.
-          Waits on <code>EXT-4</code>.</dd>
+          Waits on <code>EXT-4</code>, and since 6 August on <code>EXT-10</code> as well: the VAT ruling
+          that went the platform's way is headed a recommended counsel position for formal signature and
+          has not been signed, so a third document joins the two already queued here.</dd>
         <dt>G5</dt><dd>Independent security review closed with no high findings outstanding.
           Waits on <code>EXT-6</code>.</dd>
         <dt>G6</dt><dd>Escrow and settlement model confirmed against CBN and AML obligations.
-          Waits on <code>ADR-0002</code>.</dd>
+          <b>The model was confirmed on 5 August</b> by what the specification requires in order to be
+          implementable at all. Demonstrating it waits on <code>EXT-1</code>.</dd>
       </dl>
     </div>
   </div>
@@ -244,14 +272,34 @@
     <h3>Words borrowed from finance, law and email</h3>
     <dl class="gloss">
       <dt>escrow</dt><dd>Holding a buyer's money in a third account until both sides have done their part,
-        instead of passing it straight to the seller. Whether this platform does that is
-        <code>ADR-0002</code>, and it is a regulatory question as much as a technical one.</dd>
+        instead of passing it straight to the seller. Whether this platform does that was
+        <code>ADR-0002</code>, and it was a regulatory question as much as a technical one.
+        <b>It does.</b> An approved specification obliges the platform to reconcile an escrow bank
+        balance against the per-transaction sub-ledgers, and only the operator of an account can be put
+        under that obligation.</dd>
+      <dt>sub-ledger</dt><dd>A running record of what is owed on one transaction, kept underneath a single
+        real bank account that holds many transactions' money at once. Reconciliation is checking that the
+        sub-ledgers add up to the bank balance. This is what E9-S2 builds.</dd>
+      <dt>VAT and WHT</dt><dd><b>Value Added Tax</b>, charged on a service, and <b>Withholding Tax</b>,
+        deducted at source and remitted on somebody's behalf. Which of the two applies to the platform's
+        commission, and whether anything may be deducted from the seller's proceeds, is
+        <code>EXT-10</code>. The answer that came back on 6 August says no deduction from the seller, and
+        it is unsigned.</dd>
+      <dt>NDPA, GAID, NDPC</dt><dd>The <b>Nigeria Data Protection Act 2023</b>, the <b>General Application
+        and Implementation Directive 2025</b> made under it, and the <b>Nigeria Data Protection
+        Commission</b> that enforces both. <code>EXT-11</code> established that these govern rather than
+        either company policy, which is what makes the region question in <code>ADR-0004</code>
+        answerable.</dd>
+      <dt>SCC</dt><dd><b>Standard contractual clauses.</b> A written agreement with a hosting provider and
+        its subprocessors that makes moving personal data outside Nigeria lawful. The platform already runs
+        on non-Nigerian infrastructure and no such instrument exists in this repository.</dd>
       <dt>PoA</dt><dd><b>Power of Attorney.</b> The instrument by which a buyer authorises the platform to
         act on their behalf. Its wording was drafted by engineers in a build checklist, which is why
         <code>EXT-4</code> asks counsel to look at it.</dd>
-      <dt>NDPR</dt><dd><b>Nigeria Data Protection Regulation.</b> The law governing what this platform may do
-        with personal data. It is why E8-S1 exists, and E8-S1 stores identity documents and selfies today
-        with no consent model, no retention policy and no way to erase anybody.</dd>
+      <dt>NDPR</dt><dd><b>Nigeria Data Protection Regulation.</b> The 2019 regulation that E8-S1 was written
+        against, now sitting under the NDPA 2023 and the GAID 2025 above it. It is why E8-S1 exists, and
+        the platform stores identity documents and selfies today with no consent model, no retention
+        policy and no way to erase anybody.</dd>
       <dt>KYC</dt><dd><b>Know Your Customer.</b> The identity check a regulated business performs before
         letting somebody move money. The records exist here; nothing reads them yet.</dd>
       <dt>AML / CBN</dt><dd><b>Anti-Money Laundering</b> obligations, and the <b>Central Bank of Nigeria</b>,
@@ -270,40 +318,91 @@
 
   <div class="card" style="margin-top:14px;">
     <h3>Every decision and external input, by name</h3>
-    <p class="cap" style="margin-bottom:10px;">The six on this page are marked in red. The rest are here so
-      that a code seen elsewhere in the repository can be looked up in one place.</p>
+    <p class="cap" style="margin-bottom:10px;">The eight on this page are marked in red. The rest are here so
+      that a code seen elsewhere in the repository can be looked up in one place. <b>Three of the red ones
+      were answered on 6 August and are still red</b>, because an answer that contradicts itself, or that
+      needs a signature it does not carry, has not closed anything.</p>
     <dl class="gloss">
       <dt>ADR-0001</dt><dd><b>Answered on 2 August. Is buying a property on the platform part of the MVP?</b>
-        Yes. That answer is the reason this edition exists. It released E1's four stories and, behind them,
-        E4-S2. Recorded as Accepted in <code>docs/adr/0001-mvp-scope-envelope.md</code>.</dd>
-      <dt class="crit">ADR-0002</dt><dd><b>Does the platform hold client funds, or pass them straight
-        through?</b> The half of <code>EXT-7</code> still outstanding. It decides whether E2-S1 is a bank
-        details form or a regulated money flow, so it cannot be guessed at and then corrected later. Holds
-        three stories and gate G6.</dd>
-      <dt>ADR-0003</dt><dd>Payment mock-mode guard. <b>Decided and shipped.</b> Production can no longer
-        start in a mode that pretends payments succeeded.</dd>
+        Yes. It released E1's four stories and, behind them, E4-S2, and all five have merged. Recorded as
+        Accepted in <code>docs/adr/0001-mvp-scope-envelope.md</code>.</dd>
+      <dt>ADR-0002</dt><dd><b>Answered on 5 August. Does the platform hold client funds, or pass them
+        straight through?</b> It holds them. Not by an opinion relayed second hand: the approved Financial
+        Governance Specification obliges the platform to reconcile an escrow bank balance against the sum
+        of the per-transaction sub-ledgers, and to carry that balance as a liability owed to the parties
+        rather than as income. A platform that merely orchestrated payments between other people's
+        accounts would have nothing to reconcile. E2-S1 is therefore a regulated flow with reconciliation
+        duties rather than a bank-details form, which is its scope now rather than a risk it might have.
+        What still holds those three stories is <code>EXT-1</code>.</dd>
+      <dt>ADR-0003</dt><dd>Payment mock-mode guard. <b>Shipped.</b> Production can no longer start in a mode
+        that pretends payments succeeded. The record still reads Proposed, which is a paperwork gap rather
+        than an open question.</dd>
       <dt class="crit">ADR-0004</dt><dd><b>How are private documents served?</b> Signed short-lived links
         from object storage, or streamed through the API with an authorization check on every read. It has
         to be decided before the bucket is bought, because the two answers need different bucket settings.
-        Holds three stories and half of gate G3.</dd>
-      <dt>ADR-0005</dt><dd>The quality ratchet. <b>Decided and enforced.</b> Coverage on changed lines
-        cannot fall.</dd>
-      <dt class="crit">EXT-1</dt><dd>Production payment keys and a settlement account. Travels with
-        ADR-0002: the decision has to be made before the account can be opened, and the account has a
-        business verification behind it.</dd>
+        Its region sub-decision was blocked until 6 August and is now open rather than blocked, which is
+        not the same as decided: a Nigerian region needs no transfer instrument, and a non-Nigerian one may
+        not carry production data until standard contractual clauses are executed and documented. Holds
+        three stories and half of gate G3.</dd>
+      <dt>ADR-0005</dt><dd>The quality ratchet. <b>Enforced on every pull request.</b> Coverage on changed
+        lines cannot fall. The record still reads Proposed.</dd>
+      <dt class="crit">EXT-1</dt><dd>Production payment keys and a settlement account. It used to travel with
+        <code>ADR-0002</code> and no longer does, because that decision came back on 5 August. It is now
+        the whole of what holds eleven developer-days of money work, and the account has a business
+        verification behind it with its own lead time.</dd>
       <dt class="crit">EXT-2</dt><dd>An S3-compatible bucket, its credentials and a region choice. Travels
-        with ADR-0004.</dd>
+        with <code>ADR-0004</code>.</dd>
       <dt class="crit">EXT-3</dt><dd>A transactional email domain, SPF, DKIM, DMARC and sending credentials.
         The single highest-value item on this page: it holds thirteen developer-days and it is the fastest
-        of the six to obtain.</dd>
+        of the eight to obtain.</dd>
       <dt class="crit">EXT-4</dt><dd>Counsel-approved Power of Attorney text and terms of service. Holds one
-        story worth a single day, and gate G4.</dd>
-      <dt class="crit">EXT-5</dt><dd>An NDPR privacy notice and a retention policy. Holds the largest single
-        blocked story on the board.</dd>
+        story worth a single day, and gate G4. Writing the ask down found that it is three documents rather
+        than two, and that the third is the instrument this platform already generates and which counsel
+        has never read.</dd>
+      <dt class="crit">EXT-5</dt><dd>A privacy notice and a retention policy under Nigerian data protection
+        law. Holds the largest single blocked story on the board. Writing the ask down found that both
+        documents already exist and are structurally complete, so what is missing is board adoption, a
+        named data protection officer, a commencement date and a retention period for each of eight data
+        categories.</dd>
       <dt class="crit">EXT-6</dt><dd>A penetration test vendor and a booked window. Holds one story worth a
-        single day, and gate G5.</dd>
-      <dt>EXT-7</dt><dd>Confirmation of D1 and D2. <b>Half discharged on 2 August</b>, when D1 came back.
-        What is left of it is D2, which is ADR-0002.</dd>
+        single day, and gate G5. The only item on the list with nothing upstream of it, so it could be
+        booked today.</dd>
+      <dt>EXT-7</dt><dd>Confirmation of D1 and D2. Half discharged on 2 August when D1 came back, and
+        <b>fully discharged on 5 August</b> when the specification closed D2. Nothing waits on it.</dd>
+      <dt class="crit">EXT-8</dt><dd><b>Identifier rules, with Digital Records. Answered 6 August and not
+        closed.</b> Five conflicts between the ID Standard and the Financial Governance Specification, plus
+        a published terms page promising users professional categories the platform cannot issue an
+        identifier for. The answer contradicts itself in three places: Surveyor is coded <code>SUR</code>
+        in one place and <code>SVR</code> in three others; an instruction says a UUID replaces the
+        <code>NNN</code> sequence, printed beside four formats approved on the same pages that all end in
+        <code>NNN</code>; and the fourteenth professional category is written without separators, with a
+        segment the document never defines. None has been resolved toward either reading, because choosing
+        one would put an invented rule into a register whose whole purpose is provenance. Holds E9-S2.</dd>
+      <dt class="crit">EXT-9</dt><dd><b>The commission rate, with Finance. Answered 6 August and not
+        closed.</b> The same returned document gives it as 5% per side in every response box and 10% per
+        side in every collation row. On a fifty-million-naira sale that is the difference between
+        NGN 2,500,000 and NGN 5,000,000 a side. The 5% reading reconciles with the instrument the seller
+        actually signs and the 10% reading does not, and saying so is an observation about the instrument
+        rather than this team picking a number. Holds E9-S3 and, behind it, E9-S4.</dd>
+      <dt class="crit">EXT-10</dt><dd><b>Tax treatment of the commission, with counsel. Answered 6 August and
+        not closed.</b> The ruling is that VAT is charged on the platform's service fee and nothing is
+        withheld from the seller's proceeds, which is the answer the platform wanted and which overrules
+        an acceptance criterion that assumed the opposite. It is headed a recommended counsel position for
+        formal signature and carries no signature, so it is a draft of an answer rather than an answer.
+        Travels with <code>EXT-9</code>.</dd>
+      <dt>EXT-11</dt><dd><b>Data residency. Answered twice on 6 August and closed.</b> The NDPA 2023 and the
+        GAID 2025 govern rather than either company policy, so the closed list of transfer conditions
+        applies and the published policy's "reasonable steps" wording does not. The second reply named the
+        mechanism: an NDPC-approved Cross-Border Data Transfer Instrument or standard contractual clauses
+        with the hosting provider and the subprocessors. <b>Closing it created three things that are not
+        this question asked again</b>: an instrument that does not exist, an amendment to the published
+        privacy policy, and a policy effective date of platform go-live.</dd>
+      <dt>EXT-12</dt><dd><b>Company identity and the ID Standard's status. Answered 6 August and closed.</b>
+        Safebuyrealties International Ltd, RC 8483982, Ikeja, Lagos, and the canonical domain is
+        <code>www.safebuyrealtiesltd.com</code>, which is not the domain this platform prints into every
+        Power of Attorney QR code. Version 2 of the ID Standard is due 2026-08-13, and it supersedes on
+        content rather than on data. The freeze on generating further signed instruments lifts when that
+        default is corrected, not before.</dd>
     </dl>
   </div>
 </section>
@@ -324,18 +423,23 @@
   <h2>Everything delivered so far, and the one delivery no developer made</h2>
   <p class="cap">Thirteen rows and thirty-nine developer-days closed across three waves in two days. Wave 4
     added seventeen more across five stories, in two days again, and four of its nine pull requests carry no
-    engineering days at all because they are records rather than code. The block underneath the waves is not
-    a pull request. It is a stakeholder answering a question, and every developer-day it released is now
-    inside the wave above it.</p>
+    engineering days at all because they are records rather than code. Wave 5 is a single story and four
+    developer-days, and it is the only wave on this chart that a document opened rather than a developer:
+    an approved specification arrived on 5 August, an epic was written from it, and its first story merged
+    the same day behind a flag that is off. The block underneath the waves is not a pull request. It is a
+    stakeholder answering a question, and every developer-day it released is now inside a wave above it.</p>
   <div class="card"><div id="fig2"></div></div>
 </section>
 
 <section>
   <div class="fignum">Figure 3</div>
   <h2>Every remaining story, matched to the one item holding it</h2>
-  <p class="cap">Fourteen rows. Each is sized in developer-days and grouped under the item that has to
-    arrive before anybody can start it. The previous edition of this figure opened with a green group of
-    five held by nobody. That group is gone, because it was built.</p>
+  <p class="cap">Seventeen rows. Each is sized in developer-days and grouped under the item that has to
+    arrive before anybody can start it. The previous edition of this figure had fourteen rows and six
+    groups. The three extra rows are the ninth epic, which did not exist when that edition was written, and
+    the two extra groups are what the answers of 6 August failed to close. <code>EXT-9</code> and
+    <code>EXT-10</code> share one group because they hold the same two stories, and drawing them apart
+    would count eleven developer-days twice.</p>
   <div class="card"><div id="fig3"></div></div>
   <div class="keyrow" id="key3"></div>
 </section>
@@ -347,42 +451,50 @@
     is finished and the first story behind it could start. The red marker is the day it actually arrives, if
     somebody starts obtaining it this morning. The gap between them is a developer standing still.</p>
   <div class="card"><div id="fig4"></div></div>
-  <p class="cap" style="margin-top:10px;">Five of the six arrive after the team is ready for them, and the
-    three worst are worth nine developer-days between them, which is about one day of building. The last
-    story on this MVP is not blocked by difficulty. It is blocked by a three-week wait that has not been
-    started.</p>
+  <p class="cap" style="margin-top:10px;">Every one of the eight arrives after the team is ready for it,
+    because the team is ready for all eight this morning: there is no unbuilt code in front of any of them.
+    Five of the eight take a week or more, and the three worst are worth nine developer-days between them,
+    which is about one day of building. The last story on this MVP is not blocked by difficulty. It is
+    blocked by a three-week wait that has not been started.</p>
 </section>
 
 <section>
   <div class="fignum">Figure 5</div>
-  <h2>Two orderings of the same six items, and they are nearly reversed</h2>
-  <p class="cap">On the left, the six ranked by how much work each one releases. On the right, the same six
-    ranked by how long each one takes to obtain. Read them together and the instruction falls out on its own.</p>
+  <h2>Two orderings of the same eight items, and they are nearly reversed</h2>
+  <p class="cap">On the left, the eight ranked by how much work each one releases. On the right, the same
+    eight ranked by how long each one takes to obtain. Read them together and the instruction falls out on
+    its own.</p>
   <div class="grid2">
     <div class="card"><h3>By developer-days released</h3><div id="fig5a"></div></div>
     <div class="card"><h3>By calendar days to obtain</h3><div id="fig5b"></div></div>
   </div>
   <div class="card blue" style="margin-top:14px;">
-    <p><b>The three items at the bottom of the left chart are the three at the top of the right one.</b>
-      <code>EXT-4</code>, <code>EXT-5</code> and <code>EXT-6</code> release nine developer-days between
-      them, the least of any group here, and they take two to three weeks each to obtain, the longest of
-      any group here. They are also the three nobody feels urgency about, precisely because they release so
-      little.</p>
-    <p>That is the trap. The two items that release the most, <code>EXT-3</code> and <code>ADR-0004</code>,
-      can be dealt with today and tomorrow, so they will be. The three that release the least will sit,
-      and then they will be the only thing between a finished codebase and a launch, for three weeks, with
-      nothing to do but wait. <b>Start all six this morning. The three small ones first.</b></p>
+    <p><b>Two of the three items at the bottom of the left chart are the two at the top of the right one.</b>
+      <code>EXT-4</code> and <code>EXT-6</code> release a single developer-day each, the least on the page,
+      and take fourteen and twenty-one calendar days to obtain, the longest on the page. <code>EXT-5</code>
+      sits beside them at twenty-one days and releases seven. Those three release nine developer-days
+      between them and take three weeks, and they are the three nobody feels urgency about, precisely
+      because they release so little.</p>
+    <p>That is the trap, and this edition adds a second one. The two items that can be cleared today and
+      tomorrow, <code>EXT-3</code> and <code>ADR-0004</code>, release twenty-four developer-days between
+      them, so they will be. The three that release the least will sit, and then they will be the only
+      thing between a finished codebase and a launch, for three weeks, with nothing to do but wait. The
+      second trap is <code>EXT-8</code>, <code>EXT-9</code> and <code>EXT-10</code>: they look like the
+      fastest items on the right-hand chart because they have already been asked and already been answered,
+      and the answers did not close them. A short lead time on a question that has come back wrong is not a
+      short wait. <b>Start all eight this morning. The three small ones first, and the three answered ones
+      as a single reply.</b></p>
   </div>
 </section>
 
 <section>
   <div class="fignum">Figure 6</div>
-  <h2>What forty-four developer-days is worth in calendar time</h2>
+  <h2>What fifty-nine developer-days is worth in calendar time</h2>
   <p class="cap">A developer-day is a unit of scope, not a unit of elapsed time, and on this project the two
     are far apart. One developer running many agents in parallel, with a second developer reviewing and
     merging, does not spend those days one after another. The evidence is this repository's own history.</p>
   <div class="grid2">
-    <div class="card"><h3>Forty-four developer-days of scope</h3><div id="fig6a"></div></div>
+    <div class="card"><h3>Fifty-nine developer-days of scope</h3><div id="fig6a"></div></div>
     <div class="card"><h3>The same work, in calendar days</h3><div id="fig6b"></div></div>
   </div>
   <div class="card" style="margin-top:14px;">
@@ -398,40 +510,49 @@
       developer-days between them. The chain argument was sound and the arithmetic on top of it was
       pessimistic, so read every calendar figure below as an outer bound rather than a forecast.</p>
     <p><b>What the rate still cannot buy.</b> It cannot buy a decision, and it cannot shorten the post. Of
-      the twenty-two calendar days this report ends on, five are days somebody writes code and seventeen are
-      days spent waiting for something to arrive in an inbox. Doubling the team changes the five. It does
-      nothing at all to the seventeen.</p>
+      the twenty-two calendar days this report ends on, eight are days somebody writes code and fourteen are
+      days spent waiting for something to arrive in an inbox. Doubling the team changes the eight. It does
+      nothing at all to the fourteen.</p>
+    <p><b>And it cannot buy an answer twice.</b> This is the finding 6 August added. Five questions were
+      asked and five came back the same day, which is faster than any lead time on this page assumed. Three
+      of the five still hold every story they held the morning before, because one of them gives the
+      commission rate as two different numbers, one gives an identifier code four different ways, and one
+      is a counsel position that says on its face that it needs a signature and does not carry one. The rate
+      at which this team can ask is not the rate at which it can be answered, and the rate at which it can
+      be answered is not the rate at which anything unblocks.</p>
   </div>
 </section>
 
 <section>
   <div class="fignum">Figure 7</div>
-  <h2>The five build days, laid out</h2>
-  <p class="cap">What gets built and when, on one assumption: the stakeholder clears the three decision and
-    configuration items within three days, and starts the three long-lead paperwork items today. Each column
-    is one calendar day. Every cell names a story, its size in developer-days and the item that released it.</p>
+  <h2>The four scheduled days, and the first of them is empty</h2>
+  <p class="cap">What gets built and when, on one assumption: the stakeholder clears the three fast items
+    within two days, sends the three-sentence reply that <code>EXT-8</code> needs, and starts the long-lead
+    paperwork today. Each column is one calendar day. Every cell names a story, its size in developer-days
+    and the item that released it.</p>
   <div class="card"><div id="fig7"></div></div>
   <div class="keyrow" id="key7"></div>
   <div class="card green" style="margin-top:14px;">
-    <p><b>Eleven of the fourteen stories and thirty-five of the forty-four developer-days close inside five
-      calendar days.</b> The busiest day is day four at four merges and fifteen developer-days, which is
-      under the ceiling the repository has already sustained. Nothing in this schedule requires the team to
-      go faster than it has gone. Day one is blank, and that is the whole finding of this edition: the free
-      lane that used to fill it was built on 3 and 4 August, so the first day of this plan is now a day the
-      team spends waiting.</p>
-    <p><b>The last three stories are nine developer-days, and they are one build day.</b> E8-S1 is seven of
-      those nine on its own. They are not on the chart above because they cannot be scheduled: they start
-      when a privacy notice, a counsel-approved document and a booked penetration test arrive, and those are
-      fourteen to twenty-one calendar days out from whenever somebody begins them.</p>
-    <p><b>End to end, if all six items are started this morning: about twenty-two calendar days.</b> Five of
-      those are days on which code is written. Seventeen are days spent waiting for post. If the three
+    <p><b>Nine of the seventeen stories and twenty-eight of the fifty-nine developer-days close inside four
+      calendar days.</b> The busiest is day three at four merges and thirteen developer-days, which is under
+      the ceiling the repository has already sustained. Nothing in this schedule requires the team to go
+      faster than it has gone. Day one is blank, and it was blank in the last edition too: the free lane
+      that used to fill it was built on 3 and 4 August, and 5 August added an epic rather than a free lane,
+      because the one story of it that could be built was built the same day.</p>
+    <p><b>The other eight stories are thirty-one developer-days, and they are five separate waits.</b>
+      E8-S1 is seven days on its own and E9-S3 is another seven. They are not on the chart above because
+      they cannot be scheduled: they start when a settlement account, a commission rate that means one
+      thing, a privacy notice, a counsel-approved instrument and a booked penetration test arrive, and those
+      are seven to twenty-one calendar days out from whenever somebody begins them.</p>
+    <p><b>End to end, if all eight items are started this morning: about twenty-two calendar days.</b> Eight
+      of those are days on which code is written. Fourteen are days spent waiting for post. If the
       long-lead items are not started this morning, the finish date moves out by exactly as long as they are
       left, and no amount of engineering changes that.</p>
   </div>
 </section>
 
 <section>
-  <h2>The six items, written out in full <span class="note">what each one is, why it cannot be worked
+  <h2>The eight items, written out in full <span class="note">what each one is, why it cannot be worked
     around, and what it releases</span></h2>
   <p class="cap">In order of how much work each one releases. Every figure quoted here is the same figure
     used in the charts above.</p>
@@ -439,7 +560,7 @@
 </section>
 
 <section>
-  <h2>The fourteen blocked stories in full</h2>
+  <h2>The seventeen blocked stories in full</h2>
   <p class="cap">Every story that a developer cannot start today, with the item in front of it and what is
     true in the code right now. <b>Names it</b> means the story's own dependency list contains that item.
     <b>Behind</b> means the story is waiting on another story that names it.</p>
@@ -456,8 +577,9 @@
 
 <section>
   <h2>No stories nobody is blocking <span class="note">the free lane, and what became of it</span></h2>
-  <p class="cap">The previous edition put five stories and seventeen developer-days in this section, released
-    the morning ADR-0001 was answered. The section is empty now, and not because anything was cancelled.</p>
+  <p class="cap">The third edition put five stories and seventeen developer-days in this section, released
+    the morning ADR-0001 was answered. The section is empty now, and not because anything was cancelled. It
+    briefly refilled on 5 August and emptied again the same day.</p>
   <div class="tblwrap">
     <table>
       <thead><tr>
@@ -474,21 +596,29 @@
       for it and to nobody else, and money-moving actions are gated on verified identity.</p>
     <p><b>All five shipped behind a flag that is off.</b> <code>FEATURE_DD_CASE_LIFECYCLE</code>,
       <code>FEATURE_PROPERTY_PURCHASE</code> and <code>FEATURE_KYC_GATE</code> default to off, so none of
-      this is reachable by a user until somebody sets three values on the hosting dashboard. That is the
-      seventh tile at the top of this page, and it is the cheapest item on the whole report.</p>
+      this is reachable by a user until somebody sets three values on the hosting dashboard. A fourth,
+      <code>FEATURE_FINANCIAL_GOVERNANCE</code>, joined them on 5 August and is deliberately not in that
+      list: section 14.2 of the specification withholds production activation as its own approval, so
+      switching it on is a gate rather than a dashboard chore.</p>
+    <p><b>It refilled for part of one day and emptied again.</b> On 5 August an approved specification
+      created a ninth epic of four stories. One of them, E9-S1, needed nothing from outside the team, so it
+      was written and merged the same day: the financial governance tables, behind the flag, with no
+      behaviour on top of them. The other three each name an item nobody on this team can supply, and two
+      of those items were asked on 6 August and came back without closing.</p>
     <p><b>What replaces this section is nothing.</b> There is no work in this codebase that a developer can
-      pick up this morning without an answer from outside the team. That has not been true at any point in
-      this project's history before today, and it is the single number worth taking away from this
+      pick up this morning without an answer from outside the team. That was first true on 4 August, it is
+      still true two days and five answers later, and it is the single number worth taking away from this
       edition.</p>
   </div>
 </section>
 
 <section>
-  <h2>Ten things already built that need a setting changed <span class="note">no engineering, no
+  <h2>Twelve things already built that need a setting changed <span class="note">no engineering, no
     developer-days, an operator with a dashboard login</span></h2>
   <p class="cap">None of these appear in any total on this page, because there is no code to write. They are
     listed because each one is a piece of finished, tested work that is doing nothing until somebody with
-    access to a hosting dashboard changes a value.</p>
+    access to a hosting dashboard changes a value. Two are new in this edition, and one of them lifts a
+    freeze rather than turning a feature on.</p>
   <div class="tblwrap">
     <table>
       <thead><tr><th>What</th><th>Where</th><th>Why it matters</th></tr></thead>
@@ -501,10 +631,10 @@
   <h2>Findings that belong to nobody yet</h2>
   <p class="cap">Real problems found during the audit that are not on the board, because each one needs a
     decision about scope before it can be written as a story. Nothing has left this table since the last
-    edition. All five were re-read against the code on 4 August, after PRs 138 to 142 merged, and all five
-    are still true, including the two marked serious. Wave 4 was a large delivery and it touched none of
-    them, which is what you would expect: each one is waiting on a scope decision rather than on a
-    developer.</p>
+    edition. All five were re-read against the code on 6 August, after PRs 138 to 144 merged, and all five
+    are still true, including the two marked serious. Wave 4 was a large delivery, wave 5 added a schema,
+    and between them they touched none of these, which is what you would expect: each one is waiting on a
+    scope decision rather than on a developer.</p>
   <div class="tblwrap">
     <table>
       <thead><tr><th style="width:90px">Severity</th><th>Finding</th><th>What it needs</th></tr></thead>
@@ -516,8 +646,10 @@
 <section>
   <div class="fignum">Figure 8</div>
   <h2>Decisions and gates still open</h2>
-  <p class="cap">Two rows of the same story. The top row is the five architecture decisions, three of them
-    now closed. The bottom row is the six go-live gates, none of which can be closed by engineering alone.</p>
+  <p class="cap">Two rows of the same story, and every status is read off the record file rather than off
+    what the code does. The top row is the five architecture decisions: two answered outright, two whose
+    behaviour shipped while the record still reads Proposed, and one genuinely open. The bottom row is the
+    six go-live gates, two of them half earned and none closable by engineering alone.</p>
   <div class="card"><div id="fig8"></div></div>
 </section>
 
@@ -528,12 +660,18 @@
       <h3>The developer, starting this morning</h3>
       <ul class="tight">
         <li><b>Nothing.</b> There is no story on this board that a developer can open today. The last one
-          that did not need an answer from outside the team merged on 4 August as PR 142.</li>
-        <li><b>The one exception is not engineering.</b> Somebody with a hosting login can set
+          that did not need an answer from outside the team merged on 5 August as PR 144.</li>
+        <li><b>E9-S2 in particular is not startable</b>, and it is the one most likely to be started by
+          mistake. Its blocker came back on 6 August, so it looks answered. The answer codes Surveyor two
+          ways and describes the sequence segment two ways, and an identifier register whose whole purpose
+          is provenance cannot be seeded with a guess. Do not open a branch on it.</li>
+        <li><b>The one thing to do is not engineering.</b> Somebody with a hosting login can set
           <code>FEATURE_DD_CASE_LIFECYCLE</code>, <code>FEATURE_PROPERTY_PURCHASE</code> and
-          <code>FEATURE_KYC_GATE</code> and make seventeen developer-days of finished work reachable. That
-          is a dashboard, not a branch.</li>
-        <li><b>Then the queue starts at E6-S1</b>, two developer-days, and it starts the hour
+          <code>FEATURE_KYC_GATE</code> and make seventeen developer-days of finished work reachable, and
+          can point <code>POA_VERIFY_BASE_URL</code> at the domain the company confirmed on 6 August. That
+          second one lifts the freeze on generating signed instruments. Both are a dashboard, not a
+          branch.</li>
+        <li><b>Then the queue starts at E6-S1</b>, one developer-day, and it starts the hour
           <code>EXT-3</code> lands. Everything behind it in figure 7 is stacked and waiting.</li>
         <li><b>Read the right-hand column as the build plan.</b> On this page the stakeholder list is not a
           list of blockers alongside the work. Since 4 August it is the work.</li>
@@ -542,17 +680,30 @@
     <div class="card red">
       <h3>The stakeholder, starting this morning</h3>
       <ul class="tight">
-        <li><b>Send three emails before lunch:</b> the privacy notice request (<code>EXT-5</code>), the
+        <li><b>Send three sentences before anything else.</b> The commission rate, the Surveyor code, and
+          whether a UUID really replaces the <code>NNN</code> sequence in four formats approved on the same
+          pages. Not a new document. Those three sentences unblock <code>EXT-8</code> and
+          <code>EXT-9</code> together, which is eleven developer-days plus four, and they are the cheapest
+          thing on this entire page to supply. The full wording is in
+          <code>docs/escalations/2026-08-06-closure-schedule.md</code>.</li>
+        <li><b>Get the counsel position signed.</b> <code>EXT-10</code> is already written and already
+          right. It is headed a recommended position for formal signature and carries none, so it is a
+          draft. A signature closes it and nothing else needs to be decided.</li>
+        <li><b>Send three emails before lunch:</b> the privacy notice adoption (<code>EXT-5</code>), the
           counsel instruction (<code>EXT-4</code>), and the penetration test enquiry (<code>EXT-6</code>).
           They release the least and take the longest, so they are the only three that are genuinely
           urgent today.</li>
         <li><b><code>EXT-3</code>, the mail domain.</b> Highest value on the page, thirteen developer-days,
           and it is an afternoon's work: buy a sending plan, verify a domain, add three DNS records.</li>
         <li><b><code>ADR-0004</code> then <code>EXT-2</code>.</b> The decision has to come first because it
-          changes how the bucket is configured. Two days for both.</li>
-        <li><b><code>ADR-0002</code>, the money model.</b> Longest of the decisions, because
-          <code>EXT-1</code> behind it has a business verification with its own lead time. The code that
-          needs it is ready on build day four and the answer currently arrives on day twelve.</li>
+          changes how the bucket is configured. Its region half stopped being blocked on 6 August, which is
+          not the same as being decided: a Nigerian region needs no transfer instrument and any other
+          region may not carry production data until standard contractual clauses are executed and
+          documented. Two days for both.</li>
+        <li><b><code>EXT-1</code>, the settlement account.</b> The money model itself came back on
+          5 August, so this is no longer a decision waiting on a decision. It is a business verification
+          with its own lead time. The code that needs it is ready now and the account currently arrives on
+          day twelve.</li>
       </ul>
     </div>
   </div>
@@ -570,23 +721,35 @@
       story. Each epic's upper bound is apportioned across its remaining stories in proportion to size, with
       Small counting one, Medium three and Large five, and any remainder given to the largest story in the
       epic. Every allocation lands inside its published size band. The result summed to sixty-one across the
-      nineteen stories the last edition measured, which was exactly the board's published ceiling. Five of
-      those stories have since merged and took seventeen days with them, so the fourteen that remain sum to
-      forty-four. Nothing was re-estimated to get there; the same per-story figures are simply added up over
-      a shorter list.</p>
-    <p><b>A two-day difference from the last edition, and it is not new work.</b> The second edition's
-      per-story figures summed to fifty-nine against a published ceiling of sixty-one, and it called the
-      gap drift and left it. The gap has now been located: it was two developer-days lost to rounding, one
-      in E7 and one in E8, when the remainder was spread evenly instead of given to the largest story.
-      Fixing the arithmetic added two days to the total on paper and added no work at all.</p>
+      nineteen stories the third edition measured, which was exactly the board's published ceiling. Five of
+      those stories merged and took seventeen days with them, leaving forty-four. The ninth epic then added
+      nineteen across four stories, and one of those four merged the same day it was written and took four
+      with it. Forty-four plus fifteen is fifty-nine across seventeen stories, which is again exactly the
+      board's published ceiling. Nothing was re-estimated to get there; the same per-story figures are
+      added up over a different list.</p>
+    <p><b>A two-day difference between the second and third editions, and it was not new work.</b> The
+      second edition's per-story figures summed to fifty-nine against a published ceiling of sixty-one, and
+      it called the gap drift and left it. The gap was two developer-days lost to rounding, one in E7 and
+      one in E8, when the remainder was spread evenly instead of given to the largest story. Fixing the
+      arithmetic added two days to the total on paper and added no work at all. That fifty-nine and this
+      edition's fifty-nine are different numbers over different story lists, and their agreeing is a
+      coincidence.</p>
     <p><b>Upper bounds throughout.</b> Every figure on this page uses the ceiling of each range, not the
-      floor. The floor assumes every remaining story lands at the cheap end of its estimate, and no week in
-      this repository has done that.</p>
+      floor. The floor across the same seventeen stories is thirty-seven developer-days, and it is on the
+      board as the other end of the published range. The floor assumes every remaining story lands at the
+      cheap end of its estimate, and no week in this repository has done that.</p>
     <p><b>Lead times.</b> The calendar figures for obtaining each external item are planning estimates, not
-      quotes. They are deliberately optimistic: one day for a mail domain, two for a storage decision and a
-      bucket, twelve for a payment decision with a business verification behind it, fourteen for counsel,
-      twenty-one for a privacy review and for a penetration test window. If any of them is wrong it is wrong
-      in the direction of being too short, which makes the case in figure 4 stronger rather than weaker.</p>
+      quotes. They are deliberately optimistic: one day for a mail domain, one for a three-sentence reply on
+      identifiers, two for a storage decision and a bucket, seven for a commission rate confirmed and a
+      counsel position signed, twelve for a settlement account with a business verification behind it,
+      fourteen for counsel, twenty-one for a privacy review and for a penetration test window. If any of
+      them is wrong it is wrong in the direction of being too short, which makes the case in figure 4
+      stronger rather than weaker.</p>
+    <p><b>An answered item is not a shorter item.</b> Three of the eight were asked on 6 August and answered
+      the same day, and this page still counts their full lead time from this morning. That is deliberate.
+      A reply that gives two different commission rates has not started the clock on the reply that gives
+      one, and treating it as though it had would put a finish date on this page that nothing in the record
+      supports.</p>
     <p><b>How the work is staffed.</b> One developer building with as many AI agents in parallel as the work
       allows, and a second developer reviewing and merging. That arrangement is why the calendar figures in
       figure 6 sit so far below the developer-day figures, and it is also why the stakeholder items dominate
@@ -595,10 +758,13 @@
 </section>
 
 <footer class="meta" style="margin-top:28px;">
-  SafeBuyRealties MVP, remaining work, fourth edition, 2026-08-04. Companion documents in
+  SafeBuyRealties MVP, remaining work, fifth edition, 2026-08-06. Companion documents in
   <code>docs/</code>: <b>mvp-board.html</b> (the live schedule, with the same legend),
   <b>MVP_OUTSTANDING_BACKLOG.md</b> (acceptance criteria and cited evidence for every story),
-  <b>HANDOVER_WEEK.md</b> (the working agreement), <b>adr/0001</b> to <b>0005</b>.
+  <b>HANDOVER_WEEK.md</b> (the working agreement), <b>adr/0001</b> to <b>0005</b>,
+  <b>escalations/2026-08-06-ext-8-and-ext-12.md</b> (the five questions of 6 August and the five answers,
+  read against each other) and <b>escalations/2026-08-06-closure-schedule.md</b> (what every open item
+  needs, in what form, and who owns it).
 </footer>
 
 </div>
@@ -625,12 +791,20 @@ const R = (x, y, w, h, f, o = {}) =>
   (o.op ? ` opacity="${o.op}"` : "") + (o.stroke ? ` stroke="${o.stroke}"` : "") + `/>`;
 
 /* ------------------------------------------------------------------ *
- * THE SIX ITEMS                                                       *
+ * THE EIGHT ITEMS                                                     *
  *   days   developer-days held, including stories chained behind it   *
  *   lead   planning estimate, calendar days to obtain from a standing  *
- *          start                                                      *
+ *          start. An item answered on 6 August that did not close      *
+ *          keeps its full lead time, because the reply that closes it  *
+ *          has not been sent yet                                       *
  *   ready  the build day on which the code in front of it is done and  *
- *          the first story behind it could begin                      *
+ *          the first story behind it could begin. Every one is 1: the  *
+ *          free lane is empty, so no unbuilt code stands in front of   *
+ *          any of them                                                 *
+ *                                                                     *
+ * EXT-9 and EXT-10 are one entry. Both hold E9-S3 and, behind it,      *
+ * E9-S4, so two entries would count the same eleven developer-days     *
+ * twice. The card names both and says why.                             *
  * ------------------------------------------------------------------ */
 const ASKS = [
   {
@@ -648,31 +822,33 @@ const ASKS = [
       "password reset and email verification in E5, is chained behind it, because a password reset that " +
       "cannot send an email is not a feature.",
     extra:"This is the best-value item on the page by a wide margin: it holds thirteen developer-days and " +
-      "it is the fastest of the six to obtain. At MVP volume the running cost is nil to about twenty-five " +
+      "it is the fastest of the eight to obtain. At MVP volume the running cost is nil to about twenty-five " +
       "pounds a month.",
     ifno:"A user who forgets their password needs an administrator to let them back in, and every " +
       "notification this platform produces is only visible to somebody who happens to log in and look."
   },
   {
-    key:"D2", code:"ADR-0002 + EXT-1", owner:"Client", kind:"A decision, then an account", short:"Money",
-    days:11, lead:12, ready:4,
-    title:"Whether this platform holds a buyer's money, and who it holds it with",
+    key:"EXT1", code:"EXT-1", owner:"Client", kind:"An account and a business verification", short:"Money",
+    days:11, lead:12, ready:1,
+    title:"A live merchant account and a settlement account to pay sellers from",
     what:"Sellers are paid into a single account configured in an environment variable, which today " +
       "points at a test account. Refunds update a row in a database and never reach the payment gateway, " +
       "so a refunded buyer is not actually repaid. There is no finance screen; the chart on the admin " +
       "dashboard is generated placeholder data.",
-    need:"First the decision, written down as ADR-0002: does the platform hold client funds in escrow, " +
-      "pass them straight through to the seller, or keep money off the platform altogether? Then, once " +
-      "the answer is known, a live merchant account and a settlement account, which is EXT-1.",
-    today:"This cannot be built speculatively and corrected later. Escrow and pass-through are different " +
-      "regulated arrangements with different account types, different reconciliation and different " +
-      "obligations under CBN and AML rules. Building one and discovering the other was intended is not a " +
-      "refactor, it is a rewrite.",
-    extra:"This is the half of EXT-7 still outstanding. The other half was D1, and answering it on " +
-      "2 August released five stories that were built and merged within two days. This half has been " +
-      "open for the same length of time and has released nothing.",
-    ifno:"Gate G6 cannot be closed, gate G2 cannot be demonstrated, and the platform can take a buyer's " +
-      "money but cannot pay a real seller."
+    need:"Live payment gateway credentials and a settlement account in the company's name, with whatever " +
+      "business verification the provider requires completed. The verification is the part with the lead " +
+      "time, not the sign-up.",
+    today:"The decision half of this item is gone. Until 5 August it travelled with ADR-0002, which asked " +
+      "whether the platform holds client funds or passes them through, and nothing could be built until " +
+      "that was settled. The approved Financial Governance Specification settled it: the platform holds, " +
+      "and it reconciles a bank balance against the sum of the per-transaction sub-ledgers. That makes " +
+      "E2-S1 a regulated flow with reconciliation duties, which is now its scope rather than a risk hanging " +
+      "over it.",
+    extra:"What is left is procurement, and procurement is exactly the kind of thing that gets left because " +
+      "it has no decision in it. Twelve days is the planning estimate and it starts the day somebody " +
+      "begins, not the day the specification was approved.",
+    ifno:"Gate G6 cannot be demonstrated, gate G2 stays open, and the platform can take a buyer's money " +
+      "but cannot pay a real seller."
   },
   {
     key:"D4", code:"ADR-0004 + EXT-2", owner:"Client or Corne Labs", kind:"A decision, then a bucket",
@@ -687,12 +863,43 @@ const ASKS = [
       "authorization check on every read. Then EXT-2 provides the bucket, its credentials and a region.",
     today:"The decision has to come first because the two answers need the bucket configured differently, " +
       "and reconfiguring a bucket that already holds documents is worse than configuring it once.",
-    extra:"E7-S4, the deterministic demo seed, sits behind this too. Its dependency is soft if the seed " +
-      "only ever has to work on a developer's machine and hard if it has to work on the hosted " +
-      "environment, and that is itself a question worth ten seconds of somebody's attention.",
+    extra:"The region half stopped being blocked on 6 August, and open is not the same as decided. Two " +
+      "answers that day established that the NDPA 2023 and the GAID 2025 govern rather than company " +
+      "policy, and named the mechanism: a Nigerian region needs no transfer instrument, and any other " +
+      "region may not carry production data until an NDPC-approved instrument or standard contractual " +
+      "clauses are executed with the hosting provider and its subprocessors and documented. No such " +
+      "instrument exists in this repository. E7-S4, the deterministic demo seed, sits behind this too; its " +
+      "dependency is soft if the seed only ever has to work on a developer's machine and hard if it has to " +
+      "work on the hosted environment.",
     ifno:"Half of gate G3 stays open. The probe suite that proves no private document is reachable " +
       "without authorization already exists and passes, and it is proving it about files that do not " +
       "survive a deploy."
+  },
+  {
+    key:"E910", code:"EXT-9 + EXT-10", owner:"Finance, then counsel",
+    kind:"One number confirmed, and one signature", short:"Commission",
+    days:11, lead:7, ready:1,
+    title:"What the platform charges on a sale, and what tax sits on top of it",
+    what:"The code charges five per cent, taken from the seller's side only, at one line in the escrow " +
+      "service. Nothing charges the buyer. The Power of Attorney the seller signs deducts ten per cent " +
+      "from the sale proceeds. Whether those are the same charge described twice or two different charges " +
+      "has never been written down, and E9-S3 is the story that writes it down.",
+    need:"Two sentences and a signature. Confirm the commission rate and the side or sides it is taken " +
+      "from, and sign the counsel position on tax. Neither needs a new document.",
+    today:"Both were asked on 6 August and both came back the same day, and neither closed. The returned " +
+      "document gives the rate as five per cent per side in every response box and ten per cent per side " +
+      "in every collation row. On a fifty-million-naira sale that is the difference between two and a half " +
+      "million naira a side and five million. This team has not resolved it toward either reading, because " +
+      "the two readings are a factor of two on every invoice the platform will ever issue and choosing one " +
+      "is not an engineering decision. The tax answer is better: VAT on the platform's service fee, " +
+      "nothing withheld from the seller's proceeds, which is the answer the platform wanted. It is headed " +
+      "a recommended counsel position for formal signature and carries no signature.",
+    extra:"The tax ruling has already overruled an acceptance criterion. E9-S3 was written assuming " +
+      "withholding tax came off the seller's proceeds; that criterion is struck rather than unmet, and a " +
+      "new one covers the per-transaction commission override the specification introduced. The role " +
+      "authorised to approve an override is still unnamed.",
+    ifno:"E9-S3 and E9-S4 cannot start, which is eleven developer-days and the whole of the financial " +
+      "governance behaviour on top of the tables that merged on 5 August."
   },
   {
     key:"EXT5", code:"EXT-5", owner:"Client, with legal", kind:"A registration and a written policy",
@@ -701,28 +908,62 @@ const ASKS = [
     what:"This platform stores identity documents and selfies today. It has no consent model, no stated " +
       "retention period and no way for a person to have their data erased. That is not a missing feature, " +
       "it is a legal exposure that grows with every user who signs up.",
-    need:"An NDPR privacy notice and a retention policy, written or reviewed by somebody qualified to " +
-      "write them, plus the data protection registration that goes with them.",
+    need:"Less than this item looked like it needed. Writing the ask down in full found that both " +
+      "documents already exist and are structurally complete. What is missing is board adoption, a named " +
+      "and contactable data protection officer, a commencement date, and a retention period stated in " +
+      "months or years for each of eight categories of data this platform actually stores.",
     today:"E8-S1 is Large, seven developer-days, and it is the biggest single blocked story on the board. " +
       "It cannot be started from guesswork because the retention periods and the erasure obligations are " +
-      "inputs to the schema, not decorations on top of it.",
-    extra:"Twenty-one calendar days is the planning estimate and it is optimistic. This is the item most " +
-      "likely to be the last thing standing between a finished codebase and a launch.",
+      "inputs to the schema, not decorations on top of it. A policy that says data is kept as long as " +
+      "necessary cannot be turned into a scheduled deletion job.",
+    extra:"Twenty-one calendar days is the planning estimate and it is optimistic. Two things have since " +
+      "attached themselves to this item: an amendment to the published privacy policy, because EXT-11 " +
+      "established that its transfer wording does not match the statute, and a policy effective date of " +
+      "platform go-live. Neither is a new question, and both have to land in the same document.",
     ifno:"The platform is storing regulated personal data with no lawful basis recorded and no way to " +
       "honour an erasure request."
   },
   {
-    key:"EXT4", code:"EXT-4", owner:"Client, with counsel", kind:"Two documents", short:"Legal",
+    key:"EXT8", code:"EXT-8", owner:"Digital Records", kind:"Three sentences, not a document",
+    short:"Identifiers", days:4, lead:1, ready:1,
+    title:"Which identifier rule wins where two approved documents disagree",
+    what:"The platform issues identifiers for cases, services, properties and professionals, and it does " +
+      "so from six families in one service. Two approved documents describe those identifiers " +
+      "differently in five places, and a published terms page promises users professional categories the " +
+      "platform has no code to issue an identifier for. The schema knows seven professional types. The " +
+      "documents between them describe fourteen.",
+    need:"Three sentences. Which code Surveyor takes, whether a UUID really replaces the sequence segment " +
+      "in four formats approved on the same pages that all end in that segment, and whether the " +
+      "fourteenth professional category is a separate family or a variant of an existing one.",
+    today:"It was asked on 6 August and answered the same day, and the answer contradicts itself in three " +
+      "places. Surveyor is coded one way once and another way three times. An instruction says the " +
+      "sequence is replaced by a UUID, printed beside four formats that all still end in the sequence. " +
+      "The fourteenth category is written with no separators and with a segment the document never " +
+      "defines. None of the three has been resolved toward either reading, because an identifier register " +
+      "exists to prove where a number came from and seeding one with a guess destroys the only property " +
+      "it has.",
+    extra:"Four developer-days held by an item that takes a day to supply and has already been asked " +
+      "once. It is the cheapest unblock on this page and the one most likely to be left, because it looks " +
+      "answered.",
+    ifno:"E9-S2 cannot start. The register that is supposed to make every identifier on this platform " +
+      "traceable stays unbuilt, and the terms page keeps promising categories the platform cannot issue."
+  },
+  {
+    key:"EXT4", code:"EXT-4", owner:"Client, with counsel", kind:"Three documents", short:"Legal",
     days:1, lead:14, ready:1,
     title:"Counsel-approved Power of Attorney text and terms of service",
     what:"The Power of Attorney instrument this platform asks buyers to sign was drafted by engineers " +
       "inside a build checklist. The terms of service were never drafted at all.",
     need:"A qualified lawyer to read the instrument, correct it, and approve terms of service to go with " +
-      "it.",
+      "it. Writing the ask down in full found that it is three documents rather than two, and that the " +
+      "third is the instrument this platform already generates and signs on people's behalf, which no " +
+      "lawyer has read.",
     today:"The engineering behind this is a single day: E8-S2 is Small and mostly consists of putting the " +
       "approved words where the drafted ones are now.",
     extra:"One developer-day held by a fourteen-day wait. This is the clearest example on the page of an " +
-      "item whose cost is entirely in the calendar and not in the code.",
+      "item whose cost is entirely in the calendar and not in the code. Its clause 5 is also the ten per " +
+      "cent that EXT-9 has to be reconciled against, so counsel reading it and Finance confirming the rate " +
+      "are the same paragraph read by two people.",
     ifno:"Gate G4 cannot be closed, and the platform is asking real people to sign an instrument that no " +
       "lawyer has read."
   },
@@ -746,10 +987,13 @@ const ASKS = [
 const askOf = k => ASKS.find(a => a.key === k);
 
 /* ------------------------------------------------------------------ *
- * THE FOURTEEN REMAINING STORIES                                      *
+ * THE SEVENTEEN REMAINING STORIES                                     *
  *   [id, title, size, days, ask, hold, today]                         *
  *   ask "" means nothing outside the team is holding it, and as of    *
  *   this edition no row is left with an empty one                     *
+ *   The per-epic days sum to each epic's published ceiling on the      *
+ *   board: Money 11, Trust 7, Ops 4, Security 6, Comms 7,             *
+ *   Compliance 9, FinGov 15. Total 59, floor 37.                       *
  * ------------------------------------------------------------------ */
 const STORIES = [
   ["E6-S1","SMTP configuration and delivery observability","S",1,"EXT3","names it",
@@ -763,11 +1007,11 @@ const STORIES = [
   ["E5-S4","Email verification on self-registration","M",3,"EXT3","behind E6-S1",
    "Self-signup skips the activation mechanism that admin-created accounts already use."],
 
-  ["E2-S1","Seller payout destination, per-seller bank account","L",5,"D2","names it",
-   "Payouts go to one account set in an environment variable, defaulting to a test account."],
-  ["E2-S3","Gateway refunds, not ledger-only","M",3,"D2","behind E2-S1",
+  ["E2-S1","Seller payout destination, per-seller bank account","L",5,"EXT1","names it",
+   "Payouts go to one account set in an environment variable, defaulting to a test account. The money model behind it was settled on 5 August: the platform holds and reconciles."],
+  ["E2-S3","Gateway refunds, not ledger-only","M",3,"EXT1","behind E2-S1",
    "Refund updates a status and never calls the gateway, so the buyer is not repaid."],
-  ["E2-S5","Finance reconciliation view","M",3,"D2","behind E2-S1",
+  ["E2-S5","Finance reconciliation view","M",3,"EXT1","behind E2-S1",
    "The Finance Manager role has no finance screen; the admin chart is a placeholder generator."],
 
   ["E3-S2","Durable object storage in production","M",4,"D4","names it",
@@ -782,7 +1026,14 @@ const STORIES = [
   ["E8-S2","Legal review of the PoA instrument and terms","S",1,"EXT4","names it",
    "The instrument clauses were written in a build checklist, not by counsel."],
   ["E8-S3","Pre-launch security review","S",1,"EXT6","names it",
-   "The client's own legal comments ask for one; none has been run."]
+   "The client's own legal comments ask for one; none has been run."],
+
+  ["E9-S2","Identifier register and issuance audit","M",4,"EXT8","names it",
+   "Six identifier families are issued in one service with no register behind them. Two approved documents disagree on five points and the answer of 6 August disagrees with itself on three."],
+  ["E9-S3","Commission, VAT and the fee ledger","L",7,"E910","names it",
+   "The escrow service charges five per cent from the seller's side at one line. The instrument the seller signs deducts ten. One acceptance criterion has been struck because the tax ruling overruled it."],
+  ["E9-S4","Financial reporting and reconciliation views","M",4,"E910","behind E9-S3",
+   "The tables merged on 5 August behind a flag that is off. Nothing reads from them yet, and what they should report depends on what E9-S3 writes into them."]
 ];
 
 const BLOCKED = STORIES.filter(r => r[4]);
@@ -794,7 +1045,8 @@ const WAVES = [
   { n:2, day:"1 to 2 August", items:[["E2-S2",3,123],["E4-S3",3,125],["E7-S2b",3,127],["CH-1",3,128]] },
   { n:3, day:"2 August", items:[["E5-S1",3,129],["E8-S4",4,130],["E5-S5",5,131],["E7-S3",6,132],["DOCS-4",1,134]] },
   { n:4, day:"2 to 4 August", items:[["DOCS-7",0,135],["CH-7",0,136],["DOCS-8",0,137],["E1-S1",5,138],
-                                     ["E1-S2",3,139],["E1-S4",3,140],["E1-S3",3,141],["E4-S2",3,142],["DOCS-9",0,143]] }
+                                     ["E1-S2",3,139],["E1-S4",3,140],["E1-S3",3,141],["E4-S2",3,142],["DOCS-9",0,143]] },
+  { n:5, day:"5 August", items:[["E9-S1",4,144]] }
 ];
 
 const OPS = [
@@ -817,7 +1069,11 @@ const OPS = [
   ["Retire the superseded backend project","Vercel hosting",
    "A second deployment target exists that no longer serves anything. Confirm nothing points at it, then delete it, so no future deploy goes to the wrong place."],
   ["Decide when to lift the three new flags","Render hosting",
-   "Everything the stakeholder answer released shipped switched off: <code>FEATURE_DD_CASE_LIFECYCLE</code>, <code>FEATURE_PROPERTY_PURCHASE</code> and <code>FEATURE_KYC_GATE</code> are all off by default. The due diligence loop, the purchase step and the identity gate are built, tested and inert, and production behaves exactly as it did on 2 August until somebody sets them. Lifting them is one decision rather than three, because a purchase step without a KYC gate is a worse position than either state, and it wants a rehearsal on a real listing first. This is the largest single piece of value in this repository currently sitting behind a setting."]
+   "Everything the stakeholder answer released shipped switched off: <code>FEATURE_DD_CASE_LIFECYCLE</code>, <code>FEATURE_PROPERTY_PURCHASE</code> and <code>FEATURE_KYC_GATE</code> are all off by default. The due diligence loop, the purchase step and the identity gate are built, tested and inert, and production behaves exactly as it did on 2 August until somebody sets them. Lifting them is one decision rather than three, because a purchase step without a KYC gate is a worse position than either state, and it wants a rehearsal on a real listing first. This is the largest single piece of value in this repository currently sitting behind a setting."],
+  ["Point <code>POA_VERIFY_BASE_URL</code> at the confirmed domain","Render hosting",
+   "Every Power of Attorney this platform generates prints a QR code that resolves against this value, and it defaults to <code>https://safebuyrealties.com/verify</code>. On 6 August the company confirmed the canonical domain is <code>www.safebuyrealtiesltd.com</code>, which is a different origin. Every instrument already issued carries a code pointing at the wrong place, and generating further ones has been treated as frozen since. Setting this variable lifts that freeze. It is one field in a dashboard and it is the only item on this list that unblocks something rather than switching something on. It also has to match <code>VITE_SITE_URL</code> on the web project, or the link and the page that issued it disagree."],
+  ["Leave <code>FEATURE_FINANCIAL_GOVERNANCE</code> off","Render hosting",
+   "The financial governance tables merged on 5 August behind this flag, with no behaviour on top of them yet. It is listed separately from the three above because lifting it is not an operator's call: section 14.2 of the approved specification withholds production activation as its own approval, alongside Finance, Legal and technical sign-off. This is a gate wearing the clothes of a setting, and it stays off until E9-S3 and E9-S4 exist and those approvals are recorded."]
 ];
 
 const FINDINGS = [
@@ -837,44 +1093,53 @@ const FINDINGS = [
  * CONSTANTS. Everything quoted in prose above is one of these.        *
  * ------------------------------------------------------------------ */
 const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
-const BD       = sum(BLOCKED, r => r[3]);   // 44 developer-days behind a stakeholder
+const BD       = sum(BLOCKED, r => r[3]);   // 59 developer-days behind a stakeholder
 const FREE_D   = sum(FREE, r => r[3]);      // 0 developer-days a developer can start
-const TOTAL    = BD + FREE_D;               // 44, the board's published ceiling
-const ROWS     = 60, ROWS_DONE = 46;
+const TOTAL    = BD + FREE_D;               // 59, the board's published ceiling
+const FLOOR    = 37;                        // the other end of the board's published range
+const ROWS     = 64, ROWS_DONE = 47;
 const DELIVERED = sum(WAVES, w => sum(w.items, i => i[1]));
 const RATE_MERGES = 6, RATE_DAYS = 19;      // the ceiling this repository has sustained
 const RUNWAY   = 0;                         // calendar days of building that need nobody
-const SCHED_DAYS = 5, SCHED_STORIES = 11;
-const SCHED_D  = 35;
-const TAIL_STORIES = 3, TAIL_D = TOTAL - SCHED_D;   // 9
+const SCHED_DAYS = 4, SCHED_STORIES = 9;
+const SCHED_D  = 28;
+const TAIL_STORIES = 8, TAIL_D = TOTAL - SCHED_D;   // 31
 const END_TO_END = 22;
+const ANSWERED_0806 = 5, CLOSED_0806 = 2;   // five answers in one day, two of them closing
 /* What ADR-0001 released on 2 August. Held as a constant rather than read off FREE, because FREE is
    now empty and the fact it records is historical: all seventeen days have since been delivered. */
 const RELEASED = 17;
+/* Each bar is the whole remaining backlog at that moment. The fourth bar is larger than the third
+   because 5 August added an epic, not because anything slipped. The fifth is the same size as the
+   fourth because 6 August delivered five answers and none of them released a developer-day. */
 const WAS = [
-  { when:"1 August",              blocked:59, free:39 },
-  { when:"2 August, morning",     blocked:59, free:1  },
-  { when:"2 August, the answer",  blocked:44, free:17 },
-  { when:"Now, 4 August",         blocked:BD, free:FREE_D }
+  { when:"1 August",                    blocked:59, free:39 },
+  { when:"2 August, the answer",        blocked:44, free:17 },
+  { when:"4 August, wave 4 closed",     blocked:44, free:0  },
+  { when:"5 August, the specification", blocked:59, free:4  },
+  { when:"Now, 6 August",               blocked:BD, free:FREE_D }
 ];
 const AXIS = Math.max(...WAS.map(w => w.blocked + w.free));   // 98
 
 /* ------------------------------------------------------------------ *
  * TILES                                                               *
  * ------------------------------------------------------------------ */
+/* Counted off the operations list rather than typed. Every FEATURE_ flag named there is something
+   built, tested and inert, and a typed number goes stale the first time one is added. */
+const FLAGS_OFF = new Set(JSON.stringify(OPS).match(/FEATURE_[A-Z_]+/g)).size;
 const TILES = [
   ["Board rows closed", `${ROWS_DONE} / ${ROWS}`, `${Math.round((ROWS_DONE / ROWS) * 100)}% of everything ever scheduled`, ""],
-  ["Stories left", String(STORIES.length), `${BLOCKED.length} blocked, ${FREE.length} a developer can start`, ""],
-  ["Blocked on a stakeholder", String(BLOCKED.length), `${Math.round((BLOCKED.length / STORIES.length) * 100)}% of what is left`, "red"],
-  ["Free to start this morning", String(FREE.length), "the free lane emptied on 4 August", "red"],
+  ["Stories left", String(STORIES.length), `${TOTAL} developer-days at the ceiling, ${FLOOR} at the floor`, ""],
+  ["Blocked on somebody outside", String(BLOCKED.length), `${Math.round((BLOCKED.length / STORIES.length) * 100)}% of what is left`, "red"],
+  ["Free to start this morning", String(FREE.length), "empty since 4 August, and still empty", "red"],
   ["Days behind a stakeholder", String(BD), "developer-days nobody may begin", "red"],
   ["Days free to build", String(FREE_D), "nothing left that needs no permission", "red"],
-  ["Built and switched off", "3", "flags holding the whole of what wave 4 delivered", "red"],
+  ["Built and switched off", String(FLAGS_OFF), "flags, and one of them is a gate rather than a chore", "red"],
   ["Runway", String(RUNWAY), "calendar days of building that need nobody", "red"],
-  ["Items only a stakeholder can clear", String(ASKS.length), "two decisions, and four things to obtain", "red"],
-  ["Closed by build day five", `${SCHED_STORIES} / ${STORIES.length}`, `${SCHED_D} of ${TOTAL} days, if the decisions take three`, "green"],
-  ["Then all that is left", "1", `build day: ${TAIL_STORIES} stories, ${TAIL_D} developer-days`, ""],
-  ["Calendar days to the end", String(END_TO_END), "if all six are started this morning", "red"]
+  ["Items only somebody outside can clear", String(ASKS.length), "one decision, two answered and not closed, five to obtain", "red"],
+  ["Answered on 6 August", String(ANSWERED_0806), `and ${CLOSED_0806} of the ${ANSWERED_0806} closed`, "red"],
+  ["Closed by build day four", `${SCHED_STORIES} / ${STORIES.length}`, `${SCHED_D} of ${TOTAL} days, if the fast items take two`, "green"],
+  ["Calendar days to the end", String(END_TO_END), "if all eight are started this morning", "red"]
 ];
 document.getElementById("tiles").innerHTML = TILES.map(([l, v, f, c]) =>
   `<div class="tile${c ? " " + c : ""}"><div class="label">${l}</div>` +
@@ -902,7 +1167,7 @@ document.getElementById("fig1").innerHTML = (() => {
   });
   const yl = 26 + WAS.length * (H + G) - G + 12;
   o += R(L, yl, BW, 1, C.grid, { r: 0 });
-  o += T(L, yl + 18, "The third bar is the report this replaces: one sentence from a stakeholder moved sixteen developer-days from red to green, and delivering DOCS-4 moved one more. The bottom bar is what two days of building did with them, and it is the first bar on this page with no green in it at all.", { fs: 12, fill: C.mut });
+  o += T(L, yl + 18, "The second bar is one sentence from a stakeholder moving seventeen developer-days from red to green. The third is what two days of building did with them. The fourth is larger than the third and nobody was slow: 5 August added a ninth epic, four of whose developer-days were built the same day. The bottom bar is 6 August, when five answers arrived and the red did not move.", { fs: 12, fill: C.mut });
   return svg(W, yl + 30, o);
 })();
 
@@ -1062,33 +1327,47 @@ const pips = (id, n, per, col, note) => {
 };
 pips("fig6a", TOTAL, 20, i => (i < FREE_D ? C.good : C.crit),
   `${BD} red squares nobody may touch and ${FREE_D} green ones. One square is one developer-day. ` +
-  `The previous edition of this figure had seventeen green squares in it; they were all built inside two days.`);
+  `The third edition of this figure had seventeen green squares in it; they were all built inside two days. ` +
+  `The fourth had none, and this one is fifteen squares longer than the fourth because 5 August added a ninth epic.`);
+/* Days on which somebody writes code. 2 to 4 are the scheduled days of figure 7. The rest are the
+   day after each long-lead item lands, and E9-S4 takes the day after E9-S3 because it sits behind it. */
+const SCHED_BUILD = new Set([2, 3, 4]);
+const TAIL_BUILD  = new Set([8, 9, 13, 15, 22]);
+const BUILD_TOTAL = SCHED_BUILD.size + TAIL_BUILD.size;   // 8 of the 22
 const calCol = i => {
-  if (i < RUNWAY) return C.good;
-  if (i === END_TO_END - 1) return C.warn;
-  return i >= RUNWAY + 1 && i < SCHED_DAYS ? C.s1 : C.grid;
+  const day = i + 1;
+  if (SCHED_BUILD.has(day)) return C.s1;
+  if (TAIL_BUILD.has(day)) return C.warn;
+  return C.grid;
 };
 pips("fig6b", END_TO_END, 20, calCol,
-  `${END_TO_END} calendar days. Blue is building unlocked by an answer, grey is waiting for post, amber is the last build day. ` +
-  `There is no green left, and day one is grey for that reason: with the runway at zero the first day of this plan is spent waiting.`);
+  `${END_TO_END} calendar days. Blue is building released by one of the fast items, amber is building released by ` +
+  `something with a long lead time, grey is waiting for post. ${BUILD_TOTAL} squares have code written on them and ` +
+  `${END_TO_END - BUILD_TOTAL} do not. There is no green left, and day one is grey for that reason: with the ` +
+  `runway at zero the first day of this plan is spent waiting.`);
 
 /* ------------------------------------------------------------------ *
- * FIGURE 7  the five build days                                       *
+ * FIGURE 7  the four scheduled days, and the first of them is empty   *
  *   arrives  the calendar day the item lands, on the three-day        *
  *            assumption for decisions                                 *
+ *   ADR-0002 is not here any more. It was answered on 5 August, and   *
+ *   what now holds its three stories is EXT-1, whose twelve-day lead  *
+ *   puts them in the tail rather than on a scheduled day.             *
  * ------------------------------------------------------------------ */
 const SCHED = [
   { key:"EXT3", label:"Email",           code:"EXT-3",     arrives:1,
     items:[["E6-S1",2],["E6-S2",3],["E5-S3",3],["E5-S4",3],["E6-S3",4]] },
+  { key:"EXT8", label:"Identifiers",     code:"EXT-8",     arrives:1,
+    items:[["E9-S2",2]] },
   { key:"D4",   label:"Storage",         code:"ADR-0004",  arrives:2,
-    items:[["E3-S2",3],["E3-S3",4],["E7-S4",4]] },
-  { key:"D2",   label:"Money",           code:"ADR-0002",  arrives:3,
-    items:[["E2-S1",4],["E2-S3",5],["E2-S5",5]] }
+    items:[["E3-S2",3],["E3-S3",4],["E7-S4",4]] }
 ];
 const TAIL = [
-  { code:"EXT-4", label:"Legal",   lead:14, items:[["E8-S2"]] },
-  { code:"EXT-5", label:"Privacy", lead:21, items:[["E8-S1"]] },
-  { code:"EXT-6", label:"Pen test",lead:21, items:[["E8-S3"]] }
+  { code:"EXT-9 + EXT-10", label:"Commission", lead:7,  items:[["E9-S3"],["E9-S4"]] },
+  { code:"EXT-1",          label:"Money",      lead:12, items:[["E2-S1"],["E2-S3"],["E2-S5"]] },
+  { code:"EXT-4",          label:"Legal",      lead:14, items:[["E8-S2"]] },
+  { code:"EXT-5",          label:"Privacy",    lead:21, items:[["E8-S1"]] },
+  { code:"EXT-6",          label:"Pen test",   lead:21, items:[["E8-S3"]] }
 ];
 const daysOf = id => { const r = STORIES.find(x => x[0] === id); return r ? r[3] : 0; };
 
@@ -1124,11 +1403,22 @@ document.getElementById("fig7").innerHTML = (() => {
   o += R(0, y, W, 1, C.grid, { r: 0 });
   y += 16;
   TAIL.forEach(t => {
+    const dd = sum(t.items, it => daysOf(it[0]));
     o += T(0, y + 18, esc(t.label), { fs: 12.5, w: 640, fill: C.warn });
     o += T(0, y + 32, `${esc(t.code)} lands day ${t.lead}`, { fs: 10.5, fill: C.mut });
     o += R(L, y + 4, W - L - 150, H, C.warn, { op: 0.14, r: 4 });
-    o += T(L + 12, y + 4 + H / 2 + 4.5,
-      `${esc(t.items[0][0])} &middot; ${daysOf(t.items[0][0])}d &middot; cannot be scheduled: waits ${t.lead} calendar days from the morning somebody starts it`,
+    /* Every story in the row, not just the first. A tail row that printed one story read as
+       one story of work, and two of these five now carry more than one. */
+    let cx = L + 10;
+    t.items.forEach(([id]) => {
+      const cw = 108;
+      o += R(cx, y + 9, cw, H - 10, C.warn, { op: 0.55, r: 3 });
+      o += T(cx + cw / 2, y + 4 + H / 2 + 4.5, `${esc(id)} &middot; ${daysOf(id)}d`,
+        { fs: 11, a: "middle", w: 620, fill: "#fff" });
+      cx += cw + 6;
+    });
+    o += T(cx + 8, y + 4 + H / 2 + 4.5,
+      `${dd}d that cannot be scheduled: ${t.lead} calendar days of waiting first`,
       { fs: 11.5, fill: C.sec });
     y += H + 12;
   });
@@ -1136,7 +1426,7 @@ document.getElementById("fig7").innerHTML = (() => {
 })();
 
 document.getElementById("key7").innerHTML =
-  `<div class="r"><b>Day 1</b> <code>&mdash;</code> empty: the free lane ADR-0001 opened was spent on 3 and 4 August</div>` +
+  `<div class="r"><b>Day 1</b> <code>&mdash;</code> empty: the lane ADR-0001 opened was spent on 3 and 4 August, refilled for part of 5 August by E9-S1, and is empty again</div>` +
   SCHED.filter(g => g.key).map(g => {
     const a = askOf(g.key);
     return `<div class="r"><b>${esc(g.label)}</b> <code>${esc(a.code)}</code> ${esc(a.kind)}, ${a.lead} day${a.lead === 1 ? "" : "s"} to obtain</div>`;
@@ -1147,20 +1437,22 @@ document.getElementById("key7").innerHTML =
  * FIGURE 8  decisions and gates                                       *
  * ------------------------------------------------------------------ */
 document.getElementById("fig8").innerHTML = (() => {
+  /* Statuses are read off the record files, not off what the behaviour does. Two of these are
+     half met for that reason alone: the code shipped and the record still says Proposed. */
   const ADRS = [
-    ["ADR-0001", "MVP scope: is on-platform purchase in?", 1, "Answered 2 August. Released 5 stories."],
-    ["ADR-0002", "Escrow, pass-through, or off-platform?", 0, "Holds 3 stories and gate G6."],
-    ["ADR-0003", "Payment mock-mode guard", 1, "Shipped. Production cannot fake a payment."],
-    ["ADR-0004", "How is a private document served?", 0, "Holds 3 stories and half of gate G3."],
-    ["ADR-0005", "Quality ratchet on changed lines", 1, "Enforced on every pull request."]
+    ["ADR-0001", "MVP scope: is on-platform purchase in?", 1, "Answered 2 August. Released 5 stories, all merged."],
+    ["ADR-0002", "Escrow, pass-through, or off-platform?", 1, "Answered 5 August. EXT-1 now holds its 3 stories."],
+    ["ADR-0003", "Payment mock-mode guard", 0.5, "Behaviour shipped. The record still reads Proposed."],
+    ["ADR-0004", "How is a private document served?", 0, "Holds 3 stories and half of G3. Region open, not decided."],
+    ["ADR-0005", "Quality ratchet on changed lines", 0.5, "Enforced on every pull request. Record reads Proposed."]
   ];
   const GATES = [
-    ["G1", "Buyer completes the journey on staging", 0, "Now measurable. E1 is finally allowed to be built."],
-    ["G2", "A real payout lands and a refund is repaid", 0, "Waits on ADR-0002 and EXT-1."],
+    ["G1", "Buyer completes the journey on staging", 0, "E1 has merged. Nobody has walked it end to end yet."],
+    ["G2", "A real payout lands and a refund is repaid", 0, "ADR-0002 answered 5 August. Waits on EXT-1."],
     ["G3", "No private document readable unauthorized", 0.5, "Probe suite passes. Waits on E3-S2 and ADR-0004."],
-    ["G4", "PoA and terms approved by counsel", 0, "Waits on EXT-4. Fourteen days out."],
+    ["G4", "PoA and terms approved by counsel", 0, "Waits on EXT-4, and on EXT-10 for the deduction clause."],
     ["G5", "Independent security review closed", 0, "Waits on EXT-6. Twenty-one days out."],
-    ["G6", "Escrow model confirmed against CBN and AML", 0, "Waits on ADR-0002."]
+    ["G6", "Escrow model confirmed against CBN and AML", 0.5, "Model confirmed 5 August. Waits on EXT-1 to be shown."]
   ];
   const W = 1100;
   /* 1 met, 0.5 partly met, 0 not met. */

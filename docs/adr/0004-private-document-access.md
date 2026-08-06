@@ -31,4 +31,12 @@ refuses to start on a serverless platform with the local driver.
 Development keeps the local driver, documented as development only. A migration pass must copy recoverable
 objects and report the keys it cannot find rather than failing silently.
 
-Region selection is an open sub-decision with NDPR data-residency implications.
+Region selection is an open sub-decision with data-residency implications. It is open rather than blocked as of
+2026-08-06, and open is not decided. EXT-11 established that the NDPA 2023 and the GAID 2025 govern rather than
+either company policy, so the closed list of transfer conditions applies and the published policy's "reasonable
+steps" wording does not; a second answer the same day named the mechanism the existing non-Nigerian
+infrastructure sits under. That makes the choice takeable with a condition attached: a Nigerian region needs no
+transfer instrument, and a non-Nigerian one may not carry production data until an NDPC-approved Cross-Border
+Data Transfer Instrument or standard contractual clauses are executed with the hosting provider and the
+relevant subprocessors, and documented. No such instrument exists in this repository. Until one is executed and
+documented, no new production transfer may rely on general consent or on reasonable steps.
