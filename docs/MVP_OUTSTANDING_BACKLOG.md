@@ -289,14 +289,15 @@ E3-S2 (durable storage)
 
 Work the team cannot do with code.
 
-**EXT-8 through EXT-12 were approved on 2026-08-06 and are cleared to send. They have not gone out
-yet.** The text is on record in
+**EXT-8 through EXT-12 went out on 2026-08-06, all five together, and nothing has come back yet.**
+The text is on record in
 [docs/escalations/2026-08-06-ext-8-and-ext-12.md](escalations/2026-08-06-ext-8-and-ext-12.md), and
-what actually gets sent is the client-facing form of it,
+what was sent is the client-facing form of it,
 [ENG-DR-2026-08-06-01_Decision_Request.docx](escalations/ENG-DR-2026-08-06-01_Decision_Request.docx),
-which puts a response box under each question and a collation sheet at the back. **The dispatch date
-for each one is stamped in the table at the top of the markdown file on the day it goes, never
-backfilled**, so an empty cell there is the authority and this paragraph is not. Answers get recorded
+which puts a response box under each question and a collation sheet at the back. Its cover asked for
+a response by close of business the same day. **Sending is not answering.** The dispatch table at the
+top of the markdown file carries a second column, Answer recorded, and every cell in it is empty, so
+five questions are still open and this paragraph is not the authority on that, the table is. Answers get recorded
 in the same file, under the question they answer, with the date and who gave it. These go to people
 outside the team and come back days later, so the question has to be on record to check the answer
 against. Do not edit a question after it has been sent; add a dated entry beneath it.
@@ -336,9 +337,9 @@ Two more items go to counsel in the same bundle. Section 10 vests site content i
 
 #### EXT-8, the five identifier conflicts
 
-Approved 2026-08-06 and cleared to send, to Digital Records, copied to Finance because conflict 1 is
-a billing blocker and to Product. Not dispatched yet; the date lands in the dispatch table in
-`docs/escalations/2026-08-06-ext-8-and-ext-12.md` when it does.
+Sent 2026-08-06 to Digital Records, copied to Finance because conflict 1 is a billing blocker and to
+Product, inside ENG-DR-2026-08-06-01. **No answer recorded**, which is the state that matters here:
+E9-S2 is gated on this coming back, not on it having gone.
 
 **Lead with this sentence, because it is the one with a user in it: the published terms promise users a professional category the platform cannot issue an identifier for.** Terms §2 and the privacy policy §1 both name nine categories, including plumbers, electricians and interior designers, and none of those three has a code in either coded list. That is conflict 4 below, stated the way a user meets it rather than the way a schema does, and it is the lead rather than a sixth item.
 
