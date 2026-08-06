@@ -128,7 +128,7 @@ These are product and commercial decisions. **D1 came back answered on 2026-08-0
 | D1 | Is the on-platform property purchase in the MVP, or is standalone due diligence the MVP? | Two due diligence paths exist and only one is complete. Answering "standalone only" removes most of E1 and E2 and cuts about 20 days | Confirm on-platform is in scope, since escrow and PoA only pay off there. If it is not, retire the wizard rather than leaving it half-wired | ✅ **Answered 2026-08-02: on-platform purchase is in the MVP.** The recommendation was taken. `docs/adr/0001-mvp-scope-envelope.md` is Accepted, E1's four stories are startable, and they are wave 4 on the board |
 | D2 | Escrow money model and the settlement account | Whether SafeBuyRealties holds client funds changes the CBN and AML posture, and changes E2-S1 from a bank-details form into a regulated flow | Legal and compliance review before E2-S1 starts | ✅ **Answered 2026-08-05: SafeBuyRealties holds client funds.** SBR-FIN-DEV-SPEC-20260803-V1.5 §11.1 obliges the platform to reconcile an escrow bank balance, which only its operator can be asked to do, and §1.3 and §11.3 make that balance a liability rather than income. `docs/adr/0002-escrow-fund-holding-model.md` is Accepted. E2-S1 is a regulated flow, and it now waits on EXT-1 alone. **Approval to build is not approval to operate:** §14.2 withholds production activation, which is a second gate |
 | D3 | KYC: manual review or a provider such as Smile ID or VerifyMe | Manual is built. A provider changes E4-S2 and adds vendor lead time | Ship manual for MVP, keep the provider seam | ⏳ Open, and cheaper to answer late than it was. E4-S2 (#142) shipped on manual review and reads one field, `KycRecord.status`, through one registry. A provider changes who writes that field, not who reads it |
-| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⛔ Open **and now blocked**, 2026-08-05. The region half cannot be decided until EXT-11 comes back: the client's internal data protection policy §12 forbids any transfer outside Nigeria except on a closed list of three conditions, while the published privacy policy §10 promises only "reasonable steps". Those two rules produce different buckets, and the platform already runs on non-Nigerian infrastructure |
+| D4 | Object storage provider and region | Blocks E3-S2, which is on the critical path | S3-compatible, decide region for NDPR data residency | ⛔ Open **and now blocked**, 2026-08-05. The region half cannot be decided until EXT-11 comes back: the client's internal data protection policy §12 forbids any transfer outside Nigeria except on a closed list of three conditions, while the published privacy policy §10 promises only "reasonable steps". Those two rules produce different buckets, and the platform already runs on non-Nigerian infrastructure. **Still blocked after the 2026-08-06 answer**, and blocked for a narrower reason than before: the conflict is resolved and the strict rule governs, but which of the three conditions the running infrastructure sits under was not answered, and that is the half this row needs |
 | D5 | Adopt the reference project's quality bar as a ratchet on new code | Sets the definition of done for every story below | Yes, ratchet only, per section 0.3 | ⏳ Open |
 
 ---
@@ -165,8 +165,8 @@ Auth, users, listings, documents, verification, tasks, transactions, payments an
 | `docs/SafeBuy Realties ID Standard.docx` | ⚠️ Client source, authoritative, **and it contradicts itself** | sha256 `42c78808dd768a93b97b82356918a321ab800d89fd80084f157e6fe5f7ca80c0`, tracked since 2026-06-16. §2.0 rule 6 implies the national register throughout, §3.0 and §4.0 give Lagos examples, §7.0 gives national ones. That is EXT-8's fourth conflict, and it is why E9-S2 implements the property register only. A Word lock file beside it says somebody has it open, so re-check the hash before relying on it |
 | `docs/inputs/SBR TERMS AND CONDITIONS SAFEBUY.docx` | ⚠️ Client source, **incomplete** | The file stops at §10, Intellectual Property, and ends mid-clause. Nine clause families a platform holding client money needs are absent; the table under EXT-4 in section 3.3 lists them. §10 also vests site content in an individual rather than the company. Do not quote this document as the platform's terms |
 | `docs/inputs/SBR -POWER OF ATTORNEY.docx` | ⚠️ Client source, complete instrument, **narrower than the code assumes** | Clause 5 authorises a 10% deduction at source for brokerage and says nothing about VAT, which is the withholding FinGov §4 and Appendix C both perform. The body is dated 2017 in two places and carries no attestation, stamping, registration or Governor's consent clause. EXT-10 |
-| `docs/inputs/SB DATA PROTECTION POLICY.docx` | ⚠️ Client source, **"SUBJECT TO BOARD APPROVAL"** | Its own first line. Stricter than the published privacy policy on cross-border transfer, and it names no DPO. Its §9 DPCO engagement, §10.1 fifteen-month audit, §13 DPIA and §14 RoPA are now in E8-S1's scope. EXT-11 |
-| `docs/inputs/SBR PRIVACY POLICY.docx` | ⚠️ Client source, **published, and weaker than the internal policy** | §10 promises "reasonable steps" where the internal policy's §12 sets a closed list of three conditions. It also treats browser settings as cookie consent and continued browsing as consent. Which document governs is EXT-11, and it is blocking |
+| `docs/inputs/SB DATA PROTECTION POLICY.docx` | ⚠️ Client source, **"SUBJECT TO BOARD APPROVAL"** | Its own first line. Stricter than the published privacy policy on cross-border transfer, and it names no DPO. Its §9 DPCO engagement, §10.1 fifteen-month audit, §13 DPIA and §14 RoPA are now in E8-S1's scope, and the 2026-08-06 EXT-11 answer adds §7.1's SNAG and §6.2's higher-standard consent tier for sensitive data. Legal's reply cites this copy section by section and the wording matches, so it is the current one. EXT-11 |
+| `docs/inputs/SBR PRIVACY POLICY.docx` | ⚠️ Client source, **published, and weaker than the internal policy** | §10 promises "reasonable steps" where the internal policy's §12 sets a closed list of three conditions. It also treats browser settings as cookie consent and continued browsing as consent. **All three of those are overridden as of the 2026-08-06 EXT-11 answer**: the statute governs, so the closed list is the transfer rule, and §6's bar on consent by inactivity disposes of both consent practices. **This document now needs rewriting**, which is a client action rather than an engineering one and belongs with EXT-5 |
 
 **First housekeeping action, before any story:** reconcile `BUILD_CHECKLIST.md` against this document, and mark the stale analysis files with a header that points here. In the reference project's paradigm this is a `DOCS-1` chore, size S, and it is worth doing because the checklist is what every AI agent on this repo reads first.
 
@@ -264,6 +264,8 @@ E3-S2 (durable storage)
 >
 > **Reconciled a seventh time on 2026-08-05.** Two things moved and neither of them is a story finishing. **ADR-0002 is answered**, so `E2-S1` no longer waits on a decision at all: it waits on EXT-1, and EXT-1 is now a larger ask than it was, because the answer is that SafeBuyRealties holds client funds and the account it needs is a ring-fenced client-funds account rather than a merchant settlement account. The graph above is unchanged in shape and one of its two remaining boxes changed owner, from the stakeholder who had to decide to the client who has to open an account. **And a new epic arrived that is not on this path.** `E9` implements SBR-FIN-DEV-SPEC-20260803-V1.5 and it is deliberately drawn off the critical path: its first story ships tables and no behaviour, everything in it sits behind `financial_governance` with the flag off, and section 14.2 of the specification withholds production activation as a second gate that this project does not hold. So E9 lengthens the backlog without lengthening the path to a launchable product, which is the honest way to read the total going from 28 days to 37. The one edge E9 does have into the path is at the far end: `E9-S4` reconciles an escrow bank balance and cannot be finished without the account `E2-S1` needs, so EXT-1 now blocks two epics rather than one.
 >
+> **Reconciled an eighth time on 2026-08-06.** No story merged into this note either. **EXT-11 came back from Legal on the day it went out, and it is the first of the five to answer.** It answered two of its three questions and the graph above is unchanged, which is the part worth stating plainly: `E3-S2` still waits on ADR-0004 and EXT-2, and the region choice inside it still waits on EXT-11, because the question that was holding the region is the one that was not answered. What did change is the character of two rows rather than their status. `D4` is blocked for a narrower reason than it was: the two documents no longer disagree, the statute governs and the closed list of three conditions is the rule, so the open question is no longer *which rule* but *which condition we are already relying on*. And the published privacy policy has moved from a competing document to a wrong one, because §6's bar on consent by inactivity overrides both of the consent practices in it. Rewriting it is a client action and it belongs with EXT-5. **`E8-S1` gained scope from an answer, which is the direction scope usually does not move**: §6.2's higher-standard consent tier, §6's affirmative-act cookie consent, and §7.1's Standard Notice to Address Grievance, which is a GAID obligation this document had never carried. That last one comes with the finding underneath this whole answer: **the GAID 2025 is now named as a governing instrument and it is not in `docs/inputs/`, so part of E8-S1 is scoped against a directive nobody on this project has read.** The follow-up to Legal is three lines and does not re-ask what has been answered.
+>
 > The other half of this note is what E9 discovered rather than what it built. Reading the two controlling documents against each other produced five identifier conflicts, an unauthorised VAT withholding, a commission rate that appears in four sources with three readings, and a data-transfer rule the internal policy and the published one disagree about. Those are EXT-8 to EXT-12 below. **Two of them reach back into rows that already looked merely queued: `D4` is now blocked rather than open, because EXT-11 decides which region a bucket may sit in, and `E3-S2` therefore inherits a second external dependency it did not have this morning.**
 
 ### 3.2 Go-live gates
@@ -289,23 +291,46 @@ E3-S2 (durable storage)
 
 Work the team cannot do with code.
 
-**EXT-8 through EXT-12 went out on 2026-08-06, all five together, and nothing has come back yet.**
-The text is on record in
+**EXT-8 through EXT-12 went out on 2026-08-06, all five together, and one has come back the same
+day.** Legal answered EXT-11, on two of its three questions. The text is on record in
 [docs/escalations/2026-08-06-ext-8-and-ext-12.md](escalations/2026-08-06-ext-8-and-ext-12.md), and
 what was sent is the client-facing form of it,
 [ENG-DR-2026-08-06-01_Decision_Request.docx](escalations/ENG-DR-2026-08-06-01_Decision_Request.docx),
 which puts a response box under each question and a collation sheet at the back. Its cover asked for
 a response by close of business the same day. **Sending is not answering.** The dispatch table at the
-top of the markdown file carries a second column, Answer recorded, and every cell in it is empty, so
-five questions are still open and this paragraph is not the authority on that, the table is. Answers get recorded
+top of the markdown file carries a second column, Answer recorded, and four of its five cells are
+empty, so four questions are still open and the fifth is open in part. **A partial answer is recorded
+as partial in that cell**, because a bare date in that column reads as closed and EXT-11 is not:
+the half that was holding the region decision is the half that came back unanswered. This paragraph
+is not the authority on any of that, the table is. Answers get recorded
 in the same file, under the question they answer, with the date and who gave it. These go to people
 outside the team and come back days later, so the question has to be on record to check the answer
 against. Do not edit a question after it has been sent; add a dated entry beneath it.
 
+**EXT-1 to EXT-6 have never had a written ask behind them, only a row in this table, and a row is not
+something a stakeholder can answer.** What each one needs, in the exact form that would close it, is
+now on record in
+[docs/escalations/2026-08-06-closure-schedule.md](escalations/2026-08-06-closure-schedule.md), with
+the stakeholder-facing form in
+[ENG-CS-2026-08-06-01_Closure_Schedule.docx](escalations/ENG-CS-2026-08-06-01_Closure_Schedule.docx).
+It covers EXT-1 to EXT-6, the two decision records that are still marked Proposed for behaviour
+already running in production, ADR-0003 and ADR-0004, and D3. **It has not been dispatched**, and the
+dispatch table at the top of that file is the authority on that, not this paragraph. **It asks for a
+response by close of business today, 2026-08-06**, set on the cover on that date while the schedule
+was still drafting, which the record file notes as an edit in place because a document nobody is
+holding yet has no recipient to protect. The deadline is for what can be answered today: anything
+that cannot be settled today comes back as `pending` with the date it is expected, which is a usable
+answer because a story can be planned against a date and cannot be planned against silence. **A
+response deadline is not a dispatch date.** If close of business passes with the schedule unsent,
+the dispatch table stays empty and the deadline is what moves. ADR-0005 is
+deliberately excluded from it at the requester's instruction of 2026-08-06 and D5 stays open. The
+three sections below carry the closure conditions for EXT-4, EXT-5 and EXT-6 in full, because those
+three are the ones where the ask is materially larger than the row suggests.
+
 | ID | Input | Owner | Blocks |
 | --- | --- | --- | --- |
 | EXT-1 | Production Paystack live keys, and a **ring-fenced client-funds escrow account** with its own mandate, held apart from operating money | Client | E2-S1, E9-S4, G2, G6. **Restated 2026-08-05.** This used to read "a settlement account", which was the right ask while D2 was open and both readings were live. ADR-0002 closed it the other way: the platform holds client money, so the account is a liability account it reconciles under section 11.1 rather than a merchant account it sweeps. Same external party, materially larger ask, and it now blocks two epics |
-| EXT-2 | S3-compatible bucket, credentials, region decision | Client or Corne Labs | E3-S2. **The region half is downstream of EXT-11**, which decides whether a non-Nigerian region is permitted at all |
+| EXT-2 | S3-compatible bucket, credentials, region decision | Client or Corne Labs | E3-S2. **The region half is downstream of EXT-11 and stays held after its 2026-08-06 answer.** That answer confirmed the strict rule governs but not which of its three conditions the running infrastructure meets, and that is the part a region needs |
 | EXT-3 | Transactional email domain, SPF, DKIM, DMARC, SMTP credentials | Client | E6-S1 |
 | EXT-4 | Counsel-approved PoA instrument text and terms of service | Client | E8-S2, G4. **Partial on both halves, 2026-08-05.** See below |
 | EXT-5 | NDPR privacy notice and retention policy | Client | E8-S1 |
@@ -314,7 +339,7 @@ against. Do not edit a question after it has been sent; add a dated entry beneat
 | EXT-8 | Digital Records to resolve five conflicts between the SafeBuy Realties ID Standard and SBR-FIN-DEV-SPEC-20260803-V1.5 | Client, Digital Records | E9-S2. See below |
 | EXT-9 | Finance to confirm the commission basis: one-sided or two-sided, collected or withheld, floor or rate | Client, Finance | E9-S3. See below |
 | EXT-10 | Finance **and** counsel to confirm what authorises VAT withholding from seller proceeds | Client, Finance, counsel | E9-S3, G4. See below |
-| EXT-11 | Legal to say which data-transfer rule governs, the internal policy's or the published one's | Client, legal | D4, E3-S2, E8-S1. **Blocking**, see below |
+| EXT-11 | Legal to say which data-transfer rule governs, the internal policy's or the published one's | Client, legal | **Answered in part on 2026-08-06 and still blocking.** The statute governs and the strict rule wins, which settles the conflict and both consent questions. Which of the three §12 conditions the running infrastructure sits under was not answered, so D4 and E3-S2 are unchanged. E8-S1 gains scope rather than losing it, see below |
 | EXT-12 | Management to settle the entity name, registered address and canonical domain, and to say whether the ID Standard is currently under revision | Client, management | E9-S2, E8-S2, and **any further PoA generation**. See below |
 
 #### EXT-4, partial on both halves
@@ -334,6 +359,92 @@ The schedule assumed EXT-4 was a review of two finished documents. It is not. Th
 | Amendment, severability, force majeure, entire agreement | Standard boilerplate, all absent |
 
 Two more items go to counsel in the same bundle. Section 10 vests site content in "the Founder of SafeBuy Realties International Limited", an individual rather than the company, which is a different owner from the one every other document names. And section 5(a) obliges users to charge "a minimum of 5% commission apiece from both buyers and seller cumulatively", which is the published promise the commission question below has to be reconciled against.
+
+#### EXT-4, what closes it
+
+**Three documents, not two.** The clause table above is the request to counsel on the terms of
+service. It is not the whole of EXT-4, and treating it as the whole of EXT-4 is how this row came to
+be sized at one developer-day.
+
+1. **The terms of service, completed.** The nine absent clause families in the table above, plus the
+   two corrections: §10 vests site content in "the Founder", an individual and not the company, and
+   §5(a)'s minimum 5% apiece has to be reconciled against whatever EXT-9 comes back with.
+2. **The seller Power of Attorney.** `docs/inputs/SBR -POWER OF ATTORNEY.docx` is dated 2017 in its
+   body, has a witness block with no attestation clause above it, and carries no stamping clause, no
+   Land Registry registration clause and no Governor's consent clause under the Land Use Act. Its
+   clause 5 authorises deducting 10% at source, which is EXT-9 and EXT-10 arriving inside a signed
+   instrument.
+3. **The instrument the platform generates**, `backend/src/poa/poa.service.ts` lines 103 to 159.
+   Counsel has never seen it. Its seven clauses were written in a build checklist, not by a lawyer,
+   and it is the document a real seller actually signs. **One question in it decides whether the
+   feature is lawful at all:** can an instrument granting authority over land be executed
+   electronically under the Evidence Act 2011 and the Electronic Transactions Act 2023, or is land
+   carved out? If it is carved out, the platform has to produce a print-and-execute pack instead,
+   which is a build change and not a wording change, and E8-S2 is not an L.
+
+**Sequencing, and it is the reason this cannot simply be started.** EXT-9, EXT-10 and EXT-12 all sit
+inside the text counsel would be approving: the commission basis, the VAT authority, and the
+registered entity name that appears on every page of all three documents. Instructing counsel before
+those three come back means paying for a review of text that then changes. `RUNBOOK.md:420` already
+records that issued instruments cannot be recalled, so **further PoA generation stays blocked** on
+EXT-12 regardless of where counsel is.
+
+What comes back closes this row: counsel's name and the date they were instructed, the expected
+return date, confirmation they hold all three documents rather than the first one, and their position
+on electronic execution of a land instrument.
+
+#### EXT-5, what closes it
+
+**Both documents already exist in the repository and both are structurally complete.** This is not a
+request for a privacy notice that has never been written. `docs/inputs/SBR PRIVACY POLICY.docx` and
+`docs/inputs/SB DATA PROTECTION POLICY.docx` are both there. It is a request for six things they do
+not contain, and reading the client's own internal policy widened the row rather than narrowing it:
+four of the six are obligations that policy creates for itself and then does not discharge.
+
+1. **Board adoption.** The internal policy's first line reads "SUBJECT TO BOARD APPROVAL". Encoding
+   retention rules against an unadopted policy means encoding something the board may still change.
+   Needed: the adoption date, the resolution reference, and that line coming off the adopted version.
+2. **A named DPO.** Internal §8 creates the role and appoints nobody. §8 also makes the DPO the
+   person who advises on data protection impact assessments, so **E8-S1 criterion 8 cannot be validly
+   signed off while the role is vacant**, and there is no DPIA in this repository at all.
+3. **A licensed data protection compliance organisation**, required by internal §9. None is engaged,
+   nothing has been procured, and this has a lead time measured in weeks rather than days.
+4. **The date business operations commenced.** Internal §10.1 sets the initial compliance audit at
+   fifteen months from that date. Nobody in this repository has the date, so nobody can say whether
+   the clock has already started. §10.2 also requires annual returns by 31 March, which is a calendar
+   obligation on the business and not a build task.
+5. **Whether erasure means deletion or crypto-shredding** where a record must be retained by law.
+   This decides what E8-S1's erasure feature does to a record it is not permitted to destroy, and it
+   cannot be inferred from either document.
+6. **Retention periods, one per data category.** Neither document states a period, in days or years,
+   for anything. Published §9.1 says "as long as is reasonably necessary" and internal §14 requires
+   the record of processing activities to carry periods it never supplies. **E8-S1 criterion 3 makes
+   an unset period a loud failure rather than a silent default**, so a missing number blocks that one
+   category and not the story. The eight categories are KYC identity documents, KYC selfie and
+   liveness images, professional credentials, transaction and payment records, audit and access logs,
+   marketing consent records, cookie and analytics data, and account data after closure. Internal
+   §4.5's six months has to be reconciled against whatever comes back, and that reconciliation is the
+   DPO's to make in writing rather than engineering's to assume.
+
+The cross-border half of this row is EXT-11 and is not restated here. **Six developer-days is the
+build, and it is not the lead time.** Engaging a DPCO and getting a policy through a board are the
+long poles, and neither has started.
+
+#### EXT-6, what closes it
+
+**The only external input on this list with no upstream dependency.** It waits on nothing, it could
+be booked today, and what is missing is the booking rather than the test. That makes it the cheapest
+thing on the critical path to move and the one most likely to be forgotten because it looks small.
+
+What has to come back: the vendor and a named contact; a scope of work naming all four areas E8-S3
+criterion 1 requires, being authentication, authorization, payments and document handling, and
+explicitly including the escrow payment path and the KYC document store; whether the engagement is
+black, grey or white box; the environment, which must not be production carrying live customer data;
+the start and end dates; rules of engagement covering the seeded test data set, any out-of-hours
+constraint and who to call when something breaks mid-test; the date the report is due; and **the date
+the re-test letter is due**, which is its own artifact under criterion 4. Gate G5 reads "no high
+findings outstanding", and only an independent party can attest to that, so the re-test letter is the
+thing that actually closes the gate rather than the first report.
 
 #### EXT-8, the five identifier conflicts
 
@@ -375,6 +486,16 @@ This goes to Finance and counsel as its own item rather than folded into EXT-9, 
 #### EXT-11, which data-transfer rule governs, and it is blocking
 
 The client's internal data protection policy §12 says personal data **shall not** be transferred outside Nigeria unless one of three conditions is met: an adequacy decision, NDPC-approved standard contractual clauses, or a valid statutory exception. The published privacy policy §10 promises only that reasonable steps are taken. The internal document is the stricter of the two and the platform already runs on non-Nigerian infrastructure, so this is a live exposure and not a future one. **ADR-0004's region choice cannot be made until it is answered**, because "reasonable steps" and a closed list of three conditions produce different bucket configurations, and that is why D4 above now reads blocked. Two further conflicts go up with it: the published policy treats browser settings as cookie consent, and treats continued browsing as consent, neither of which the internal policy or the NDPA supports. Engineering's position in the meantime is to encode the stricter rule and let the tests be the record of which document won.
+
+**Answered in part on 2026-08-06 by Legal, and it is still blocking.** The full reply and what was checked against the source is in [the escalation record](escalations/2026-08-06-ext-8-and-ext-12.md#answer-2026-08-06). Three things changed and one did not.
+
+The governing instrument question is settled, and settled a level above where it was asked. Neither company document governs: the **NDPA 2023 and the GAID 2025** do, and both company documents sit underneath them. A company document cannot lower a statutory floor, so §12's closed list survives and the published policy's "reasonable steps" does not, whatever the website says. That confirms engineering's interim position rather than overturning it.
+
+Both consent conflicts are settled too, though by the section Legal pointed at rather than by name. §6's "No implied consent: Silence, pre-ticked boxes, or inactivity does not constitute consent" disposes of continued browsing, and §6.1's requirement that cookie consent state the purpose and the party responsible disposes of browser settings. **That is engineering's reading of the ruling and is recorded as a reading**, not as words Legal wrote. It is wrong only in the strict direction if it is wrong at all. §6.2 also gives E8-S1 something it did not have: a named higher-standard consent tier for sensitive data, which `KycRecord` holds.
+
+**What did not change is the part that was holding work.** Which of the three §12 conditions the non-Nigerian infrastructure already in use sits under, and what must be in place before a region is chosen, was not answered. **D4 stays blocked, ADR-0004's region sub-decision stays open, and the region half of EXT-2 stays held.** The exposure is now sharper rather than smaller: the strict rule is confirmed as operative and none of the three conditions is recorded anywhere in this repository, so it is a known gap rather than a suspected one.
+
+**And the ruling added a document this project has never read.** GAID 2025 is named as governing. It is cited to §1, where our copy has only the NDPA 2023, but it is genuinely in the policy at §7, §7.1 and §8, so this is a citation slip and not a stale copy. The instrument itself is not in `docs/inputs/` and nothing has been scoped against it. One consequence is already visible: §7.1 requires a **Standard Notice to Address Grievance** as a GAID obligation, and SNAG appears nowhere in this backlog, the board or the codebase. E8-S1 is scoped against a directive nobody here has opened. The follow-up asks for question 2 again, for a copy of the GAID, and for a named person, because the answer is attributed to "Legal" with no individual on it.
 
 #### EXT-12, whose company is this and is the standard moving
 
@@ -1227,6 +1348,8 @@ Small, but it is a deploy-path change and wants its own verification rather than
 **Evidence of the gap.** No consent model, no retention policy, and no erasure path exist in the schema or the codebase. The platform stores government identity documents, selfies, and professional credentials. The reference project treats the equivalent as `FR-A6` and `FR-A7` with a dedicated privacy centre, and its own `docs/adr/0004-auth-and-account-portal.md` is worth reading before designing this.
 
 **What reading the client's own policy added, 2026-08-05.** `docs/inputs/SB DATA PROTECTION POLICY.docx` is now in the repository and it is stricter and more specific than this story assumed. Four obligations in it are dated or nameable and belong in this scope rather than in a general intention to comply: a licensed **Data Protection Compliance Organisation must be engaged** under §9, which is an engagement and not the NDPC registration this backlog used to call it; an **initial compliance audit within fifteen months** under §10.1, with annual returns by 31 March under §10.2; a **DPIA** under §13, which is unavoidable rather than discretionary because `KycRecord` already stores identity documents; and a **record of processing activities** under §14 which must carry a retention period per purpose. The RoPA is what resolves the retention design: periods are configured per purpose with no default and a loud failure when one is unset, rather than a single global number. §4.5's six months and the financial retention this platform needs are then two entries in that record rather than a contradiction, which is a documentation gap for the DPO to close in writing. Note also that the policy is headed "SUBJECT TO BOARD APPROVAL" and names no DPO, so both are open questions to the client. **And §12 is the one that blocks: it forbids transfer outside Nigeria except on a closed list of three conditions, while the published privacy policy §10 promises only reasonable steps.** That is EXT-11, and until it comes back this story encodes the stricter of the two and lets the tests be the record of which document won.
+
+**What the EXT-11 answer added, 2026-08-06.** The stricter-of-the-two hedge is no longer a hedge. Legal ruled that the **NDPA 2023 and the GAID 2025** govern, both company documents sit under them, and a company document cannot lower a statutory floor, so §12's closed list is the transfer rule and the published policy's "reasonable steps" is not. This story now encodes a rule rather than a guess, and the tests record a ruling rather than a bet. Three things join its scope. **§6.2's higher-standard consent tier for sensitive data** is now named, and `KycRecord` holds identity documents, so consent is two tiers rather than one flow. **§6's bar on consent by inactivity** kills continued browsing and browser settings as consent, so the cookie banner is an affirmative act with no pre-ticked boxes and the withdrawal path is as easy as the giving path, which §6 also requires. **§7.1's Standard Notice to Address Grievance** is a GAID obligation this backlog had never recorded, and SNAG appears nowhere in the repository, so the complaint route is a build item and not a paragraph in a notice. Note what this does not settle: which of the three §12 conditions the running infrastructure meets is still open, so the story can state the rule but cannot yet state the basis, and **the GAID itself is not in `docs/inputs/`**. Scoping the rest of this story against a directive nobody here has read is the risk to flag when it is picked up.
 
 **Acceptance criteria**
 
