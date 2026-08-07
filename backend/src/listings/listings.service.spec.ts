@@ -151,7 +151,13 @@ describe("ListingsService", () => {
 
   describe("create with spec fields", () => {
     it("persists beds, baths, landAreaSqm, and buildType on create", async () => {
-      const created = { ...baseListing, beds: null, baths: null, landAreaSqm: null, buildType: null };
+      const created = {
+        ...baseListing,
+        beds: null,
+        baths: null,
+        landAreaSqm: null,
+        buildType: null,
+      };
       prisma.listing.create.mockResolvedValue(created);
       prisma.listing.findUniqueOrThrow.mockResolvedValue({
         ...baseListing,
@@ -491,10 +497,7 @@ describe("ListingsService", () => {
 
   describe("findAll search filters", () => {
     it("applies minBeds and location filters for buyers", async () => {
-      await service.findAll(
-        { minBeds: 3, location: "Lagos" },
-        buyerActor,
-      );
+      await service.findAll({ minBeds: 3, location: "Lagos" }, buyerActor);
 
       expect(prisma.listing.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -607,9 +610,9 @@ describe("ListingsService", () => {
         { order: 0, status: VerificationStepStatus.COMPLETED },
         { order: 1, status: VerificationStepStatus.ACCEPTED },
       ];
-      expect(service.resolveListingStatusFromVerificationSteps(ListingStatus.IN_VERIFICATION, steps)).toBe(
-        ListingStatus.LIVE,
-      );
+      expect(
+        service.resolveListingStatusFromVerificationSteps(ListingStatus.IN_VERIFICATION, steps),
+      ).toBe(ListingStatus.LIVE);
     });
 
     it("returns IN_VERIFICATION when non-submission work has started", () => {

@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import {
   IsArray,
@@ -187,11 +179,7 @@ export class DdCmsController {
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @RequirePermissions(PERMISSIONS.DD_CHECKLISTS_MANAGE)
-  createItem(
-    @CurrentUser() user: JwtPayload,
-    @Param("id") id: string,
-    @Body() dto: CreateItemDto,
-  ) {
+  createItem(@CurrentUser() user: JwtPayload, @Param("id") id: string, @Body() dto: CreateItemDto) {
     return this.ddCms.createItem(id, dto, user.sub);
   }
 
@@ -211,11 +199,7 @@ export class DdCmsController {
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @RequirePermissions(PERMISSIONS.DD_CHECKLISTS_MANAGE)
-  reorder(
-    @CurrentUser() user: JwtPayload,
-    @Param("id") id: string,
-    @Body() dto: ReorderDto,
-  ) {
+  reorder(@CurrentUser() user: JwtPayload, @Param("id") id: string, @Body() dto: ReorderDto) {
     return this.ddCms.reorderItems(id, dto.orderedIds, user.sub);
   }
 }

@@ -28,8 +28,7 @@ export type StorageConfigStatus =
 
 function resolveLocalRoot(config: ConfigService): string {
   const configured =
-    config.get<string>("STORAGE_LOCAL_PATH")?.trim() ||
-    config.get<string>("UPLOAD_DIR")?.trim();
+    config.get<string>("STORAGE_LOCAL_PATH")?.trim() || config.get<string>("UPLOAD_DIR")?.trim();
   if (configured) {
     // Relative UPLOAD_DIR (e.g. ./uploads) is not writable on Vercel serverless
     if (process.env.VERCEL && !path.isAbsolute(configured)) {
@@ -228,19 +227,14 @@ export class StorageService {
     const endpoint = this.config.get<string>("AWS_S3_ENDPOINT");
 
     if (!region || !bucket) {
-      throw new BadRequestException(
-        "S3 storage requires AWS_REGION and AWS_S3_BUCKET",
-      );
+      throw new BadRequestException("S3 storage requires AWS_REGION and AWS_S3_BUCKET");
     }
 
     this.s3Bucket = bucket;
     this.s3Client = new S3Client({
       region,
       endpoint: endpoint || undefined,
-      credentials:
-        accessKeyId && secretAccessKey
-          ? { accessKeyId, secretAccessKey }
-          : undefined,
+      credentials: accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined,
       forcePathStyle: Boolean(endpoint),
     });
 
@@ -261,11 +255,9 @@ export class StorageService {
 
   private async getSignedUrlS3(key: string, expiresInSeconds: number): Promise<string> {
     const { client, bucket } = this.getS3();
-    return getSignedUrl(
-      client,
-      new GetObjectCommand({ Bucket: bucket, Key: key }),
-      { expiresIn: expiresInSeconds },
-    );
+    return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+      expiresIn: expiresInSeconds,
+    });
   }
 
   private async deleteS3(key: string): Promise<void> {

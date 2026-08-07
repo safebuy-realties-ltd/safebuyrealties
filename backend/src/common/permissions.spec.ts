@@ -1,10 +1,5 @@
 import { UserRole } from "@prisma/client";
-import {
-  ALL_PERMISSIONS,
-  PERMISSIONS,
-  hasPermission,
-  resolvePermissions,
-} from "./permissions";
+import { ALL_PERMISSIONS, PERMISSIONS, hasPermission, resolvePermissions } from "./permissions";
 
 describe("resolvePermissions", () => {
   it("gives super admin every permission regardless of grants", () => {
@@ -26,10 +21,11 @@ describe("resolvePermissions", () => {
   });
 
   it("prefers admin role permissions when no grants", () => {
-    const custom = resolvePermissions(UserRole.STAFF, [], [
-      PERMISSIONS.ESCROWS_READ,
-      PERMISSIONS.ANALYTICS_READ,
-    ]);
+    const custom = resolvePermissions(
+      UserRole.STAFF,
+      [],
+      [PERMISSIONS.ESCROWS_READ, PERMISSIONS.ANALYTICS_READ],
+    );
     expect(custom).toEqual([PERMISSIONS.ESCROWS_READ, PERMISSIONS.ANALYTICS_READ]);
   });
 
@@ -46,8 +42,8 @@ describe("hasPermission", () => {
   it("requires all listed permissions", () => {
     const effective = [PERMISSIONS.USERS_READ, PERMISSIONS.LISTINGS_READ];
     expect(hasPermission(effective, PERMISSIONS.USERS_READ)).toBe(true);
-    expect(
-      hasPermission(effective, [PERMISSIONS.USERS_READ, PERMISSIONS.LISTINGS_WRITE]),
-    ).toBe(false);
+    expect(hasPermission(effective, [PERMISSIONS.USERS_READ, PERMISSIONS.LISTINGS_WRITE])).toBe(
+      false,
+    );
   });
 });

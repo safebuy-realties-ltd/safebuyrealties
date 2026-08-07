@@ -84,10 +84,7 @@ describe("TransactionsService", () => {
   describe("create", () => {
     it("rejects non-buyers", async () => {
       await expect(
-        service.create(
-          { listingId: "listing-1" },
-          { ...buyerActor, role: UserRole.SELLER },
-        ),
+        service.create({ listingId: "listing-1" }, { ...buyerActor, role: UserRole.SELLER }),
       ).rejects.toThrow(ForbiddenException);
     });
 

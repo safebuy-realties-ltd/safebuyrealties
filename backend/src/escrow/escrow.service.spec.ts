@@ -97,9 +97,14 @@ describe("EscrowService", () => {
       .mockResolvedValueOnce(makeEscrow())
       .mockResolvedValueOnce({
         ...makeEscrow(),
-        transaction: { ...makeEscrow().transaction, listing: { ...makeEscrow().transaction.listing, sellerId } },
+        transaction: {
+          ...makeEscrow().transaction,
+          listing: { ...makeEscrow().transaction.listing, sellerId },
+        },
       });
-    (prisma.escrow as { update: jest.Mock }).update.mockResolvedValue(makeEscrow({ status: ESCROW_STATUS.RELEASED }));
+    (prisma.escrow as { update: jest.Mock }).update.mockResolvedValue(
+      makeEscrow({ status: ESCROW_STATUS.RELEASED }),
+    );
     (prisma.payout as { findFirst: jest.Mock }).findFirst.mockResolvedValue(null);
     (prisma.payout as { create: jest.Mock }).create.mockResolvedValue({
       id: "payout-1",
@@ -191,6 +196,8 @@ describe("EscrowService", () => {
       listing: { status: ListingStatus.LIVE },
       powerOfAttorney: null,
     });
-    await expect(service.release(transactionId, "staff-1")).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.release(transactionId, "staff-1")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

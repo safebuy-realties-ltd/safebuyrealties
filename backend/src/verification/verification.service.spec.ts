@@ -1,14 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  UserRole,
-  VerificationStepStatus,
-  VerificationStepType,
-} from "@prisma/client";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { UserRole, VerificationStepStatus, VerificationStepType } from "@prisma/client";
 import { ListingStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
@@ -76,9 +68,9 @@ describe("VerificationService accept / request-revision", () => {
     prisma = {
       verificationStep: {
         findUnique: jest.fn().mockResolvedValue({ ...baseStep }),
-        update: jest.fn().mockImplementation(({ data }) =>
-          Promise.resolve({ ...baseStep, ...data }),
-        ),
+        update: jest
+          .fn()
+          .mockImplementation(({ data }) => Promise.resolve({ ...baseStep, ...data })),
       },
       task: {
         findFirst: jest.fn().mockResolvedValue(null),

@@ -1,10 +1,7 @@
 import { Prisma, TransactionStatus } from "@prisma/client";
 import { KYC_BLOCK_CODE, KYC_GATED_ACTIONS, KYC_GATE_FLAG, kycRequiredFor } from "../kyc/kyc-gate";
 import { KycStatus } from "../kyc/kyc.constants";
-import type {
-  FeatureFlagKey,
-  FeatureFlagReader,
-} from "../feature-flags/feature-flags.constants";
+import type { FeatureFlagKey, FeatureFlagReader } from "../feature-flags/feature-flags.constants";
 
 /**
  * The include both callers pass, so neither can read a fact the other cannot see.
@@ -192,10 +189,7 @@ export function evaluatePurchaseReadiness(facts: PurchaseFacts): PurchaseReadine
   // registry's answer for PROPERTY_PURCHASE rather than the raw flag, and the sentence the buyer
   // reads is the registry's too, so the button and the endpoint refuse in the same words.
   if (facts.kycEnforced && facts.kycStatus !== KycStatus.VERIFIED) {
-    return blocked(
-      PURCHASE_BLOCK.KYC_REQUIRED,
-      KYC_GATED_ACTIONS.PROPERTY_PURCHASE.blockedReason,
-    );
+    return blocked(PURCHASE_BLOCK.KYC_REQUIRED, KYC_GATED_ACTIONS.PROPERTY_PURCHASE.blockedReason);
   }
 
   return {

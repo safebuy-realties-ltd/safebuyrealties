@@ -163,6 +163,9 @@ export function assertCorsConfigured(env: CorsEnvironment = readCorsEnvironment(
   if (!isProductionLike(env)) return;
   if (parseAllowedOrigins(env.frontendUrl).length > 0) return;
 
+  // console rather than the Nest logger, and the same in ./database-guard.ts: this runs during
+  // module evaluation, before the application context exists, and the next statement exits.
+  // eslint-disable-next-line no-console
   console.error(
     "\n[SafeBuyRealties] Refusing to start: FRONTEND_URL is unset or empty in production.\n" +
       "Set it to a comma-separated list of allowed browser origins, e.g.\n" +

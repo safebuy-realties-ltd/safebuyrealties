@@ -190,9 +190,10 @@ describe("TransactionStateService", () => {
     it("reports that nothing changed rather than throwing", async () => {
       const db = writerFor({ status: TransactionStatus.DD_COMPLETE });
 
-      await expect(
-        service.advance(db, "txn-1", TransactionStatus.DD_COMPLETE),
-      ).resolves.toEqual({ status: TransactionStatus.DD_COMPLETE, changed: false });
+      await expect(service.advance(db, "txn-1", TransactionStatus.DD_COMPLETE)).resolves.toEqual({
+        status: TransactionStatus.DD_COMPLETE,
+        changed: false,
+      });
     });
 
     it("writes nothing on the second run", async () => {

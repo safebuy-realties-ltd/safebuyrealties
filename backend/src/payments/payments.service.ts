@@ -252,11 +252,7 @@ export class PaymentsService {
 
     // Criterion 2. Before the payment row and before the gateway, because this is the record that an
     // attempt happened at all, and a checkout the buyer walks away from writes nothing else.
-    await this.transactionState.advance(
-      this.prisma,
-      tx.id,
-      TransactionStatus.PURCHASE_PENDING,
-    );
+    await this.transactionState.advance(this.prisma, tx.id, TransactionStatus.PURCHASE_PENDING);
 
     return this.initiatePayment(
       {

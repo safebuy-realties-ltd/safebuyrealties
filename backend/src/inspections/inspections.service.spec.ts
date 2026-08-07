@@ -14,7 +14,12 @@ describe("InspectionsService", () => {
   let service: InspectionsService;
   const prisma = {
     listing: { findUnique: jest.fn() },
-    inspectionSlot: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    inspectionSlot: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
     user: { findUnique: jest.fn() },
   };
 

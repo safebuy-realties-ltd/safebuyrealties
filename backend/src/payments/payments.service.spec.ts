@@ -73,7 +73,10 @@ describe("PaymentsService paystack integration", () => {
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
-        { provide: NotificationsService, useValue: { create: jest.fn(), createForStaff: jest.fn() } },
+        {
+          provide: NotificationsService,
+          useValue: { create: jest.fn(), createForStaff: jest.fn() },
+        },
         { provide: EscrowService, useValue: { hold: jest.fn() } },
         { provide: PaystackService, useValue: paystack },
         { provide: GuestCheckoutService, useValue: { completePayment: jest.fn() } },

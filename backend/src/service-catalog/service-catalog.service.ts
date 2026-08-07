@@ -39,28 +39,29 @@ const DD_CHECK_ITEMS = [
 ];
 
 const CATALOG_ITEMS = [
-  { code: "DUE_DILIGENCE",        name: "Due Diligence",           sortOrder: 1 },
-  { code: "LAND_CHARTING_SEARCH", name: "Land/Charting Search",    sortOrder: 2 },
-  { code: "COF_O",                name: "Certificate of Occupancy",sortOrder: 3 },
-  { code: "TITLE_VERIFICATION",   name: "Title Verification",      sortOrder: 4 },
-  { code: "SURVEY_PLAN",          name: "Survey Plan",             sortOrder: 5 },
-  { code: "EXCISION",             name: "Excision",                sortOrder: 6 },
-  { code: "GAZETTE",              name: "Gazette",                 sortOrder: 7 },
-  { code: "DEED_OF_ASSIGNMENT",   name: "Deed of Assignment",      sortOrder: 8 },
-  { code: "GOVERNORS_CONSENT",    name: "Governor's Consent",      sortOrder: 9 },
-  { code: "TITLE_PERFECTION",     name: "Title Perfection",        sortOrder: 10 },
-  { code: "DOCUMENTATION_AUDIT",  name: "Documentation Audit",     sortOrder: 11 },
-  { code: "VALUATION",            name: "Valuation",               sortOrder: 12 },
-  { code: "RISK_ASSESSMENT",      name: "Risk Assessment",         sortOrder: 13 },
-  { code: "DISPUTE_ADVISORY",     name: "Dispute Advisory",        sortOrder: 14 },
-  { code: "TRANSACTION_ADVISORY", name: "Transaction Advisory",    sortOrder: 15 },
+  { code: "DUE_DILIGENCE", name: "Due Diligence", sortOrder: 1 },
+  { code: "LAND_CHARTING_SEARCH", name: "Land/Charting Search", sortOrder: 2 },
+  { code: "COF_O", name: "Certificate of Occupancy", sortOrder: 3 },
+  { code: "TITLE_VERIFICATION", name: "Title Verification", sortOrder: 4 },
+  { code: "SURVEY_PLAN", name: "Survey Plan", sortOrder: 5 },
+  { code: "EXCISION", name: "Excision", sortOrder: 6 },
+  { code: "GAZETTE", name: "Gazette", sortOrder: 7 },
+  { code: "DEED_OF_ASSIGNMENT", name: "Deed of Assignment", sortOrder: 8 },
+  { code: "GOVERNORS_CONSENT", name: "Governor's Consent", sortOrder: 9 },
+  { code: "TITLE_PERFECTION", name: "Title Perfection", sortOrder: 10 },
+  { code: "DOCUMENTATION_AUDIT", name: "Documentation Audit", sortOrder: 11 },
+  { code: "VALUATION", name: "Valuation", sortOrder: 12 },
+  { code: "RISK_ASSESSMENT", name: "Risk Assessment", sortOrder: 13 },
+  { code: "DISPUTE_ADVISORY", name: "Dispute Advisory", sortOrder: 14 },
+  { code: "TRANSACTION_ADVISORY", name: "Transaction Advisory", sortOrder: 15 },
 ];
 
 const BUNDLES = [
   {
     code: "STANDARD",
     name: "Standard Bundle",
-    description: "Essential property verification services covering due diligence, land search, C of O, title verification, and survey plan.",
+    description:
+      "Essential property verification services covering due diligence, land search, C of O, title verification, and survey plan.",
     basePrice: new Prisma.Decimal(2950000),
     itemCodes: [
       "DUE_DILIGENCE",
@@ -73,7 +74,8 @@ const BUNDLES = [
   {
     code: "PREMIUM",
     name: "Premium Bundle",
-    description: "Comprehensive property verification including all standard services plus excision, gazette, deed, governor's consent, and title perfection.",
+    description:
+      "Comprehensive property verification including all standard services plus excision, gazette, deed, governor's consent, and title perfection.",
     basePrice: new Prisma.Decimal(4200000),
     itemCodes: [
       "DUE_DILIGENCE",
@@ -91,7 +93,8 @@ const BUNDLES = [
   {
     code: "ELITE",
     name: "Elite Bundle",
-    description: "Full-suite property verification and advisory covering all 15 services including documentation audit, valuation, risk assessment, and dispute advisory.",
+    description:
+      "Full-suite property verification and advisory covering all 15 services including documentation audit, valuation, risk assessment, and dispute advisory.",
     basePrice: new Prisma.Decimal(5850000),
     itemCodes: CATALOG_ITEMS.map((item) => item.code),
   },

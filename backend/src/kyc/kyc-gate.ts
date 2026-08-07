@@ -1,8 +1,5 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
-import type {
-  FeatureFlagKey,
-  FeatureFlagReader,
-} from "../feature-flags/feature-flags.constants";
+import type { FeatureFlagKey, FeatureFlagReader } from "../feature-flags/feature-flags.constants";
 import { KycStatus } from "./kyc.constants";
 
 /** The one flag the whole gate hangs off. Off means no action requires anything of anybody. */

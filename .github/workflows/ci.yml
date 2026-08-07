@@ -20,6 +20,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      lint: ${{ steps.filter.outputs.lint }}
       e2e: ${{ steps.filter.outputs.e2e }}
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +47,20 @@ jobs:
               - '.github/workflows/ci.yml'
             backend:
               - 'backend/**'
+
+            # Both halves, plus the files that decide what the rules are. Wider than either of the
+            # two above on purpose: eslint.config.js and .prettierrc govern src/ and backend/ alike,
+            # so a change to one of them has to lint both or it proves nothing.
+            lint:
+              - 'src/**'
+              - 'backend/**'
+              - 'eslint.config.*'
+              - '.prettierrc'
+              - '.prettierignore'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
+
             # The board's own filters used to live here and no longer do. They needed to say "work,
             # but not the three documents that record it", and a negated pattern does not subtract
             # on any released version of this action: the exclusion quantifier is on its main branch
@@ -82,7 +97,26 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: npx eslint src --max-warnings 0
+
+  # Lint, for the whole repository. This was one step inside frontend-typecheck reading `src`, which
+  # is the frontend and only the frontend, so nothing anywhere ran eslint over `backend/src`. By
+  # 2026-08-07 that had accumulated 226 errors and a warning nobody had seen. It is a job of its own
+  # now because it belongs to neither half: eslint, its plugins and prettier are root dependencies
+  # and eslint.config.js is a root file, so this runs from the repository root and names both.
+  lint:
+    needs: changes
+    if: needs.changes.outputs.lint == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      # Root install only, and no backend npm ci. Every rule that reaches the backend is syntactic,
+      # so none of this needs backend/node_modules or a TypeScript program to answer.
+      - run: npm ci
+      - run: npx eslint src backend/src --max-warnings 0
 
   frontend-test:
     needs: changes
@@ -425,6 +459,7 @@ jobs:
         changes,
         frontend-typecheck,
         frontend-test,
+        lint,
         backend-check,
         e2e-api,
         e2e-browser,
@@ -448,6 +483,14 @@ jobs:
           fi
           if [ "${{ needs.frontend-test.result }}" != "success" ]; then
             echo "frontend-test: ${{ needs.frontend-test.result }}"
+            exit 1
+          fi
+
+      - name: Lint (when anything it reads changed)
+        if: needs.changes.outputs.lint == 'true'
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "lint: ${{ needs.lint.result }}"
             exit 1
           fi
 
