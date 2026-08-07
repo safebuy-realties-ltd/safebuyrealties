@@ -41,12 +41,21 @@ coverage/
 # Local assistant tooling, never committed
 .claude/
 
-# Renders of docs/reports/*.html. The HTML is the source and it is committed; the PDF and the PNG
-# are printed from it on demand and weigh two megabytes and nine between them. A committed binary
-# that regenerates from the file beside it goes stale without anyone noticing, and the stale copy is
-# the one that gets emailed.
+# Renders of docs/reports/*.html. The HTML is the source and it is committed; the PDF, the PNG and
+# the Word version are printed from it on demand and weigh thirteen megabytes between them. A
+# committed binary that regenerates from the file beside it goes stale without anyone noticing, and
+# the stale copy is the one that gets emailed.
+#
+# The .docx joined this list on 2026-08-06, when it was first built. It carries a checksum of the
+# page it was printed from, on the cover, with the rule that the page wins on any mismatch, so a
+# stale copy can at least be caught. That is a reason to keep the checksum, not a reason to commit
+# the file: nobody computes a sha256 before forwarding an attachment.
+#
+# The escalation documents under docs/escalations/ are committed, and the difference is not size.
+# Those have no committed source to regenerate from, so the .docx is the record. These do.
 docs/reports/*.pdf
 docs/reports/*.png
+docs/reports/*.docx
 
 # Office lock files. Word writes `~$name.docx` beside a document while it is open and deletes it on
 # close; LibreOffice writes `.~lock.name.docx#` for the same reason. They are owner-and-machine

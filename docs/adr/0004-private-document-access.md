@@ -46,3 +46,12 @@ Region selection is an open sub-decision with NDPR data-residency implications.
 > six sub-stories, #103 to #112; its storage half is E3-S2, which now waits on EXT-2, the bucket and its
 > credentials, and on nothing else. **Nothing here is a ratification of the access half.** Backlog
 > decision D4 is answered; this ADR's own acceptance is not, and the closure schedule still asks for it.
+>
+> One residual survives the close. EXT-11 established that the NDPA 2023 and the GAID 2025 govern rather
+> than either company policy, so the statutory closed list of transfer conditions applies and the
+> published policy's "reasonable steps" wording does not. A Nigerian region needs no transfer instrument,
+> which is why this is discharged; but if production data is ever placed outside Nigeria, it may not go
+> until an NDPC-approved Cross-Border Data Transfer Instrument or standard contractual clauses are
+> executed with the hosting provider and the relevant subprocessors, and documented. No such instrument
+> exists in this repository. Until one does, no production transfer may rely on general consent or on
+> reasonable steps.
