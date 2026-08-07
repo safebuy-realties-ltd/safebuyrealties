@@ -157,7 +157,11 @@ describe("the refusal (E4-S2 criterion 2)", () => {
     }
 
     function refuse(): { code: string; message: string; details?: Record<string, unknown> } {
-      res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis(), setHeader: jest.fn() };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+        setHeader: jest.fn(),
+      };
       new HttpExceptionFilter().catch(
         new KycRequiredException("POA_EXECUTION", KycStatus.REJECTED),
         host(),

@@ -1,10 +1,4 @@
-import {
-  IsBoolean,
-  IsIn,
-  IsNotEmpty,
-  IsString,
-  ValidateNested,
-} from "class-validator";
+import { IsBoolean, IsIn, IsNotEmpty, IsString, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
 export class ConsentFlagsDto {

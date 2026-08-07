@@ -1,4 +1,5 @@
 import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
+import { isProductionEnvironment } from "./runtime-environment";
 
 /**
  * CORS origin policy.
@@ -36,6 +37,7 @@ export const ALLOWED_METHODS = ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE",
 export interface CorsEnvironment {
   frontendUrl?: string;
   vercelTeamSlug?: string;
+  appEnv?: string;
   nodeEnv?: string;
   vercelEnv?: string;
 }
@@ -44,13 +46,23 @@ export function readCorsEnvironment(env: NodeJS.ProcessEnv = process.env): CorsE
   return {
     frontendUrl: env.FRONTEND_URL,
     vercelTeamSlug: env.VERCEL_TEAM_SLUG,
+    appEnv: env.APP_ENV,
     nodeEnv: env.NODE_ENV,
     vercelEnv: env.VERCEL_ENV,
   };
 }
 
+/**
+ * Delegates to the shared definition in ./runtime-environment.ts rather than carrying a second
+ * one. It kept its own before ADR-0006, which is how an undeclared environment could accept
+ * localhost origins and squatted `safebuyrealties*.vercel.app` preview hostnames on a real server.
+ */
 export function isProductionLike(env: CorsEnvironment): boolean {
-  return env.nodeEnv === "production" || env.vercelEnv === "production";
+  return isProductionEnvironment({
+    APP_ENV: env.appEnv,
+    NODE_ENV: env.nodeEnv,
+    VERCEL_ENV: env.vercelEnv,
+  });
 }
 
 /** Reduces a URL to its canonical origin, or null when it is not a parseable absolute URL. */
@@ -151,6 +163,9 @@ export function assertCorsConfigured(env: CorsEnvironment = readCorsEnvironment(
   if (!isProductionLike(env)) return;
   if (parseAllowedOrigins(env.frontendUrl).length > 0) return;
 
+  // console rather than the Nest logger, and the same in ./database-guard.ts: this runs during
+  // module evaluation, before the application context exists, and the next statement exits.
+  // eslint-disable-next-line no-console
   console.error(
     "\n[SafeBuyRealties] Refusing to start: FRONTEND_URL is unset or empty in production.\n" +
       "Set it to a comma-separated list of allowed browser origins, e.g.\n" +

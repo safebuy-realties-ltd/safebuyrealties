@@ -46,11 +46,7 @@ export class ListingsController {
     @Query("page") page?: string,
     @Query("pageSize") pageSize?: string,
   ) {
-    return this.listings.findSaved(
-      user,
-      page ? Number(page) : 1,
-      pageSize ? Number(pageSize) : 20,
-    );
+    return this.listings.findSaved(user, page ? Number(page) : 1, pageSize ? Number(pageSize) : 20);
   }
 
   @Get(":id/analytics")

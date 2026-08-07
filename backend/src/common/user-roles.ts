@@ -2,9 +2,7 @@ import { UserRole } from "@prisma/client";
 
 /** STAFF, ADMIN, or SUPER_ADMIN — platform operators with elevated access. */
 export function isInternalRole(role: UserRole): boolean {
-  return (
-    role === UserRole.STAFF || role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN
-  );
+  return role === UserRole.STAFF || role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN;
 }
 
 /** ADMIN or SUPER_ADMIN. */

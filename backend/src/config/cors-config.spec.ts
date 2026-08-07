@@ -104,8 +104,9 @@ describe("isOriginAllowed", () => {
     });
 
     it.each(["", "   "])("treats a blank slug the same as unset", (vercelTeamSlug) => {
-      expect(isOriginAllowed(`https://sbr-frontend-${TEAM_SLUG}.vercel.app`, env({ vercelTeamSlug })))
-        .toBe(false);
+      expect(
+        isOriginAllowed(`https://sbr-frontend-${TEAM_SLUG}.vercel.app`, env({ vercelTeamSlug })),
+      ).toBe(false);
     });
   });
 

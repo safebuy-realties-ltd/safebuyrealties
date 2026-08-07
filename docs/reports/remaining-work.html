@@ -139,6 +139,19 @@
     <code>docs/MVP_OUTSTANDING_BACKLOG.md</code> at <code>main</code> @ <code>fc046f2</code> plus the
     escalation records in <code>docs/escalations/</code>, and the derivation is described under
     <b>Method</b> at the foot of the page.</p>
+  <p class="meta" style="margin-top:8px;"><b>Corrected 2026-08-07, the day after generation.</b> This
+    edition was written on 6 August, and the next day answered the largest open question in it.
+    <code>ADR-0006</code> takes the platform off Vercel onto self-managed Nigerian infrastructure and
+    puts the bucket in a Nigerian region. That decides the region half of <code>ADR-0004</code> and
+    answers backlog decision <code>D4</code> by removing the question rather than by meeting it:
+    documents that never leave Nigeria are never transferred, so no condition of the statutory closed
+    list has to be met and no transfer instrument is needed at all. Seven passages below were written
+    before that and are corrected in place, each one marked <b>2026-08-07</b>. The dated narratives of
+    5 and 6 August are left exactly as they were written, because what was true on the day is the
+    point of keeping them. <b>No count on this page moves.</b> Closing <code>D4</code> releases no
+    developer-day on its own, and the eight items in the title are still eight. What changed is one of
+    them: where documents live has stopped being a decision and is now only a purchase, so the three
+    stories behind it wait on <code>EXT-2</code> alone.</p>
 </header>
 
 <section>
@@ -289,10 +302,14 @@
         and Implementation Directive 2025</b> made under it, and the <b>Nigeria Data Protection
         Commission</b> that enforces both. <code>EXT-11</code> established that these govern rather than
         either company policy, which is what makes the region question in <code>ADR-0004</code>
-        answerable.</dd>
+        answerable. <b>2026-08-07:</b> it was answered. <code>ADR-0006</code> put the bucket in a
+        Nigerian region, so the statutory closed list never engages.</dd>
       <dt>SCC</dt><dd><b>Standard contractual clauses.</b> A written agreement with a hosting provider and
         its subprocessors that makes moving personal data outside Nigeria lawful. The platform already runs
-        on non-Nigerian infrastructure and no such instrument exists in this repository.</dd>
+        on non-Nigerian infrastructure and no such instrument exists in this repository. <b>2026-08-07:</b>
+        <code>ADR-0006</code> moves it off that infrastructure, so no instrument is needed. This term stays
+        in the glossary because it becomes the condition on ever putting production data outside Nigeria
+        again, which is a different thing from a blocker.</dd>
       <dt>PoA</dt><dd><b>Power of Attorney.</b> The instrument by which a buyer authorises the platform to
         act on their behalf. Its wording was drafted by engineers in a build checklist, which is why
         <code>EXT-4</code> asks counsel to look at it.</dd>
@@ -343,7 +360,11 @@
         Its region sub-decision was blocked until 6 August and is now open rather than blocked, which is
         not the same as decided: a Nigerian region needs no transfer instrument, and a non-Nigerian one may
         not carry production data until standard contractual clauses are executed and documented. Holds
-        three stories and half of gate G3.</dd>
+        three stories and half of gate G3. <b>2026-08-07:</b> the region was decided.
+        <code>ADR-0006</code> chose a Nigerian one, so no instrument is needed and the sub-decision is
+        closed. The three stories are still parked and what they are parked behind is
+        <code>EXT-2</code>. This ADR's own record still reads Proposed and its access half has still not
+        been ratified, which is a paperwork gap rather than an open question.</dd>
       <dt>ADR-0005</dt><dd>The quality ratchet. <b>Enforced on every pull request.</b> Coverage on changed
         lines cannot fall. The record still reads Proposed.</dd>
       <dt class="crit">EXT-1</dt><dd>Production payment keys and a settlement account. It used to travel with
@@ -351,7 +372,9 @@
         the whole of what holds eleven developer-days of money work, and the account has a business
         verification behind it with its own lead time.</dd>
       <dt class="crit">EXT-2</dt><dd>An S3-compatible bucket, its credentials and a region choice. Travels
-        with <code>ADR-0004</code>.</dd>
+        with <code>ADR-0004</code>. <b>2026-08-07:</b> the region is no longer a choice.
+        <code>ADR-0006</code> fixed it as Nigerian, so what is left of this item is the bucket and the
+        credentials, and it now holds its three stories on its own.</dd>
       <dt class="crit">EXT-3</dt><dd>A transactional email domain, SPF, DKIM, DMARC and sending credentials.
         The single highest-value item on this page: it holds thirteen developer-days and it is the fastest
         of the eight to obtain.</dd>
@@ -699,7 +722,10 @@
           changes how the bucket is configured. Its region half stopped being blocked on 6 August, which is
           not the same as being decided: a Nigerian region needs no transfer instrument and any other
           region may not carry production data until standard contractual clauses are executed and
-          documented. Two days for both.</li>
+          documented. Two days for both. <b>2026-08-07:</b> <code>ADR-0006</code> decided the region and
+          took the Nigerian one, so this is one item rather than two. <code>EXT-2</code> is a bucket and a
+          set of credentials, it needs nobody's judgement, and it is now an afternoon rather than two
+          days.</li>
         <li><b><code>EXT-1</code>, the settlement account.</b> The money model itself came back on
           5 August, so this is no longer a decision waiting on a decision. It is a business verification
           with its own lead time. The code that needs it is ready now and the account currently arrives on
@@ -868,7 +894,11 @@ const ASKS = [
       "policy, and named the mechanism: a Nigerian region needs no transfer instrument, and any other " +
       "region may not carry production data until an NDPC-approved instrument or standard contractual " +
       "clauses are executed with the hosting provider and its subprocessors and documented. No such " +
-      "instrument exists in this repository. E7-S4, the deterministic demo seed, sits behind this too; its " +
+      "instrument exists in this repository. 2026-08-07: the region was decided. ADR-0006 takes the " +
+      "platform off Vercel onto self-managed Nigerian infrastructure and puts the bucket in a Nigerian " +
+      "region, so nothing is transferred, no condition has to be met and no instrument is needed at all. " +
+      "What is left of this row is EXT-2, a bucket and a set of credentials. " +
+      "E7-S4, the deterministic demo seed, sits behind this too; its " +
       "dependency is soft if the seed only ever has to work on a developer's machine and hard if it has to " +
       "work on the hosted environment.",
     ifno:"Half of gate G3 stays open. The probe suite that proves no private document is reachable " +
@@ -1443,7 +1473,7 @@ document.getElementById("fig8").innerHTML = (() => {
     ["ADR-0001", "MVP scope: is on-platform purchase in?", 1, "Answered 2 August. Released 5 stories, all merged."],
     ["ADR-0002", "Escrow, pass-through, or off-platform?", 1, "Answered 5 August. EXT-1 now holds its 3 stories."],
     ["ADR-0003", "Payment mock-mode guard", 0.5, "Behaviour shipped. The record still reads Proposed."],
-    ["ADR-0004", "How is a private document served?", 0, "Holds 3 stories and half of G3. Region open, not decided."],
+    ["ADR-0004", "How is a private document served?", 0, "Holds 3 stories and half of G3. Region decided 7 August by ADR-0006."],
     ["ADR-0005", "Quality ratchet on changed lines", 0.5, "Enforced on every pull request. Record reads Proposed."]
   ];
   const GATES = [

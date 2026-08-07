@@ -31,6 +31,7 @@ export class PaystackService {
    */
   private guardEnv(): NodeJS.ProcessEnv {
     return {
+      APP_ENV: this.config.get<string>("APP_ENV"),
       NODE_ENV: this.config.get<string>("NODE_ENV"),
       VERCEL_ENV: this.config.get<string>("VERCEL_ENV"),
       PAYSTACK_FORCE_MOCK: this.config.get<string>("PAYSTACK_FORCE_MOCK"),
@@ -127,8 +128,7 @@ export class PaystackService {
     reference?: string;
   }): Promise<{ transferCode: string; reference: string; status: string }> {
     const paystack = this.getClient();
-    const bankCode =
-      this.config.get<string>("PAYSTACK_PAYOUT_BANK_CODE")?.trim() || "057";
+    const bankCode = this.config.get<string>("PAYSTACK_PAYOUT_BANK_CODE")?.trim() || "057";
     const accountNumber =
       this.config.get<string>("PAYSTACK_PAYOUT_ACCOUNT_NUMBER")?.trim() || "0000000000";
 

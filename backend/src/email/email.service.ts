@@ -97,8 +97,7 @@ export class EmailService {
     const port = Number(this.config.get<string>("SMTP_PORT") ?? "587");
     const user = this.config.get<string>("SMTP_USER")?.trim();
     const pass = this.config.get<string>("SMTP_PASS")?.trim();
-    const from =
-      this.config.get<string>("SMTP_FROM")?.trim() ?? "noreply@safebuyrealties.com";
+    const from = this.config.get<string>("SMTP_FROM")?.trim() ?? "noreply@safebuyrealties.com";
 
     try {
       const nodemailer = await import("nodemailer");

@@ -15,11 +15,7 @@ import { ListUsersQueryDto } from "./dto/list-users.query";
 import { isInternalRole, isSuperAdmin } from "../common/user-roles";
 import { SessionsService } from "../auth/sessions.service";
 
-const STAFF_ASSIGNABLE_ROLES: UserRole[] = [
-  UserRole.BUYER,
-  UserRole.SELLER,
-  UserRole.PROFESSIONAL,
-];
+const STAFF_ASSIGNABLE_ROLES: UserRole[] = [UserRole.BUYER, UserRole.SELLER, UserRole.PROFESSIONAL];
 
 const ADMIN_ASSIGNABLE_ROLES: UserRole[] = [
   UserRole.STAFF,
@@ -77,9 +73,7 @@ export class UsersService {
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
       adminRoleId: user.adminRoleId ?? null,
-      adminRole: user.adminRole
-        ? { id: user.adminRole.id, name: user.adminRole.name }
-        : null,
+      adminRole: user.adminRole ? { id: user.adminRole.id, name: user.adminRole.name } : null,
     };
   }
 

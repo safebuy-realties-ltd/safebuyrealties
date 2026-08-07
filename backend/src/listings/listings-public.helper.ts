@@ -14,9 +14,6 @@ export function isPubliclyVisible(listing: ListingVisibilityFields): boolean {
 
 export function publiclyVisibleWhere(): Prisma.ListingWhereInput {
   return {
-    OR: [
-      { status: ListingStatus.LIVE },
-      { status: ListingStatus.VERIFIED, isPublished: true },
-    ],
+    OR: [{ status: ListingStatus.LIVE }, { status: ListingStatus.VERIFIED, isPublished: true }],
   };
 }

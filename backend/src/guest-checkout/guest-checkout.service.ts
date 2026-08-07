@@ -386,68 +386,66 @@ export class GuestCheckoutService {
       };
     }
 
-    const itemIds = Array.isArray(order.itemIds)
-      ? (order.itemIds as string[])
-      : [];
+    const itemIds = Array.isArray(order.itemIds) ? (order.itemIds as string[]) : [];
 
     const { payment, transactionPublicId } = await this.prisma.$transaction(async (tx) => {
-        let transactionId = order.transaction?.id;
-        if (!transactionId) {
-          const created = await tx.transaction.create({
-            data: {
-              listingId: order.listingId,
-              buyerId: buyer.id,
-              caseId: order.caseId,
-              status: TransactionStatus.INITIATED,
-            },
-          });
-          transactionId = created.id;
-          await tx.serviceRequest.update({
-            where: { id: order.id },
-            data: { transactionId },
-          });
-          await tx.dueDiligenceOrder.create({
-            data: {
-              transactionId,
-              buyerId: buyer.id,
-              serviceId: order.serviceId,
-              bundleId: order.bundleId,
-              itemIds: itemIds as Prisma.InputJsonValue,
-              subtotal: order.subtotal,
-              vatAmount: order.vatAmount,
-              total: order.total,
-              status: "PENDING",
-            },
-          });
-        }
-
-        const transactionPublicId = await this.sbrId.nextTransactionId();
-        const payment = await tx.payment.create({
+      let transactionId = order.transaction?.id;
+      if (!transactionId) {
+        const created = await tx.transaction.create({
           data: {
-            payerId: buyer.id,
-            listingId,
-            transactionId,
-            amount: order.total,
-            currency: listingCurrency,
-            status: PaymentStatus.PENDING,
-            intent: PaymentIntent.DD_SERVICE,
-            provider: "paystack",
-            transactionPublicId,
-            metadata: {
-              serviceRequestId: order.id,
-              guestCheckout: true,
-              callbackUrl: dto.callbackUrl,
-            } as object,
+            listingId: order.listingId,
+            buyerId: buyer.id,
+            caseId: order.caseId,
+            status: TransactionStatus.INITIATED,
           },
         });
-
-        await tx.transaction.update({
-          where: { id: transactionId },
-          data: { status: TransactionStatus.IN_PROGRESS },
+        transactionId = created.id;
+        await tx.serviceRequest.update({
+          where: { id: order.id },
+          data: { transactionId },
         });
+        await tx.dueDiligenceOrder.create({
+          data: {
+            transactionId,
+            buyerId: buyer.id,
+            serviceId: order.serviceId,
+            bundleId: order.bundleId,
+            itemIds: itemIds as Prisma.InputJsonValue,
+            subtotal: order.subtotal,
+            vatAmount: order.vatAmount,
+            total: order.total,
+            status: "PENDING",
+          },
+        });
+      }
 
-        return { payment, transactionPublicId };
+      const transactionPublicId = await this.sbrId.nextTransactionId();
+      const payment = await tx.payment.create({
+        data: {
+          payerId: buyer.id,
+          listingId,
+          transactionId,
+          amount: order.total,
+          currency: listingCurrency,
+          status: PaymentStatus.PENDING,
+          intent: PaymentIntent.DD_SERVICE,
+          provider: "paystack",
+          transactionPublicId,
+          metadata: {
+            serviceRequestId: order.id,
+            guestCheckout: true,
+            callbackUrl: dto.callbackUrl,
+          } as object,
+        },
       });
+
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: { status: TransactionStatus.IN_PROGRESS },
+      });
+
+      return { payment, transactionPublicId };
+    });
 
     const amountMinor = Math.round(Number(order.total) * 100);
 

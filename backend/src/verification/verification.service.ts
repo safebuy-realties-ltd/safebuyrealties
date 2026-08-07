@@ -58,9 +58,7 @@ export class VerificationService {
       where: { userId: professionalId },
     });
     if (!profile || profile.verifiedStatus !== "VERIFIED") {
-      throw new BadRequestException(
-        "Professional credentials must be verified before assignment",
-      );
+      throw new BadRequestException("Professional credentials must be verified before assignment");
     }
   }
 
@@ -345,9 +343,7 @@ export class VerificationService {
         title: "Revision requested",
         body: trimmed,
         entityId: relatedTask?.id ?? step.listingId,
-        entityType: relatedTask
-          ? NotificationEntityType.Task
-          : NotificationEntityType.Listing,
+        entityType: relatedTask ? NotificationEntityType.Task : NotificationEntityType.Listing,
       });
     }
     return this.serializeStep(updated);

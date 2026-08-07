@@ -7,7 +7,11 @@ import { assertSafeDatabaseUrl } from "./config/database-guard";
 import { assertCorsConfigured } from "./config/cors-config";
 import { assertPaymentsConfigured } from "./config/payments-guard";
 import { assertJwtSecret } from "./config/jwt-secret";
+import { warnIfRuntimeEnvironmentUndeclared } from "./config/runtime-environment";
 
+// First, because every guard below resolves the environment and this says so once when nothing
+// declared it. See docs/adr/0006-deployment-target-and-runtime-environment.md.
+warnIfRuntimeEnvironmentUndeclared();
 assertSafeDatabaseUrl();
 assertCorsConfigured();
 assertPaymentsConfigured();

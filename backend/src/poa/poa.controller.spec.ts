@@ -65,9 +65,9 @@ describe("PoaController", () => {
   it("passes an empty string through when the hash query is missing", async () => {
     service.verifyByHash.mockRejectedValueOnce(new NotFoundException());
 
-    await expect(
-      controller.verify(undefined as unknown as string),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.verify(undefined as unknown as string)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     expect(service.verifyByHash).toHaveBeenCalledWith("");
   });
 });

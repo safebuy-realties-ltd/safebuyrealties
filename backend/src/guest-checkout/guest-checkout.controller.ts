@@ -27,10 +27,7 @@ export class GuestCheckoutController {
 
   /** POST /guest-checkout/orders/:serviceId/pay — public */
   @Post("orders/:serviceId/pay")
-  initiatePayment(
-    @Param("serviceId") serviceId: string,
-    @Body() dto: InitiateGuestPaymentDto,
-  ) {
+  initiatePayment(@Param("serviceId") serviceId: string, @Body() dto: InitiateGuestPaymentDto) {
     return this.guestCheckout.initiatePayment(serviceId, dto);
   }
 }
