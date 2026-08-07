@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { ErrorTrackerService } from "../logging/error-tracker.service";
 import { currentRequestContext } from "../logging/request-context";
+import { isDevelopmentOrTest } from "../../config/runtime-environment";
 
 /**
  * The one place an unhandled failure becomes a response, and therefore the one place worth
@@ -65,7 +66,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Outside production the real message is returned so a developer is not left guessing; in
       // production it is withheld, because an unhandled message quotes internals. Either way the
       // capture below has the full text and the correlation id ties the two together.
-      message = process.env.NODE_ENV === "production" ? message : exception.message;
+      message = isDevelopmentOrTest() ? exception.message : message;
     }
 
     this.track(exception, req, status, code);

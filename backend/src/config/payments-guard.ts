@@ -9,19 +9,13 @@
  * See docs/adr/0003-payment-mock-mode-guard.md.
  */
 
-/** Environments in which PAYSTACK_FORCE_MOCK is honoured. Everywhere else it is ignored. */
-const MOCK_ALLOWED_NODE_ENVS = new Set(["development", "test"]);
+import {
+  isDevelopmentOrTest,
+  isProductionEnvironment,
+  resolveRuntimeEnvironment,
+} from "./runtime-environment";
 
 const TRUTHY = new Set(["true", "1", "yes"]);
-
-function nodeEnv(env: NodeJS.ProcessEnv): string {
-  return (env.NODE_ENV?.trim() || "development").toLowerCase();
-}
-
-/** Production is either an explicit NODE_ENV or a Vercel production deployment. */
-export function isProductionEnvironment(env: NodeJS.ProcessEnv = process.env): boolean {
-  return nodeEnv(env) === "production" || env.VERCEL_ENV?.trim().toLowerCase() === "production";
-}
 
 /**
  * Whether a payment credential exists at all. Deliberately returns a boolean and never
@@ -36,11 +30,16 @@ export function isForceMockRequested(env: NodeJS.ProcessEnv = process.env): bool
   return TRUTHY.has(env.PAYSTACK_FORCE_MOCK?.trim().toLowerCase() ?? "");
 }
 
-/** Whether that request is actually honoured: development and test only. */
+/**
+ * Whether that request is actually honoured: development and test only.
+ *
+ * Staging and an undeclared environment both refuse it. Before ADR-0006 an undeclared environment
+ * resolved to development and honoured it, which is how mock payments could have reached a real
+ * deployment that simply forgot to set NODE_ENV.
+ */
 export function isForceMockHonoured(env: NodeJS.ProcessEnv = process.env): boolean {
   if (!isForceMockRequested(env)) return false;
-  if (isProductionEnvironment(env)) return false;
-  return MOCK_ALLOWED_NODE_ENVS.has(nodeEnv(env));
+  return isDevelopmentOrTest(env);
 }
 
 /**
@@ -82,7 +81,7 @@ export function assertPaymentsConfigured(deps: GuardDeps = {}): void {
   if (isForceMockRequested(env) && !isForceMockHonoured(env)) {
     logger.warn(
       "\n[SafeBuyRealties] PAYSTACK_FORCE_MOCK is set but will be ignored.\n" +
-        `Mock payments are only available when NODE_ENV is development or test (currently "${nodeEnv(env)}").\n` +
+        `Mock payments are only available in development or test (this environment resolves to "${resolveRuntimeEnvironment(env)}").\n` +
         "Payments will use the configured Paystack credentials.\n",
     );
   }

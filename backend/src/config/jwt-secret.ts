@@ -11,7 +11,7 @@
  * See docs/RUNBOOK.md §7.2.
  */
 
-import { isProductionEnvironment } from "./payments-guard";
+import { isProductionEnvironment } from "./runtime-environment";
 
 /**
  * A 256-bit key expressed as text. Shorter secrets are brute-forceable offline
