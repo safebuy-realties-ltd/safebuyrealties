@@ -23,9 +23,27 @@ const buyerActor = {
   professionalType: null,
 };
 
+/** A model stand-in: a bag of jest mocks under the method names this file exercises. */
+type ModelDouble = Record<string, jest.Mock>;
+
+interface PrismaDouble {
+  listing: ModelDouble;
+  externalProperty: ModelDouble;
+  serviceCatalogItem: ModelDouble;
+  serviceBundle: ModelDouble;
+  serviceRequest: ModelDouble;
+  user: ModelDouble;
+  transaction: ModelDouble;
+  dueDiligenceAssignment: ModelDouble;
+  dueDiligenceOrder: ModelDouble;
+  payment: ModelDouble;
+  accountActivationToken: ModelDouble;
+  $transaction: jest.Mock;
+}
+
 describe("StandaloneDdService", () => {
   let service: StandaloneDdService;
-  let prisma: any;
+  let prisma: PrismaDouble;
   let sbrId: {
     nextServiceId: jest.Mock;
     nextCaseId: jest.Mock;
@@ -65,7 +83,12 @@ describe("StandaloneDdService", () => {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         findUnique: jest.fn(),
       },
-      dueDiligenceAssignment: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      dueDiligenceAssignment: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
       dueDiligenceOrder: {
         findUnique: jest.fn(),
         create: jest.fn(),
@@ -102,7 +125,10 @@ describe("StandaloneDdService", () => {
             }),
           },
         },
-        { provide: EmailService, useValue: { sendPaymentReceipt: jest.fn(), sendStaffDdAlert: jest.fn() } },
+        {
+          provide: EmailService,
+          useValue: { sendPaymentReceipt: jest.fn(), sendStaffDdAlert: jest.fn() },
+        },
         {
           provide: NotificationsService,
           useValue: { create: jest.fn(), createForStaff: jest.fn() },
@@ -114,7 +140,10 @@ describe("StandaloneDdService", () => {
         { provide: SbrIdService, useValue: sbrId },
         {
           provide: StorageService,
-          useValue: { getSignedUrl: jest.fn().mockResolvedValue("/uploads/report.pdf"), upload: jest.fn() },
+          useValue: {
+            getSignedUrl: jest.fn().mockResolvedValue("/uploads/report.pdf"),
+            upload: jest.fn(),
+          },
         },
         {
           provide: DdCmsService,
@@ -139,13 +168,20 @@ describe("StandaloneDdService", () => {
                 items: [{ code: "PHYS_BOUNDARY_BEACONS", label: "Boundary / beacon verification" }],
               },
             ]),
-            validateChecklistSelections: jest.fn().mockImplementation(async (selections: Record<string, string[]>) => {
-              const scheduleCodes = Object.keys(selections).filter((k) => (selections[k]?.length ?? 0) > 0);
-              if (!scheduleCodes.length) {
-                return { ok: false, message: "Select at least one checklist item under a schedule." };
-              }
-              return { ok: true, scheduleCodes };
-            }),
+            validateChecklistSelections: jest
+              .fn()
+              .mockImplementation(async (selections: Record<string, string[]>) => {
+                const scheduleCodes = Object.keys(selections).filter(
+                  (k) => (selections[k]?.length ?? 0) > 0,
+                );
+                if (!scheduleCodes.length) {
+                  return {
+                    ok: false,
+                    message: "Select at least one checklist item under a schedule.",
+                  };
+                }
+                return { ok: true, scheduleCodes };
+              }),
             suggestedTypesForSchedules: jest.fn().mockResolvedValue(["LAWYER"]),
           },
         },
@@ -532,45 +568,45 @@ describe("StandaloneDdService", () => {
   it("marks a case complete with verdict and transaction status", async () => {
     (prisma.dueDiligenceOrder.findUnique as jest.Mock)
       .mockResolvedValueOnce({
-      id: "dd-1",
-      buyerId: "buyer-1",
-      listingId: null,
-      externalPropertyId: "external-1",
-      transactionId: "tx-1",
-      serviceId: "SBR-SRV-BUY-20260717-001",
-      caseId: "SBR-CASE-DD-LOS-20260717-001",
-      source: "STANDALONE",
-      bundleId: null,
-      itemIds: ["item-legal"],
-      subtotal: new Prisma.Decimal(350000),
-      vatAmount: new Prisma.Decimal(26250),
-      total: new Prisma.Decimal(376250),
-      status: "PAID",
-      verdict: null,
-      reportStorageKeys: [],
-      staffNotes: null,
-      completedAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      listing: null,
-      externalProperty: {
-        id: "external-1",
-        address: "12 Admiralty Way",
-        state: "Lagos",
-        lga: "Eti-Osa",
-        propertyType: "Duplex",
-        approxSize: null,
-        titleRef: "TR-001",
-        sellerName: null,
-        sellerContact: null,
-        notes: null,
-        documentKeys: [],
+        id: "dd-1",
+        buyerId: "buyer-1",
+        listingId: null,
+        externalPropertyId: "external-1",
+        transactionId: "tx-1",
+        serviceId: "SBR-SRV-BUY-20260717-001",
+        caseId: "SBR-CASE-DD-LOS-20260717-001",
+        source: "STANDALONE",
+        bundleId: null,
+        itemIds: ["item-legal"],
+        subtotal: new Prisma.Decimal(350000),
+        vatAmount: new Prisma.Decimal(26250),
+        total: new Prisma.Decimal(376250),
+        status: "PAID",
+        verdict: null,
+        reportStorageKeys: [],
+        staffNotes: null,
+        completedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdById: null,
-      },
-      transaction: { id: "tx-1", payments: [] },
-    })
+        listing: null,
+        externalProperty: {
+          id: "external-1",
+          address: "12 Admiralty Way",
+          state: "Lagos",
+          lga: "Eti-Osa",
+          propertyType: "Duplex",
+          approxSize: null,
+          titleRef: "TR-001",
+          sellerName: null,
+          sellerContact: null,
+          notes: null,
+          documentKeys: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdById: null,
+        },
+        transaction: { id: "tx-1", payments: [] },
+      })
       .mockResolvedValueOnce({
         id: "dd-1",
         buyerId: "buyer-1",

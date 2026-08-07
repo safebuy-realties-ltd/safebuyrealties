@@ -22,11 +22,7 @@ import { SessionsService } from "./sessions.service";
 import { DEFAULT_ACCESS_TOKEN_TTL, REFRESH_FAILURE_MESSAGE } from "./sessions.constants";
 import type { Permission } from "../common/permissions";
 
-const SELF_REGISTER_ROLES: UserRole[] = [
-  UserRole.BUYER,
-  UserRole.SELLER,
-  UserRole.PROFESSIONAL,
-];
+const SELF_REGISTER_ROLES: UserRole[] = [UserRole.BUYER, UserRole.SELLER, UserRole.PROFESSIONAL];
 
 /**
  * What an access token was worth before E5-S5, and what it goes back to being if the flag is turned
@@ -87,9 +83,7 @@ export class AuthService {
       publicId: user.publicId,
       createdAt: user.createdAt.toISOString(),
       permissions,
-      adminRole: user.adminRole
-        ? { id: user.adminRole.id, name: user.adminRole.name }
-        : null,
+      adminRole: user.adminRole ? { id: user.adminRole.id, name: user.adminRole.name } : null,
     };
   }
 
@@ -112,10 +106,7 @@ export class AuthService {
         select: { adminRole: { select: { id: true, name: true } } },
       }),
     ]);
-    return this.userPublic(
-      { ...user, adminRole: withRole?.adminRole ?? null },
-      permissions,
-    );
+    return this.userPublic({ ...user, adminRole: withRole?.adminRole ?? null }, permissions);
   }
 
   async register(dto: RegisterDto, context: SignInContext = {}) {

@@ -285,10 +285,7 @@ export class ListingsService {
   async findAll(query: ListListingsQueryDto, actor: JwtPayload | null) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
-    const where = this.mergeWhere(
-      this.buildRoleWhere(query, actor),
-      this.buildSearchWhere(query),
-    );
+    const where = this.mergeWhere(this.buildRoleWhere(query, actor), this.buildSearchWhere(query));
 
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.listing.count({ where }),
@@ -556,7 +553,8 @@ export class ListingsService {
       void this.notifications.create({
         userId: buyerId,
         type,
-        title: status === ListingStatus.LIVE ? "Saved listing is live" : "Saved listing under offer",
+        title:
+          status === ListingStatus.LIVE ? "Saved listing is live" : "Saved listing under offer",
         body,
         entityId: listingId,
         entityType: NotificationEntityType.Listing,

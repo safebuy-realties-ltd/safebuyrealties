@@ -40,8 +40,7 @@ describe("PlatformConfigService", () => {
         {
           provide: ConfigService,
           useValue: {
-            get: (key: string) =>
-              key === "PAYSTACK_TEST_PUBLIC_KEY" ? "pk_test_x" : undefined,
+            get: (key: string) => (key === "PAYSTACK_TEST_PUBLIC_KEY" ? "pk_test_x" : undefined),
           },
         },
       ],

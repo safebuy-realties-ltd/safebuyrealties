@@ -101,53 +101,65 @@ export class PoaService {
       doc.moveDown(1);
 
       doc.font("Helvetica-Bold").text("1. Appointment");
-      doc.font("Helvetica").text(
-        "I, the Principal named above, hereby irrevocably appoint SafeBuyRealties " +
-          "(the \"Attorney\") as my true and lawful attorney-in-fact to act on my behalf " +
-          "in connection with the acquisition and perfection of title to the property described above.",
-      );
+      doc
+        .font("Helvetica")
+        .text(
+          "I, the Principal named above, hereby irrevocably appoint SafeBuyRealties " +
+            '(the "Attorney") as my true and lawful attorney-in-fact to act on my behalf ' +
+            "in connection with the acquisition and perfection of title to the property described above.",
+        );
       doc.moveDown(0.75);
 
       doc.font("Helvetica-Bold").text("2. Scope of Authority");
-      doc.font("Helvetica").text(
-        "The Attorney is authorised to: (a) conduct due diligence and verification in respect of " +
-          "the property; (b) process and perfect title documentation; (c) apply for and obtain " +
-          "Governor's Consent and Certificate of Occupancy where applicable; (d) pay statutory " +
-          "fees and charges on my behalf; (e) receive, execute, and deliver documents necessary " +
-          "for the transaction; and (f) take any ancillary steps reasonably required to complete " +
-          "the purchase.",
-      );
+      doc
+        .font("Helvetica")
+        .text(
+          "The Attorney is authorised to: (a) conduct due diligence and verification in respect of " +
+            "the property; (b) process and perfect title documentation; (c) apply for and obtain " +
+            "Governor's Consent and Certificate of Occupancy where applicable; (d) pay statutory " +
+            "fees and charges on my behalf; (e) receive, execute, and deliver documents necessary " +
+            "for the transaction; and (f) take any ancillary steps reasonably required to complete " +
+            "the purchase.",
+        );
       doc.moveDown(0.75);
 
       doc.font("Helvetica-Bold").text("3. Revocation");
-      doc.font("Helvetica").text(
-        "This Power of Attorney is irrevocable until the completion of the transaction and " +
-          "registration of title in my name, or until released in writing by SafeBuyRealties " +
-          "following completion of all obligations under the transaction.",
-      );
+      doc
+        .font("Helvetica")
+        .text(
+          "This Power of Attorney is irrevocable until the completion of the transaction and " +
+            "registration of title in my name, or until released in writing by SafeBuyRealties " +
+            "following completion of all obligations under the transaction.",
+        );
       doc.moveDown(0.75);
 
       doc.font("Helvetica-Bold").text("4. Indemnity");
-      doc.font("Helvetica").text(
-        "I agree to indemnify and hold harmless SafeBuyRealties, its officers, and agents against " +
-          "all claims, losses, and expenses arising from actions taken in good faith pursuant to " +
-          "this instrument, except where caused by gross negligence or wilful misconduct.",
-      );
+      doc
+        .font("Helvetica")
+        .text(
+          "I agree to indemnify and hold harmless SafeBuyRealties, its officers, and agents against " +
+            "all claims, losses, and expenses arising from actions taken in good faith pursuant to " +
+            "this instrument, except where caused by gross negligence or wilful misconduct.",
+        );
       doc.moveDown(0.75);
 
       doc.font("Helvetica-Bold").text("5. Legal Framework");
-      doc.font("Helvetica").text(
-        "This instrument is executed in accordance with the laws of the Federal Republic of Nigeria, " +
-          "including the Evidence Act 2011 and the Electronic Transactions Act 2023. I acknowledge " +
-          "that independent witnessing may be required for this document to be legally binding and " +
-          "that registration at the relevant Land Registry within 60 days is my responsibility.",
-      );
+      doc
+        .font("Helvetica")
+        .text(
+          "This instrument is executed in accordance with the laws of the Federal Republic of Nigeria, " +
+            "including the Evidence Act 2011 and the Electronic Transactions Act 2023. I acknowledge " +
+            "that independent witnessing may be required for this document to be legally binding and " +
+            "that registration at the relevant Land Registry within 60 days is my responsibility.",
+        );
       doc.moveDown(1);
 
       doc.font("Helvetica-Bold").text("6. Consents Confirmed");
       doc.font("Helvetica");
       doc.text(`• Legal capacity: ${consentFlags.legalCapacity ? "Yes" : "No"}`);
-      doc.text(`• Witnessing requirement acknowledged: ${consentFlags.witnessingRequired ? "Yes" : "No"}`);
+      doc.text(
+        `• Witnessing requirement acknowledged: ${consentFlags.witnessingRequired ? "Yes" : "No"}`,
+      );
       doc.text(
         `• Land Registry registration within 60 days: ${consentFlags.landRegistryRegistration ? "Yes" : "No"}`,
       );
@@ -200,7 +212,9 @@ export class PoaService {
       throw new ForbiddenException("You can only execute PoA for your own transaction");
     }
     if (transaction.powerOfAttorney) {
-      throw new ConflictException("A Power of Attorney has already been executed for this transaction");
+      throw new ConflictException(
+        "A Power of Attorney has already been executed for this transaction",
+      );
     }
     if (!transaction.listing || !transaction.listingId) {
       throw new BadRequestException("Power of Attorney requires a transaction linked to a listing");

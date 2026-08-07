@@ -64,7 +64,10 @@ export class PlatformConfigService {
     return value;
   }
 
-  getForRole(role: UserRole, config: PlatformConfigResponse): PlatformConfigResponse | PlatformConfigPublicResponse {
+  getForRole(
+    role: UserRole,
+    config: PlatformConfigResponse,
+  ): PlatformConfigResponse | PlatformConfigPublicResponse {
     if (isInternalRole(role)) {
       return config;
     }

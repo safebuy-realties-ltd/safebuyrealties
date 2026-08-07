@@ -127,8 +127,7 @@ export class PaystackService {
     reference?: string;
   }): Promise<{ transferCode: string; reference: string; status: string }> {
     const paystack = this.getClient();
-    const bankCode =
-      this.config.get<string>("PAYSTACK_PAYOUT_BANK_CODE")?.trim() || "057";
+    const bankCode = this.config.get<string>("PAYSTACK_PAYOUT_BANK_CODE")?.trim() || "057";
     const accountNumber =
       this.config.get<string>("PAYSTACK_PAYOUT_ACCOUNT_NUMBER")?.trim() || "0000000000";
 

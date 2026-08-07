@@ -200,7 +200,9 @@ describe("PaymentsService property purchase", () => {
       source: "PLATFORM",
       listing,
       dueDiligenceOrder:
-        overrides.verdict === undefined ? { verdict: DD_VERDICT.PROCEED } : { verdict: overrides.verdict },
+        overrides.verdict === undefined
+          ? { verdict: DD_VERDICT.PROCEED }
+          : { verdict: overrides.verdict },
       buyer: { kycRecord: { status: overrides.kycStatus ?? KycStatus.VERIFIED } },
     });
   }
@@ -284,7 +286,9 @@ describe("PaymentsService property purchase", () => {
     it("records that a purchase was started before it asks Paystack for a checkout", async () => {
       await start();
 
-      const moved = db.calls.indexOf(`transaction.updateMany:${TransactionStatus.PURCHASE_PENDING}`);
+      const moved = db.calls.indexOf(
+        `transaction.updateMany:${TransactionStatus.PURCHASE_PENDING}`,
+      );
       expect(moved).toBeGreaterThanOrEqual(0);
       expect(moved).toBeLessThan(db.calls.indexOf("payment.create"));
       expect(moved).toBeLessThan(db.calls.indexOf("paystack.initialize"));
@@ -591,10 +595,7 @@ describe("PaymentsService property purchase", () => {
       seed({ status: TransactionStatus.INITIATED, listingStatus: ListingStatus.UNDER_OFFER });
 
       await expect(
-        service.initiate(
-          { amount: 250_000, listingId: "listing-1", callbackUrl: CALLBACK },
-          buyer,
-        ),
+        service.initiate({ amount: 250_000, listingId: "listing-1", callbackUrl: CALLBACK }, buyer),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
   });

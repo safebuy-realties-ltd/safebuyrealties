@@ -93,9 +93,7 @@ describe("NotificationsService", () => {
       select: { id: true },
     });
     expect(createSpy).toHaveBeenCalledTimes(2);
-    expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "staff-1" }),
-    );
+    expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({ userId: "staff-1" }));
   });
 
   it("returns paginated notifications with unread count", async () => {

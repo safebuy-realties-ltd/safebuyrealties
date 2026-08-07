@@ -246,15 +246,17 @@ export class ProfessionalsService {
     throw new BadRequestException("kind must be 'license' or 'id'");
   }
 
-  private isReviewReady(profile: Pick<
-    ProfessionalProfile,
-    "regulatoryBody" | "licenseNumber" | "licenseDocumentKey" | "idDocumentKey"
-  >): boolean {
+  private isReviewReady(
+    profile: Pick<
+      ProfessionalProfile,
+      "regulatoryBody" | "licenseNumber" | "licenseDocumentKey" | "idDocumentKey"
+    >,
+  ): boolean {
     return Boolean(
       profile.regulatoryBody.trim() &&
-        profile.licenseNumber.trim() &&
-        profile.licenseDocumentKey &&
-        profile.idDocumentKey,
+      profile.licenseNumber.trim() &&
+      profile.licenseDocumentKey &&
+      profile.idDocumentKey,
     );
   }
 

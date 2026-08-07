@@ -47,7 +47,9 @@ describe("PoaService", () => {
     storage = {
       upload: jest
         .fn()
-        .mockImplementation((_buf: Buffer, key: string) => Promise.resolve(key.replace(/\\/g, "/"))),
+        .mockImplementation((_buf: Buffer, key: string) =>
+          Promise.resolve(key.replace(/\\/g, "/")),
+        ),
       // Deliberately not the real URL: the assertions below prove the response carries whatever
       // StorageService returned, and a separate test proves what it returns for a POA key.
       getSignedUrl: jest.fn().mockImplementation((key: string) => Promise.resolve(`signed:${key}`)),

@@ -90,9 +90,8 @@ export class DdCmsService implements OnModuleInit {
     },
     opts?: { includeInactiveItems?: boolean },
   ) {
-    const items = (opts?.includeInactiveItems
-      ? schedule.items
-      : schedule.items.filter((i) => i.active)
+    const items = (
+      opts?.includeInactiveItems ? schedule.items : schedule.items.filter((i) => i.active)
     )
       .slice()
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -144,7 +143,9 @@ export class DdCmsService implements OnModuleInit {
   async createSchedule(dto: UpsertScheduleDto, actorId: string) {
     const code = dto.code.trim().toUpperCase();
     if (!/^[A-Z0-9_]+$/.test(code)) {
-      throw new BadRequestException("Schedule code must be uppercase letters, numbers, underscores");
+      throw new BadRequestException(
+        "Schedule code must be uppercase letters, numbers, underscores",
+      );
     }
     try {
       const created = await this.prisma.ddScheduleConfig.create({
@@ -179,7 +180,9 @@ export class DdCmsService implements OnModuleInit {
     const updated = await this.prisma.ddScheduleConfig.update({
       where: { id },
       data: {
-        ...(dto.letter !== undefined ? { letter: dto.letter.trim().toUpperCase().slice(0, 2) } : {}),
+        ...(dto.letter !== undefined
+          ? { letter: dto.letter.trim().toUpperCase().slice(0, 2) }
+          : {}),
         ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
         ...(dto.shortName !== undefined ? { shortName: dto.shortName.trim() } : {}),
         ...(dto.description !== undefined ? { description: dto.description.trim() } : {}),
@@ -249,9 +252,7 @@ export class DdCmsService implements OnModuleInit {
       where: { id: itemId },
       data: {
         ...(dto.label !== undefined ? { label: dto.label.trim() } : {}),
-        ...(dto.description !== undefined
-          ? { description: dto.description?.trim() || null }
-          : {}),
+        ...(dto.description !== undefined ? { description: dto.description?.trim() || null } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
       },
