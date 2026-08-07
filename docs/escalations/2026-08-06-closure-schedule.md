@@ -13,17 +13,38 @@ closed, in the exact form that would close it, matched to the stories that are w
 | EXT-6 | Corne Labs | 2026-08-06 | |
 | EXT-8 | Digital Records, COO | 2026-08-06 | |
 | EXT-9 | Finance | 2026-08-06 | |
-| ADR-0003 | Product, client | 2026-08-06 | |
+| ADR-0003 | Product, client | 2026-08-06 | **2026-08-07, in full** |
 | ADR-0004 | Product, client, security | 2026-08-06 | |
 | D3 | Client, product | 2026-08-06 | |
 
-**Status: dispatched 2026-08-06.** All eleven items went out that day, stamped on the day of
-sending rather than backfilled. **The Answer recorded column is empty in all eleven rows, and that
-is why it is a separate column:** sending is not answering. Nothing here has come back, nothing
-here is closed, and no story on the board moves on a dispatch date. Until a date appears in an
-item's **Answer recorded** cell, nothing anywhere in this repository may say that item is answered,
-closed or unblocked, and a partial answer is recorded in that word rather than as a bare date,
-because a bare date in that column reads as closed.
+**Status: dispatched 2026-08-06, one item answered on 2026-08-07, ten open.** All eleven went out
+on the one day, stamped on the day of sending rather than backfilled. **ADR-0003 is the only row
+with a date in the Answer recorded column, and the other ten are empty, which is why it is a
+separate column:** sending is not answering. Ten items have not come back, ten are not closed, and
+no story moves on a dispatch date. Until a date appears in an item's **Answer recorded** cell,
+nothing anywhere in this repository may say that item is answered, closed or unblocked, and a
+partial answer is recorded in that word rather than as a bare date, because a bare date in that
+column reads as closed.
+
+**Dates in this register are West Africa Time.** This is stated because nothing in this repository
+had ever stated it, and the gap was capable of moving a date by a day. The officers who sign these
+answers are in WAT (`+01:00`) and the repository commits at `-05:00`, six hours apart, so a commit
+made late in the evening of one day lands on the next day in WAT. The company, its officers and the
+NDPC are all Nigerian, so the register runs on WAT and a commit timestamp is evidence of when
+something was written down, not of the date an officer decided it. **No existing date needed
+correcting when this was settled:** every 2026-08-06 commit in this directory falls between 11:21
+and 23:31 WAT, so the dispatch stamp clears midnight WAT by twenty-nine minutes and stands as
+written.
+
+**The returned decision request was amended on 2026-08-07, after it was received and after it was
+recorded here as frozen.** `ENG-DR-2026-08-06-01_All_Decisions_Completed.docx` came back on
+2026-08-06 and was committed at `6acecb1`. On 2026-08-07 one row of it changed. The document is 220
+blocks long and **exactly one block differs**, the EXT-10 counsel position, checked block by block
+rather than sampled. Both versions are in the history, the first at `6acecb1` and the second at the
+commit that carries this paragraph, so the 6 August analysis below can still be read against the
+document it was written from. What changed is recorded under EXT-9 and EXT-10 in Part B. **The
+freeze is not thereby waived**: what a returned document says on the day it arrives stays on the
+record, and a later version is recorded beside it rather than in place of it.
 
 **EXT-8 and EXT-9 joined this schedule on 2026-08-06, after they were answered.** That is not a
 contradiction. Both were answered the same day inside `ENG-DR-2026-08-06-01`, and both answers left
@@ -396,6 +417,16 @@ gates:** G4, on two counsel signatures rather than one
    CFO approve the configuration.
    *Form:* signed, with a name, a role and a date, or the wording counsel signs instead. This is
    the single thing keeping EXT-10 open, and no agent may tick it.
+   **2026-08-07: the paragraph counsel is being asked to sign got longer, and it is still
+   unsigned.** It is still headed "Recommended counsel position for formal signature" and still
+   carries the same condition, so this point is unchanged in substance. What counsel is now signing
+   additionally says: the VAT rate is **7.5%** and it is chargeable on all commissions; the
+   application operates a dedicated **VAT sub-account** into which VAT charged on commissions is
+   recorded for accounting, reconciliation and audit, **while the actual funds remain in the
+   designated bank account**, so it is a ledger account and not a second bank account; and two terms
+   are defined for use throughout, **Selling Price Ex-Commission** and **Selling Price
+   Cum-Commission**. The wording also moved from "invoice VAT" to "charge VAT". Counsel should be
+   told the paragraph changed after 6 August, because a signature is given on a version.
 7. **"Commission plus applicable VAT" in the buyer and seller engagement documents.**
    *Form:* confirmation that the phrase, or counsel's equivalent, appears in each. This is
    counsel's own condition from the EXT-10 answer, and it is a wording change to instruments rather
@@ -630,8 +661,8 @@ unsettled, and the recipient of this schedule is now the only person who can set
 | Ref | State after 6 August | What is still needed | Blocks |
 | --- | --- | --- | --- |
 | EXT-8 | Answered, not closed | Three contradictions inside the answer. Four smaller gaps stood beside them and were answered on 6 August, so this ask is shorter than it was that morning. **Item EXT-8 below** | E9-S2 |
-| EXT-9 | Answered, not closed | The rate. The structure is settled and the number is not. **Item EXT-9 below** | E9-S3, and EXT-4 |
-| EXT-10 | Answered by Finance, not closed | Counsel's signature on the position drafted for it, and the CEO, COO and CFO approval of the configuration. Chased at **EXT-4 point 6**, because it is counsel's work | E9-S3, G4 |
+| EXT-9 | Answered, not closed. **Ask narrowed 2026-08-07** | Was the rate. The 2026-08-07 amendment settles it arithmetically at 5% per side, so what is left is a one-line confirmation that the collation rows are superseded, plus the two needs that were never answered at all: who the authorised users are, and whether a variation is capped. **Item EXT-9 below** | E9-S3, and EXT-4 |
+| EXT-10 | Answered by Finance, not closed. **Answer enlarged 2026-08-07** | Unchanged: counsel's signature on the position drafted for it, and the CEO, COO and CFO approval of the configuration. Chased at **EXT-4 point 6**, because it is counsel's work. The amendment adds the VAT rate and a worked model but is still headed "Recommended counsel position for formal signature", so it is still unsigned | E9-S3, G4 |
 | EXT-11 | **Closed** | Nothing. It converted into an executed transfer instrument (**EXT-2 point 4**), an amended Privacy Policy and a copy of GAID 2025 (**EXT-5 points 7 and 8**) | Released D4's region half |
 | EXT-12 | **Closed** | Nothing. It converted into ID Standard Version 2, due 2026-08-13, and the instrument corrections at **EXT-4 points 5 and 10** | Released EXT-3 point 8 |
 
@@ -753,6 +784,30 @@ EXT-12 answer.
 **Owner:** Finance · **Closes:** E9-S3's commission half, and EXT-4 points 8 and 9 · **Answered
 2026-08-06 by** Aregbe Idris, Finance
 
+> **2026-08-07: the rate is settled by arithmetic, in the EXT-10 answer rather than in this one, and
+> this item stays open.** Nothing in the question below is edited, and nothing in the EXT-9 rows of
+> the returned document changed. The amendment of that day rewrote one block, the EXT-10 counsel
+> position, and it fixes total commission at **10% of the ex-commission price** in both of its
+> worked examples: ₦30,000 becomes ₦33,000 at 10%, and the 5%-each split is ₦1,500 from each side.
+> The company receives ₦3,000 either way. **5 plus 5 is that 10%; 10 plus 10 would be ₦6,000, twice
+> the worked example in the same document and twice what clause 5 authorises.** So the response
+> boxes are right and the collation rows are the error.
+>
+> **That is a strong inference and it is still an inference, so the item does not close on it.** It
+> is drawn from a different item's answer, by us rather than by Finance, and the collation rows at
+> EXT-9.1 and EXT-9.3 still read 10% word for word. What this changes is the size of the ask, not
+> the state of the item: need 1 below drops from "choose the rate" to "confirm the collation rows
+> are superseded by the response boxes", which is a line rather than a decision. **Needs 2 and 3
+> were never answered at all and are untouched by any of this**, so EXT-9 would stay open even if
+> need 1 closed this morning.
+>
+> **The amendment also adds an arrangement nobody asked about.** It provides that the seller may
+> transfer responsibility for the whole commission to the buyer, so the buyer pays 10% and the
+> seller receives the full ex-commission price. Need 3 below asks whether a varied *rate* is capped.
+> This is a variation in who *bears* the commission, at an unchanged rate, and E9-S3 has to build
+> both modes rather than one. It is added to what E9-S3 must cover; it is not treated as an answer
+> to need 3.
+
 **Two of the three questions closed and are not reopened.** Commission is two-sided, charged to
 both parties. The buyer's share is collected from the buyer and must not be withheld from the
 seller's proceeds. Both are clear and both are implementable.
@@ -858,6 +913,12 @@ above, rather than twice.
 
 **Owner:** Product, client · **Relates to:** E2-S4 · **Status in the repository: Proposed**
 
+> **2026-08-07: answered in full, and this item is closed.** The header line above is left as it was
+> written on 2026-08-06 because the question text is not edited after sending. The status in the
+> repository is now **Accepted**, not Proposed. All four needs below were answered, the answer is in
+> the Response block at the end of this item, and `docs/adr/0003-payment-mock-mode-guard.md` carries
+> it. This is the first of the eleven items to close.
+
 **This is a ratification, not a decision.** E2-S4 shipped as PR #99. The behaviour described in
 this ADR is live: a production deploy with no payment credential refuses to start rather than
 recording every seller as paid against a `mock_transfer_...` reference. The decision record still
@@ -894,11 +955,47 @@ what was merely suggested, and a future change has no recorded baseline to depar
 **Documents updated when this lands:** the status line of `docs/adr/0003-payment-mock-mode-guard.md`,
 `docs/mvp-board.html`, `docs/BUILD_CHECKLIST.md`.
 
-**Response**
+**Response** · answered 2026-08-07
 
-> ____________________________________________________________________________
+> **Question 1, accepted as written?** Yes. ADR-0003 is accepted as written.
 >
-> Given by: ____________________ Role: ____________________ Date: __________
+> **Question 2, alternative design if not accepted.** Not applicable.
+>
+> **Question 3, accept the trade-off?** Yes. I accept that where the production Paystack credential
+> is missing or blank, the API will refuse to start, even if this results in a temporary platform
+> outage. This is preferable to allowing the platform to process or record payments incorrectly or
+> indicate that a seller has been paid when no actual payment has occurred. I also acknowledge that
+> `PAYSTACK_FORCE_MOCK` will be ignored in production, with a warning issued, while the system
+> continues to use real payment processing.
+>
+> **Question 4, effective date.** 7 August 2026. The ADR should separately record that the
+> implemented behaviour has been live since 30 July 2026, while the formal management decision
+> became effective on 7 August 2026.
+>
+> ADR-0003 is accepted as written, effective 6 August 2026, decided by Adebiyi Emmanuel Babatope,
+> role Chief Operating Officer (COO). I understand that a production deploy with a missing or
+> blanked Paystack credential will refuse to start, and that this takes the whole API down rather
+> than degrading payments.
+>
+> Given by: Adebiyi Emmanuel Babatope · Role: Chief Operating Officer (COO) · Date: 7 August 2026
+
+**Recorded exactly as returned, including the one date that appears twice.** Question 4 answers
+2026-08-07 and the summary paragraph beneath it says 2026-08-06. **The effective date taken is
+2026-08-07**, for two reasons: question 4 is the question that asked for it, and it carries an
+instruction about how to record it that the summary paragraph does not. The signature is dated
+2026-08-07 because the decider is in West Africa Time, which is the convention this register now
+states at the top of this file. The one-day gap is not treated as a contradiction of the kind that
+holds an item open, because the question that asked for the date answered it unambiguously.
+
+**Recorded when the answer was checked against the code, and neither point reopens anything.** The
+Decision says mock payments "carry an explicit flag on the record"; no column in
+`backend/prisma/schema.prisma` holds one, and the flag is derived at read time from the reference
+prefix by `isMockReference()`, at both read sites. The badge reaches every operator view, so the
+promise holds, and it holds because the prefix is never rewritten. Separately,
+`backend/src/config/payments-guard.ts` reads production from `NODE_ENV` **or** `VERCEL_ENV`, so a
+move off Vercel leaves `NODE_ENV` carrying this guard alone and **a host that does not set
+`NODE_ENV=production` would silently reinstate the failure this ADR exists to prevent.** Both are
+written into the ADR's acceptance section. The second is a cutover item, not a decision item.
 
 ### ADR-0004, private documents move behind authorization, decision D4
 
@@ -1019,7 +1116,7 @@ and copy the dispatch dates up into the table at the top of this file on the day
 | EXT-6 | | | |
 | EXT-8 | | | |
 | EXT-9 | | | |
-| ADR-0003 | | | |
+| ADR-0003 | Adebiyi Emmanuel Babatope, Chief Operating Officer | 2026-08-07 | **None. Answered in full and closed.** The effective date is taken as 2026-08-07 from question 4, which is the question that asked for it; the summary paragraph in the same answer says 2026-08-06 and both are recorded in the item above |
 | ADR-0004 | | | |
 | D3 | | | |
 
@@ -1047,7 +1144,9 @@ find its source without asking.
 | The internal policy is unadopted and names no DPO | Same file, first line "SUBJECT TO BOARD APPROVAL" and §8, which creates the role and appoints nobody |
 | The initial audit runs fifteen months from commencement | Same file, §10.1 |
 | A licensed DPCO must be engaged | Same file, §9 |
-| E2-S4 shipped and ADR-0003 is still Proposed | `docs/MVP_OUTSTANDING_BACKLOG.md` epic table row E2-S4 (✅ #99) against the status line of `docs/adr/0003-payment-mock-mode-guard.md` |
+| E2-S4 shipped and ADR-0003 was still Proposed when this schedule was written | `docs/MVP_OUTSTANDING_BACKLOG.md` epic table row E2-S4 (✅ #99) against the status line of `docs/adr/0003-payment-mock-mode-guard.md` as it read on 2026-08-06. **That status line reads Accepted from 2026-08-07**, which is what the item above records |
+| Power of Attorney clause 5 still reads 10% in the instrument itself, on a re-read after the 2026-08-07 amendment | `docs/inputs/SBR -POWER OF ATTORNEY.docx`, read again 2026-08-07: "The Donee shall be entitled to deduct from source 10% brokerage and/or commission for the successful sale of the demised property." The signed instrument has not changed. The returned decision request still carries the 5% rewrite of that quotation recorded two rows below, in both the EXT-9 and the EXT-10 preamble, and the 2026-08-07 amendment did not correct it |
+| The 2026-08-07 amendment changes exactly one block of the returned document | The committed copy at `6acecb1` against the working-tree copy, both walked in document order with python-docx and compared with `difflib`: 220 blocks each, one differing block, the EXT-10 counsel position. Compared block by block rather than sampled |
 | E3-S1 shipped and ADR-0004 is still Proposed | Same table, row E3-S1 (✅ #103–112) against the status line of `docs/adr/0004-private-document-access.md` |
 | EXT-8 to EXT-12 were dispatched 2026-08-06 and all five answered the same day | The dispatch table in [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) |
 
@@ -1059,7 +1158,8 @@ taken from the returned document directly rather than from a summary of it.
 | Every quoted answer | `ENG-DR-2026-08-06-01_All_Decisions_Completed.docx` in this directory, sha256 `a04107550dacf8a46338407d483cb1563b295a2c580a554605dec529cac85891`, 143 paragraphs and 20 tables, extracted with python-docx on 2026-08-06 |
 | The returned copy differs from the dispatched copy in six places, four of them rewriting a quotation of clause 5 from 10% to 5% | A `difflib` comparison of the paragraph text of the two files |
 | Clause 5 authorises 10% and authorises it from the seller | `docs/inputs/SBR -POWER OF ATTORNEY.docx`, paragraph 59: "The Donee shall be entitled to deduct from source 10% brokerage and/or commission for the successful sale of the demised property" |
-| The response box and the collation sheet give different commission rates | Same returned document, EXT-9 questions 1 and 3 against the collation rows for the same two questions |
+| The response box and the collation sheet give different commission rates | Same returned document, EXT-9 questions 1 and 3 against the collation rows for the same two questions. **Still true after the 2026-08-07 amendment**, which did not touch either of those rows |
+| The 2026-08-07 amendment fixes total commission at 10% of the ex-commission price in both of its worked examples | Same returned document, EXT-10 counsel position: ₦30,000 + 10% = ₦33,000, and the 5%-each split gives ₦1,500 + ₦1,500. The company receives ₦3,000 in both, so the two arrangements differ in who bears the commission and not in how much it is |
 | Three places say SUR is retained and one says use SVR | Same document, EXT-8 question 5 (both sentences), the EXT-12 registers answer, and collation row EXT-8.5 |
 | UUID appears in two response boxes and in neither corresponding collation row | Same document, the EXT-8 scoping box and EXT-12 question 1, against collation rows EXT-8.S and EXT-12.1 |
 | `NNN` is a per-prefix, per-day counter and cannot collide | `backend/src/sbr-id/sbr-id.service.ts` lines 40 to 96, the counter upsert |

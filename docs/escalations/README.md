@@ -68,14 +68,31 @@ or source file behind every factual assertion, plus what is deliberately not ass
 A recipient who disputes a fact should be able to find where it came from without
 asking.
 
+**Dates in this directory are West Africa Time.** Stated on 2026-08-07, because it had never been
+stated anywhere and the gap could move a date by a day. The officers who sign these answers are in
+WAT (`+01:00`); the repository commits at `-05:00`. Six hours apart, so a commit made late in the
+evening lands on the following day in WAT. The company, its officers and the NDPC are all Nigerian,
+so the register runs on WAT, and **a commit timestamp is evidence of when something was written
+down rather than of the date an officer decided it.** Settling this corrected no existing date:
+every 2026-08-06 commit here falls between 11:21 and 23:31 WAT.
+
+**A returned document that changes after it arrives is a second receipt, and the first stays on the
+record.** The freeze rule above protects a recipient holding a sent document. This is its mirror:
+we are the recipient of an answer, and an answer that changes underneath us is not a record either.
+When a returned file changes, diff it block by block rather than sampling it, name every changed
+block in the record file, and keep both versions reachable by commit. What the document said on the
+day it arrived is what the analysis written that day was answering, and it is not overwritten by a
+later version. `ENG-DR-2026-08-06-01_All_Decisions_Completed.docx` was amended this way on
+2026-08-07, in exactly one of its 220 blocks.
+
 ## Current
 
 | Reference | Raised | Subject | Status |
 | --- | --- | --- | --- |
 | [2026-08-06-ext-8-and-ext-12.md](2026-08-06-ext-8-and-ext-12.md) | 2026-08-06 | EXT-8 to EXT-12: identifiers, commission basis, VAT authority, data transfer, entity and domain | **Dispatched 2026-08-06**, all five. **All five answered 2026-08-06. Two closed** (EXT-11, EXT-12), **three answered and not closed** (EXT-8, EXT-9, EXT-10) |
 | `ENG-DR-2026-08-06-01_Decision_Request.docx` | 2026-08-06 | The client-facing form of the above | Issued, frozen |
-| `ENG-DR-2026-08-06-01_All_Decisions_Completed.docx` | 2026-08-06 | The returned document, with the client's answers filled in | Received 2026-08-06, frozen. Read against the question rather than in place of it |
-| [2026-08-06-closure-schedule.md](2026-08-06-closure-schedule.md) | 2026-08-06 | Originally EXT-1 to EXT-6, ADR-0003, ADR-0004 and D3. **Eleven items since 2026-08-06**, the five new ones being what the three unclosed answers left outstanding | **Dispatched 2026-08-06**, all eleven. **Nothing answered.** Every cell in the Answer recorded column is empty |
+| `ENG-DR-2026-08-06-01_All_Decisions_Completed.docx` | 2026-08-06 | The returned document, with the client's answers filled in | Received 2026-08-06 at `6acecb1`, then **amended 2026-08-07 in one block of 220**, the EXT-10 counsel position. Both versions are in the history and the first is not superseded. Read against the question rather than in place of it |
+| [2026-08-06-closure-schedule.md](2026-08-06-closure-schedule.md) | 2026-08-06 | Originally EXT-1 to EXT-6, ADR-0003, ADR-0004 and D3. **Eleven items since 2026-08-06**, the five new ones being what the three unclosed answers left outstanding | **Dispatched 2026-08-06**, all eleven. **One answered and closed 2026-08-07** (ADR-0003). **Ten open**, and every cell in their Answer recorded column is empty |
 | `ENG-CS-2026-08-06-01_Closure_Schedule.docx` | 2026-08-06 | The stakeholder-facing form of the above, plus ten per-owner splits carrying the same first three pages | Written and revised in place four times on 2026-08-06, then **dispatched 2026-08-06 and frozen**. Not regenerated after dispatch, because recipients hold these bytes. Cover asks for a response by close of business that day. A change now is `ENG-CS-2026-08-06-02` |
 
 ADR-0005 is deliberately excluded from the closure schedule at the requester's instruction of
