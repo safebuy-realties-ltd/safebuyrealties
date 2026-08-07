@@ -3,7 +3,7 @@ import type { Response } from "express";
 import { PaystackService } from "../payments/paystack.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
-import { isProductionEnvironment } from "../config/payments-guard";
+import { isProductionEnvironment } from "../config/runtime-environment";
 import { CHECK_TIMEOUT_MS, CheckStatus, runCheck } from "./health-check";
 import { SkipThrottle } from "../common/decorators/throttle.decorator";
 

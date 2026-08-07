@@ -12,10 +12,15 @@ const GOOD_SECRET = "Zb7yQpK3vR8sT1wX5nD2gH6jL9mC4fA0eU";
 /** The literal this story deleted from auth.module.ts and jwt.strategy.ts. */
 const OLD_FALLBACK = "dev-secret-change-me";
 
+/**
+ * `{}` is deliberately absent. An undeclared environment used to sit here, because the old
+ * production check defaulted it to development; since ADR-0006 it resolves to production and is
+ * covered by the undeclared-environment test below instead.
+ */
 const OUTSIDE_PRODUCTION: NodeJS.ProcessEnv[] = [
-  {},
   { NODE_ENV: "development" },
   { NODE_ENV: "test" },
+  { APP_ENV: "staging" },
   { VERCEL_ENV: "preview" },
 ];
 
@@ -159,6 +164,28 @@ describe("assertJwtSecret — production refuses to start on an unusable secret"
     expect(message).not.toContain(secret.slice(0, 10));
     // Not even a prefix long enough to be worth guessing from.
     expect(message).not.toContain(secret.slice(0, 6));
+  });
+});
+
+describe("assertJwtSecret — an undeclared environment is treated as production", () => {
+  it("refuses to start with no secret and nothing declaring the environment", () => {
+    const { errors, exits } = guard({});
+
+    expect(exits).toEqual([1]);
+    expect(errors.join("\n")).toContain("Refusing to start");
+  });
+
+  it("refuses to start on the development default when nothing declares the environment", () => {
+    expect(guard({ JWT_SECRET: DEVELOPMENT_JWT_SECRET }).exits).toEqual([1]);
+    expect(guard({ JWT_SECRET: OLD_FALLBACK }).exits).toEqual([1]);
+  });
+
+  it("refuses to start when the declared environment is not one we recognise", () => {
+    expect(guard({ APP_ENV: "prodction" }).exits).toEqual([1]);
+  });
+
+  it("starts on a usable secret, so declaring nothing is safe rather than merely broken", () => {
+    expect(guard({ JWT_SECRET: GOOD_SECRET }).exits).toEqual([]);
   });
 });
 

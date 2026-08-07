@@ -1,6 +1,7 @@
 import { Injectable, LogLevel, LoggerService } from "@nestjs/common";
 import { currentRequestContext } from "./request-context";
 import { redact } from "./redact";
+import { isDevelopmentOrTest, isTestEnvironment } from "../../config/runtime-environment";
 
 /**
  * E7-S1 criteria 1 and 2: one line per event, structured, carrying the request it belongs to.
@@ -53,16 +54,18 @@ function resolveLevels(): LogLevel[] {
   // Silent under jest unless a spec asks otherwise. Two specs build a real app with the real
   // middleware, so without this every assertion in the suite would arrive buried in access logs and
   // a failure would be harder to find than it is now.
-  if (process.env.NODE_ENV === "test") return [];
-  // Debug and verbose are noise in production and cost money to ship to a log drain.
-  return process.env.NODE_ENV === "production" ? SEVERITY.slice(SEVERITY.indexOf("log")) : SEVERITY;
+  if (isTestEnvironment()) return [];
+  // Debug and verbose are noise on a real deployment and cost money to ship to a log drain. An
+  // undeclared environment gets the quieter set, because the risk of debug logging on a server is
+  // larger than the inconvenience of it being off on a laptop that forgot to say so.
+  return isDevelopmentOrTest() ? SEVERITY : SEVERITY.slice(SEVERITY.indexOf("log"));
 }
 
 function resolveJson(): boolean {
   const configured = process.env.LOG_FORMAT?.trim().toLowerCase();
   if (configured === "json") return true;
   if (configured === "human" || configured === "pretty") return false;
-  return process.env.NODE_ENV === "production";
+  return !isDevelopmentOrTest();
 }
 
 @Injectable()

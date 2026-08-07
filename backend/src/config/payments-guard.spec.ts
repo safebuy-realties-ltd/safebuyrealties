@@ -4,7 +4,6 @@ import {
   hasPaymentSecretKey,
   isForceMockHonoured,
   isMockReference,
-  isProductionEnvironment,
   MOCK_REFERENCE_PREFIX,
 } from "./payments-guard";
 
@@ -27,20 +26,7 @@ function guard(env: NodeJS.ProcessEnv) {
   return { errors, warnings, exits };
 }
 
-describe("isProductionEnvironment", () => {
-  it("is true for NODE_ENV=production", () => {
-    expect(isProductionEnvironment({ NODE_ENV: "production" })).toBe(true);
-  });
-
-  it("is true for a Vercel production deployment even without NODE_ENV", () => {
-    expect(isProductionEnvironment({ VERCEL_ENV: "production" })).toBe(true);
-  });
-
-  it("is false for preview and development", () => {
-    expect(isProductionEnvironment({ NODE_ENV: "development", VERCEL_ENV: "preview" })).toBe(false);
-    expect(isProductionEnvironment({})).toBe(false);
-  });
-});
+// isProductionEnvironment moved to ./runtime-environment.ts, and its tests with it.
 
 describe("assertPaymentsConfigured — startup fails in production without a key", () => {
   it("exits when NODE_ENV=production and no Paystack secret key is set", () => {
@@ -76,14 +62,27 @@ describe("assertPaymentsConfigured — startup fails in production without a key
   });
 
   it("never exits outside production, even with no key at all", () => {
+    // `{}` used to be in this list, on the reading that an unset NODE_ENV meant a laptop. Since
+    // ADR-0006 an undeclared environment is production, and the case below covers it.
     for (const env of [
-      {},
       { NODE_ENV: "development" },
       { NODE_ENV: "test" },
+      { APP_ENV: "staging" },
       { VERCEL_ENV: "preview" },
     ]) {
       expect(guard(env).exits).toEqual([]);
     }
+  });
+
+  it("exits when no key is set and nothing declares the environment", () => {
+    const { errors, exits } = guard({});
+
+    expect(exits).toEqual([1]);
+    expect(errors.join("\n")).toContain("Refusing to start");
+  });
+
+  it("starts when a key is set and nothing declares the environment", () => {
+    expect(guard({ PAYSTACK_SECRET_KEY: LIVE_KEY }).exits).toEqual([]);
   });
 
   it("does not put the key, or any part of it, in the failure message", () => {
@@ -104,8 +103,16 @@ describe("PAYSTACK_FORCE_MOCK is honoured in development and test only", () => {
     expect(isForceMockHonoured({ NODE_ENV: "test", PAYSTACK_FORCE_MOCK: "1" })).toBe(true);
   });
 
-  it("is honoured when NODE_ENV is unset, which is local development", () => {
-    expect(isForceMockHonoured({ PAYSTACK_FORCE_MOCK: "yes" })).toBe(true);
+  it("is refused when nothing declares the environment", () => {
+    // This assertion used to read the other way, on the reading that an unset NODE_ENV meant local
+    // development. It is the path by which mock payments could have reached a real deployment: a
+    // host that never set NODE_ENV would have honoured PAYSTACK_FORCE_MOCK and written payouts as
+    // COMPLETED without moving money. See ADR-0003 and ADR-0006.
+    expect(isForceMockHonoured({ PAYSTACK_FORCE_MOCK: "yes" })).toBe(false);
+  });
+
+  it("is refused in staging", () => {
+    expect(isForceMockHonoured({ APP_ENV: "staging", PAYSTACK_FORCE_MOCK: "true" })).toBe(false);
   });
 
   it("is ignored in production", () => {

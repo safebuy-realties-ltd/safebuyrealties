@@ -21,6 +21,7 @@ import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { Throttle } from "../common/decorators/throttle.decorator";
 import { JwtPayload } from "./jwt.strategy";
 import { SessionsService } from "./sessions.service";
+import { isDevelopmentOrTest } from "../config/runtime-environment";
 
 const COOKIE_NAME = "sbr_session";
 const REFRESH_COOKIE_NAME = "sbr_refresh";
@@ -42,13 +43,17 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const REFRESH_COOKIE_PATH = "/api/v1/auth";
 
 function sessionCookieOptions() {
-  const isProd = process.env.NODE_ENV === "production";
-  // SameSite=Lax works when the browser talks to the API on the same origin
-  // (Vercel rewrite /api/v1 → backend). SameSite=None is only needed for direct
-  // cross-subdomain calls, which third-party cookie rules often block.
+  // Secure everywhere except a developer's machine and the test runner, so staging and an
+  // undeclared environment both get it. It used to read NODE_ENV directly, which meant a host
+  // that did not set NODE_ENV issued session and refresh cookies over plain http. See ADR-0006.
+  //
+  // SameSite=Lax works when the browser talks to the API on the same origin, which is true both
+  // for the Vercel rewrite /api/v1 → backend and for a reverse proxy in front of both processes.
+  // SameSite=None is only needed for direct cross-subdomain calls, which third-party cookie rules
+  // often block.
   return {
     httpOnly: true,
-    secure: isProd,
+    secure: !isDevelopmentOrTest(),
     sameSite: "lax" as const,
     path: "/",
   };

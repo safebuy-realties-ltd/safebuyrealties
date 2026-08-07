@@ -32,3 +32,17 @@ Development keeps the local driver, documented as development only. A migration 
 objects and report the keys it cannot find rather than failing silently.
 
 Region selection is an open sub-decision with NDPR data-residency implications.
+
+> **Closed 2026-08-07 by ADR-0006.** The sentence above is left as it was written, because it was true
+> for nine days and the record of what was open matters as much as the answer.
+> `0006-deployment-target-and-runtime-environment.md` puts the bucket in a **Nigerian region** and moves
+> the application off Vercel onto self-managed Nigerian infrastructure. The residency implication is
+> discharged rather than satisfied: with the data in Nigeria there is no transfer, so §12 of the client's
+> data protection policy never engages and none of its three conditions has to be met. That also disposes
+> of the half of EXT-11 Legal did not answer, which asked which of the three conditions the running
+> infrastructure sits under.
+>
+> This ADR is otherwise unchanged and still reads **Proposed**. Its access half shipped as E3-S1 and its
+> six sub-stories, #103 to #112; its storage half is E3-S2, which now waits on EXT-2, the bucket and its
+> credentials, and on nothing else. **Nothing here is a ratification of the access half.** Backlog
+> decision D4 is answered; this ADR's own acceptance is not, and the closure schedule still asks for it.
