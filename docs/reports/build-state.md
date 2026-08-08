@@ -1,9 +1,9 @@
 # What is built, and what is owed
 
-SafeBuyRealties build state. Revised 7 August 2026, 23:09, after the second return.
-Counts read from `docs/MVP_OUTSTANDING_BACKLOG.md` section 3 and the audit corrections in
-`docs/BUILD_CHECKLIST.md`. Route, module and coupling counts read from the working tree at commit
-`e8f35c7`.
+SafeBuyRealties build state. Revised 8 August 2026, after four further answers arrived in
+conversation rather than on the form. Counts read from `docs/MVP_OUTSTANDING_BACKLOG.md` section 3
+and the audit corrections in `docs/BUILD_CHECKLIST.md`. Route, module and coupling counts read from
+the working tree at commit `c993731`.
 
 > **This is the permanent copy.** The same content is published as a page, and the page is generated
 > from `docs/reports/build-state.html` in this repository, so the two cannot drift. This markdown
@@ -23,21 +23,31 @@ Counts read from `docs/MVP_OUTSTANDING_BACKLOG.md` section 3 and the audit corre
 
 ---
 
-## What changed today
+## What changed on 8 August
 
-Three pull requests merged, so the totals moved for the first time in a week. `#150` put one
-fail-closed definition of the runtime environment into the backend, `#151` lit the backend up in the
-linter for the first time, and `#152` recorded the dispatched closure schedule. `ADR-0006` landed
-with them, which answers decision D4 by removing the question rather than by meeting it, so E3-S2
-now waits on a purchase and not on anybody's judgement.
+Four further answers came back, in conversation rather than on the form, against EXT-4, EXT-8 and
+EXT-9. **One external item closed, two dependency columns moved, and no story became startable.**
+That is the whole of the movement, and it is worth stating plainly rather than dressing up: the
+board's blocked list is the same length this evening as it was this morning.
+
+EXT-8 closed on one sentence. EXT-4 gained counsel of record and its row stayed open, because naming
+counsel is not counsel having ruled. EXT-9 is now one line short of closing, and the line it is short
+of is a citation. `#153` merged alongside, carrying the second return into the record and making this
+page permanent, so the commit these counts are read from is now `c993731`.
+
+The day before, three pull requests merged and the totals moved for the first time in a week. `#150`
+put one fail-closed definition of the runtime environment into the backend, `#151` lit the backend up
+in the linter for the first time, and `#152` recorded the dispatched closure schedule. `ADR-0006`
+landed with them, which answers decision D4 by removing the question rather than by meeting it, so
+E3-S2 now waits on a purchase and not on anybody's judgement.
 
 Then the twelve outstanding items came back filled in, first at 18:16 and again at 23:09.
 **Thirty-eight of the sixty-seven points are answered and six of the nine signature blocks are
-complete**, and those two counts are identical in both returns. What the second return changed is
-the substance of six answers, and it is worth more than the counts suggest: **three items now close
-rather than two**. One of the three moves a story off the blocked list, and it is the largest story
-left. Five came back entirely blank in both returns, and the board has held those pending cost
-implications.
+complete**, and those two counts are identical in both returns and unchanged by the answers that
+followed on 8 August, because those four answered points that already carried an answer. **Four of
+the twelve items are now closed rather than three.** Only one of the four ever moved a story off the
+blocked list, and that was EXT-5 on 7 August. Five items came back entirely blank in both returns,
+and the board has held those pending cost implications.
 
 ---
 
@@ -174,30 +184,38 @@ flowchart LR
 
 ---
 
-## What came back this evening
+## What came back, and what came back after it
 
-Source: `docs/reports/what-is-neededv2.pdf`, returned 7 August 2026 at 23:09. The full record of
-every question and every answer is in `docs/reports/what-is-needed.md`.
+Source: `docs/reports/what-is-neededv2.pdf`, returned 7 August 2026 at 23:09, plus four answers given
+in conversation on 8 August 2026. The full record of every question and every answer is in
+`docs/reports/what-is-needed.md`, where the later four are printed under the point they answer and
+marked as having arrived off the form.
 
 The twelve outstanding items were sent out as a form with a typing box against every point and a
 signature block on every item. Thirty-eight of the sixty-seven points came back filled in and six of
 the nine signature blocks are complete. That sounds better than it is. A filled box is not the same
-as a closed item, and on this page three items are genuinely closed, only one of which holds a
+as a closed item, and on this page four items are genuinely closed, only one of which ever held a
 story.
 
-Two returns arrived, five hours apart. The second one does not answer a single new point and it does
-not add a signature, so every count below is the same in both. It rewrites six answers, and two of
-those rewrites are the difference between an item that closes and an item that does not. **EXT-10
-now names a statute where it previously wrote the words "statutory authority", and EXT-8 writes out
-the register format in full where it previously wrote "Confirmed".** Reading only the first return
-would have understated the evening by one closed item and one resolved contradiction.
+Two returns arrived on 7 August, five hours apart. The second one does not answer a single new point
+and it does not add a signature, so every count below is the same in both. It rewrites six answers,
+and two of those rewrites are the difference between an item that closes and an item that does not.
+**EXT-10 now names a statute where it previously wrote the words "statutory authority", and EXT-8
+writes out the register format in full where it previously wrote "Confirmed".** Reading only the
+first return would have understated the evening by one closed item and one resolved contradiction.
+
+Four more answers followed on 8 August, in conversation. They carry no name, no role and no
+signature, which is a record-keeping problem rather than a substance problem: an answer that never
+reaches the form is an answer the next reader of the form cannot see. Their substance is real all the
+same. **EXT-8 closed on them, EXT-4 point 7 closed on them and the EXT-4 row did not, and EXT-9 came
+within one line of closing.**
 
 | Count | What it counts |
 | --- | --- |
 | 38 of 67 | Points answered |
 | 6 of 9 | Signature blocks complete |
-| 3 | Items closed outright |
-| 4 | Answered, not closing |
+| 4 | Items closed outright |
+| 3 | Answered, not closing |
 | 5 | Returned blank |
 
 | Item | Points | Signed by | State | What it does to the story it holds |
@@ -205,10 +223,10 @@ would have understated the evening by one closed item and one resolved contradic
 | EXT-5 | 9 of 9 | Barr. Isoken Adisa-Isikalu, CLO | **Closes** | The one real close. A named Data Protection Officer with an address, Goldrush Partners as the compliance organisation, the commencement date, the retention basis and the GAID copy. E8-S1 has its inputs. One conflict to carry into the build: the answer allows erasure only after six years, which is not what the right to erasure says. |
 | D3 | 3 of 3 | Abiodun Olaluwe, CTO | **Closes** | Closes, but holds no story. Manual review for the first release, no provider, signed. E4-S2 already shipped on manual review. One loose thread: the box names Goodness Ifejesu Olajide as the decider and the signature block on the same item is the Chief Technology Officer. |
 | EXT-10 | 1 of 1 | Barr. Isoken Adisa-Isikalu, CLO | **Closes** | Closed by the second return. The first wrote "STATUTORY AUTHORITY", which is the phrase the ask was trying to replace. The second names the Nigeria Tax Act 2025 and links the published copy. It also closes point 6 of EXT-4, because the two ask the same question. Two reservations: no section is cited inside the Act, and the signature is the in-house Chief Legal Officer where the ask named the instructed firm. |
+| EXT-8 | 4 of 4 | Adebiyi Emmanuel Babatope, COO | **Closes** | Closed on 8 August by one sentence: SVR is the code for a Surveyor and SUR is the code for Surulere. That disposes of the last contradiction by saying what SUR is instead of choosing between two readings of it. It releases no story. E9-S2 drops EXT-8 from its dependency list and is then held by version 2 of the identifier standard, due 13 August 2026. The closing sentence arrived in conversation, so it carries no name and no role against it. |
 | EXT-1 | 7 of 7 | Olufemi Adisa-Isikalu, CEO | Answered | Every point answered, nothing delivered. The keys are still to be generated and the settlement account number is "ready on Monday". The second return replaces the refusal at point 3 with the Corporate Affairs Commission registration, which proves the company exists and does not say that money sitting in its account belongs to somebody else. That is the thing E2-S1 needs. |
-| EXT-4 | 11 of 11 | Idris Aregbe, CFO, attested by the CLO | Answered | Finance has put 7.5 percent on the record at points 6, 7 and 11, and the second return adds the Chief Legal Officer as attesting to point 7. Both officers are in-house. E8-S2 needs counsel's own name on the same page, and five of the eleven points still answer a different question from the one asked. |
-| EXT-8 | 4 of 4 | Adebiyi Emmanuel Babatope, COO | Answered | Two of the three contradictions are resolved. The second return writes the whole format out rather than confirming it: `SBR-ALD-LOCYYMM-UUID`. What is left is point 1, which still answers a choice between SUR and SVR with the single word "Confirmed". E9-S2 also waits on ID Standard V2. |
-| EXT-9 | 3 of 3 | Idris Aregbe, CFO | Answered | Commission is two-sided, with a combined floor of 10 percent and a configurable actual rate, and the worked example runs to the end. The second return names the body that sets the rate: a five-person board of the CEO, CFO, COO, CLO and CTO. It still does not say where that decision gets recorded, and E9-S3's criterion 7 asks for a single override role rather than a board of five. |
+| EXT-4 | 11 of 11 | Idris Aregbe, CFO, attested by the CLO | Answered | Counsel of record was named on 8 August: Barr. Isoken Adisa-Isikalu, Chief Legal Officer. That closes point 7, because the attestation already on the form is now counsel's own ratification rather than a second finance signature, and it retires the reservation carried over from EXT-10 about an in-house officer signing where the ask named an instructed firm. The row stays open. Naming counsel is not counsel having ruled, none of the three EXT-4 documents has come back confirmed, and four of the eleven points still answer a different question from the one asked. |
+| EXT-9 | 3 of 3 | Idris Aregbe, CFO | Answered | Commission is two-sided, with a hard floor of 10 percent combined and a configurable actual rate, and the worked example runs to the end. The 8 August answers settle the override: a per-transaction variation needs the CEO, the Chief Legal Officer and the Chief Operating Officer, all three together and not any one of them, it is not capped upward, and every variation is recorded against the transaction with the approver's identity. One line is still owed. The answer points at a minute recorded in the late hours of 7 August 2026 WAT and a date is not a reference. E9-S3's commission rate row is not seeded until that line comes back. |
 | EXT-2 | 0 of 7 | Not required | Blank | A purchase. E3-S2's verification half stays blocked. The code half does not need it. |
 | EXT-3 | 0 of 9 | Not required | Blank | A purchase. E6-S1 and the four stories behind it stay blocked. The single most expensive blank on the page, measured in stories held. |
 | EXT-6 | 0 of 8 | Blank | Blank | A purchase. E8-S3 stays blocked, and this one has a lead time, so a start date would have been worth more than nothing. |
@@ -224,8 +242,27 @@ all the same, and they are the cheapest things anybody could return tomorrow.
 reads Adebiyi Emmanuel Babatope everywhere he appears. The domain does not: the company is
 `safebuyrealtiesltd` at EXT-5 point 1 and `safebuyrealitiesltd.com` at EXT-4 points 1 and 10. That
 second value is the target every Power of Attorney QR code prints onto paper. One of the two is
-wrong and it needs settling before the next instrument is issued. The second return touched neither
-point, so the conflict is now five hours older and no nearer settled.
+wrong and it needs settling before the next instrument is issued. Neither the second return nor the
+8 August answers touched either point, so the conflict is a day older and no nearer settled.
+
+**One answer asks for work rather than closing it.** EXT-4's answer on the execution of land
+instruments says the baton passes to the appropriate professional services, an offering that can be
+searched for and contracted on the application. The application does not offer that today, and this
+was checked file by file rather than assumed. The professionals module carries a profile, document
+upload and credential verification. The service catalogue carries items, bundles and price
+calculation. Every professional-facing route in the frontend is a professional's own dashboard.
+There is no route by which a seller searches for a professional, no engagement, no contract and no
+fee flow. So the answer describes a capability that has to be built, and it is deliberately left
+unsized and off the board until somebody says whether it belongs in the first release. Separately,
+the answer names who performs a conveyance and the question was whether a seller's Power of Attorney
+can be signed electronically at all. The seller signs before any professional is engaged, so the
+narrower question is still open with counsel.
+
+**One consequence of "not capped" belongs with counsel too.** With no upward cap on a commission
+variation, three officers acting together can set the seller side above the 10 percent that clause 5
+of the Power of Attorney authorises deducting at source. That is not a reason to refuse the answer.
+It is a reason to put the conflict in front of the Chief Legal Officer before the first variation is
+approved rather than after.
 
 **Three readings still disagree with what is already written down.** EXT-1 point 4 calls the escrow
 account a "revenue flow account", where `ADR-0002` records escrow principal as a client-funds
@@ -241,23 +278,24 @@ code is written against them.
 ## What actually holds the sixteen
 
 Sixteen of the seventeen remaining stories sit behind a row that is waiting on an answer, an account
-or a signature from outside the repository. The seventeenth is E8-S1, released this evening when
+or a signature from outside the repository. The seventeenth is E8-S1, released on 7 August when
 EXT-5 came back signed, and it is the largest single story left on the board. Unblock four of the
 seven heads and thirteen more stories follow.
 
-One of the nine gates went away today rather than being answered. `D4` asked which of the three
-lawful transfer conditions the running host sits under, and `ADR-0006` put the bucket in a Nigerian
-region, so nothing is transferred and the question has nothing left to bite on. **E3-S2 is the only
-head on this graph now held by a purchase order rather than by a judgement.**
+One of the nine gates went away on 7 August rather than being answered. `D4` asked which of the
+three lawful transfer conditions the running host sits under, and `ADR-0006` put the bucket in a
+Nigerian region, so nothing is transferred and the question has nothing left to bite on. **E3-S2 is
+the only head on this graph now held by a purchase order rather than by a judgement.**
 
-The second return turns one more box green without releasing anything. EXT-10 is answered and
-signed, but E9-S3 sits behind EXT-9 as well, and EXT-9 still does not say where the commission rate
-is recorded. **A gate with two inputs opens when both of them open.** The same is true one row down:
-EXT-8 has gone from three contradictions to one, and E9-S2 waits on that one and on ID Standard V2,
-which is due on 13 August 2026.
+Two of the boxes have gone green since without releasing anything behind them, and the reason is the
+same in both cases. **A gate with two inputs opens when both of them open.** EXT-10 is answered and
+signed, but E9-S3 sits behind EXT-9 as well, and EXT-9 has still not cited the minute the commission
+rate is recorded in. EXT-8 closed on 8 August, but E9-S2 sits behind version 2 of the identifier
+standard as well, and that is due on 13 August 2026. Closing an input is worth doing on its own
+terms. It is not the same as starting a story.
 
-Dashed boxes are outside inputs. Green is answered and signed, amber means something came back and
-nothing closed, red means nothing came back.
+Dashed boxes are outside inputs. Green is answered and signed, or closed. Amber means something came
+back and nothing closed. Red means nothing came back.
 
 ```mermaid
 flowchart LR
@@ -276,13 +314,14 @@ flowchart LR
   N1 --> N4["E5-S3, password reset"]
   N1 --> N5["E5-S4, email verification"]
 
-  X9["EXT-9, commission basis, rate not recorded anywhere"] --> F3
+  X9["EXT-9, commission settled, minute not cited"] --> F3
   X10["EXT-10, VAT authority named and signed"] --> F3
   F3["E9-S3, accounts, rates, postings"] --> F4["E9-S4, escrow sub-ledger"]
-  X812["EXT-8 register spelling, EXT-12 ID Standard V2"] --> F2["E9-S2, location register"]
+  X8["EXT-8, register spelling, closed 8 August"] --> F2["E9-S2, location register"]
+  X12["ID Standard Version 2, due 13 August"] --> F2
 
   X5["EXT-5, DPCO and named DPO, signed"] --> P1["E8-S1, NDPR privacy centre"]
-  X4["EXT-4, counsel-approved PoA and terms"] --> P2["E8-S2, legal review"]
+  X4["EXT-4, counsel of record named, documents not back"] --> P2["E8-S2, legal review"]
   X6["EXT-6, security reviewer engaged"] --> P3["E8-S3, pre-launch security review"]
 
   classDef ext fill:#f1dedb,stroke:#97302c,color:#5c1b18,stroke-dasharray:5 3
@@ -291,9 +330,9 @@ flowchart LR
   classDef blocked fill:#f1dedb,stroke:#97302c,color:#5c1b18,stroke-width:2px
   classDef todo fill:#f4e8d1,stroke:#96690f,color:#553c08
 
-  class X2,X3,X6 ext
-  class X1,X4,X9,X812 extpart
-  class X5,X10 extdone
+  class X2,X3,X6,X12 ext
+  class X1,X4,X9 extpart
+  class X5,X8,X10 extdone
   class S1,M1,N1,F2,F3,P2,P3 blocked
   class S2,S3,M2,M3,N2,N3,N4,N5,F4,P1 todo
 ```
@@ -308,9 +347,9 @@ That is the critical path worth working: the hosting cutover guards first, becau
 production guard keys off a platform being left behind, then E3-S2's code half, then E6-S1, then
 E3-S3 and the E2-S1 model.
 
-**E8-S1 now joins them, and it is not a code half, it is the whole story.** It is the largest single
-item on the board, it is the one piece of remaining work that no longer waits on anybody, and it can
-start tomorrow morning.
+**E8-S1 joins them, and it is not a code half, it is the whole story.** It is the largest single item
+on the board, it is the one piece of remaining work that no longer waits on anybody, and nothing that
+came back on 8 August changed that either way.
 
 ---
 
@@ -323,11 +362,11 @@ Half refers to which side of the repository the work lands in.
 | E2-S1 | Seller payout destination, per-seller bank account | Both | Blocked | EXT-1, a live merchant and settlement account. D2 answered: the platform holds client funds. |
 | E3-S2 | Durable object storage in production | Backend | Blocked | EXT-2 alone since 7 August. D4 closed by ADR-0006, which removed the question instead of answering it. |
 | E6-S1 | SMTP configuration and delivery observability | Backend | Blocked | EXT-3, SMTP credentials and a verified sending domain. |
-| E8-S1 | NDPR consent, retention and erasure | Both | Planned | Released this evening. EXT-5 came back answered and signed. Two consent tiers, a RoPA, a DPIA and a SNAG grievance route, plus one wording conflict to put back to the Chief Legal Officer. |
-| E8-S2 | Legal review of the PoA instrument and terms | Neither | Blocked | EXT-4. No code. A counsel signature closes it. |
+| E8-S1 | NDPR consent, retention and erasure | Both | Planned | Released on 7 August. EXT-5 came back answered and signed. Two consent tiers, a RoPA, a DPIA and a SNAG grievance route, plus one wording conflict to put back to the Chief Legal Officer. |
+| E8-S2 | Legal review of the PoA instrument and terms | Neither | Blocked | EXT-4. No code. Counsel of record is named as of 8 August and none of the three documents has come back confirmed. The seven-clause instrument in `poa.service.ts` has still never been read by counsel, and the electronic execution question about the seller's Power of Attorney is still open. |
 | E8-S3 | Pre-launch security review | Neither | Blocked | EXT-6. No code. An engaged reviewer closes it. |
-| E9-S2 | Location register and property ID issuance | Backend | Blocked | EXT-8, down to one contradiction, SUR against SVR, and EXT-12, ID Standard V2 due 13 August. |
-| E9-S3 | Six main accounts, sub-codes, commission and VAT rates, postings | Backend | Blocked | EXT-10 is answered. EXT-9 gives the number and not the place it is recorded, and criterion 7 wants one override role where the answer names a board of five. |
+| E9-S2 | Location register and property ID issuance | Backend | Blocked | EXT-8 closed on 8 August. What is left is version 2 of the identifier standard, due 13 August 2026. |
+| E9-S3 | Six main accounts, sub-codes, commission and VAT rates, postings | Backend | Blocked | EXT-10 is answered and the override rule is settled: three named officers together, no upward cap, every variation recorded with the approver's identity. EXT-9 still has not cited the minute the rate is recorded in, so the commission rate row cannot be seeded. |
 | E2-S3 | Gateway refunds, not ledger-only | Backend | Planned | E2-S1 |
 | E2-S5 | Finance reconciliation view | Both | Planned | E2-S1 |
 | E3-S3 | Upload hardening: allow-list, magic bytes, AV hook | Backend | Planned | E3-S2 |
@@ -365,22 +404,24 @@ pushed migration and a table people are reading from. The move itself is L and i
 rather than engineering. Together, roughly 10 to 15 developer-days on top of the published 37 to 59.
 
 None of that is written into the backlog yet, and it stays unwritten by instruction. Whether the
-cutover counts against the published totals or sits outside them is a decision the board takes on
-8 August 2026, once the cost implications are in. Moving a published ceiling is a scoping call
-rather than housekeeping, so nothing goes into the three record documents until that answer exists.
+cutover counts against the published totals or sits outside them is a decision the board was to take
+on 8 August 2026, once the cost implications were in. **That date is today and the answer has not
+come back.** Moving a published ceiling is a scoping call rather than housekeeping, so nothing goes
+into the three record documents until it does. The estimate above stands and the rows stay unwritten.
 
 ---
 
-## What landed today, and what is open
+## What has landed, and what is open
 
 | PR | What it does | Half | State |
 | --- | --- | --- | --- |
 | `#150` | E7-S7: one fail-closed definition of the runtime environment. Three signals, most hardened wins, unknown treated as production. | Backend | Merged |
 | `#151` | Lints the backend, which nothing had ever done. 226 errors cleared, eslint taught that the repository has two halves, a lint job added to CI. | Both | Merged |
 | `#152` | The closure schedule dispatched, five answers recorded, ADR-0003 accepted, ADR-0006 written. Documents only. | Neither | Merged |
+| `#153` | The second return read into the record, E8-S1 released, and this page written as a permanent file in the repository rather than a published page with no source. Documents only. | Neither | Merged |
 | E3-S2a | The code half of durable object storage. Branch cut off `main`, one file written so far: a boot guard that refuses the local storage driver wherever the environment resolves to production. Not wired in, not pushed, no pull request. | Backend | In progress |
 
-The review queue is empty. All three of today's pull requests are on `main`, which is why the counts
+The review queue is empty. All four of those pull requests are on `main`, which is why the counts
 above moved for the first time in a week. One branch at a time remains the rule: every pull request
 in this repository touches the same three record documents, so a second branch opened alongside
 conflicts in exactly those three files.
@@ -392,10 +433,16 @@ conflicts in exactly those three files.
 Twenty-five merged plus ten planned plus seven blocked is forty-two, which is the same number as
 there are story headings in the backlog. The two figures were derived separately and they agree.
 
-**Three items closing does not move a story.** EXT-5 released E8-S1 at 18:16 and that is already
-counted above. EXT-10 and D3 close without releasing anything, because E9-S3 still waits on EXT-9
-and on E9-S1, and D3 records a decision that E4-S2 had already shipped. So the totals here are
-unchanged by the second return, which is the honest reading and not a cautious one.
+**Four items closing has moved one story, and that was on 7 August.** EXT-5 released E8-S1 at 18:16
+and that is already counted above. EXT-10, D3 and EXT-8 close without releasing anything. E9-S3
+still waits on EXT-9, D3 records a decision that E4-S2 had already shipped, and E9-S2 still waits on
+version 2 of the identifier standard. So the totals here are unchanged by the second return and
+unchanged again by the answers of 8 August, which is the honest reading and not a cautious one.
+
+**Two dependency columns moved on 8 August and nothing else did.** E9-S2 lost EXT-8 and gained a
+dated deliverable in its place. E9-S3 lost EXT-10 when that closed on 7 August and still carries
+EXT-9. A shorter dependency list is progress worth recording. It is not a story that can be picked
+up, and this page does not count it as one.
 
 The 10 to 15 days for the cutover are an estimate made here rather than a figure quoted from the
 backlog, because the backlog does not carry the row yet.

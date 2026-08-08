@@ -2,7 +2,7 @@
 
 *Twelve items are open outside engineering. Between them they hold seventeen stories, which is everything left before this platform can go live. Each item below says what has to come back, what shape the answer has to take, where to write it, and who signs it.*
 
-Generated 7 August 2026, against main at commit 1b4c46e. Revision 3, written 2026-08-07 against the 23:09 return.
+Generated 7 August 2026, against main at commit 1b4c46e. Revision 4, written 2026-08-08 against the 23:09 return and the answers that followed it.
 
 | Count | What it counts |
 |---|---|
@@ -15,21 +15,23 @@ Generated 7 August 2026, against main at commit 1b4c46e. Revision 3, written 202
 
 ## What came back, and what it changed
 
-7 August 2026. First return 18:16, revised return 23:09.
+7 August 2026 on the form. First return 18:16, revised return 23:09. Four further answers on 8 August 2026, in conversation.
 
 | Count | What it counts |
 |---|---|
 | 38 of 67 | points carry an answer |
 | 6 of 9 | required signatures given |
-| 3 | items closed outright |
+| 4 | items closed outright |
 | 5 | items came back untouched |
 | 0 | stories change state |
 
 This document was issued as a blank form. It is no longer one. Two returns have come back, the first on the evening of 7 August 2026 and the second a few hours later with six answers rewritten, and what follows now prints what was written against each point underneath the point itself. The answers are quoted, never paraphrased and never tidied up, because the wording is the thing being relied on.
 
+Four further answers came back on 8 August 2026 in conversation rather than on the form, against EXT-4, EXT-8 and EXT-9. They are printed under the point they answer and marked as answered off the form, because the form itself still shows those boxes exactly as they were returned. One of the four closes an item outright. If you are the person those four came from, the useful next step is to put them on the form under your name and role, so that the next reader of the form sees what the record already knows.
+
 Underneath each quoted answer there is a line saying what that point still owes. It is measured against the point's own 'comes back as' requirement and nothing else, so a point marked settled is settled and a point still owing something says exactly what. Seven of the twelve items answered. Five came back untouched and those five keep their typing space, so this file is still the right place to send the rest.
 
-The important thing to understand about this return is that answering an item and closing it are different. EXT-1 answered all seven of its points and delivered none of the three things it exists to deliver: there are still no live payment keys, still no account number, and still no client money mandate. A full page of answers and an empty hand. EXT-4 is the same shape, with eleven answers of which five reply to a question other than the one asked.
+The important thing to understand about this return is that answering an item and closing it are different. EXT-1 answered all seven of its points and delivered none of the three things it exists to deliver: there are still no live payment keys, still no account number, and still no client money mandate. A full page of answers and an empty hand. EXT-4 is the same shape, with eleven answers of which four reply to a question other than the one asked, even after counsel of record was named.
 
 ### The three that close
 
@@ -38,8 +40,9 @@ The important thing to understand about this return is that answering an item an
 | EXT-5 | Closes. Releases E8-S1, the largest single story remaining, which can start immediately. |
 | EXT-10 | Closes on the second return. It also closes point 6 of EXT-4. It does not release E9-S3, which still needs a named rate setter from EXT-9 and two acceptance criteria rewritten. |
 | D3 | Closes. Holds no story, because E4-S2 shipped on manual review already. |
+| EXT-8 | Closes on 8 August 2026, on one sentence naming both codes. It releases no story: E9-S2 drops it from the dependency list and is then held by version 2 of the identifier standard, due 13 August 2026. |
 
-**No story changes state on this return. E2-S1 waits on artefacts EXT-1 did not deliver. E8-S2 waits on the five EXT-4 points that answered a different question. E9-S2 waits on SUR against SVR and on version 2 of the identifier standard. E9-S3 waits on a named rate setter. E3-S2, E6-S1 and E8-S3 wait on items that came back blank. The published counts therefore hold at 25 merged, 10 planned and 7 blocked.**
+**No story changes state. E2-S1 waits on artefacts EXT-1 did not deliver. E8-S2 waits on the four EXT-4 points that answer a different question, and above all on whether a land instrument may be signed electronically. E9-S2 no longer waits on EXT-8 and now waits on version 2 of the identifier standard itself. E9-S3 waits on one line, the citation for the decision that sets the rate. E3-S2, E6-S1 and E8-S3 wait on items that came back blank. The published counts therefore hold at 25 merged, 10 planned and 7 blocked, and the movement on 8 August is two dependency columns rather than a number.**
 
 ## Why this document exists
 
@@ -383,7 +386,7 @@ Five stories sit behind this one item, which makes it the widest of the twelve. 
 
 `Answered, does not close`  `Long lead`  Drafting with counsel, not a signature
 
-**Eleven of eleven points carry an answer, the Chief Financial Officer has signed, and the Chief Legal Officer has attested to the item. Five of the eleven answer a different question from the one asked, and those five are the ones E8-S2 needs. One point closes by a different route: point 6 is the same question as EXT-10, and counsel signed EXT-10.**
+**Eleven of eleven points carry an answer, the Chief Financial Officer has signed, and the Chief Legal Officer has attested to the item. Counsel of record was named on 8 August 2026 and it is Barr. Isoken Adisa-Isikalu, Chief Legal Officer, which closes point 7 and retires the reservation recorded beside EXT-10 that an in-house officer's signature might not be the instructed firm's. Naming counsel is not counsel having ruled. Four of the eleven still answer a different question from the one asked, and those four are the ones E8-S2 needs. One point closes by a different route: point 6 is the same question as EXT-10, and counsel signed EXT-10.**
 
 | Field | Detail |
 |---|---|
@@ -404,7 +407,9 @@ This was planned as a review of two finished documents. Reading them showed that
 
    > According to Barr. Olufemi Adisa-Isikalu, CEO safebuyrealitiesltd the VAT is a statutory requirement and it needs no special mention
 
-   **Still owed.** This answers a VAT question. The point asks who counsel is and the date they were instructed. Points 3 and 4 both name Goldrush Partners, so the firm is knowable from elsewhere on the page, but no instruction date appears anywhere.
+   **Answered again on 8 August 2026, off the form.** Given on 8 August 2026, off the form: BARR. ISOKEN ADISA-ISIKALU, CLO is counsel of record. That names the individual, which the form never did.
+
+   **Still owed.** The individual is now named. Counsel of record is Barr. Isoken Adisa-Isikalu, Chief Legal Officer, given on 8 August 2026. What is still not written is the date they were instructed, and if counsel here is an officer of the company rather than an instructed firm then one line saying that closes the point, because an officer holds office from a date rather than being instructed on one.
 
 2. **The date the reviewed documents are expected back.**
 
@@ -428,7 +433,9 @@ This was planned as a review of two finished documents. Reading them showed that
 
    > When it comes to the point of preparation of land deeds or contract the parties will be to seek counsels on the section for professional services on our platform or contact Goldrush Partners for it.
 
-   **Still owed.** None of the three words the point asks for is given. The answer says where the parties should go for advice, which is not counsel's position on whether a land instrument may be executed electronically at all. Every generated Power of Attorney turns on that position.
+   **Answered again on 8 August 2026, off the form.** Given on 8 August 2026, off the form: when it comes to execution of a land instrument the baton is passed to the appropriate professional services, an offering that can be searched for and contracted on the application. Read against the point, this answers who performs the conveyance rather than whether the signature may be electronic, so the point is where it was. Read against the codebase, it relies on a capability this platform does not have: the professionals module offers a profile, document upload and credential verification, the service catalog offers items, bundles and a price calculation, and every professional-facing route is a professional's own dashboard. There is no buyer or seller facing search, no engagement and no contracting. That is new scope rather than a closure, and it is deliberately left unsized until somebody says whether it belongs in the first release.
+
+   **Still owed.** None of the three words the point asks for is given, on the form or in the answer that followed it on 8 August 2026. Both answers say who performs the conveyance. The point asks whether a signature on a land instrument may be electronic at all, and the seller signs the Power of Attorney this platform generates before any professional is engaged, so the answer arrives after the moment it was needed for. Every generated Power of Attorney turns on that position and E8-S2 cannot be sized without it.
 
 5. **The company's legal name, registered address and canonical domain, as they should appear on the instrument.**
 
@@ -454,7 +461,9 @@ This was planned as a review of two finished documents. Reading them showed that
 
    *Revised on the second return.* The first return attributed this to the Chief Financial Officer alone. The revision adds the Chief Legal Officer. The wording is otherwise unchanged, so the point still argues that the words are unnecessary rather than adding them.
 
-   **Still owed.** It neither confirms the words have been added nor supplies alternative wording. It argues that the words are unnecessary. The engagement documents still do not carry them, so a buyer reading a fee line has no way of knowing VAT is coming on top of it.
+   **Answered again on 8 August 2026, off the form.** Closed by the same 8 August 2026 answer. Naming the Chief Legal Officer as counsel of record makes the CLO's attestation counsel's ratification, which was the only thing the point was still waiting on, and it also retires the reservation recorded beside EXT-10 that an in-house officer's signature might not be the instructed firm's. What survives is not a question about who ratified and it does not belong to this point: the engagement documents themselves still do not carry the words, so a buyer reading a fee line has no way of knowing VAT is coming on top of it. That is the terms of service, which is acceptance criterion 2 of this item and still owed.
+
+   **Settled.** Nothing further is needed on this point.
 
 8. **A buyer-facing instrument that carries the buyer's commission.**
 
@@ -706,9 +715,9 @@ Gate G5 reads 'no high findings outstanding'. Nobody can close that gate without
 
 ### EXT-8, Three contradictions inside the identifier standard, resolved
 
-`Answered, does not close`  `Today`  Three answers and a name against them
+`Closes`  `Today`  Three answers and a name against them
 
-**Four of four points carry an answer and the Chief Operating Officer has signed. Two of the three contradictions are now resolved. The third, SUR against SVR, is answered with the word 'Confirmed', which cannot be read as either. E9-S2 also waits independently on version 2 of the identifier standard, due 13 August 2026.**
+**Closed on 8 August 2026. Four of four points carry an answer, the Chief Operating Officer has signed, and all three contradictions are now resolved. The last of them went on one sentence: SVR is the code for a Surveyor and SUR is the code for Surulere. That disposes of the clash by saying what the other code is for rather than by choosing between two readings of the same code, which is a better answer than the one asked for. Two things are worth recording beside the closure. The sentence arrived in conversation and not on the form, so it carries no name and no role, and this item's own signature block is the Chief Operating Officer's. And closing it does not release E9-S2, which waits independently on version 2 of the identifier standard, due 13 August 2026.**
 
 | Field | Detail |
 |---|---|
@@ -729,7 +738,9 @@ The identifier standard contradicts itself in three places, and the finance spec
 
    > Confirmed
 
-   **Still owed.** Neither SUR nor SVR is written. The point offers a choice between two three letter segments and 'Confirmed' does not pick one. An identifier issued under the wrong one is wrong permanently, because identifiers are not reissued, so this is the one point on the item that cannot be guessed at.
+   **Answered again on 8 August 2026, off the form.** Given on 8 August 2026, off the form: SVR is naming for Surveyor and SUR is naming for Surulere. Both codes are now spoken for, section 4.0 and section 5.0 no longer collide, and the point closes. The one thing left is record-keeping and not doubt: the sentence came back in conversation, so it carries no name and no role, and this item is signed by the Chief Operating Officer. One line attributing it puts the closure on the same footing as the signature above it.
+
+   **Settled.** Nothing further is needed on this point.
 
 2. **Whether a UUID replaces the NNN sequence, or sits alongside it.**
 
@@ -781,7 +792,7 @@ The identifier standard contradicts itself in three places, and the finance spec
 
 `Answered, does not close`  `Today`  Three lines from Finance
 
-**Three of three, signed by the Chief Financial Officer, and the commission number is now settled: a combined floor of 10 percent, split 5 and 5 by default, with the buyer able to carry all ten if the seller pushes, and 7.5 percent VAT on the commission only. What is still missing is small and it blocks configuration: a single named role that sets the actual rate, and the place the decision is written down.**
+**Three of three, signed by the Chief Financial Officer, and the commission number is now settled: a combined floor of 10 percent, split 5 and 5 by default, with the buyer able to carry all ten if the seller pushes, and 7.5 percent VAT on the commission only. The 8 August 2026 answers went further and settled how the rate is varied: a per-transaction variation is approved by the Chief Executive Officer, the Chief Legal Officer and the Chief Operating Officer, all three together, it is not capped upward, the 10 percent combined floor is hard, and every variation is recorded against the transaction with the approver's identity. One line is still owed and it is the whole of what blocks E9-S3: where the decision is recorded. A date is not a reference.**
 
 | Field | Detail |
 |---|---|
@@ -820,7 +831,9 @@ The accounting tables shipped with no rows in them, deliberately, because a comm
 
    *Revised on the second return.* The first return gave the floor alone. The revision adds the board and the five names behind the decision, which settles a number the backlog had recorded as unsettled since 6 August.
 
-   **Still owed.** Floor is given and the rate is settled. Five people are named, which is the board rather than a rate setter. E9-S3 has to attribute a rate change to one role, and the point also asked where the decision is recorded, which is still unanswered. A minute reference or a register name would close it.
+   **Answered again on 8 August 2026, off the form.** Given on 8 August 2026, off the form, in four parts. A per-transaction commission variation may be approved by Barr. Olufemi Adisa-Isikalu, Chief Executive Officer, Barr. Isoken Adisa-Isikalu, Chief Legal Officer, and Mr Adebiyi Emmanuel Babatope, Chief Operating Officer, all three together and not any one of them. It is not capped. Every variation is recorded against the transaction with the approver's identity. The floor is 10 percent and it is hard. Read together, not capped means not capped upward, because the floor and the cap were the two halves of one answer and only the upward half was left open. Two consequences follow and both are now acceptance criteria under E9-S3 rather than notes in a conversation. A variation is a proposal that becomes effective only when three distinct people have approved it, so a vacant office blocks variations rather than lowering the count to two. And with no upward cap a variation can set the seller side above the 10 percent at source that clause 5 of the seller's Power of Attorney authorises, which is a question for counsel and not a configuration value. What none of this supplies is the citation, so the point stays open on it.
+
+   **Still owed.** Floor is given, the rate is settled, and who varies it is now settled too. What is still unanswered is the second half of the point: where the decision is recorded. The 8 August answer points at a minute or resolution taken in the late hours of 7 August 2026 WAT, and a date is not a reference. E9-S3 criterion 7 has to read a recorded decision at runtime, so what closes this is the document's own identifier and where it is filed, in one line. The commission rate row is not seeded until that line exists.
 
 **Signed and returned**
 
