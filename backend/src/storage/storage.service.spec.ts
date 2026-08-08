@@ -227,7 +227,6 @@ describe("StorageService (ephemeral filesystem)", () => {
 });
 
 describe("StorageService (s3 driver)", () => {
-
   /**
    * The sharp edge of E3-S1c. A presigned URL is a bearer capability — an hour of access to
    * whoever holds it, with no session and no role check — so it cannot express "the owner and
@@ -342,7 +341,11 @@ describe("StorageService (s3 durability and failure mapping)", () => {
   it("falls back to AES256 on a value it does not recognise, because that is the safe direction", async () => {
     send.mockResolvedValue({});
 
-    await make({ AWS_S3_SSE: "aes-256" }).upload(Buffer.from("x"), "listings/a/b.pdf", "text/plain");
+    await make({ AWS_S3_SSE: "aes-256" }).upload(
+      Buffer.from("x"),
+      "listings/a/b.pdf",
+      "text/plain",
+    );
 
     expect(lastPut().ServerSideEncryption).toBe("AES256");
   });
@@ -375,7 +378,9 @@ describe("StorageService (s3 durability and failure mapping)", () => {
   it("tells the caller nothing about the bucket it could not reach", async () => {
     send.mockRejectedValue(new Error("Access Denied for bucket sbr-documents"));
 
-    const failure = await make().readObject("listings/a/b.pdf").catch((e) => e);
+    const failure = await make()
+      .readObject("listings/a/b.pdf")
+      .catch((e) => e);
 
     expect(JSON.stringify(failure.getResponse())).not.toContain("sbr-documents");
   });
@@ -387,7 +392,9 @@ describe("StorageService (s3 durability and failure mapping)", () => {
   it("still answers 404 for a key that is not there", async () => {
     send.mockRejectedValue(Object.assign(new Error("no such key"), { name: "NoSuchKey" }));
 
-    await expect(make().readObject("listings/a/gone.pdf")).rejects.toBeInstanceOf(NotFoundException);
+    await expect(make().readObject("listings/a/gone.pdf")).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });
 

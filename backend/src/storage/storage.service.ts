@@ -189,7 +189,11 @@ export class StorageService {
    * what is added here is the same id on the log line that holds the underlying error, which is the
    * end of the thread the caller is quoting.
    */
-  private async throughDriver<T>(operation: string, key: string, run: () => Promise<T>): Promise<T> {
+  private async throughDriver<T>(
+    operation: string,
+    key: string,
+    run: () => Promise<T>,
+  ): Promise<T> {
     try {
       return await run();
     } catch (err) {
@@ -229,7 +233,10 @@ export class StorageService {
    * setting to reach for. Any other value falls back to `AES256`: the safe direction for a typo in
    * an encryption setting is encrypted.
    */
-  private encryptionSettings(): Pick<PutObjectCommandInput, "ServerSideEncryption" | "SSEKMSKeyId"> {
+  private encryptionSettings(): Pick<
+    PutObjectCommandInput,
+    "ServerSideEncryption" | "SSEKMSKeyId"
+  > {
     const mode = (this.config.get<string>("AWS_S3_SSE") ?? "AES256").trim().toLowerCase();
     if (mode === "none" || mode === "") return {};
     if (mode === "aws:kms") {
