@@ -1,0 +1,1188 @@
+<title>What is needed, and who has to give it</title>
+<style>
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --ink:#10222a; --soft:#4b5f66; --faint:#77878c;
+  --rule:#d3ded9; --rail:#e8efec; --field:#fbfdfc;
+  --credit:#1f6b4f; --pending:#8a5f0c; --debit:#97302c;
+  --credit-bg:#e6f0ea; --pending-bg:#f6eedc; --debit-bg:#f7e7e5;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0e1619; --card:#152024; --ink:#e5eeeb; --soft:#a3b5b8; --faint:#7b8d92;
+    --rule:#27373b; --rail:#1c282c; --field:#0f191d;
+    --credit:#74c9a0; --pending:#dcae4d; --debit:#e4867d;
+    --credit-bg:#163026; --pending-bg:#332918; --debit-bg:#331d1c;
+  }
+}
+:root[data-theme="light"]{
+  --paper:#f1f5f3; --card:#ffffff; --ink:#10222a; --soft:#4b5f66; --faint:#77878c;
+  --rule:#d3ded9; --rail:#e8efec; --field:#fbfdfc;
+  --credit:#1f6b4f; --pending:#8a5f0c; --debit:#97302c;
+  --credit-bg:#e6f0ea; --pending-bg:#f6eedc; --debit-bg:#f7e7e5;
+}
+:root[data-theme="dark"]{
+  --paper:#0e1619; --card:#152024; --ink:#e5eeeb; --soft:#a3b5b8; --faint:#7b8d92;
+  --rule:#27373b; --rail:#1c282c; --field:#0f191d;
+  --credit:#74c9a0; --pending:#dcae4d; --debit:#e4867d;
+  --credit-bg:#163026; --pending-bg:#332918; --debit-bg:#331d1c;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);
+     font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.frame{max-width:940px;margin:0 auto;padding:44px 22px 90px;display:flex;
+       flex-direction:column;gap:40px}
+
+.eyebrow{font-family:var(--sans);font-size:11px;font-weight:650;letter-spacing:.13em;
+         text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+h1{font-size:clamp(31px,5vw,46px);line-height:1.1;margin:0 0 14px;font-weight:600;
+   letter-spacing:-.015em;text-wrap:balance}
+h2{font-size:26px;line-height:1.2;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;
+   text-wrap:balance}
+h3{font-size:20px;line-height:1.28;margin:0;font-weight:600;letter-spacing:-.005em}
+p{margin:0 0 14px;max-width:68ch}
+p:last-child{margin-bottom:0}
+
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:26px}
+.standfirst{font-size:19px;color:var(--soft);max-width:64ch;margin:0 0 26px}
+.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));
+        gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.ledger>div{background:var(--card);padding:14px 15px;display:flex;flex-direction:column;gap:3px}
+.ledger b{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.ledger span{font-family:var(--sans);font-size:11.5px;line-height:1.35;color:var(--faint)}
+.is-credit b{color:var(--credit)} .is-pending b{color:var(--pending)} .is-debit b{color:var(--debit)}
+
+section{display:flex;flex-direction:column;gap:16px}
+.source{font-family:var(--sans);font-size:11px;letter-spacing:.05em;color:var(--faint);
+        margin:-10px 0 0}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--rule);background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14.5px}
+th{font-family:var(--sans);font-size:10.5px;font-weight:650;letter-spacing:.1em;
+   text-transform:uppercase;color:var(--faint);text-align:left;padding:11px 14px;
+   border-bottom:1px solid var(--rule);white-space:nowrap;vertical-align:bottom}
+td{padding:12px 14px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.tight td:nth-child(2),.tight th:nth-child(2){white-space:nowrap;font-variant-numeric:tabular-nums}
+.wrapfirst td:first-child{white-space:normal}
+
+.note{background:var(--rail);border-left:3px solid var(--rule);padding:14px 17px;
+      font-size:15px;color:var(--soft)}
+.note b{color:var(--ink)}
+
+.rules{margin:0;padding:0;list-style:none;counter-reset:rule;display:flex;
+       flex-direction:column;gap:13px}
+.rules li{counter-increment:rule;position:relative;padding-left:40px;font-size:15.5px;
+          line-height:1.55;color:var(--soft);max-width:70ch}
+.rules li::before{content:counter(rule);position:absolute;left:0;top:0;width:26px;height:26px;
+                  display:grid;place-items:center;font-family:var(--sans);font-size:12px;
+                  font-weight:650;color:var(--card);background:var(--ink);border-radius:50%}
+.rules b{color:var(--ink);font-weight:600}
+
+.items{display:flex;flex-direction:column;gap:22px}
+.item{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--pending);
+      padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.item.fast{border-left-color:var(--credit)}
+.item.mid{border-left-color:var(--pending)}
+.item.slow{border-left-color:var(--debit)}
+.item-head{display:flex;flex-direction:column;gap:8px}
+.ref{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em;
+     color:var(--faint)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.chip{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.03em;
+      padding:3px 9px;border-radius:2px;background:var(--rail);color:var(--soft)}
+.chip.fast{background:var(--credit-bg);color:var(--credit)}
+.chip.mid{background:var(--pending-bg);color:var(--pending)}
+.chip.slow{background:var(--debit-bg);color:var(--debit)}
+
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:14.5px;
+       border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:14px 0}
+.facts dt{font-family:var(--sans);font-size:10.5px;font-weight:650;letter-spacing:.09em;
+          text-transform:uppercase;color:var(--faint);padding-top:4px;white-space:nowrap}
+.facts dd{margin:0;line-height:1.5}
+
+.asks{margin:0;padding:0;list-style:none;counter-reset:ask;display:flex;
+      flex-direction:column;gap:20px}
+.asks>li{counter-increment:ask;position:relative;padding-left:34px}
+.asks>li::before{content:counter(ask);position:absolute;left:0;top:1px;width:22px;height:22px;
+                 display:grid;place-items:center;font-family:var(--sans);font-size:11px;
+                 font-weight:650;color:var(--soft);background:var(--rail);border-radius:50%}
+.what{font-size:15.5px;line-height:1.55;margin:0 0 6px}
+.form{font-size:14px;line-height:1.5;color:var(--soft);margin:0;padding-left:12px;
+      border-left:2px solid var(--rule);max-width:66ch}
+.form b{font-family:var(--sans);font-size:10px;font-weight:650;letter-spacing:.09em;
+        text-transform:uppercase;color:var(--faint);display:block;margin-bottom:2px}
+.sub{font-family:var(--sans);font-size:10.5px;font-weight:650;letter-spacing:.09em;
+     text-transform:uppercase;color:var(--faint);margin:0}
+
+.ans{display:block;width:100%;margin-top:9px;padding:9px 11px;background:var(--field);
+     border:1px solid var(--rule);border-radius:2px;color:var(--ink);
+     font-family:var(--sans);font-size:14px;line-height:1.55;resize:vertical}
+.ans::placeholder{color:var(--faint);font-style:italic}
+.ans:focus-visible{outline:2px solid var(--credit);outline-offset:1px;border-color:var(--credit)}
+
+/* What came back, and what it still owes. The answer is quoted, never paraphrased. */
+.given{margin-top:10px;background:var(--rail);border:1px solid var(--rule);
+       border-left:3px solid var(--credit);padding:11px 14px}
+.given .tag{font-family:var(--sans);font-size:9.5px;font-weight:650;letter-spacing:.1em;
+            text-transform:uppercase;color:var(--credit);display:block;margin-bottom:5px}
+.given q{font-size:14.5px;line-height:1.55;quotes:"\201c" "\201d";display:block;max-width:70ch}
+.owes{margin-top:8px;padding:10px 13px;background:var(--pending-bg);
+      border-left:3px solid var(--pending);font-size:14px;line-height:1.55;max-width:72ch}
+.owes .tag{font-family:var(--sans);font-size:9.5px;font-weight:650;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--pending);display:block;margin-bottom:4px}
+.settled{margin-top:8px;font-family:var(--sans);font-size:12px;font-weight:600;
+         letter-spacing:.03em;color:var(--credit)}
+.revised{margin-top:8px;padding:9px 13px;background:var(--card);border:1px dashed var(--rule);
+         font-size:13.5px;line-height:1.5;color:var(--soft);max-width:72ch}
+.revised .tag{font-family:var(--sans);font-size:9.5px;font-weight:650;letter-spacing:.1em;
+              text-transform:uppercase;color:var(--faint);display:block;margin-bottom:4px}
+.nothing{margin-top:9px;padding:10px 13px;background:var(--debit-bg);border-left:3px solid var(--debit);
+         font-family:var(--sans);font-size:13px;color:var(--debit)}
+.verdict{font-size:15.5px;line-height:1.58;margin:0;padding:14px 17px;background:var(--rail);
+         border-top:2px solid var(--ink);max-width:none}
+.chip.closed{background:var(--credit-bg);color:var(--credit)}
+.chip.partial{background:var(--pending-bg);color:var(--pending)}
+.chip.open{background:var(--debit-bg);color:var(--debit)}
+.chip.none{background:var(--debit-bg);color:var(--debit)}
+.sig.is-done{border-left:3px solid var(--credit)}
+.sig-done{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px}
+.sig-done div{display:flex;flex-direction:column;gap:2px}
+.sig-done dt{font-family:var(--sans);font-size:10px;font-weight:650;letter-spacing:.09em;
+             text-transform:uppercase;color:var(--faint)}
+.sig-done dd{margin:0;font-size:15px;font-weight:600;border-bottom:1px solid var(--rule);
+             padding-bottom:5px}
+.scoreboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+            background:var(--rule);border:1px solid var(--rule)}
+.scoreboard>div{background:var(--card);padding:13px 15px;display:flex;flex-direction:column;gap:3px}
+.scoreboard b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.scoreboard span{font-family:var(--sans);font-size:11.5px;line-height:1.35;color:var(--faint)}
+
+.sig{background:var(--rail);border:1px solid var(--rule);padding:18px 20px;
+     display:flex;flex-direction:column;gap:12px}
+.sig-words{font-size:15.5px;line-height:1.55;margin:0;padding-left:14px;
+           border-left:3px solid var(--ink);max-width:66ch}
+.sig-who{font-size:14px;color:var(--soft);margin:0;max-width:66ch}
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 18px}
+.fld-wrap{display:flex;flex-direction:column;gap:4px}
+.fld-wrap label{font-family:var(--sans);font-size:10px;font-weight:650;letter-spacing:.09em;
+                text-transform:uppercase;color:var(--faint)}
+.fld{width:100%;padding:7px 9px;background:var(--field);border:1px solid var(--rule);
+     border-radius:2px;color:var(--ink);font-family:var(--sans);font-size:14px}
+.fld:focus-visible{outline:2px solid var(--credit);outline-offset:1px;border-color:var(--credit)}
+.sig-alt{font-family:var(--sans);font-size:12.5px;line-height:1.5;color:var(--soft);margin:0;
+         max-width:70ch}
+
+.links{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.links li{font-size:14.5px;line-height:1.45}
+.links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.links a:hover{border-bottom-color:var(--ink)}
+.links a:focus-visible{outline:2px solid var(--credit);outline-offset:3px}
+.links code{font-family:var(--mono);font-size:12.5px;color:var(--faint);word-break:break-all}
+.onbranch{font-family:var(--sans);font-size:10px;font-weight:650;letter-spacing:.06em;
+          text-transform:uppercase;color:var(--debit);background:var(--debit-bg);
+          padding:2px 6px;border-radius:2px;margin-left:6px;white-space:nowrap}
+
+footer{border-top:1px solid var(--rule);padding-top:22px;font-size:14px;color:var(--faint)}
+footer p{max-width:74ch}
+@media (max-width:620px){
+  body{font-size:16px}
+  .facts{grid-template-columns:1fr;gap:2px 0}
+  .facts dd{margin-bottom:8px}
+  .item{padding:18px 16px}
+  .sig{padding:15px 14px}
+}
+@media print{
+  body{background:#fff;color:#000;font-size:11pt}
+  .frame{max-width:none;padding:0;gap:24px}
+  .item{break-inside:avoid;border-left-width:2px}
+  .asks>li{break-inside:avoid}
+  .sig{break-inside:avoid;background:#fff}
+  .ans,.fld{background:#fff;border:0;border-bottom:1px solid #000;border-radius:0}
+  .ans{min-height:52px}
+  .ans::placeholder{color:transparent}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="frame">
+<header class="masthead">
+<p class="eyebrow">SafeBuy Realties &middot; the work that is not engineering work &middot; Revision 3, written 2026-08-07 against the 23:09 return.</p>
+<h1>What is needed, and who has to give it</h1>
+<p class="standfirst">Twelve items are open outside engineering. Between them they hold seventeen stories, which is everything left before this platform can go live. Each item below says what has to come back, what shape the answer has to take, where to write it, and who signs it.</p>
+<div class="ledger"><div class="is-pending"><b>17</b><span>stories left in total</span></div><div class="is-debit"><b>8</b><span>blocked at the head, each on one named item</span></div><div class="is-pending"><b>9</b><span>planned behind those eight, needing nobody outside</span></div><div class="is-debit"><b>12</b><span>items open, eleven of them sent on 6 August 2026</span></div><div class="is-credit"><b>2</b><span>people named anywhere in the record</span></div><div class="is-pending"><b>37 to 59</b><span>developer-days, once the answers arrive</span></div></div>
+</header>
+<section>
+<h2>What came back, and what it changed</h2>
+<p class="source">7 August 2026. First return 18:16, revised return 23:09.</p>
+<div class="scoreboard">
+<div class="is-credit"><b>38 of 67</b><span>points carry an answer</span></div>
+<div class="is-credit"><b>6 of 9</b><span>required signatures given</span></div>
+<div class="is-credit"><b>3</b><span>items closed outright</span></div>
+<div class="is-debit"><b>5</b><span>items came back untouched</span></div>
+<div class="is-pending"><b>0</b><span>stories change state</span></div>
+</div>
+<p>This document was issued as a blank form. It is no longer one. Two returns have come back, the first on the evening of 7 August 2026 and the second a few hours later with six answers rewritten, and what follows now prints what was written against each point underneath the point itself. The answers are quoted, never paraphrased and never tidied up, because the wording is the thing being relied on.</p>
+<p>Underneath each quoted answer there is a line saying what that point still owes. It is measured against the point&#x27;s own &#x27;comes back as&#x27; requirement and nothing else, so a point marked settled is settled and a point still owing something says exactly what. Seven of the twelve items answered. Five came back untouched and those five keep their typing space, so this file is still the right place to send the rest.</p>
+<p>The important thing to understand about this return is that answering an item and closing it are different. EXT-1 answered all seven of its points and delivered none of the three things it exists to deliver: there are still no live payment keys, still no account number, and still no client money mandate. A full page of answers and an empty hand. EXT-4 is the same shape, with eleven answers of which five reply to a question other than the one asked.</p>
+<h3>The three that close</h3>
+<div class="table-wrap"><table class="wrapfirst"><thead><tr><th>Item</th><th>What it means now</th></tr></thead><tbody><tr><td>EXT-5</td><td>Closes. Releases E8-S1, the largest single story remaining, which can start immediately.</td></tr><tr><td>EXT-10</td><td>Closes on the second return. It also closes point 6 of EXT-4. It does not release E9-S3, which still needs a named rate setter from EXT-9 and two acceptance criteria rewritten.</td></tr><tr><td>D3</td><td>Closes. Holds no story, because E4-S2 shipped on manual review already.</td></tr></tbody></table></div>
+<p class="note"><b>No story changes state on this return. E2-S1 waits on artefacts EXT-1 did not deliver. E8-S2 waits on the five EXT-4 points that answered a different question. E9-S2 waits on SUR against SVR and on version 2 of the identifier standard. E9-S3 waits on a named rate setter. E3-S2, E6-S1 and E8-S3 wait on items that came back blank. The published counts therefore hold at 25 merged, 10 planned and 7 blocked.</b></p>
+</section>
+<section>
+<h2>Why this document exists</h2>
+<p>This document says one thing. Nine of the seventeen stories left are not waiting on a supplier, a lawyer, a bank or a signature. They are waiting on the other eight. Each of those eight is waiting on one named item from a person outside the engineering team.</p>
+<p>So there is no useful answer to the question of when the nine will be done. The question to ask is when the twelve items below come back, because the nine follow on by themselves once they do. Nothing in this repository can produce any of the twelve. No developer and no agent can tick them on anybody&#x27;s behalf, and none of them has been ticked here.</p>
+<p>Eleven of the twelve were sent on 6 August 2026, in two documents. EXT-1 to EXT-6, ADR-0004 and D3 went out in the closure schedule, ENG-CS-2026-08-06-01, which was split into ten copies so that no recipient was handed the whole schedule in order to answer the three points of it that were theirs. EXT-8, EXT-9 and EXT-10 went out in the decision request, ENG-DR-2026-08-06-01. Both asked for a reply by close of business that day, and that date has passed. The twelfth item, ADR-0006, was written on 7 August 2026, after both documents went out, and has not been sent to anybody.</p>
+<p>One item sent on 6 August 2026 has come back. Adebiyi Emmanuel Babatope accepted ADR-0003 as Chief Operating Officer on 7 August 2026, in writing, with his name, his role and the date. That is the form every answer in this document should take, and it is the only completed example the record currently holds.</p>
+</section>
+<section>
+<h2>How to answer, and where</h2>
+<p>Two documents carry the response blocks: the closure schedule for eight of the items, and the decision request for three. The line marked WHERE THE ANSWER GOES on each item below says which one, by name. An answer written in the wrong document is still an answer, but it takes longer to record, because the record checks every answer against the question as it was originally asked.</p>
+<p>This page also carries a writing space under every point. In the Word version those spaces are ruled lines you can type straight into, and the file can be filled in and sent back as it stands. In the web version they are typing boxes: you can type into them and print the page, but nothing you type is saved when the page is closed. If you are answering rather than reading, use the Word version.</p>
+<h3>Five rules, and they are the same five printed on the schedule that went out</h3>
+<ol class="rules">
+<li><b>Never leave a point blank.</b> A blank cannot be told apart from a point nobody read. If a point does not apply, write &#x27;not applicable&#x27; and one line saying why. If the answer is not available today, write &#x27;pending&#x27; and the date you expect it.</li>
+<li><b>Never write a secret value.</b> No key, password, secret or access token goes into this document, into an email body or into a chat message, in any point and in any circumstance. The points about credentials ask who received them, on what date and through which channel. That is the whole answer, and it is enough.</li>
+<li><b>Write dates in full.</b> 2026-08-14, not &#x27;next week&#x27; and not &#x27;Q3&#x27;. Other dates in the record are calculated from the dates you give.</li>
+<li><b>Name people, not departments.</b> &#x27;Finance&#x27; cannot approve anything and &#x27;Legal&#x27; cannot sign anything. A named person in a named role can. Every point that ends in an approval asks for a full name, a role and a date, for that reason and no other.</li>
+<li><b>If a point is wrong, say so in the point.</b> A correction is worth more to this project than a compliant answer to a question that should not have been asked.</li>
+</ol>
+<h3>Signatures, and what counts as one</h3>
+<p>Where an item needs a signature, the exact wording to write is printed on the item, in quotation marks. Write that wording, then complete the four lines under it.</p>
+<p>A handwritten signature is not required. A full name typed or written in the signature line, with the role and the date beside it, is accepted and carries the same weight. What the record needs is an attributable person, not an image of a pen stroke. This is the form the Chief Operating Officer used to accept ADR-0003 on 7 August 2026, and that acceptance is on the record and closed.</p>
+<p>A signature given by somebody whose role is not stated cannot be recorded, because the record has no way to check that the person who signed was entitled to. The role line is not a formality.</p>
+<h3>What the status words mean</h3>
+<div class="table-wrap"><table class="wrapfirst"><thead><tr><th>Word</th><th>What it means here</th></tr></thead><tbody><tr><td>Open</td><td>The answer has not arrived, or part of it has arrived with nobody&#x27;s name against it. An unattributed answer is treated as open.</td></tr><tr><td>Answered in part</td><td>Some points have come back and been recorded. The item stays open until the rest come back. Partial answers are welcome and they land immediately: one answered point can release the story behind it without waiting for the others.</td></tr><tr><td>Closed</td><td>Every point has an answer, and that answer carries a full name, a role and a date. The answer is then written into the repository, and the item stops appearing on pages like this one.</td></tr><tr><td>Blocked</td><td>The story cannot start. Starting it would mean writing down an answer that nobody has given, which is how a guess becomes a fact in a database.</td></tr><tr><td>Planned</td><td>The story can start on the day the story in front of it starts. Nobody outside the engineering team is holding it.</td></tr><tr><td>Holds</td><td>The stories that cannot start until this item closes. Read it as the cost of the item staying open.</td></tr></tbody></table></div>
+</section>
+<section>
+<h2>How the blocking actually works</h2>
+<p class="source">Read left to right. Nothing in the third column can start until the second column starts, and the second column cannot start until the first arrives.</p>
+<div class="table-wrap"><table class=""><thead><tr><th>Waiting on</th><th>Which holds</th><th>And behind it</th><th>Size</th></tr></thead><tbody><tr><td>EXT-1, the money</td><td>E2-S1, seller payout destination</td><td>E2-S3 gateway refunds, E2-S5 finance reconciliation view, E9-S4 escrow sub-ledger</td><td>L plus three M</td></tr><tr><td>EXT-2, the bucket</td><td>E3-S2, durable object storage in production</td><td>E3-S3 upload hardening, E7-S4 deterministic demo seed and reset</td><td>three M</td></tr><tr><td>EXT-3, the email</td><td>E6-S1, SMTP configuration and delivery observability</td><td>E5-S3 password reset, E5-S4 email verification, E6-S2 email channel, E6-S3 templates</td><td>S plus four M</td></tr><tr><td>EXT-4, the legal documents</td><td>E8-S2, legal review of the PoA instrument and terms</td><td>Nothing behind it, but it holds gate G4</td><td>S to review, weeks to draft</td></tr><tr><td>EXT-5, the privacy paperwork</td><td>E8-S1, NDPR consent, retention and erasure</td><td>Nothing behind it</td><td>L</td></tr><tr><td>EXT-6, the security review</td><td>E8-S3, pre-launch security review</td><td>Nothing behind it, but it holds gate G5</td><td>S to schedule, unknown to fix</td></tr><tr><td>EXT-8, the identifier conflicts</td><td>E9-S2, location register and property ID issuance</td><td>Nothing behind it</td><td>M</td></tr><tr><td>EXT-9 and EXT-10, commission and VAT</td><td>E9-S3, six main accounts, sub-codes, commission and VAT rates</td><td>E9-S4 escrow sub-ledger, shared with EXT-1</td><td>L</td></tr></tbody></table></div>
+<p class="note">Eight stories at the head and nine behind them make seventeen, which is the whole of what is left. E9-S4 sits behind both EXT-1 and EXT-9, so it is counted once. ADR-0004, D3 and ADR-0006 do not appear in this table because they hold no story: they are records of behaviour that has already shipped and still reads as proposed rather than accepted.</p>
+</section>
+<section>
+<h2>Who has to give it</h2>
+<div class="table-wrap"><table class="wrapfirst"><thead><tr><th>Who</th><th>Named person</th><th>What they are holding</th></tr></thead><tbody><tr><td>The client, as owner of the business</td><td>Nobody is named against these items</td><td>EXT-1, EXT-2, EXT-3, EXT-4, EXT-5 and D3. Six of the twelve.</td></tr><tr><td>Finance</td><td>Nobody is named</td><td>EXT-1 with the client, EXT-9 alone, and EXT-10 with counsel.</td></tr><tr><td>Counsel, meaning the law firm or lawyer instructed</td><td>Nobody is named. The name is itself one of the things being asked for, as point 1 of EXT-4</td><td>EXT-4, and the half of EXT-10 that is still outstanding.</td></tr><tr><td>The board of directors</td><td>The Managing Director and CEO, and the Board, both named as bodies in the EXT-11 answer of 6 August 2026, neither as an individual</td><td>The adoption of the data protection policy, which is point 1 of EXT-5.</td></tr><tr><td>The Data Protection Officer</td><td>Nobody holds the role. Appointing somebody to it is point 2 of EXT-5</td><td>EXT-5.</td></tr><tr><td>Digital Records, the issuer of the identifier standard</td><td>Nobody is named</td><td>EXT-8, jointly with the Chief Operating Officer.</td></tr><tr><td>The Chief Operating Officer</td><td>Adebiyi Emmanuel Babatope</td><td>EXT-8, jointly with Digital Records. He accepted ADR-0003 on 7 August 2026, which is the only item sent on 6 August 2026 that has come back.</td></tr><tr><td>Corne Labs, the delivery partner</td><td>Nobody is named</td><td>EXT-6 alone, and EXT-2 jointly with the client.</td></tr><tr><td>Product</td><td>Nobody is named</td><td>ADR-0004 with the client and security, and D3 with the client.</td></tr><tr><td>Security</td><td>Nobody is named</td><td>ADR-0004.</td></tr></tbody></table></div>
+<p class="note">Two names appear anywhere in the record. Adebiyi Emmanuel Babatope, as Chief Operating Officer, and the Managing Director and CEO together with the Board, as bodies rather than as people, in the EXT-11 answer. Every other row above is a role with nobody behind it. That is not an omission in this document. It is the state of the record, and several of the items below exist in order to put a name where a role currently sits.</p>
+</section>
+<section>
+<h2>The twelve items, one at a time</h2>
+<p class="source">The first chip on each item is where it stands after the two returns. The second is how quickly it can move, which is not the same thing and is not how important it is: green can be done today, amber takes days, red has a lead time measured in weeks and should start first.</p>
+<div class="items">
+<article class="item slow">
+<div class="item-head">
+<p class="ref">EXT-1</p>
+<h3>Live payment keys, and a bank account that holds client money only</h3>
+<div class="chips">
+<span class="chip open">Answered, delivers nothing</span>
+<span class="chip slow">Long lead</span>
+<span class="chip">A bank account, a mandate and a permission</span>
+</div></div>
+<p class="verdict">All seven points carry an answer and the Chief Executive Officer has signed. None of the three things the item exists to deliver has arrived: there are no keys, there is no account number, and there is no client money mandate. E2-S1 stays blocked, and it stays blocked on the artefacts rather than on the answers.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client, with Finance</dd>
+<dt>Named person</dt><dd>Nobody is named</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule.</dd>
+<dt>What it holds</dt><dd>E2-S1 seller payout destination, and behind it E2-S3, E2-S5 and E9-S4. Gates G2 and G6.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>The platform holds client funds. ADR-0002 settled that, and it changes what this item is. It is no longer a merchant account. It is a client funds account, kept apart from the company&#x27;s own money, with a written mandate that says so. Until that account exists a payout has nowhere to come from, and four stories stand still.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">The live Paystack secret key and the live public key, delivered out of band.</p>
+<p class="form"><b>Comes back as</b>Not the key values. Send back who received them, on what date, and through which channel. A key never goes into a document, an email body or a chat message.</p>
+<div class="given"><span class="tag">What came back</span><q>We are to create a Organization Paystack account under which there will be, escrow, listing, due diligence and professionals services accounts and then generate the keys to use.</q></div>
+<p class="owes"><span class="tag">Still owed</span>No key has been issued, so there is nobody who received one, no date and no channel. This describes the account that will be opened, which is the step before the one the point asks about.</p>
+</li>
+<li>
+<p class="what">The bank account opened to hold client money only.</p>
+<p class="form"><b>Comes back as</b>The bank name, the account name exactly as it appears on the mandate, and the ten digit NUBAN.</p>
+<div class="given"><span class="tag">What came back</span><q>The account number will be ready on Monday</q></div>
+<p class="owes"><span class="tag">Still owed</span>No bank name, no account name and no ten digit NUBAN. Monday is 10 August 2026.</p>
+</li>
+<li>
+<p class="what">The mandate that keeps that account separate from the company&#x27;s operating money.</p>
+<p class="form"><b>Comes back as</b>The date of the mandate and its reference, or the word &#x27;attached&#x27; with the file enclosed.</p>
+<div class="given"><span class="tag">What came back</span><q>Barr. Olufemi Adisa-Isikalu, CEO / Mr. Idris Aregbe, CFO / Mr ADEBIYI EMMANUEL BABATOPE, COO facilitated, fill-out the forms and signed proper documentation and tender the Corporate Affairs Commission registration done at https://www.cac.gov.ng/services/company-registration. All these were included to justify creation of accounts needed to link separate escrow account, operational account, listing account, due diligence account and account that holds professionals services cashflow to be operated along with the PAYSTACK account infrastructure setup.</q></div>
+<div class="revised"><span class="tag">Revised on the second return</span>The first return read: &#x27;This is not needed. This was included to justify the need to separate operational account, listing account, due diligence account and account that holds professionals services cashflow.&#x27; The revision withdraws the refusal and puts a registration in its place. It is a better answer and it is still not a mandate.</div>
+<p class="owes"><span class="tag">Still owed</span>A Corporate Affairs Commission registration proves the company exists. It is not a mandate. A mandate is the instruction to the bank that makes the money in that account belong to the parties rather than to the company, and it is what stops client money being swept into operating money. No date, no reference and nothing attached. This is the single most important line on the page and it is the one still missing.</p>
+</li>
+<li>
+<p class="what">Every person who can sign on that account.</p>
+<p class="form"><b>Comes back as</b>A full name and a role for each one. &#x27;Finance&#x27; is not a signatory.</p>
+<div class="given"><span class="tag">What came back</span><q>There will be escrow, listing, due diligence and professionals services accounts which are revenue flow accounts. Person(s) who can sign on escrow account for the cash outflow or release: Barr. Olufemi Adisa-Isikalu, CEO / Mr. Idris Aregbe, CFO / Mr ADEBIYI EMMANUEL BABATOPE, COO / Barr. Isoken Adisa-Isikalu, CLO. At the end of escrow cash flow/transaction the transaction should be marked as completed and all parties involved notified of its completion. Person(s) who can sign to move cash / money out of listing, due diligence and professionals services (inflow accounts); Barr. Olufemi Adisa-Isikalu, CEO and any of the following people (Mr. Idris Aregbe, CFO / Mr ADEBIYI EMMANUEL BABATOPE, COO / Barr. Isoken Adisa-Isikalu, CLO). The identifiers for listing and professional service can only marked completed after due diligence is submitted, for listing and professional services are marked completed when we commission is posted.</q></div>
+<p class="owes"><span class="tag">Still owed</span>Full names and roles are given for both groups, so the point itself is answered. The sentence carrying them calls escrow, listing, due diligence and professional services &#x27;revenue flow accounts&#x27;. ADR-0002 is explicit that escrow principal is a client funds liability and never platform revenue, so that phrase has to be corrected before it reaches an account opening form.</p>
+</li>
+<li>
+<p class="what">The rule that authorises a release of client money.</p>
+<p class="form"><b>Comes back as</b>The rule written out in words, for example: any two of the three signatories, for any amount. If a larger amount needs a further signature, give the threshold as a figure.</p>
+<div class="given"><span class="tag">What came back</span><q>After all signatories have attested to the service and release of fund then CFO is notified via email with a pdf attachment of the transaction details summary with which he will communicate to the bank to pay.</q></div>
+<p class="owes"><span class="tag">Still owed</span>This is a notification route, not an authorisation rule. It does not say how many of the four signatories are required, and it gives no figure above which a further signature is needed.</p>
+</li>
+<li>
+<p class="what">Confirmation that the balance can be reconciled every day, and how it will be.</p>
+<p class="form"><b>Comes back as</b>Yes or no, the full name of the person who will do it, and what they will read it from, meaning a portal, a statement or an API. Section 11.1 of SBR-FIN-DEV-SPEC-20260803-V1.5 obliges the platform to reconcile, and only the operator of the account can supply the other side of that reconciliation.</p>
+<div class="given"><span class="tag">What came back</span><q>Yes. Daily reconciliation of inflows will be done with respect to the transaction identifiers and account token for the transaction.</q></div>
+<p class="owes"><span class="tag">Still owed</span>Yes is given. No person is named, and no source is named. The scope is also narrower than the obligation: section 11.1 reconciles the bank balance against the sum of the per transaction sub-ledgers, and reconciling inflows alone does not do that.</p>
+</li>
+<li>
+<p class="what">The production activation approval required by section 14.2 of SBR-FIN-DEV-SPEC-20260803-V1.5.</p>
+<p class="form"><b>Comes back as</b>The wording printed in the signature block below, with a full name, a role and a date. Approval to build is not approval to operate. These are two different permissions, engineering already holds the first, and nobody inside engineering can give the second.</p>
+<div class="given"><span class="tag">What came back</span><q>I am putting the CHIEF EXECUTIVE OFFICER below because he is last person to sign in the approval trail to sign. The rest in the approval chain are as follows: Mr. Idris Aregbe, CHIEF FINANCIAL OFFICER Mr ADEBIYI EMMANUEL BABATOPE., CHIEF OPERATING OFFICER Barr. Isoken Adisa-Isikalu, CHIEF LEGAL OFFICER</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;I approve production activation under section 14.2 of SBR-FIN-DEV-SPEC-20260803-V1.5.&rdquo;</p>
+<p class="sig-who">An officer of the company with authority over the client funds account. Gate G6 closes on this approval and on no piece of code.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>Olufemi Adisa-Isikalu</dd></div>
+<div><dt>Full name</dt><dd>OLUFEMI ADISA-ISIKALU</dd></div>
+<div><dt>Role</dt><dd>CHIEF EXECUTIVE OFFICER</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> Not needed</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0002-escrow-fund-holding-model.md">The escrow decision that made this a client funds account</a><br><code>docs/adr/0002-escrow-fund-holding-model.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-1</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx">The client&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx">The Finance copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">EXT-2</p>
+<h3>An S3-compatible bucket in a Nigerian region, and its credentials</h3>
+<div class="chips">
+<span class="chip none">No answer returned</span>
+<span class="chip fast">Today, if bought</span>
+<span class="chip">A purchase. The decision is already taken</span>
+</div></div>
+<p class="verdict">No answer returned, in either return. The bucket has not been bought. The decision to buy it was taken and recorded in ADR-0006, so this is a purchase waiting to be made rather than a question waiting to be settled. E3-S2 is the story it holds, and the code half of E3-S2 can be built without it.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client or Corne Labs, whichever of the two buys it</dd>
+<dt>Named person</dt><dd>Nobody is named</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule. The region question inside it was settled on 7 August 2026 by ADR-0006.</dd>
+<dt>What it holds</dt><dd>E3-S2 durable object storage, and behind it E3-S3 and E7-S4. Gate G3.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>This item used to carry an argument about which country the files could sit in. That argument is over. ADR-0006 puts the bucket in Nigeria, which means no data leaves the country and no cross-border transfer rule has to be satisfied. What is left is a purchase. Any provider offering a Nigerian region will do. This is the cheapest item on the page and it is holding three stories and a launch gate.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">The bucket name.</p>
+<p class="form"><b>Comes back as</b>The name exactly as it was created, capital letters included.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 1 of EXT-2" placeholder="Type the answer to point 1 here"></textarea>
+</li>
+<li>
+<p class="what">The S3-compatible endpoint.</p>
+<p class="form"><b>Comes back as</b>The full URL, with the scheme in front of it.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 2 of EXT-2" placeholder="Type the answer to point 2 here"></textarea>
+</li>
+<li>
+<p class="what">The region.</p>
+<p class="form"><b>Comes back as</b>The provider&#x27;s region code, written as the provider writes it. ADR-0006 requires it to be inside Nigeria.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 3 of EXT-2" placeholder="Type the answer to point 3 here"></textarea>
+</li>
+<li>
+<p class="what">An access key and a secret key that can write to that bucket.</p>
+<p class="form"><b>Comes back as</b>Not the values. Who received them, on what date, through which channel, and confirmation that the key can write to that bucket and to nothing else.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 4 of EXT-2" placeholder="Type the answer to point 4 here"></textarea>
+</li>
+<li>
+<p class="what">Confirmation that public reads are refused by the bucket policy itself, not only by the application in front of it.</p>
+<p class="form"><b>Comes back as</b>Yes or no, and the date it was checked. ADR-0004 makes this a production requirement, so a &#x27;no&#x27; here stops the deployment rather than degrading it.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 5 of EXT-2" placeholder="Type the answer to point 5 here"></textarea>
+</li>
+<li>
+<p class="what">Whether object versioning is switched on.</p>
+<p class="form"><b>Comes back as</b>On, or off. This is not housekeeping. Criterion 5 of E8-S1 turns on the answer, because a versioned bucket keeps the previous copy of an object after the current one has been replaced, and an erasure that leaves the previous copy in place is not an erasure.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 6 of EXT-2" placeholder="Type the answer to point 6 here"></textarea>
+</li>
+<li>
+<p class="what">The retention and lifecycle rules set on the bucket.</p>
+<p class="form"><b>Comes back as</b>Describe each rule in words, or write &#x27;none&#x27;. They must not contradict the retention periods that EXT-5 sets, so if EXT-5 is not answered yet, say so.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 7 of EXT-2" placeholder="Type the answer to point 7 here"></textarea>
+</li>
+</ol>
+<div class="sig">
+<p class="sub">No signature is required. The answer still has to carry a name, a role and a date</p>
+<div class="sig-grid">
+<div class="fld-wrap"><label for="ext-2-signed">Signed, or full name written out</label><input class="fld" type="text" id="ext-2-signed" name="ext-2-signed"></div>
+<div class="fld-wrap"><label for="ext-2-name">Full name in capitals</label><input class="fld" type="text" id="ext-2-name" name="ext-2-name"></div>
+<div class="fld-wrap"><label for="ext-2-role">Role</label><input class="fld" type="text" id="ext-2-role" name="ext-2-role"></div>
+<div class="fld-wrap"><label for="ext-2-date">Date, written in full</label><input class="fld" type="text" id="ext-2-date" name="ext-2-date"></div>
+</div>
+<p class="sig-alt">A handwritten signature is not required. Writing or typing your full name on the first line, with your role and the date beside it, is accepted and carries the same weight.</p>
+<div class="fld-wrap"><label for="ext-2-pending">Points I could not answer today, and the date I expect to have them</label><textarea class="ans" rows="2" id="ext-2-pending" placeholder="Point number, and the date you expect the answer"></textarea></div>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0006-deployment-target-and-runtime-environment.md">The decision that put the bucket in Nigeria and took the platform off Vercel</a><br><code>docs/adr/0006-deployment-target-and-runtime-environment.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-2</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx">The Corne Labs copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx">The client&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx</code></li>
+</ul>
+</article>
+<article class="item mid">
+<div class="item-head">
+<p class="ref">EXT-3</p>
+<h3>A sending domain for email, with SPF, DKIM, DMARC and SMTP credentials</h3>
+<div class="chips">
+<span class="chip none">No answer returned</span>
+<span class="chip mid">Days</span>
+<span class="chip">A domain and four DNS records</span>
+</div></div>
+<p class="verdict">No answer returned, in either return. Nine points, none of them touched. This is the item behind every email the platform sends, so E6-S1 and the four stories behind it cannot start.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client</dd>
+<dt>Named person</dt><dd>Nobody is named. Point 2 below asks who controls the DNS zone.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule.</dd>
+<dt>What it holds</dt><dd>E6-S1 SMTP configuration, and behind it E5-S3, E5-S4, E6-S2 and E6-S3.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>Five stories sit behind this one item, which makes it the widest of the twelve. A user cannot reset a password, cannot verify an address on sign up, and cannot be told anything at all by the platform until mail leaves a domain that other mail servers are willing to accept. The engineering story is small. The waiting is all in DNS.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">The sending domain or subdomain.</p>
+<p class="form"><b>Comes back as</b>The exact domain, spelled as it will be published.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 1 of EXT-3" placeholder="Type the answer to point 1 here"></textarea>
+</li>
+<li>
+<p class="what">The person and the organisation that control DNS for that domain.</p>
+<p class="form"><b>Comes back as</b>A full name and an organisation. SPF, DKIM and DMARC records have to be published by whoever holds that zone, so a department name cannot be acted on.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 2 of EXT-3" placeholder="Type the answer to point 2 here"></textarea>
+</li>
+<li>
+<p class="what">The SPF record as it is published today.</p>
+<p class="form"><b>Comes back as</b>The record value in full, and the date it was published. If it is not published yet, write &#x27;not published&#x27; and the date you expect to publish it.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 3 of EXT-3" placeholder="Type the answer to point 3 here"></textarea>
+</li>
+<li>
+<p class="what">The DKIM selector, and whether the public key is live in DNS.</p>
+<p class="form"><b>Comes back as</b>The selector name, and yes or no.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 4 of EXT-3" placeholder="Type the answer to point 4 here"></textarea>
+</li>
+<li>
+<p class="what">The DMARC policy and its reporting address.</p>
+<p class="form"><b>Comes back as</b>One of &#x27;none&#x27;, &#x27;quarantine&#x27; or &#x27;reject&#x27;, plus the address that receives the aggregate reports.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 5 of EXT-3" placeholder="Type the answer to point 5 here"></textarea>
+</li>
+<li>
+<p class="what">The SMTP host, port and username.</p>
+<p class="form"><b>Comes back as</b>The host, the port number and the username. Not the password. For the password, who received it, on what date and through which channel.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 6 of EXT-3" placeholder="Type the answer to point 6 here"></textarea>
+</li>
+<li>
+<p class="what">The addresses users will see on a message from the platform, and the address that receives bounces.</p>
+<p class="form"><b>Comes back as</b>Three addresses written out in full: the From address, the Reply-To address and the bounce address.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 7 of EXT-3" placeholder="Type the answer to point 7 here"></textarea>
+</li>
+<li>
+<p class="what">Confirmation that the sending domain sits under safebuyrealtiesltd.com.</p>
+<p class="form"><b>Comes back as</b>Yes or no. EXT-12 settled safebuyrealtiesltd.com as the canonical domain, and a sending domain chosen against it has to be republished later.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 8 of EXT-3" placeholder="Type the answer to point 8 here"></textarea>
+</li>
+<li>
+<p class="what">The person who holds the registrar account for that domain.</p>
+<p class="form"><b>Comes back as</b>A full name and an organisation. If nobody can be named, write &#x27;nobody can be named&#x27;, because a domain whose registrar login has no named holder cannot be recovered when that login is lost, and every address above stops working at once when it is.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 9 of EXT-3" placeholder="Type the answer to point 9 here"></textarea>
+</li>
+</ol>
+<div class="sig">
+<p class="sub">No signature is required. The answer still has to carry a name, a role and a date</p>
+<div class="sig-grid">
+<div class="fld-wrap"><label for="ext-3-signed">Signed, or full name written out</label><input class="fld" type="text" id="ext-3-signed" name="ext-3-signed"></div>
+<div class="fld-wrap"><label for="ext-3-name">Full name in capitals</label><input class="fld" type="text" id="ext-3-name" name="ext-3-name"></div>
+<div class="fld-wrap"><label for="ext-3-role">Role</label><input class="fld" type="text" id="ext-3-role" name="ext-3-role"></div>
+<div class="fld-wrap"><label for="ext-3-date">Date, written in full</label><input class="fld" type="text" id="ext-3-date" name="ext-3-date"></div>
+</div>
+<p class="sig-alt">A handwritten signature is not required. Writing or typing your full name on the first line, with your role and the date beside it, is accepted and carries the same weight.</p>
+<div class="fld-wrap"><label for="ext-3-pending">Points I could not answer today, and the date I expect to have them</label><textarea class="ans" rows="2" id="ext-3-pending" placeholder="Point number, and the date you expect the answer"></textarea></div>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-3</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx">The client&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx</code></li>
+</ul>
+</article>
+<article class="item slow">
+<div class="item-head">
+<p class="ref">EXT-4</p>
+<h3>Counsel-approved Power of Attorney text and terms of service</h3>
+<div class="chips">
+<span class="chip partial">Answered, does not close</span>
+<span class="chip slow">Long lead</span>
+<span class="chip">Drafting with counsel, not a signature</span>
+</div></div>
+<p class="verdict">Eleven of eleven points carry an answer, the Chief Financial Officer has signed, and the Chief Legal Officer has attested to the item. Five of the eleven answer a different question from the one asked, and those five are the ones E8-S2 needs. One point closes by a different route: point 6 is the same question as EXT-10, and counsel signed EXT-10.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client, with counsel</dd>
+<dt>Named person</dt><dd>Nobody is named. Point 1 below asks for counsel&#x27;s name.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule. Both halves are incomplete.</dd>
+<dt>What it holds</dt><dd>E8-S2 legal review, and gate G4. Answering point 6 also closes EXT-10.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>This was planned as a review of two finished documents. Reading them showed that it is not one. The terms of service file stops at section 10 and ends in the middle of a clause, and what is missing is not decoration: limitation of liability, indemnity, governing law, jurisdiction, dispute resolution, fees, refunds, termination, and every escrow term, from the contract of a platform that holds client money and runs a dispute process. The Power of Attorney is a complete document but it is dated 2017, and its clause 5 authorises a ten per cent deduction at source while saying nothing about VAT, which is the withholding the platform actually performs. This is weeks of drafting with counsel. It is not a signature on a finished document, and planning it as one will put the launch date in the wrong place.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">Counsel&#x27;s name, or the firm&#x27;s name, and the date they were instructed.</p>
+<p class="form"><b>Comes back as</b>The individual&#x27;s name, the firm&#x27;s name, and a date in full. If counsel has not been instructed yet, write &#x27;not instructed&#x27; and the date you expect to instruct them.</p>
+<div class="given"><span class="tag">What came back</span><q>According to Barr. Olufemi Adisa-Isikalu, CEO safebuyrealitiesltd the VAT is a statutory requirement and it needs no special mention</q></div>
+<p class="owes"><span class="tag">Still owed</span>This answers a VAT question. The point asks who counsel is and the date they were instructed. Points 3 and 4 both name Goldrush Partners, so the firm is knowable from elsewhere on the page, but no instruction date appears anywhere.</p>
+</li>
+<li>
+<p class="what">The date the reviewed documents are expected back.</p>
+<p class="form"><b>Comes back as</b>A date in full. Not &#x27;in a few weeks&#x27;.</p>
+<div class="given"><span class="tag">What came back</span><q>08/08/2026 The correction needed is stated above</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">Confirmation that counsel holds all three documents linked below.</p>
+<p class="form"><b>Comes back as</b>Yes or no against each of the three separately. All three matter, because the instrument the platform generates is not the same document as either of the two the client supplied.</p>
+<div class="given"><span class="tag">What came back</span><q>Yes the counsel holds all the three document</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">Counsel&#x27;s position on executing a land instrument electronically.</p>
+<p class="form"><b>Comes back as</b>One of &#x27;permitted&#x27;, &#x27;not permitted&#x27;, or &#x27;permitted subject to conditions&#x27;. If conditions, list them.</p>
+<div class="given"><span class="tag">What came back</span><q>When it comes to the point of preparation of land deeds or contract the parties will be to seek counsels on the section for professional services on our platform or contact Goldrush Partners for it.</q></div>
+<p class="owes"><span class="tag">Still owed</span>None of the three words the point asks for is given. The answer says where the parties should go for advice, which is not counsel&#x27;s position on whether a land instrument may be executed electronically at all. Every generated Power of Attorney turns on that position.</p>
+</li>
+<li>
+<p class="what">The company&#x27;s legal name, registered address and canonical domain, as they should appear on the instrument.</p>
+<p class="form"><b>Comes back as</b>The registered name exactly as it appears at the Corporate Affairs Commission, the registered address in full, and the domain. These three are printed onto every instrument the platform generates, so a later correction reprints all of them.</p>
+<div class="given"><span class="tag">What came back</span><q>This is will be dependent on the counsels service the different parties to the documentation of the title documents engage.</q></div>
+<p class="owes"><span class="tag">Still owed</span>The registered name, the registered address and the canonical domain are all still missing. These three are printed onto every instrument the platform generates, so a later correction reprints all of them.</p>
+</li>
+<li>
+<p class="what">Counsel&#x27;s signature on the VAT position, saying what authorises withholding VAT from a seller&#x27;s proceeds.</p>
+<p class="form"><b>Comes back as</b>The signature block below, completed by counsel. This single answer also closes EXT-10 in full, and it is the only outstanding part of that item.</p>
+<div class="given"><span class="tag">What came back</span><q>According to MR. IDRIS AREGBE, CHIEF FINANCIAL OFFICER the 7.5 percent VAT is a statutory requirement and it needs no special mention.</q></div>
+<p class="owes"><span class="tag">Still owed</span>Answered here by the Chief Financial Officer, who is not counsel. It closes anyway, by the rule printed under the point itself: EXT-10 asks the same question, and the Chief Legal Officer signed EXT-10 on 8 August. Read the EXT-10 answer as the operative one.</p>
+</li>
+<li>
+<p class="what">The words &#x27;commission plus applicable VAT&#x27; written into the engagement documents.</p>
+<p class="form"><b>Comes back as</b>Confirmation that the words have been added, or counsel&#x27;s alternative wording written out.</p>
+<div class="given"><span class="tag">What came back</span><q>According to BARR. ISOKEN ADISA-ISIKALU, CHIEF LEGAL OFFICER and MR. IDRIS AREGBE, CHIEF FINANCIAL OFFICER the VAT is a statutory requirement and it needs no special mention but the commission is mandatory inclusion in the sales proceed. Kindly take the following as the ratifying that 7.5 percent VAT on commission.</q></div>
+<div class="revised"><span class="tag">Revised on the second return</span>The first return attributed this to the Chief Financial Officer alone. The revision adds the Chief Legal Officer. The wording is otherwise unchanged, so the point still argues that the words are unnecessary rather than adding them.</div>
+<p class="owes"><span class="tag">Still owed</span>It neither confirms the words have been added nor supplies alternative wording. It argues that the words are unnecessary. The engagement documents still do not carry them, so a buyer reading a fee line has no way of knowing VAT is coming on top of it.</p>
+</li>
+<li>
+<p class="what">A buyer-facing instrument that carries the buyer&#x27;s commission.</p>
+<p class="form"><b>Comes back as</b>Either a draft instrument, or a written statement that no buyer-facing instrument is required, and why. The current document set contains none.</p>
+<div class="given"><span class="tag">What came back</span><q>The buyer pays the market price plus commission plus VAT (7.5 percent) on commission</q></div>
+<p class="owes"><span class="tag">Still owed</span>This is the arithmetic. The point asks for an instrument the buyer signs, or a written statement that no such instrument is required and why. The document set still contains neither.</p>
+</li>
+<li>
+<p class="what">A rewrite of clause 5 of the Power of Attorney, on both counts.</p>
+<p class="form"><b>Comes back as</b>Replacement wording covering the ten per cent deduction at source and the silence on VAT. If instruments have already been signed under the existing clause 5, say what happens to those.</p>
+<div class="given"><span class="tag">What came back</span><q>The Donee shall be entitled to deduct from source 10% brokerage plus commission for the successful sale of the property plus VAT (7.5 percent) on commission</q></div>
+<p class="owes"><span class="tag">Still owed</span>Replacement wording is given and it covers both counts. What happens to instruments already signed under the old clause 5 is not addressed.</p>
+</li>
+<li>
+<p class="what">The web address the QR code on the generated instrument should point to.</p>
+<p class="form"><b>Comes back as</b>The full URL. If it should not carry a QR code at all, write &#x27;no QR code&#x27; and one line saying why.</p>
+<div class="given"><span class="tag">What came back</span><q>https://www.safebuyrealitiesltd.com</q></div>
+<p class="owes"><span class="tag">Still owed</span>A full URL is given, so the point is answered. It is spelled safebuyrealitiesltd.com, with an extra i, where EXT-5 point 1 spells the company safebuyrealtiesltd and EXT-3 point 8 fixes safebuyrealtiesltd.com as canonical. This value is printed as a QR code onto every Power of Attorney, so one of the two spellings has to be withdrawn before the next instrument is issued.</p>
+</li>
+<li>
+<p class="what">Whether counsel starts now, or waits for EXT-9.</p>
+<p class="form"><b>Comes back as</b>&#x27;Proceed now&#x27;, or &#x27;wait&#x27;. EXT-9 settles the commission basis, and drafting a fee clause before it comes back means drafting the clause twice.</p>
+<div class="given"><span class="tag">What came back</span><q>Proceed now Point 6 and point 9 should rewritten thus, 6. I confirm that the withholding of 7.5 percent VAT from commission from seller is authorised by tax statutory law and I confirm the wording of clause 5 as set out at point 9.</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;On the VAT position, at point 6: I confirm that the withholding of VAT from a seller&#x27;s proceeds is authorised by [name the clause, the statute or the instrument], and I confirm the wording of clause 5 as set out at point 9.&rdquo;</p>
+<p class="sig-who">Counsel, meaning the lawyer or the firm instructed. This is the signature gate G4 closes on, and it is also the whole of EXT-10.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>MR. IDRIS AREGBE</dd></div>
+<div><dt>Full name</dt><dd>IDRIS AREGBE</dd></div>
+<div><dt>Role</dt><dd>CHIEF FINANCIAL OFFICER</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> Also attested to by BARR. ISOKEN ADISA-ISIKALU, CHIEF LEGAL OFFICER</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SBR%20TERMS%20AND%20CONDITIONS%20SAFEBUY.docx">The terms of service, the file that stops at section 10</a><br><code>docs/inputs/SBR TERMS AND CONDITIONS SAFEBUY.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SBR%20-POWER%20OF%20ATTORNEY.docx">The Power of Attorney, dated 2017</a><br><code>docs/inputs/SBR -POWER OF ATTORNEY.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/backend/src/poa/poa.service.ts">The instrument the platform generates today, in code</a><br><code>backend/src/poa/poa.service.ts</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-4</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx">Counsel&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx</code></li>
+</ul>
+</article>
+<article class="item slow">
+<div class="item-head">
+<p class="ref">EXT-5</p>
+<h3>An adopted privacy policy, a retention schedule, and a Data Protection Officer</h3>
+<div class="chips">
+<span class="chip closed">Closes</span>
+<span class="chip slow">Long lead</span>
+<span class="chip">A board resolution and two appointments</span>
+</div></div>
+<p class="verdict">Nine of nine, signed by the Chief Legal Officer. This closes, and it releases E8-S1, the largest single story left on the board. One wording question goes back to counsel rather than being resolved in code.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client, the board of directors, and a Data Protection Officer</dd>
+<dt>Named person</dt><dd>The board and the Managing Director are named as bodies, not as people. Nobody holds the DPO role.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule.</dd>
+<dt>What it holds</dt><dd>E8-S1 NDPR consent, retention and erasure. E8-S1 is an L, the largest single story left.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>The company&#x27;s own data protection policy is still headed &#x27;SUBJECT TO BOARD&#x27;, which means the board has not adopted it. Section 8 of that policy requires a Data Protection Officer and section 9 requires a licensed compliance organisation, and neither exists. Engineering cannot write a retention rule without being told how long each kind of record is kept, and cannot build erasure without being told whether erasure means deleting the record or destroying the key that reads it. These are decisions for the board and the officer it appoints. They are not code.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">The board&#x27;s formal adoption of the data protection policy.</p>
+<p class="form"><b>Comes back as</b>The adoption date and the resolution reference, plus confirmation that the heading &#x27;SUBJECT TO BOARD&#x27; comes off the document. Complete the signature block below.</p>
+<div class="given"><span class="tag">What came back</span><q>We the board of directors of safebuyrealtiesltd hereby adopt the position of the privacy policy, and retention schedule and reckon that when we are done with lawful usage, we will either delete or anonymize the data before storage. And because we are charging VAT, this requires to keep for at least 6 years by virtue of CAMA / NTA.</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">The name of the Data Protection Officer required by section 8 of that policy.</p>
+<p class="form"><b>Comes back as</b>A full name, a role and a contact address. Section 8 creates the role and appoints nobody to it.</p>
+<div class="given"><span class="tag">What came back</span><q>BARR. ISOKEN ADISA-ISIKALU, CLO 14 ALLEN AVENUE STE 404 IKEJA LAGOS</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">The licensed Data Protection Compliance Organisation required by section 9.</p>
+<p class="form"><b>Comes back as</b>The organisation&#x27;s name, its licence number and the engagement date. If it has not been engaged yet, give the date procurement starts. This one has a lead time, so a start date is a useful answer on its own.</p>
+<div class="given"><span class="tag">What came back</span><q>GOLDRUSH PARTNERS, licence number not needed 01 JUNE 2025</q></div>
+<p class="owes"><span class="tag">Still owed</span>Given, and the item closes on it. Section 9 asks for a licensed Data Protection Compliance Organisation, and the answer says the licence number is not needed, so the licence is asserted rather than evidenced. Worth one line of follow up, not a reason to hold the story.</p>
+</li>
+<li>
+<p class="what">The date the business commenced operations.</p>
+<p class="form"><b>Comes back as</b>One date, in full. Section 10.1 of the internal policy sets the first compliance audit at fifteen months from that date, so it is not a formality.</p>
+<div class="given"><span class="tag">What came back</span><q>01 JULY 2026</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">Whether erasure means deleting the record, or destroying the key that reads it.</p>
+<p class="form"><b>Comes back as</b>One of the two. Say it per category if the answer differs by category. This decides what the erasure feature actually does to a record the company is required by law to keep.</p>
+<div class="given"><span class="tag">What came back</span><q>Erasure means destroying the key that reads but erasure can only be allowed after 6 years</q></div>
+<p class="owes"><span class="tag">Still owed</span>Answered, and the answer creates a reading that has to go back to the Chief Legal Officer before it is built. An erasure right that only becomes available after six years is not an erasure right. What is almost certainly meant is that erasure is honoured on request and the record the law requires to be kept survives in key destroyed form for the six years. Engineering should not choose between those two readings on counsel&#x27;s behalf.</p>
+</li>
+<li>
+<p class="what">A retention period for each category of personal data.</p>
+<p class="form"><b>Comes back as</b>A number and a unit for each of the eight categories in the retention table of the closure schedule: KYC identity documents, KYC selfie and liveness images, professional credentials, transaction and payment records, audit and access logs, marketing consent records, cookie and analytics data, and account data after closure. Write &#x27;7 years&#x27; or &#x27;90 days&#x27;. &#x27;As long as necessary&#x27; cannot be encoded, which is the reason the policies as they stand cannot be implemented. If a category genuinely has no fixed period, write the event that ends it, for example &#x27;until the account is closed, then 90 days&#x27;.</p>
+<div class="given"><span class="tag">What came back</span><q>We the board reckon that when we are done with lawful usage, we will either delete or anonymize the data before storage. And because we are charging VAT, this requires to keep for at least 6 years by virtue of CAMA / NTA.</q></div>
+<p class="owes"><span class="tag">Still owed</span>The six years applies as a single period across the categories. The point asked for a number and a unit against each of the eight, and one period covering all eight is a usable answer, so the story can be built from it.</p>
+</li>
+<li>
+<p class="what">The amended privacy policy as published on the website.</p>
+<p class="form"><b>Comes back as</b>The replacement file, or the web address where the amended policy is live.</p>
+<div class="given"><span class="tag">What came back</span><q>The amended publishing is not required for now.</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">A copy of the General Application and Implementation Directive 2025.</p>
+<p class="form"><b>Comes back as</b>The document itself, or a link to it. Nobody on this project has read it, and the EXT-11 answer of 6 August 2026 says it governs.</p>
+<div class="given"><span class="tag">What came back</span><q>The link to the document is https://ndpc.gov.ng/wp-content/uploads/2025/07/NDP-ACT-GAID-2025-MARCH-20TH.pdf</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">&#x27;Estate Agent and Allied Service Provider&#x27; added to the category lists in both published documents.</p>
+<p class="form"><b>Comes back as</b>Confirmation that it has been added, with the replacement files attached.</p>
+<div class="given"><span class="tag">What came back</span><q>Yes! Estate Agent and Allied Service Provider was added to the category lists in both published documents</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;The board of directors adopted the data protection policy on [date], by resolution [reference], and the heading &#x27;SUBJECT TO BOARD&#x27; is removed from the document with effect from that date.&rdquo;</p>
+<p class="sig-who">A director, or the company secretary, on behalf of the board. This is the adoption at point 1, and every retention period below it depends on the policy being adopted.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>BARR. ISOKEN ADISA-ISIKALU</dd></div>
+<div><dt>Full name</dt><dd>ISOKEN ADISA-ISIKALU</dd></div>
+<div><dt>Role</dt><dd>CHIEF LEGAL OFFICER</dd></div>
+<div><dt>Date</dt><dd>08 AUGUST 2026</dd></div>
+</dl>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SB%20DATA%20PROTECTION%20POLICY.docx">The internal policy, still marked SUBJECT TO BOARD</a><br><code>docs/inputs/SB DATA PROTECTION POLICY.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SBR%20PRIVACY%20POLICY.docx">The published privacy policy</a><br><code>docs/inputs/SBR PRIVACY POLICY.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-5, and the eight-row retention table</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx">The board&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx">The DPO copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx</code></li>
+</ul>
+</article>
+<article class="item slow">
+<div class="item-head">
+<p class="ref">EXT-6</p>
+<h3>A penetration test vendor and a booked testing window</h3>
+<div class="chips">
+<span class="chip none">No answer returned</span>
+<span class="chip slow">Long lead</span>
+<span class="chip">A booking with a vendor</span>
+</div></div>
+<p class="verdict">No answer returned, in either return. No vendor, no window, no report date. This is the longest lead time on the page and it is the one nobody has started. E8-S3 and gate G5 wait on it.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>Corne Labs</dd>
+<dt>Named person</dt><dd>Nobody is named. Point 1 below asks for the vendor and the contact there.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule.</dd>
+<dt>What it holds</dt><dd>E8-S3 pre-launch security review, and gate G5.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>Gate G5 reads &#x27;no high findings outstanding&#x27;. Nobody can close that gate without a report, and a report needs a vendor, a scope and a booked window. Vendors book weeks ahead, so the lead time on this item is longer than the engineering work behind it. Scheduling it is small. Fixing whatever it finds cannot be sized until it has been found, and that unsized work sits directly in front of launch.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">The vendor, and a named contact there.</p>
+<p class="form"><b>Comes back as</b>The company name, the contact&#x27;s full name, their email address and their telephone number.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 1 of EXT-6" placeholder="Type the answer to point 1 here"></textarea>
+</li>
+<li>
+<p class="what">A scope of work covering the four areas named in criterion 1 of E8-S3.</p>
+<p class="form"><b>Comes back as</b>Yes or no against each of the four separately: authentication, authorization, payments, and document handling. A scope that omits one of the four does not close gate G5, so a partial yes is worth knowing about now rather than after the test.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 2 of EXT-6" placeholder="Type the answer to point 2 here"></textarea>
+</li>
+<li>
+<p class="what">Whether the engagement is black box, grey box or white box.</p>
+<p class="form"><b>Comes back as</b>One of the three. If grey or white, say what access the testers are given.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 3 of EXT-6" placeholder="Type the answer to point 3 here"></textarea>
+</li>
+<li>
+<p class="what">The environment to be tested.</p>
+<p class="form"><b>Comes back as</b>Name it. It must not be production carrying live customer data.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 4 of EXT-6" placeholder="Type the answer to point 4 here"></textarea>
+</li>
+<li>
+<p class="what">The testing window.</p>
+<p class="form"><b>Comes back as</b>A start date and an end date, both in full.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 5 of EXT-6" placeholder="Type the answer to point 5 here"></textarea>
+</li>
+<li>
+<p class="what">The rules of engagement, agreed by both sides.</p>
+<p class="form"><b>Comes back as</b>Attached, or summarised, covering the seeded test data set, any out of hours constraint, and who to telephone if the test takes a service down. Complete the signature block below, or attach the signed rules.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 6 of EXT-6" placeholder="Type the answer to point 6 here"></textarea>
+</li>
+<li>
+<p class="what">The date the report is due.</p>
+<p class="form"><b>Comes back as</b>A date in full. The report carries findings, severity ratings and reproduction steps.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 7 of EXT-6" placeholder="Type the answer to point 7 here"></textarea>
+</li>
+<li>
+<p class="what">The date the re-test letter is due.</p>
+<p class="form"><b>Comes back as</b>A date in full. Criterion 4 of E8-S3 requires the re-test as its own document. The re-test letter is what closes gate G5, not the original report.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 8 of EXT-6" placeholder="Type the answer to point 8 here"></textarea>
+</li>
+</ol>
+<div class="sig">
+<p class="sub">Signature required, and not yet given. Write the wording below, then complete the four lines</p>
+<p class="sig-words">&ldquo;The rules of engagement for the penetration test described above are agreed by both parties, with effect from [date].&rdquo;</p>
+<p class="sig-who">One signatory for Corne Labs and one for the vendor. A test run without agreed rules of engagement produces a report that cannot be used to close a gate.</p>
+<div class="sig-grid">
+<div class="fld-wrap"><label for="ext-6-signed">Signed, or full name written out</label><input class="fld" type="text" id="ext-6-signed" name="ext-6-signed"></div>
+<div class="fld-wrap"><label for="ext-6-name">Full name in capitals</label><input class="fld" type="text" id="ext-6-name" name="ext-6-name"></div>
+<div class="fld-wrap"><label for="ext-6-role">Role</label><input class="fld" type="text" id="ext-6-role" name="ext-6-role"></div>
+<div class="fld-wrap"><label for="ext-6-date">Date, written in full</label><input class="fld" type="text" id="ext-6-date" name="ext-6-date"></div>
+</div>
+<p class="sig-alt">A handwritten signature is not required. Writing or typing your full name on the first line, with your role and the date beside it, is accepted and carries the same weight.</p>
+<div class="fld-wrap"><label for="ext-6-pending">Points I could not answer today, and the date I expect to have them</label><textarea class="ans" rows="2" id="ext-6-pending" placeholder="Point number, and the date you expect the answer"></textarea></div>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item EXT-6</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx">The Corne Labs copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">EXT-8</p>
+<h3>Three contradictions inside the identifier standard, resolved</h3>
+<div class="chips">
+<span class="chip partial">Answered, does not close</span>
+<span class="chip fast">Today</span>
+<span class="chip">Three answers and a name against them</span>
+</div></div>
+<p class="verdict">Four of four points carry an answer and the Chief Operating Officer has signed. Two of the three contradictions are now resolved. The third, SUR against SVR, is answered with the word &#x27;Confirmed&#x27;, which cannot be read as either. E9-S2 also waits independently on version 2 of the identifier standard, due 13 August 2026.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>Digital Records, with the Chief Operating Officer</dd>
+<dt>Named person</dt><dd>Adebiyi Emmanuel Babatope, as Chief Operating Officer. Nobody is named at Digital Records.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the decision request. Answered in part, and still open.</dd>
+<dt>What it holds</dt><dd>E9-S2 location register and property ID issuance.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into ENG-DR-2026-08-06-01, the decision request. This item carries no response block in the closure schedule, deliberately, because an answer given in two documents can differ in two documents.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>The identifier standard contradicts itself in three places, and the finance specification contradicts the standard. Answers came back on some of the smaller gaps, but they arrived without an author, and an answer with nobody&#x27;s name on it cannot be recorded as a decision. Where a document says two different things, this project writes both readings down and leaves the item open, because choosing the more likely reading is how a guess turns into a fact that later has to be unpicked.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">SUR or SVR, for Surveyor as a record type segment.</p>
+<p class="form"><b>Comes back as</b>One of the two, written as three letters. Section 4.0 of the ID Standard gives SBR-SUR for Surveyor and section 5.0 gives SUR for Surulere. An identifier issued under the wrong one of those is wrong permanently, because identifiers are not reissued.</p>
+<div class="given"><span class="tag">What came back</span><q>Confirmed</q></div>
+<p class="owes"><span class="tag">Still owed</span>Neither SUR nor SVR is written. The point offers a choice between two three letter segments and &#x27;Confirmed&#x27; does not pick one. An identifier issued under the wrong one is wrong permanently, because identifiers are not reissued, so this is the one point on the item that cannot be guessed at.</p>
+</li>
+<li>
+<p class="what">Whether a UUID replaces the NNN sequence, or sits alongside it.</p>
+<p class="form"><b>Comes back as</b>One of &#x27;replaces&#x27; or &#x27;sits alongside&#x27;. If it sits alongside, say which of the two is printed onto an instrument a person reads.</p>
+<div class="given"><span class="tag">What came back</span><q>UUID replaces NNN</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">The ALD format, SBR-ALD-LOCYYXX-NNN, written out.</p>
+<p class="form"><b>Comes back as</b>The format set out the way section 4.0 sets out the other record types, plus one line saying what YY stands for and one line saying what XX stands for. YYMM has been proposed for YYXX. Confirm it, or correct it.</p>
+<div class="given"><span class="tag">What came back</span><q>SBR-ALD-LOCYYXX-UUID changed to SBR-ALD-LOCYYMM-NNN with NNN and XX replaced with UUID and MM respectively. Confirmed,</q></div>
+<div class="revised"><span class="tag">Revised on the second return</span>The first return answered this point with the single word &#x27;Confirmed&#x27;, which left the format unresolved. The revision writes it out and defines XX. This is the clearest improvement in the second return.</div>
+<p class="owes"><span class="tag">Still owed</span>Resolved. Read through, the format is SBR-ALD-LOCYYMM-UUID: XX is defined as MM, and NNN is replaced by the UUID that point 2 already established. What YY stands for is still not written out in its own line, though year is the only reading the rest of section 4.0 supports.</p>
+</li>
+<li>
+<p class="what">A name and a role against the answers already relayed.</p>
+<p class="form"><b>Comes back as</b>A full name, a role and a date, written against the answers relayed on the building material seller code, the five TYPE forms, and the third form approved alongside them. Complete the signature block below. This is the cheapest point on the whole page. It costs one line, and without it three answers that have already been given cannot be recorded.</p>
+<div class="given"><span class="tag">What came back</span><q>MR ADEBIYI EMMANUEL BABATOPE., CHIEF OPERATING OFFICER 08/08/2026</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;The answers relayed on the building material seller code, the five TYPE forms and the third approved form are given by me in the role stated below, and may be recorded as a decision.&rdquo;</p>
+<p class="sig-who">The Chief Operating Officer, or a named officer at Digital Records. The answers themselves have already been given. What is missing is the person who gave them.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>MR. ADEBIYI EMMANUEL BABATOPE</dd></div>
+<div><dt>Full name</dt><dd>ADEBIYI EMMANUEL BABATOPE</dd></div>
+<div><dt>Role</dt><dd>CHIEF OPERATING OFFICER</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> Not applicable</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md">The identifier questions in full</a><br><code>docs/escalations/2026-08-06-ext-8-and-ext-12.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/sql/id-location-code-audit.sql">The audit query, for whoever holds database access</a><br><code>docs/sql/id-location-code-audit.sql</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx">The Digital Records copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx">The COO copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">EXT-9</p>
+<h3>The commission basis: what is charged, to whom, and whether it can be varied</h3>
+<div class="chips">
+<span class="chip partial">Answered, does not close</span>
+<span class="chip fast">Today</span>
+<span class="chip">Three lines from Finance</span>
+</div></div>
+<p class="verdict">Three of three, signed by the Chief Financial Officer, and the commission number is now settled: a combined floor of 10 percent, split 5 and 5 by default, with the buyer able to carry all ten if the seller pushes, and 7.5 percent VAT on the commission only. What is still missing is small and it blocks configuration: a single named role that sets the actual rate, and the place the decision is written down.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>Finance</dd>
+<dt>Named person</dt><dd>Nobody is named</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the decision request.</dd>
+<dt>What it holds</dt><dd>E9-S3 six main accounts and commission rates, and behind it E9-S4. It also releases two of the eleven points inside EXT-4.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into ENG-DR-2026-08-06-01, the decision request. This item carries no response block in the closure schedule, deliberately, because an answer given in two documents can differ in two documents.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>The accounting tables shipped with no rows in them, deliberately, because a commission rate written into a ledger on a guess is worse than an empty table. Four sources describe the commission and they give three different readings. The platform as built charges five per cent on the seller side only. Clause 5 of the Power of Attorney says the donee deducts ten per cent at source. Section 5(a) of the terms says a minimum of five per cent from buyer and seller cumulatively. The finance specification carries separate sub-codes 11 and 12 for buyer and seller, which points at two sides. Five plus five making the ten at source is the likeliest reconciliation, and it is plausible enough to be dangerous, which is why it is being asked rather than assumed. Three short answers fill the tables.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">Is the commission one-sided or two-sided?</p>
+<p class="form"><b>Comes back as</b>&#x27;One-sided&#x27; or &#x27;two-sided&#x27;. If one-sided, say which side. The platform charges the seller only today and has no buyer commission at all, in spite of sub-code 11 existing for it.</p>
+<div class="given"><span class="tag">What came back</span><q>Two-sided.</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">If two-sided, is the buyer&#x27;s share collected from the buyer, or withheld from the seller&#x27;s proceeds alongside the seller&#x27;s share?</p>
+<p class="form"><b>Comes back as</b>&#x27;Collected from the buyer&#x27; or &#x27;withheld from the seller&#x27;. The second is what &#x27;deduct ten per cent from source&#x27; would mean, and it is a materially different thing to tell a seller.</p>
+<div class="given"><span class="tag">What came back</span><q>Given the following scenarios Scenario 1: If the seller is pushing the buyer should pay the full (10 percent instead of 5 percent split between buyer and seller) commission, it means the buyer will pay the market price plus 10 percent commission plus 7.5 percent VAT on commission Scenario 2: if both buyer and seller are paying 5 percent commission each (a) the buyer pays market price plus 5 percent commission plus 7.5 percent VAT on commission (b) the seller receives market price less 5 percent commission less 7.5 percent VAT on commission</q></div>
+<p class="owes"><span class="tag">Still owed</span>Neither of the two phrases the point asked for is written, but the two scenarios say it plainly enough to build from: the buyer&#x27;s share is added to what the buyer pays, and the seller&#x27;s share is deducted from what the seller receives. That is &#x27;collected from the buyer&#x27; for the buyer&#x27;s half, which is the answer that matters, because withholding the buyer&#x27;s half from the seller&#x27;s proceeds would be a materially different thing to tell a seller.</p>
+</li>
+<li>
+<p class="what">Is &#x27;minimum of five per cent&#x27; a floor with a configurable actual rate, or is it the rate?</p>
+<p class="form"><b>Comes back as</b>&#x27;Floor&#x27; or &#x27;rate&#x27;. If it is a floor, give the full name of the person who sets the actual rate, and say where that decision gets recorded.</p>
+<div class="given"><span class="tag">What came back</span><q>Floor of 10 percent with a configurable actual rate. The board which consist of Barr. Olufemi Adisa-Isikalu, CEO, Mr Idris Aregbe, CFO, Mr. Adebiyi Emmanuel Babatope, COO, Barr. Barr. Isoken Adisa-Isikalu, CLO, and Mr Abiodun Olaluwe, CTO met to decide and affirm what the rate should be.</q></div>
+<div class="revised"><span class="tag">Revised on the second return</span>The first return gave the floor alone. The revision adds the board and the five names behind the decision, which settles a number the backlog had recorded as unsettled since 6 August.</div>
+<p class="owes"><span class="tag">Still owed</span>Floor is given and the rate is settled. Five people are named, which is the board rather than a rate setter. E9-S3 has to attribute a rate change to one role, and the point also asked where the decision is recorded, which is still unanswered. A minute reference or a register name would close it.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>MR. IDRIS AREGBE</dd></div>
+<div><dt>Full name</dt><dd>IDRIS AREGBE</dd></div>
+<div><dt>Role</dt><dd>CFO</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> Not applicable</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md">The three questions in full, item EXT-9</a><br><code>docs/escalations/2026-08-06-ext-8-and-ext-12.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx">The Finance copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx</code></li>
+</ul>
+</article>
+<article class="item mid">
+<div class="item-head">
+<p class="ref">EXT-10</p>
+<h3>Counsel&#x27;s signature on what authorises withholding VAT from seller proceeds</h3>
+<div class="chips">
+<span class="chip closed">Closes</span>
+<span class="chip mid">Days</span>
+<span class="chip">One signature</span>
+</div></div>
+<p class="verdict">One of one, signed by the Chief Legal Officer, and the answer now names a statute and links it. On the wording of its own signature block, which asks counsel to name the clause, the statute or the instrument, this closes. It also closes point 6 of EXT-4 by the rule printed under both points.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>Finance and counsel, together</dd>
+<dt>Named person</dt><dd>Nobody is named at counsel</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the decision request. Finance has answered. Counsel has not signed.</dd>
+<dt>What it holds</dt><dd>E9-S3, and gate G4.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into ENG-DR-2026-08-06-01, the decision request. This item carries no response block in the closure schedule, deliberately, because an answer given in two documents can differ in two documents.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>One signature is all that is outstanding here, and it matters more than its size suggests. The finance specification&#x27;s own worked example deducts VAT from what a seller receives. On a fifty million naira sale it takes 2,500,000 in commission and 187,500 in VAT, and pays the seller 47,312,500. The platform as built pays 47,500,000, because clause 5 of the Power of Attorney authorises the ten per cent brokerage deduction and stops there. It says nothing about VAT. So the difference is 187,500 naira of a seller&#x27;s money on a single transaction, and it is the specification that has run ahead of its authority, not the code. Until counsel signs, no VAT rate can be written into the platform.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">What authorises the platform to withhold VAT from a seller&#x27;s proceeds.</p>
+<p class="form"><b>Comes back as</b>A signed statement from counsel, using the signature block below. If clause 5 was always intended to cover VAT, counsel confirms that in writing, because the clause does not say so on its face. If it was not, then the answer is replacement wording for clause 5 plus a route for re-executing the instruments already signed under the old wording. Either way it is a drafting answer, not a configuration value. This is the same question as point 6 of EXT-4, and answering it in either place closes it in both.</p>
+<div class="given"><span class="tag">What came back</span><q>The NIGERIAN STATUTORY AUTHORITY as documented in Tax Act, https://www.nrs.gov.ng/uploads/NIGERIA_TAX_ACT_2025_ef6bb812a5.pdf</q></div>
+<div class="revised"><span class="tag">Revised on the second return</span>The first return read &#x27;STATUTORY AUTHORITY&#x27; and named nothing. The revision names the Nigeria Tax Act 2025 and links the published text. That is the difference between a signature on an assertion and a signature on a citation, and it is what moves the item from open to closed.</div>
+<p class="owes"><span class="tag">Still owed</span>Closes. Two reservations worth recording rather than blocking on. The Act is cited without a section, so the specific provision that authorises withholding from a seller&#x27;s proceeds is not identified, and anybody drafting clause 5 will want it. The signatory is the in-house Chief Legal Officer rather than Goldrush Partners, the instructed firm, which is counsel by any ordinary reading but not the firm named elsewhere on this page.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;I confirm that the withholding of VAT from a seller&#x27;s proceeds is authorised by [name the clause, the statute or the instrument]. Where it is not currently authorised, replacement wording for clause 5 of the Power of Attorney is attached, together with the route for re-executing instruments already signed.&rdquo;</p>
+<p class="sig-who">Counsel. Finance has already given its half of this item, so counsel&#x27;s signature closes it outright.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>BARR. ISOKEN ADISA-ISIKALU</dd></div>
+<div><dt>Full name</dt><dd>ISOKEN ADISA-ISIKALU</dd></div>
+<div><dt>Role</dt><dd>CHIEF LEGAL OFFICER</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> Not aplicable</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md">The question in full, and the worked example it comes from</a><br><code>docs/escalations/2026-08-06-ext-8-and-ext-12.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx">Counsel&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">ADR-0004</p>
+<h3>Ratification of how a private document is served</h3>
+<div class="chips">
+<span class="chip none">No answer returned</span>
+<span class="chip fast">Today</span>
+<span class="chip">A ratification of what already shipped</span>
+</div></div>
+<p class="verdict">No answer returned, in either return. Four points, and the decision it ratifies has already shipped as E3-S1. This is the cheapest unanswered item on the page.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>Product, the client, and security</dd>
+<dt>Named person</dt><dd>Nobody is named</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule. The region half of it was closed on 7 August 2026 by ADR-0006.</dd>
+<dt>What it holds</dt><dd>No story on its own. It records the behaviour of E3-S1, which has already shipped, and it is relied on by E3-S2, E3-S3 and gate G3.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>This is paperwork, not a question. The behaviour it describes shipped weeks ago as E3-S1, and the record still reads &#x27;Proposed&#x27;. Four short answers move it to &#x27;Accepted&#x27;. It takes one sitting, it needs nobody outside the company, and it is one of the three items on this page that can be closed today.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">Whether the decision is accepted as written.</p>
+<p class="form"><b>Comes back as</b>&#x27;Accepted&#x27;, or &#x27;not accepted&#x27; with what should happen instead.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 1 of ADR-0004" placeholder="Type the answer to point 1 here"></textarea>
+</li>
+<li>
+<p class="what">Confirmation of the production requirement the decision states.</p>
+<p class="form"><b>Comes back as</b>Yes or no. Production will refuse to start without S3-compatible storage that denies public reads. A &#x27;no&#x27; here means the requirement changes, so say what should replace it.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 2 of ADR-0004" placeholder="Type the answer to point 2 here"></textarea>
+</li>
+<li>
+<p class="what">What should happen to stored objects that the migration pass cannot find.</p>
+<p class="form"><b>Comes back as</b>Choose one course and name the full name of the person who carries it out. For example: notify the user who uploaded the file and ask them for it again.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 3 of ADR-0004" placeholder="Type the answer to point 3 here"></textarea>
+</li>
+<li>
+<p class="what">The date the decision takes effect.</p>
+<p class="form"><b>Comes back as</b>A date in full. It may be backdated to the day E3-S1 shipped, if the record should match what actually happened.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 4 of ADR-0004" placeholder="Type the answer to point 4 here"></textarea>
+</li>
+</ol>
+<div class="sig">
+<p class="sub">Signature required, and not yet given. Write the wording below, then complete the four lines</p>
+<p class="sig-words">&ldquo;I accept ADR-0004 as written, with effect from [date].&rdquo;</p>
+<p class="sig-who">One named officer, on behalf of product, the client and security together. The decision record moves from &#x27;Proposed&#x27; to &#x27;Accepted&#x27; on the strength of this and nothing else.</p>
+<div class="sig-grid">
+<div class="fld-wrap"><label for="adr-0004-signed">Signed, or full name written out</label><input class="fld" type="text" id="adr-0004-signed" name="adr-0004-signed"></div>
+<div class="fld-wrap"><label for="adr-0004-name">Full name in capitals</label><input class="fld" type="text" id="adr-0004-name" name="adr-0004-name"></div>
+<div class="fld-wrap"><label for="adr-0004-role">Role</label><input class="fld" type="text" id="adr-0004-role" name="adr-0004-role"></div>
+<div class="fld-wrap"><label for="adr-0004-date">Date, written in full</label><input class="fld" type="text" id="adr-0004-date" name="adr-0004-date"></div>
+</div>
+<p class="sig-alt">A handwritten signature is not required. Writing or typing your full name on the first line, with your role and the date beside it, is accepted and carries the same weight.</p>
+<div class="fld-wrap"><label for="adr-0004-pending">Points I could not answer today, and the date I expect to have them</label><textarea class="ans" rows="2" id="adr-0004-pending" placeholder="Point number, and the date you expect the answer"></textarea></div>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0004-private-document-access.md">The decision record itself</a><br><code>docs/adr/0004-private-document-access.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx">The Product copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx">The Security copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">D3</p>
+<h3>Manual review or a provider for identity checks</h3>
+<div class="chips">
+<span class="chip closed">Closes</span>
+<span class="chip fast">Today</span>
+<span class="chip">A ratification of what already shipped</span>
+</div></div>
+<p class="verdict">Three of three, signed by the Chief Technology Officer. Manual review for the first release, no provider. This closes, and it holds no story: E4-S2 already shipped on manual review, so it records a decision the code had already made.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>The client, with Product</dd>
+<dt>Named person</dt><dd>Nobody is named. Point 3 below asks who decided.</dd>
+<dt>Status</dt><dd>Open. Sent 6 August 2026 in the closure schedule.</dd>
+<dt>What it holds</dt><dd>No story. E4-S2 has already shipped with manual review.</dd>
+<dt>Where the answer goes</dt><dd>Write the answer into the response block printed under this item in your copy of ENG-CS-2026-08-06-01, the closure schedule. Your copy is linked below.</dd>
+<dt>Reply by</dt><dd>Close of business on 6 August 2026, as asked at the time. That date has passed. No new date has been agreed, and this document does not set one.</dd>
+</dl>
+<p>Manual review is what was built and merged. This decision ratifies it. Like ADR-0004 it needs no supplier, no document and nobody outside the company, and it is the second of the three items on this page that can be closed today.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">Manual review, or a provider, for the first release.</p>
+<p class="form"><b>Comes back as</b>The word &#x27;manual&#x27;, or the word &#x27;provider&#x27;.</p>
+<div class="given"><span class="tag">What came back</span><q>Manual review</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">If a provider, which one.</p>
+<p class="form"><b>Comes back as</b>Name the provider, or write &#x27;not applicable&#x27;.</p>
+<div class="given"><span class="tag">What came back</span><q>not applicable</q></div>
+<p class="settled">Settled. Nothing further is needed on this point.</p>
+</li>
+<li>
+<p class="what">Who decided, and on what date.</p>
+<p class="form"><b>Comes back as</b>A full name, a role and a date in full. Complete the signature block below.</p>
+<div class="given"><span class="tag">What came back</span><q>Goodness Ifejesu Olajide</q></div>
+<p class="owes"><span class="tag">Still owed</span>A name is given and the block is signed, so the point is answered. The name in the box is Goodness Ifejesu Olajide and the name on the signature block is the Chief Technology Officer. One of the two decided and the record should say which.</p>
+</li>
+</ol>
+<div class="sig is-done">
+<p class="sub">Signed and returned</p>
+<p class="sig-words">&ldquo;The identity check approach for the first release is [manual review / the named provider], decided on [date].&rdquo;</p>
+<p class="sig-who">One named officer for the client, or for product. This is the whole of the item.</p>
+<dl class="sig-done">
+<div><dt>Signed</dt><dd>MR ABIODUN OLALUWE</dd></div>
+<div><dt>Full name</dt><dd>ABIODUN OLALUWE</dd></div>
+<div><dt>Role</dt><dd>CHIEF TECHNOLOGY OFFICER</dd></div>
+<div><dt>Date</dt><dd>08/08/2026</dd></div>
+</dl>
+<p class="sig-who"><b>Written against &ldquo;Points I could not answer today, and the date I expect to have them&rdquo;:</b> not applicable</p>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md">The full wording of the ask, item D3</a><br><code>docs/escalations/2026-08-06-closure-schedule.md</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx">The client&#x27;s copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx</code></li>
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx">The Product copy of the ask, as a Word document</a><span class="onbranch">on the review branch</span><br><code>docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx</code></li>
+</ul>
+</article>
+<article class="item fast">
+<div class="item-head">
+<p class="ref">ADR-0006</p>
+<h3>A named officer&#x27;s acceptance of leaving Vercel for Nigerian infrastructure</h3>
+<div class="chips">
+<span class="chip none">No answer returned</span>
+<span class="chip fast">Today</span>
+<span class="chip">An acceptance with a name on it</span>
+</div></div>
+<p class="verdict">No answer returned, in either return. One point, one signature, and the decision to leave Vercel for Nigerian infrastructure has already been acted on: EXT-2 and the region half of ADR-0004 were both settled on the strength of it. The ADR stays at Proposed until a named officer accepts it.</p>
+<dl class="facts">
+<dt>Owner</dt><dd>An officer of the company. Which officer has not been settled.</dd>
+<dt>Named person</dt><dd>Nobody is named</dd>
+<dt>Status</dt><dd>Open, and not sent. It was written on 7 August 2026, after both documents went out on 6 August.</dd>
+<dt>What it holds</dt><dd>No story directly. It is the basis on which EXT-2 turned from an argument into a purchase, and on which the region half of ADR-0004 was closed.</dd>
+<dt>Where the answer goes</dt><dd>No response document exists for this one, because it was written after the schedule went out. Three lines carrying the wording below, a name, a role and a date are enough. Send them to the engineering lead, who records the acceptance in the decision record itself.</dd>
+<dt>Reply by</dt><dd>Not sent, so no date has been asked for. It can be answered today.</dd>
+</dl>
+<p>This is the twelfth item and it is not on the dispatch table, so it is listed here in order that it does not get lost. The decision is written and it is already being relied on: it is what closed the region question inside EXT-2 and the region half of ADR-0004. A decision that is already being relied on needs an acceptance with a name on it, otherwise two other items rest on a document nobody has agreed to.</p>
+<p class="sub">What had to come back, what came back, and what is still owed</p>
+<ol class="asks">
+<li>
+<p class="what">A named officer&#x27;s acceptance of the decision to leave Vercel and host on self-managed Nigerian infrastructure.</p>
+<p class="form"><b>Comes back as</b>The wording in the signature block below, with a full name, a role and a date. If it is not accepted, say what should happen instead, because EXT-2 and the region half of ADR-0004 have both been settled on the strength of it and would have to be reopened.</p>
+<p class="nothing">Nothing came back on this point, in either return. The space below is still live.</p>
+<textarea class="ans" rows="3" aria-label="Your answer to point 1 of ADR-0006" placeholder="Type the answer to point 1 here"></textarea>
+</li>
+</ol>
+<div class="sig">
+<p class="sub">Signature required, and not yet given. Write the wording below, then complete the four lines</p>
+<p class="sig-words">&ldquo;I accept ADR-0006 as written, with effect from [date]. The platform leaves Vercel and is hosted on self-managed Nigerian infrastructure.&rdquo;</p>
+<p class="sig-who">One named officer of the company. This is the same form the Chief Operating Officer used to accept ADR-0003 on 7 August 2026.</p>
+<div class="sig-grid">
+<div class="fld-wrap"><label for="adr-0006-signed">Signed, or full name written out</label><input class="fld" type="text" id="adr-0006-signed" name="adr-0006-signed"></div>
+<div class="fld-wrap"><label for="adr-0006-name">Full name in capitals</label><input class="fld" type="text" id="adr-0006-name" name="adr-0006-name"></div>
+<div class="fld-wrap"><label for="adr-0006-role">Role</label><input class="fld" type="text" id="adr-0006-role" name="adr-0006-role"></div>
+<div class="fld-wrap"><label for="adr-0006-date">Date, written in full</label><input class="fld" type="text" id="adr-0006-date" name="adr-0006-date"></div>
+</div>
+<p class="sig-alt">A handwritten signature is not required. Writing or typing your full name on the first line, with your role and the date beside it, is accepted and carries the same weight.</p>
+<div class="fld-wrap"><label for="adr-0006-pending">Points I could not answer today, and the date I expect to have them</label><textarea class="ans" rows="2" id="adr-0006-pending" placeholder="Point number, and the date you expect the answer"></textarea></div>
+</div>
+<p class="sub">Links</p>
+<ul class="links">
+<li><a href="https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0006-deployment-target-and-runtime-environment.md">The decision record</a><br><code>docs/adr/0006-deployment-target-and-runtime-environment.md</code></li>
+</ul>
+</article>
+</div></section>
+<section>
+<h2>The nine that are only waiting on the eight</h2>
+<div class="table-wrap"><table class="tight"><thead><tr><th>Story</th><th>Size</th><th>Waits on</th><th>Which waits on</th></tr></thead><tbody><tr><td>E2-S3, gateway refunds</td><td>M</td><td>E2-S1</td><td>EXT-1</td></tr><tr><td>E2-S5, finance reconciliation view</td><td>M</td><td>E2-S1</td><td>EXT-1</td></tr><tr><td>E9-S4, escrow sub-ledger and reconciliation</td><td>M</td><td>E9-S3 and E2-S1</td><td>EXT-9, EXT-10, EXT-1</td></tr><tr><td>E3-S3, upload hardening</td><td>M</td><td>E3-S2</td><td>EXT-2</td></tr><tr><td>E7-S4, deterministic demo seed and reset</td><td>M</td><td>E3-S2</td><td>EXT-2</td></tr><tr><td>E5-S3, password reset</td><td>M</td><td>E6-S1</td><td>EXT-3</td></tr><tr><td>E5-S4, email verification on self-registration</td><td>M</td><td>E6-S1</td><td>EXT-3</td></tr><tr><td>E6-S2, email channel for notifications</td><td>M</td><td>E6-S1</td><td>EXT-3</td></tr><tr><td>E6-S3, transactional email templates</td><td>M</td><td>E6-S2 and E6-S1</td><td>EXT-3</td></tr></tbody></table></div>
+<p class="note"><b>None of these nine needs a supplier, a lawyer, a bank, a signature or anybody outside the engineering team. Each one is ordinary development work that starts on the day the story in front of it starts. Five of the nine sit behind EXT-3, which is a domain and a set of DNS records.</b></p>
+</section>
+<section>
+<h2>What to do with this</h2>
+<p>Two things follow from the twelve items above, and both are worth stating plainly.</p>
+<p>The first is that the twelve are not equal. Three of them, ADR-0004, D3 and ADR-0006, need nobody outside the company and no document at all. They put a name and a date against behaviour that has already shipped. One sitting closes all three and takes the open count from twelve to nine, and it is the only reduction available today that depends on nobody else. Three more are nearly as cheap. EXT-2 is a purchase with the decision already taken. EXT-9 is three answers from Finance. EXT-10 is one signature from counsel. Those six are the cheap half of the page, and none of the six is currently being worked on.</p>
+<p>The second is that EXT-4, EXT-5 and EXT-6 have long lead times and none of the three has started. EXT-4 is a drafting job with counsel on a contract that stops in the middle of a clause. EXT-5 needs a board resolution and two appointments to roles that nobody holds. EXT-6 needs a vendor who books weeks ahead, and then however long it takes to fix what that vendor finds. If these three start last they will finish last, and they will set the launch date whatever happens to everything else.</p>
+<p>Nothing on this page has been ticked on anybody&#x27;s behalf. Where a name is missing it is written as missing. Where a document contradicts itself, both readings are kept and the item stays open until somebody with a name and a role chooses between them.</p>
+</section>
+<footer><p>Generated 7 August 2026 from the working tree at commit 1b4c46e. The counts were re-derived from the backlog rather than carried across: seventeen stories left, eight of them blocked at the head and nine behind those eight, against a backlog total of thirty-seven to fifty-nine developer-days. Links marked as being on the review branch point at pull request 152, which is open and has not been merged. Those ten Word documents move to the main branch when it merges, and the same link works there with &#x27;main&#x27; written in place of the branch name.</p></footer>
+</div>
