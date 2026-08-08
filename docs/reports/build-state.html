@@ -1,0 +1,1184 @@
+<title>SafeBuyRealties: what is built, what is owed</title>
+
+<style>
+  :root {
+    --paper: #f1f5f3;
+    --card: #ffffff;
+    --card-2: #f7faf8;
+    --rule: #d2dedb;
+    --rule-soft: #e3ebe8;
+    --ink: #10222a;
+    --ink-2: #48605f;
+    --ink-3: #7a8e91;
+    --credit: #1f6b4f;
+    --credit-bg: #dfeae3;
+    --pending: #96690f;
+    --pending-bg: #f4e8d1;
+    --debit: #97302c;
+    --debit-bg: #f1dedb;
+    --paper-diagram: #eef2f0;
+
+    --serif: "Iowan Old Style", "Hoefler Text", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --measure: 68ch;
+    --frame: 1120px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0d191e;
+      --card: #14232a;
+      --card-2: #182b32;
+      --rule: #26383f;
+      --rule-soft: #1d2f36;
+      --ink: #e5ede9;
+      --ink-2: #a1b5b6;
+      --ink-3: #6d858a;
+      --credit: #57b98d;
+      --credit-bg: #17362c;
+      --pending: #d3a355;
+      --pending-bg: #372c17;
+      --debit: #df8077;
+      --debit-bg: #3a201e;
+      --paper-diagram: #dfe6e3;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0d191e;
+    --card: #14232a;
+    --card-2: #182b32;
+    --rule: #26383f;
+    --rule-soft: #1d2f36;
+    --ink: #e5ede9;
+    --ink-2: #a1b5b6;
+    --ink-3: #6d858a;
+    --credit: #57b98d;
+    --credit-bg: #17362c;
+    --pending: #d3a355;
+    --pending-bg: #372c17;
+    --debit: #df8077;
+    --debit-bg: #3a201e;
+    --paper-diagram: #dfe6e3;
+  }
+
+  :root[data-theme="light"] {
+    --paper: #f1f5f3;
+    --card: #ffffff;
+    --card-2: #f7faf8;
+    --rule: #d2dedb;
+    --rule-soft: #e3ebe8;
+    --ink: #10222a;
+    --ink-2: #48605f;
+    --ink-3: #7a8e91;
+    --credit: #1f6b4f;
+    --credit-bg: #dfeae3;
+    --pending: #96690f;
+    --pending-bg: #f4e8d1;
+    --debit: #97302c;
+    --debit-bg: #f1dedb;
+    --paper-diagram: #eef2f0;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .frame {
+    max-width: var(--frame);
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  p { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+
+  .masthead { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 5vw, 3.1rem);
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+
+  .standfirst {
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 58ch;
+  }
+
+  .ledger {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    border: 1px solid var(--rule);
+    background: var(--card);
+    margin-top: 0.5rem;
+  }
+
+  .ledger div {
+    padding: 1rem 1.1rem;
+    border-right: 1px solid var(--rule-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .ledger div:last-child { border-right: 0; }
+
+  .ledger b {
+    font-family: var(--serif);
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .ledger span {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .ledger .is-credit b { color: var(--credit); }
+  .ledger .is-pending b { color: var(--pending); }
+  .ledger .is-debit b { color: var(--debit); }
+
+  /* ---------- sections ---------- */
+
+  section { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border-top: 2px solid var(--ink);
+    padding-top: 0.75rem;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .source {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ink-3);
+    letter-spacing: 0.03em;
+  }
+
+  /* ---------- diagram ---------- */
+
+  .diagram {
+    background: var(--paper-diagram);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 1rem;
+    overflow-x: auto;
+  }
+  .diagram pre.mermaid {
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+  }
+  .legend i {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.4rem;
+    border: 1px solid currentColor;
+    vertical-align: -1px;
+    font-style: normal;
+  }
+  .sw-done { color: var(--credit); background: var(--credit-bg); }
+  .sw-todo { color: var(--pending); background: var(--pending-bg); }
+  .sw-blocked { color: var(--debit); background: var(--debit-bg); }
+
+  /* ---------- epic bars ---------- */
+
+  .epics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    border: 1px solid var(--rule);
+    background: var(--card);
+  }
+
+  .epic {
+    display: grid;
+    grid-template-columns: 13rem 1fr 5.5rem;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .epic:last-child { border-bottom: 0; }
+
+  .epic-name { display: flex; flex-direction: column; gap: 0.05rem; }
+  .epic-name strong { font-size: 0.9rem; font-weight: 600; }
+  .epic-name em {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .bar {
+    display: flex;
+    height: 0.7rem;
+    background: var(--rule-soft);
+    overflow: hidden;
+  }
+  .bar span { display: block; height: 100%; }
+  .seg-done { background: var(--credit); }
+  .seg-todo { background: var(--pending); }
+  .seg-blocked { background: var(--debit); }
+
+  .epic-count {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+  .epic-count b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--card); }
+
+  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 0.87rem; }
+
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:nth-child(even) { background: var(--card-2); }
+
+  td.id { font-family: var(--mono); font-size: 0.8rem; white-space: nowrap; color: var(--ink); }
+  td.gate { color: var(--ink-2); }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .p-blocked { color: var(--debit); background: var(--debit-bg); }
+  .p-planned { color: var(--pending); background: var(--pending-bg); }
+  .p-done { color: var(--credit); background: var(--credit-bg); }
+
+  .half {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  /* ---------- callout ---------- */
+
+  .note {
+    border-left: 3px solid var(--credit);
+    background: var(--card);
+    border-top: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .note.is-warning { border-left-color: var(--debit); }
+  .note p { margin: 0; max-width: 72ch; }
+  .note strong { font-weight: 600; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--rule-soft);
+    padding: 0.08em 0.32em;
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.25rem;
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  footer p { max-width: 74ch; margin: 0; }
+
+  @media (max-width: 720px) {
+    .epic { grid-template-columns: 1fr; gap: 0.45rem; }
+    .epic-count { text-align: left; }
+  }
+</style>
+
+<div class="frame">
+
+  <header class="masthead">
+    <div class="eyebrow">SafeBuyRealties &middot; build state &middot; revised 7 August 2026, 23:09, after the second return</div>
+    <h1>What is built, and what is owed</h1>
+    <p class="standfirst">Forty-two stories sit on the board. Twenty-five have merged. The seventeen
+      that remain are not evenly spread: the frontend is close to finished, and almost everything left
+      is backend work that somebody outside this repository has to unblock first. One of the seventeen
+      was released this evening. There is also an eighteenth piece of work that is on nobody's board,
+      and it is the one that has to go first.</p>
+    <p class="standfirst">This page lives in the repository at <code>docs/reports/build-state.html</code>
+      and it is the same file that gets published. Edit the file, publish it again, and the link keeps
+      working. The two diagrams that open the page are also written out on their own in
+      <code>docs/reports/build-state.md</code>, which is the copy to correct by hand.</p>
+
+    <div class="ledger">
+      <div><b>42</b><span>Stories on the board</span></div>
+      <div class="is-credit"><b>25</b><span>Merged</span></div>
+      <div class="is-pending"><b>10</b><span>Planned</span></div>
+      <div class="is-debit"><b>7</b><span>Blocked</span></div>
+      <div><b>37&ndash;59</b><span>Developer-days budgeted</span></div>
+      <div class="is-debit"><b>+10&ndash;15</b><span>Cutover, unbudgeted</span></div>
+    </div>
+
+    <div class="note">
+      <p><strong>What changed today.</strong> Three pull requests merged, so the totals moved for the
+        first time in a week: <code>#150</code> put one fail-closed definition of the runtime
+        environment into the backend, <code>#151</code> lit the backend up in the linter for the first
+        time, and <code>#152</code> recorded the dispatched closure schedule. <code>ADR-0006</code>
+        landed with them, which <strong>answers decision D4 by removing the question</strong> rather
+        than by meeting it, so E3-S2 now waits on a purchase and not on anybody's judgement.</p>
+      <p>Then the twelve outstanding items came back filled in, first at 18:16 and again at 23:09.
+        <strong>Thirty-eight of the sixty-seven points are answered and six of the nine signature
+        blocks are complete</strong>, and those two counts are identical in both returns. What the
+        second return changed is the substance of six answers, and it is worth more than the counts
+        suggest: <strong>three items now close rather than two</strong>. One of the three moves a
+        story off the blocked list, and it is the largest story left. Five came back entirely blank
+        in both returns, and the board has held those pending cost implications. The item-by-item
+        read is the next section.</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="head">
+      <h2>The frontend</h2>
+      <div class="source">64 route files in src/routes &middot; six role portals</div>
+    </div>
+    <p>Every screen the product sells is already there. What is missing is six screens, and every one
+      of the six waits on a backend capability that has not been built yet. That is a correction to the
+      morning edition, which said five and then listed six.</p>
+
+    <div class="legend">
+      <span><i class="sw-done"></i>Shipped</span>
+      <span><i class="sw-todo"></i>Planned, waiting on an upstream story</span>
+      <span><i class="sw-blocked"></i>Blocked on an outside input</span>
+    </div>
+
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"-apple-system, Segoe UI, Helvetica Neue, Arial, sans-serif","fontSize":"13px","lineColor":"#5b7378","primaryColor":"#eef2f0","primaryTextColor":"#10222a","primaryBorderColor":"#5b7378","background":"#eef2f0"}}}%%
+flowchart LR
+  FE(["FRONTEND"])
+  FE --- SH["SHIPPED"]
+  FE --- RE["LEFT TO BUILD"]
+
+  SH --- A1["Six role portals, separate logins"]
+  SH --- A2["Browse, search filters, saved properties"]
+  SH --- A3["Listing detail, media, per-listing analytics"]
+  SH --- A4["Due diligence purchase wizard, seven steps"]
+  SH --- A5["Standalone DD request, guest or signed in"]
+  SH --- A6["KYC submission"]
+  SH --- A7["Admin portal, thirteen screens"]
+  SH --- A8["Staff queues and verification workflow"]
+  SH --- A9["Professional workspace, tasks and reports"]
+  SH --- A10["Seller listings and documents"]
+  SH --- A11["In-app notification bell"]
+  SH --- A12["Public PoA verification page"]
+  SH --- A13["Robots, sitemap, per-route metadata"]
+  SH --- A14["Feature-flag client with kill switch"]
+  SH --- A15["Property purchase step, flag off"]
+  SH --- A16["Buyer DD report delivery, flag off"]
+
+  RE --- B1["Seller payout account form, E2-S1"]
+  RE --- B2["Finance reconciliation screen, E2-S5"]
+  RE --- B3["Password reset screens, E5-S3"]
+  RE --- B4["Email verification banner, E5-S4"]
+  RE --- B5["Notification preferences, E6-S2"]
+  RE --- B6["Privacy centre and cookie consent, E8-S1"]
+
+  classDef spine fill:#10222a,stroke:#10222a,color:#f1f5f3,font-weight:bold
+  classDef done fill:#dfeae3,stroke:#1f6b4f,color:#123a2b
+  classDef todo fill:#f4e8d1,stroke:#96690f,color:#553c08
+  classDef blocked fill:#f1dedb,stroke:#97302c,color:#5c1b18
+
+  class FE,SH,RE spine
+  class A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15,A16 done
+  class B2,B3,B4,B5,B6 todo
+  class B1 blocked
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>The backend</h2>
+      <div class="source">33 Nest modules in backend/src &middot; 67 test suites &middot; linted since #151</div>
+    </div>
+    <p>The trust layer, the authorization layer and the operability layer are done. The gaps are all
+      in the same place: money leaving the platform, files surviving a deploy, and email leaving the
+      building.</p>
+
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"-apple-system, Segoe UI, Helvetica Neue, Arial, sans-serif","fontSize":"13px","lineColor":"#5b7378","primaryColor":"#eef2f0","primaryTextColor":"#10222a","primaryBorderColor":"#5b7378","background":"#eef2f0"}}}%%
+flowchart LR
+  BE(["BACKEND"])
+  BE --- SH2["SHIPPED"]
+  BE --- RE2["LEFT TO BUILD"]
+
+  SH2 --- C1["Auth and six-role identity"]
+  SH2 --- C2["PermissionsGuard on every privileged route"]
+  SH2 --- C3["Rate limiting, lockout, CORS allow-list"]
+  SH2 --- C4["Session refresh rotation and revocation, flag off"]
+  SH2 --- C5["Listing lifecycle across ten statuses"]
+  SH2 --- C6["Verification workflow, reports, risk flags"]
+  SH2 --- C7["Service catalogue, bundles, VAT"]
+  SH2 --- C8["DD case lifecycle, queue to completion, flag off"]
+  SH2 --- C9["Transaction state machine, flag off"]
+  SH2 --- C10["Standalone due diligence, end to end"]
+  SH2 --- C11["PoA: PDF, SHA-256, QR, immutable record"]
+  SH2 --- C12["Escrow ledger: hold, release, refund, payout row"]
+  SH2 --- C13["Webhook idempotency and replay guard"]
+  SH2 --- C14["Production guard on payment mock mode"]
+  SH2 --- C15["Authorized document access, no static route"]
+  SH2 --- C16["KYC records and money-moving gate, flag off"]
+  SH2 --- C17["In-app notifications"]
+  SH2 --- C18["Audit log, SBR IDs, platform config, maintenance"]
+  SH2 --- C19["Health probes, structured logging, correlation id"]
+  SH2 --- C20["Financial governance tables, flag off"]
+  SH2 --- C21["One fail-closed runtime environment, E7-S7"]
+
+  RE2 --- D1["Seller payout destination and recipients, E2-S1"]
+  RE2 --- D2["Gateway refunds, not ledger-only, E2-S3"]
+  RE2 --- D3["Reconciliation endpoint, E2-S5"]
+  RE2 --- D4["Durable object storage, E3-S2"]
+  RE2 --- D5["Upload hardening, magic bytes, AV hook, E3-S3"]
+  RE2 --- D6["Password reset tokens, E5-S3"]
+  RE2 --- D7["Email verification tokens, E5-S4"]
+  RE2 --- D8["SMTP and delivery observability, E6-S1"]
+  RE2 --- D9["Email channel per notification type, E6-S2"]
+  RE2 --- D10["Transactional email templates, E6-S3"]
+  RE2 --- D11["Deterministic demo seed and reset, E7-S4"]
+  RE2 --- D12["Consent, retention, erasure, export, E8-S1"]
+  RE2 --- D13["Location register and property ID issuance, E9-S2"]
+  RE2 --- D14["Accounts, sub-codes, rates, postings, E9-S3"]
+  RE2 --- D15["Escrow sub-ledger and reconciliation, E9-S4"]
+
+  classDef spine fill:#10222a,stroke:#10222a,color:#f1f5f3,font-weight:bold
+  classDef done fill:#dfeae3,stroke:#1f6b4f,color:#123a2b
+  classDef todo fill:#f4e8d1,stroke:#96690f,color:#553c08
+  classDef blocked fill:#f1dedb,stroke:#97302c,color:#5c1b18
+
+  class BE,SH2,RE2 spine
+  class C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14,C15,C16,C17,C18,C19,C20,C21 done
+  class D2,D3,D5,D6,D7,D9,D10,D11,D12,D15 todo
+  class D1,D4,D8,D13,D14 blocked
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>Progress by epic</h2>
+      <div class="source">docs/MVP_OUTSTANDING_BACKLOG.md &sect;3, the story status table</div>
+    </div>
+
+    <div class="epics">
+      <div class="epic">
+        <div class="epic-name"><strong>E1 &middot; Close the loop</strong><em>Buyer journey</em></div>
+        <div class="bar"><span class="seg-done" style="width:100%"></span></div>
+        <div class="epic-count"><b>4</b> / 4</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E2 &middot; Money integrity</strong><em>Payouts, refunds, finance</em></div>
+        <div class="bar"><span class="seg-done" style="width:40%"></span><span class="seg-blocked" style="width:20%"></span><span class="seg-todo" style="width:40%"></span></div>
+        <div class="epic-count"><b>2</b> / 5</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E3 &middot; Document trust</strong><em>Access and durability</em></div>
+        <div class="bar"><span class="seg-done" style="width:50%"></span><span class="seg-blocked" style="width:25%"></span><span class="seg-todo" style="width:25%"></span></div>
+        <div class="epic-count"><b>2</b> / 4</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E4 &middot; Access correctness</strong><em>Privileges and KYC gate</em></div>
+        <div class="bar"><span class="seg-done" style="width:100%"></span></div>
+        <div class="epic-count"><b>3</b> / 3</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E5 &middot; Account security</strong><em>Sessions, reset, verification</em></div>
+        <div class="bar"><span class="seg-done" style="width:66.7%"></span><span class="seg-todo" style="width:33.3%"></span></div>
+        <div class="epic-count"><b>4</b> / 6</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E6 &middot; Communications</strong><em>Email leaves the building</em></div>
+        <div class="bar"><span class="seg-blocked" style="width:33.3%"></span><span class="seg-todo" style="width:66.7%"></span></div>
+        <div class="epic-count"><b>0</b> / 3</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E7 &middot; Operability</strong><em>CI, probes, logging, seed</em></div>
+        <div class="bar"><span class="seg-done" style="width:88.9%"></span><span class="seg-todo" style="width:11.1%"></span></div>
+        <div class="epic-count"><b>8</b> / 9</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E8 &middot; Go-live compliance</strong><em>NDPR, legal, security review</em></div>
+        <div class="bar"><span class="seg-done" style="width:25%"></span><span class="seg-blocked" style="width:50%"></span><span class="seg-todo" style="width:25%"></span></div>
+        <div class="epic-count"><b>1</b> / 4</div>
+      </div>
+      <div class="epic">
+        <div class="epic-name"><strong>E9 &middot; Financial governance</strong><em>Coded, ring-fenced, reconcilable</em></div>
+        <div class="bar"><span class="seg-done" style="width:25%"></span><span class="seg-blocked" style="width:50%"></span><span class="seg-todo" style="width:25%"></span></div>
+        <div class="epic-count"><b>1</b> / 4</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>What came back this evening</h2>
+      <div class="source">docs/reports/what-is-neededv2.pdf &middot; returned 7 August 2026, 23:09</div>
+    </div>
+    <p>The twelve outstanding items were sent out as a form with a typing box against every point and
+      a signature block on every item. Thirty-eight of the sixty-seven points came back filled in and
+      six of the nine signature blocks are complete. That sounds better than it is. A filled box is
+      not the same as a closed item, and on this page three items are genuinely closed, only one of
+      which holds a story.</p>
+    <p>Two returns arrived, five hours apart. The second one does not answer a single new point and it
+      does not add a signature, so every count below is the same in both. It rewrites six answers, and
+      two of those rewrites are the difference between an item that closes and an item that does not.
+      <strong>EXT-10 now names a statute where it previously wrote the words "statutory authority",
+      and EXT-8 writes out the register format in full where it previously wrote "Confirmed".</strong>
+      Reading only the first return would have understated the evening by one closed item and one
+      resolved contradiction.</p>
+
+    <div class="ledger">
+      <div><b>38 / 67</b><span>Points answered</span></div>
+      <div><b>6 / 9</b><span>Signature blocks complete</span></div>
+      <div class="is-credit"><b>3</b><span>Items closed outright</span></div>
+      <div class="is-pending"><b>4</b><span>Answered, not closing</span></div>
+      <div class="is-debit"><b>5</b><span>Returned blank</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Points</th>
+            <th>Signed by</th>
+            <th>State</th>
+            <th>What it does to the story it holds</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">EXT-5</td>
+            <td class="half">9 of 9</td>
+            <td>Barr. Isoken Adisa-Isikalu, CLO</td>
+            <td><span class="pill p-done">Closes</span></td>
+            <td class="gate"><strong>The one real close.</strong> A named Data Protection Officer with
+              an address, Goldrush Partners as the compliance organisation, the commencement date, the
+              retention basis and the GAID copy. E8-S1 has its inputs. One conflict to carry into the
+              build: the answer allows erasure only after six years, which is not what the right to
+              erasure says.</td>
+          </tr>
+          <tr>
+            <td class="id">D3</td>
+            <td class="half">3 of 3</td>
+            <td>Abiodun Olaluwe, CTO</td>
+            <td><span class="pill p-done">Closes</span></td>
+            <td class="gate"><strong>Closes, but holds no story.</strong> Manual review for the first
+              release, no provider, signed. E4-S2 already shipped on manual review, so this records a
+              decision that the code had already made. One loose thread: the box names Goodness
+              Ifejesu Olajide as the decider and the signature block on the same item is the Chief
+              Technology Officer.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-10</td>
+            <td class="half">1 of 1</td>
+            <td>Barr. Isoken Adisa-Isikalu, CLO</td>
+            <td><span class="pill p-done">Closes</span></td>
+            <td class="gate"><strong>Closed by the second return.</strong> The first return wrote
+              "STATUTORY AUTHORITY", which is the phrase the ask was trying to replace. The second
+              names the Nigeria Tax Act 2025 and links the published copy, which is a statute by name
+              and is what the signed wording needed in its blank. It also closes point 6 of EXT-4,
+              because the two ask the same question. Two reservations to carry: no section is cited
+              inside the Act, and the signature is the in-house Chief Legal Officer where the ask
+              named the instructed firm.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-1</td>
+            <td class="half">7 of 7</td>
+            <td>Olufemi Adisa-Isikalu, CEO</td>
+            <td><span class="pill p-planned">Answered</span></td>
+            <td class="gate">Every point answered, nothing delivered. The keys are described as still
+              to be generated and the settlement account number is "ready on Monday". The second
+              return replaces the refusal at point 3 with the company's Corporate Affairs Commission
+              registration and the three officers who filed it, which proves the company exists and
+              does not say that money sitting in its account belongs to somebody else. That is the
+              thing E2-S1 needs. E2-S1 stays where it was.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-4</td>
+            <td class="half">11 of 11</td>
+            <td>Idris Aregbe, CFO, attested by the CLO</td>
+            <td><span class="pill p-planned">Answered</span></td>
+            <td class="gate">The ask names counsel and the Chief Financial Officer signed it. Finance
+              has now put 7.5 percent on the record at points 6, 7 and 11, which is Finance's half of
+              the question, and the second return adds the Chief Legal Officer as attesting to point
+              7. Both officers are in-house. E8-S2 needs counsel's own name on the same page, and
+              five of the eleven points still answer a different question from the one asked.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-8</td>
+            <td class="half">4 of 4</td>
+            <td>Adebiyi Emmanuel Babatope, COO</td>
+            <td><span class="pill p-planned">Answered</span></td>
+            <td class="gate">Two of the three contradictions are now resolved. Point 2 says the UUID
+              replaces the NNN sequence, and the second return writes the whole format out rather
+              than confirming it: <code>SBR-ALD-LOCYYMM-UUID</code>, with YY and MM spelled and the
+              trailing sequence gone. What is left is point 1, which still answers a choice between
+              SUR and SVR with the single word "Confirmed". E9-S2 needs that one word replaced with
+              one of the two spellings, and it also waits on ID Standard V2.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-9</td>
+            <td class="half">3 of 3</td>
+            <td>Idris Aregbe, CFO</td>
+            <td><span class="pill p-planned">Answered</span></td>
+            <td class="gate">Commission is two-sided, with a combined floor of 10 percent and a
+              configurable actual rate, and the worked example now runs to the end. The second return
+              names the body that sets the rate: a five-person board of the CEO, CFO, COO, CLO and
+              CTO. What it still does not say is where that decision gets recorded, and E9-S3's
+              criterion 7 asks for a single override role rather than a board of five. That is a
+              rewrite of the criterion, not a blocked story waiting on another answer.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-2</td>
+            <td class="half">0 of 7</td>
+            <td>Not required</td>
+            <td><span class="pill p-blocked">Blank</span></td>
+            <td class="gate">A purchase. E3-S2's verification half stays blocked. The code half does
+              not need it, which is what the branch open right now is for.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-3</td>
+            <td class="half">0 of 9</td>
+            <td>Not required</td>
+            <td><span class="pill p-blocked">Blank</span></td>
+            <td class="gate">A purchase. E6-S1 and the four stories behind it stay blocked. This is
+              the single most expensive blank on the page, measured in stories held.</td>
+          </tr>
+          <tr>
+            <td class="id">EXT-6</td>
+            <td class="half">0 of 8</td>
+            <td>Blank</td>
+            <td><span class="pill p-blocked">Blank</span></td>
+            <td class="gate">A purchase. E8-S3 stays blocked, and this one has a lead time, so a start
+              date would have been worth more than nothing.</td>
+          </tr>
+          <tr>
+            <td class="id">ADR-0004</td>
+            <td class="half">0 of 4</td>
+            <td>Blank</td>
+            <td><span class="pill p-blocked">Blank</span></td>
+            <td class="gate">Costs nothing. It is a ratification of a decision already written down,
+              and it is the record that E3-S2 and E3-S3 are built against.</td>
+          </tr>
+          <tr>
+            <td class="id">ADR-0006</td>
+            <td class="half">0 of 1</td>
+            <td>Blank</td>
+            <td><span class="pill p-blocked">Blank</span></td>
+            <td class="gate">Costs nothing. It is one officer's name accepting the move off Vercel.
+              Everything in the cutover section below rests on a decision that is still marked
+              Proposed with nobody's name against it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note is-warning">
+      <p><strong>The cost hold explains three of the five blanks, not five.</strong> EXT-2, EXT-3 and
+        EXT-6 are purchases and the board is right to want a number before committing to them. ADR-0004
+        and ADR-0006 are signatures against decisions that have already been written. They carry no
+        invoice, they hold work all the same, and they are the cheapest things anybody could return
+        tomorrow.</p>
+      <p><strong>One name conflict closed, one spelling conflict still open.</strong> The Chief
+        Operating Officer now reads Adebiyi Emmanuel Babatope everywhere he appears, which settles a
+        question the earlier return left hanging. The domain does not: the company is
+        <code>safebuyrealtiesltd</code> at EXT-5 point 1 and
+        <code>safebuyrealitiesltd.com</code> at EXT-4 points 1 and 10. That second value is the
+        target every Power of Attorney QR code prints onto paper. One of the two is wrong and it
+        needs settling before the next instrument is issued, not during a later sweep. The second
+        return touched neither point, so the conflict is now five hours older and no nearer settled.</p>
+      <p><strong>Three readings still disagree with what is already written down.</strong> EXT-1 point
+        4 calls the escrow account a "revenue flow account", where <code>ADR-0002</code> records
+        escrow principal as a client-funds liability and never as platform revenue. EXT-1 point 6
+        confirms daily reconciliation of inflows, where section 11.1 of the same ADR asks for the
+        escrow bank balance reconciled against the sum of the per-transaction sub-ledgers, which is a
+        different check and the one that catches a shortfall. And EXT-5 point 5 allows erasure only
+        after six years, which is not what an erasure right is. None of the three blocks a story.
+        All three are cheaper to settle now, in a sentence each, than after the code is written
+        against them.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>What actually holds the sixteen</h2>
+      <div class="source">Dependency chains from the seven blocked heads</div>
+    </div>
+    <p>This was the finding worth acting on, and it has moved by exactly one. Sixteen of the seventeen
+      remaining stories still sit behind a row that is waiting on an answer, an account or a signature
+      from outside the repository. The seventeenth is E8-S1, released this evening when EXT-5 came back
+      signed, and it is the largest single story left on the board. Unblock four of the seven heads and
+      thirteen more stories follow.</p>
+    <p>One of the nine gates went away today rather than being answered. <code>D4</code> asked which
+      of the three lawful transfer conditions the running host sits under, and <code>ADR-0006</code>
+      put the bucket in a Nigerian region, so nothing is transferred and the question has nothing left
+      to bite on. <strong>E3-S2 is the only head on this graph now held by a purchase order rather
+      than by a judgement.</strong></p>
+    <p>The second return turns one more box green without releasing anything. EXT-10 is answered and
+      signed, but E9-S3 sits behind EXT-9 as well, and EXT-9 still does not say where the commission
+      rate is recorded. <strong>A gate with two inputs opens when both of them open.</strong> The
+      same is true one row down: EXT-8 has gone from three contradictions to one, and E9-S2 waits on
+      that one and on ID Standard V2, which is due on 13 August 2026.</p>
+
+    <div class="legend">
+      <span>Dashed boxes are outside inputs:</span>
+      <span><i class="sw-done"></i>Answered and signed</span>
+      <span><i class="sw-todo"></i>Something came back, nothing closed</span>
+      <span><i class="sw-blocked"></i>Nothing came back</span>
+    </div>
+
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"-apple-system, Segoe UI, Helvetica Neue, Arial, sans-serif","fontSize":"13px","lineColor":"#5b7378","primaryColor":"#eef2f0","primaryTextColor":"#10222a","primaryBorderColor":"#5b7378","background":"#eef2f0"}}}%%
+flowchart LR
+  X2["EXT-2, bucket and credentials"] --> S1
+  S1["E3-S2, durable object storage"] --> S2["E3-S3, upload hardening"]
+  S1 --> S3["E7-S4, demo seed and reset"]
+
+  X1["EXT-1, merchant and settlement account"] --> M1
+  M1["E2-S1, seller payout destination"] --> M2["E2-S3, gateway refunds"]
+  M1 --> M3["E2-S5, finance reconciliation"]
+  M1 --> F4
+
+  X3["EXT-3, SMTP credentials"] --> N1
+  N1["E6-S1, SMTP and delivery"] --> N2["E6-S2, email channel"]
+  N2 --> N3["E6-S3, templates"]
+  N1 --> N4["E5-S3, password reset"]
+  N1 --> N5["E5-S4, email verification"]
+
+  X9["EXT-9, commission basis, rate not recorded anywhere"] --> F3
+  X10["EXT-10, VAT authority named and signed"] --> F3
+  F3["E9-S3, accounts, rates, postings"] --> F4["E9-S4, escrow sub-ledger"]
+  X812["EXT-8 register spelling, EXT-12 ID Standard V2"] --> F2["E9-S2, location register"]
+
+  X5["EXT-5, DPCO and named DPO, signed"] --> P1["E8-S1, NDPR privacy centre"]
+  X4["EXT-4, counsel-approved PoA and terms"] --> P2["E8-S2, legal review"]
+  X6["EXT-6, security reviewer engaged"] --> P3["E8-S3, pre-launch security review"]
+
+  classDef ext fill:#f1dedb,stroke:#97302c,color:#5c1b18,stroke-dasharray:5 3
+  classDef extpart fill:#f4e8d1,stroke:#96690f,color:#553c08,stroke-dasharray:5 3
+  classDef extdone fill:#dfeae3,stroke:#1f6b4f,color:#123a2b,stroke-dasharray:5 3
+  classDef blocked fill:#f1dedb,stroke:#97302c,color:#5c1b18,stroke-width:2px
+  classDef todo fill:#f4e8d1,stroke:#96690f,color:#553c08
+
+  class X2,X3,X6 ext
+  class X1,X4,X9,X812 extpart
+  class X5,X10 extdone
+  class S1,M1,N1,F2,F3,P2,P3 blocked
+  class S2,S3,M2,M3,N2,N3,N4,N5,F4,P1 todo
+</pre>
+    </div>
+
+    <div class="note is-warning">
+      <p><strong>Three of the seven have a buildable code half today.</strong> E3-S2 needs the bucket
+        for verification, not for the driver: the storage abstraction, the key scheme and the
+        migration path can be written now that the hosting target is Nigerian infrastructure in a
+        Nigerian region. E6-S1 can be built against a stubbed transport and pointed at a real one
+        when EXT-3 lands. E2-S1's model, encryption and blocked-payout path do not need a live
+        merchant account, only the flow that follows them does.</p>
+      <p>That is the critical path worth working: the hosting cutover guards first, because every
+        other production guard keys off a platform being left behind, then E3-S2's code half, then
+        E6-S1, then E3-S3 and the E2-S1 model. Four of those five are rows in the table below. The
+        first one is not a row anywhere, which is what the cutover section further down is for.</p>
+      <p><strong>E8-S1 now joins them, and it is not a code half, it is the whole story.</strong> It
+        is the largest single item on the board, it is the one piece of remaining work that no longer
+        waits on anybody, and it can start tomorrow morning. The one thing it cannot settle on its own
+        is what EXT-5 point 5 means: an erasure right that only becomes available after six years is
+        not an erasure right, and that reading has to go back to the Chief Legal Officer rather than
+        be resolved in code.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>The seventeen, in full</h2>
+      <div class="source">Half refers to which side of the repository the work lands in</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Story</th>
+            <th>Half</th>
+            <th>State</th>
+            <th>What it waits on</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">E2-S1</td>
+            <td>Seller payout destination, per-seller bank account</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-1, a live merchant and settlement account. D2 answered: the platform holds client funds.</td>
+          </tr>
+          <tr>
+            <td class="id">E3-S2</td>
+            <td>Durable object storage in production</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-2 alone since 7 August. D4 closed by ADR-0006, which removed the question instead of answering it: a bucket in a Nigerian region transfers nothing.</td>
+          </tr>
+          <tr>
+            <td class="id">E6-S1</td>
+            <td>SMTP configuration and delivery observability</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-3, SMTP credentials and a verified sending domain.</td>
+          </tr>
+          <tr>
+            <td class="id">E8-S1</td>
+            <td>NDPR consent, retention and erasure</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">Released this evening. EXT-5 came back answered and signed on 7 August. Scope is two consent tiers, a RoPA, a DPIA and a SNAG grievance route, plus one wording conflict to put back to the Chief Legal Officer.</td>
+          </tr>
+          <tr>
+            <td class="id">E8-S2</td>
+            <td>Legal review of the PoA instrument and terms</td>
+            <td class="half">Neither</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-4. No code. A counsel signature closes it.</td>
+          </tr>
+          <tr>
+            <td class="id">E8-S3</td>
+            <td>Pre-launch security review</td>
+            <td class="half">Neither</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-6. No code. An engaged reviewer closes it.</td>
+          </tr>
+          <tr>
+            <td class="id">E9-S2</td>
+            <td>Location register and property ID issuance</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-8, down to one contradiction, SUR against SVR, and EXT-12, ID Standard V2 due 13 August.</td>
+          </tr>
+          <tr>
+            <td class="id">E9-S3</td>
+            <td>Six main accounts, sub-codes, commission and VAT rates, postings</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-blocked">Blocked</span></td>
+            <td class="gate">EXT-10 is answered. EXT-9 gives the number and not the place it is recorded, and criterion 7 wants one override role where the answer names a board of five.</td>
+          </tr>
+          <tr>
+            <td class="id">E2-S3</td>
+            <td>Gateway refunds, not ledger-only</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E2-S1</td>
+          </tr>
+          <tr>
+            <td class="id">E2-S5</td>
+            <td>Finance reconciliation view</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E2-S1</td>
+          </tr>
+          <tr>
+            <td class="id">E3-S3</td>
+            <td>Upload hardening: allow-list, magic bytes, AV hook</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E3-S2</td>
+          </tr>
+          <tr>
+            <td class="id">E5-S3</td>
+            <td>Password reset</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E6-S1</td>
+          </tr>
+          <tr>
+            <td class="id">E5-S4</td>
+            <td>Email verification on self-registration</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E6-S1</td>
+          </tr>
+          <tr>
+            <td class="id">E6-S2</td>
+            <td>Email channel per notification type</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E6-S1</td>
+          </tr>
+          <tr>
+            <td class="id">E6-S3</td>
+            <td>Transactional email templates</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E6-S2</td>
+          </tr>
+          <tr>
+            <td class="id">E7-S4</td>
+            <td>Deterministic demo seed and reset</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E3-S2</td>
+          </tr>
+          <tr>
+            <td class="id">E9-S4</td>
+            <td>Escrow sub-ledger and the section 11.1 reconciliation</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">Planned</span></td>
+            <td class="gate">E9-S3 and E2-S1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>The eighteenth thing, which is on nobody's board</h2>
+      <div class="source">ADR-0006 &middot; 31 files under src, backend and scripts still name Vercel</div>
+    </div>
+    <p>ADR-0006 takes the platform off Vercel onto self-managed Nigerian infrastructure. That decision
+      released D4 and it also bought work, and <strong>not one of the forty-two rows above pays for
+      it.</strong> The list below is what a search of the working tree turns up, checked file by file
+      rather than estimated.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Where</th><th>What it does today</th><th>What the move costs</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">backend/package.json</td>
+            <td><code>vercel-build</code> runs <code>prisma migrate deploy</code>, then a seed, then a listing fixup, as a build step.</td>
+            <td class="gate"><strong>The one that matters.</strong> A schema change reaches production today with no operator between the push and the migration. Off Vercel there is no build hook to carry it, so the release procedure has to be written rather than inherited.</td>
+          </tr>
+          <tr>
+            <td class="id">storage.service.ts</td>
+            <td><code>process.env.VERCEL</code> picks the upload root at two places.</td>
+            <td class="gate">Goes away with E3-S2, which already owns it. The two are the same edit done once.</td>
+          </tr>
+          <tr>
+            <td class="id">cors-config.ts</td>
+            <td>Fifteen references, matching <code>*.vercel.app</code> preview origins against this project's own deployments.</td>
+            <td class="gate">Preview origins stop existing in that shape. The allow-list needs a replacement rule before the old one is deleted, not after, or E5-S2a's fix is undone by the cleanup.</td>
+          </tr>
+          <tr>
+            <td class="id">runtime-environment.ts</td>
+            <td>Reads <code>VERCEL_ENV</code> as one of three signals and takes the most hardened.</td>
+            <td class="gate">Deliberately kept. E7-S7 built it to survive exactly this move, and the vendor signal is dropped after the last Vercel deployment is retired, not before.</td>
+          </tr>
+          <tr>
+            <td class="id">seo.ts</td>
+            <td><code>DEFAULT_SITE_URL</code> is <code>safebuyrealties-app.vercel.app</code>.</td>
+            <td class="gate">This is the value a Power of Attorney QR code prints onto paper. Issued instruments cannot be recalled, so this one changes before any further instrument is generated and not as part of a sweep.</td>
+          </tr>
+          <tr>
+            <td class="id">paystack.service.ts</td>
+            <td>Reads <code>VERCEL_ENV</code> when deciding whether mock mode is allowed.</td>
+            <td class="gate">Small, once <code>runtime-environment.ts</code> is the single source. It is a call-site change, not a rule change.</td>
+          </tr>
+          <tr>
+            <td class="id">vite.config.ts, vercel.mjs</td>
+            <td>The nitro <code>vercel</code> preset gated on <code>VERCEL=1</code>, plus the <code>/api/v1</code> rewrite and the <code>ignoreCommand</code>.</td>
+            <td class="gate">A different build preset and a real reverse proxy in front of the API. Mechanical, but it is where the frontend stops being served by somebody else.</td>
+          </tr>
+          <tr>
+            <td class="id">seven vercel-*.mjs</td>
+            <td>Migrate, seed-if-empty, ensure-pipeline-listings, two ignore commands, an API smoke test and a Paystack env sync.</td>
+            <td class="gate">Each is either rehomed into the release procedure or deleted. <code>vercel-seed-if-empty.mjs</code> was read rather than assumed: it will not wipe a populated database, but it will seed demo users into production once if the demo account is missing.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note is-warning">
+      <p><strong>This is three rows, not one, and they are not the same kind of work.</strong>
+        Decoupling the code from the vendor is <strong>M</strong> and it can start today. Writing the
+        release procedure that replaces <code>vercel-build</code> is <strong>M</strong>, and it is the
+        one that protects production data, because it is the only thing standing between a pushed
+        migration and a table people are reading from. The move itself is <strong>L</strong> and is
+        mostly operations rather than engineering. Together, roughly <strong>10 to 15
+        developer-days</strong> on top of the published 37 to 59.</p>
+      <p>None of that is written into the backlog yet, and it stays unwritten by instruction. Whether
+        the cutover counts against the published totals or sits outside them is a decision the board
+        takes on 8 August, once the cost implications are in. Moving a published ceiling is a scoping
+        call rather than housekeeping, so nothing goes into the three record documents until that
+        answer exists.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <h2>What landed today, and what is open</h2>
+      <div class="source">Review queue empty, one branch cut locally</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>PR</th><th>What it does</th><th>Half</th><th>State</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">#150</td>
+            <td>E7-S7: one fail-closed definition of the runtime environment. Three signals, most hardened wins, unknown treated as production.</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-done">Merged</span></td>
+          </tr>
+          <tr>
+            <td class="id">#151</td>
+            <td>Lints the backend, which nothing had ever done. 226 errors cleared, eslint taught that the repository has two halves, a lint job added to CI.</td>
+            <td class="half">Both</td>
+            <td><span class="pill p-done">Merged</span></td>
+          </tr>
+          <tr>
+            <td class="id">#152</td>
+            <td>The closure schedule dispatched, five answers recorded, ADR-0003 accepted, ADR-0006 written. Documents only. It also had to correct what <code>main</code> said about its own branch, because the branch sat unpushed while <code>main</code> moved twice, and <code>main</code> asserted the schedule had never been sent.</td>
+            <td class="half">Neither</td>
+            <td><span class="pill p-done">Merged</span></td>
+          </tr>
+          <tr>
+            <td class="id">E3-S2a</td>
+            <td>The code half of durable object storage. Branch cut off <code>main</code>, one file written so far: a boot guard that refuses the local storage driver wherever the environment resolves to production. Not wired in, not pushed, no pull request.</td>
+            <td class="half">Backend</td>
+            <td><span class="pill p-planned">In progress</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The review queue is empty. All three of today's pull requests are on <code>main</code>, which is
+      why the counts above moved for the first time in a week. One branch at a time remains the rule:
+      every pull request in this repository touches the same three record documents, so a second
+      branch opened alongside conflicts in exactly those three files. That is how <code>main</code>
+      got out of step in the first place.</p>
+  </section>
+
+  <footer>
+    <p>Counts read from the story status table in <code>docs/MVP_OUTSTANDING_BACKLOG.md</code>, the
+      milestone table in section 1.3, and the audit corrections in <code>docs/BUILD_CHECKLIST.md</code>.
+      Route, module and coupling counts read from the working tree at commit <code>e8f35c7</code>.</p>
+    <p>Twenty-five merged plus ten planned plus seven blocked is forty-two, which is the same number
+      as there are story headings in the backlog. The two figures were derived separately and they
+      agree. The seventeen that remain, and the 37 to 59 days behind them, are unchanged from the
+      morning edition: E7-S7 was found and merged inside one pull request, so it arrived and left in
+      the same breath, D4 closing releases no developer-day on its own, and E8-S1 moving from blocked
+      to planned changes who is waiting rather than how long the work takes.</p>
+    <p>The 10 to 15 days for the cutover are an estimate made here rather than a figure quoted from
+      the backlog, because the backlog does not carry the row yet.</p>
+    <p><strong>Three items closing does not move a story.</strong> EXT-5 released E8-S1 at 18:16 and
+      that is already counted above. EXT-10 and D3 close without releasing anything, because E9-S3
+      still waits on EXT-9 and on E9-S1, and D3 records a decision that E4-S2 had already shipped.
+      So the numbers here are unchanged by the second return, which is the honest reading and not a
+      cautious one.</p>
+    <p><strong>How to keep this page current.</strong> The file is
+      <code>docs/reports/build-state.html</code>. Edit it, then publish it again to the same link.
+      The two delivery diagrams are duplicated in <code>docs/reports/build-state.md</code>, which
+      GitHub renders in the browser and which anybody can correct in a text editor. Opening the HTML
+      file straight off disk will show the diagrams as plain text rather than pictures, because
+      drawing them needs a script this page is not allowed to fetch. That is the reason the markdown
+      twin exists, and it is the copy to read in a pull request.</p>
+  </footer>
+
+</div>
