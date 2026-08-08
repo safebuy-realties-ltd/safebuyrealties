@@ -1,0 +1,776 @@
+{
+  "$schema": "docs/HANDOVER_WEEK.md rule 11",
+  "purpose": "Every dependency advisory open against this repository, read by a person, tagged with its CWE and its OWASP category, and carrying the date somebody looks at it again. scripts/check-security.mjs fails on anything here that is missing, expired, or reachable at high or critical with no story named.",
+  "assessedOn": "2026-08-08",
+  "assessedAgainst": "dd64e55",
+  "advisories": [
+    {
+      "id": "GHSA-v422-hmwv-36x6",
+      "package": "body-parser",
+      "workspace": "backend",
+      "severity": "low",
+      "cwe": [
+        "CWE-770"
+      ],
+      "owasp": "A05:2021 Security Misconfiguration",
+      "reachable": "no",
+      "why": "In the Express stack under Nest, so it parses every request body. The bug needs an invalid limit value to be passed, and this application passes no limit at all, so the default stays in force.",
+      "reviewBy": "2026-11-06",
+      "title": "body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement"
+    },
+    {
+      "id": "GHSA-3jxr-9vmj-r5cp",
+      "package": "brace-expansion",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups"
+    },
+    {
+      "id": "GHSA-jxxr-4gwj-5jf2",
+      "package": "brace-expansion",
+      "workspace": "backend",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-11-06",
+      "title": "brace-expansion: Large numeric range defeats documented `max` DoS protection"
+    },
+    {
+      "id": "GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash"
+    },
+    {
+      "id": "GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation"
+    },
+    {
+      "id": "GHSA-4c8g-83qw-93j6",
+      "package": "fast-uri",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-436",
+        "CWE-551"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not in the backend production tree at all. npm ls fast-uri --omit=dev in backend/ returns empty, so it is a development dependency of the schema tooling and does not ship.",
+      "reviewBy": "2026-09-05",
+      "title": "fast-uri vulnerable to host confusion via failed IDN canonicalization"
+    },
+    {
+      "id": "GHSA-7p8r-x3mc-p8w7",
+      "package": "fast-uri",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-436"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not in the backend production tree at all. npm ls fast-uri --omit=dev in backend/ returns empty, so it is a development dependency of the schema tooling and does not ship.",
+      "reviewBy": "2026-09-05",
+      "title": "fast-uri vulnerable to host confusion via backslash authority introducer"
+    },
+    {
+      "id": "GHSA-q3j6-qgpj-74h6",
+      "package": "fast-uri",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-22"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not in the backend production tree at all. npm ls fast-uri --omit=dev in backend/ returns empty, so it is a development dependency of the schema tooling and does not ship.",
+      "reviewBy": "2026-09-05",
+      "title": "fast-uri vulnerable to path traversal via percent-encoded dot segments"
+    },
+    {
+      "id": "GHSA-v2hh-gcrm-f6hx",
+      "package": "fast-uri",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-436"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not in the backend production tree at all. npm ls fast-uri --omit=dev in backend/ returns empty, so it is a development dependency of the schema tooling and does not ship.",
+      "reviewBy": "2026-09-05",
+      "title": "fast-uri vulnerable to host confusion via literal backslash authority delimiter"
+    },
+    {
+      "id": "GHSA-v39h-62p7-jpjc",
+      "package": "fast-uri",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-436"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not in the backend production tree at all. npm ls fast-uri --omit=dev in backend/ returns empty, so it is a development dependency of the schema tooling and does not ship.",
+      "reviewBy": "2026-09-05",
+      "title": "fast-uri vulnerable to host confusion via percent-encoded authority delimiters"
+    },
+    {
+      "id": "GHSA-52cp-r559-cp3m",
+      "package": "js-yaml",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-09-05",
+      "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption"
+    },
+    {
+      "id": "GHSA-5p4m-2wfm-xmqj",
+      "package": "js-yaml",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-09-05",
+      "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) — CVE-2026-59870 fix not backported"
+    },
+    {
+      "id": "GHSA-h67p-54hq-rp68",
+      "package": "js-yaml",
+      "workspace": "backend",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-11-06",
+      "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases"
+    },
+    {
+      "id": "GHSA-3p4h-7m6x-2hcm",
+      "package": "multer",
+      "workspace": "backend",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-459"
+      ],
+      "owasp": "A04:2021 Insecure Design",
+      "reachable": "yes",
+      "why": "Reachable, and the sharpest finding in either tree. FileInterceptor and FilesInterceptor are wired in five controllers: kyc, professionals, due-diligence-assignments, documents and standalone-dd. The KYC identity-document upload is on that path. Both advisories are denial of service rather than disclosure, so the exposure is availability, but an unauthenticated or lightly authenticated caller can reach the parser.",
+      "reviewBy": "2026-08-22",
+      "story": "CH-8",
+      "title": "Multer vulnerable to Denial of Service via incomplete cleanup of aborted uploads"
+    },
+    {
+      "id": "GHSA-72gw-mp4g-v24j",
+      "package": "multer",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": "A04:2021 Insecure Design",
+      "reachable": "yes",
+      "why": "Reachable, and the sharpest finding in either tree. FileInterceptor and FilesInterceptor are wired in five controllers: kyc, professionals, due-diligence-assignments, documents and standalone-dd. The KYC identity-document upload is on that path. Both advisories are denial of service rather than disclosure, so the exposure is availability, but an unauthenticated or lightly authenticated caller can reach the parser.",
+      "reviewBy": "2026-08-22",
+      "story": "CH-8",
+      "title": "Multer vulnerable to Denial of Service via deeply nested field names"
+    },
+    {
+      "id": "GHSA-p6gq-j5cr-w38f",
+      "package": "nodemailer",
+      "workspace": "backend",
+      "severity": "high",
+      "cwe": [
+        "CWE-73",
+        "CWE-918"
+      ],
+      "owasp": "A10:2021 Server-Side Request Forgery",
+      "reachable": "no",
+      "why": "The vulnerable message-level raw option is passed nowhere in backend/src. Every raw identifier in the backend belongs to something else: trust-proxy, the storage guard and the feature-flag constants.",
+      "reviewBy": "2026-09-05",
+      "title": "Nodemailer: Message-level raw option bypasses disableFileAccess/disableUrlAccess, enabling arbitrary file read and full-response SSRF in the delivered message"
+    },
+    {
+      "id": "GHSA-q8mj-m7cp-5q26",
+      "package": "qs",
+      "workspace": "backend",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-476"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Express parses query strings with qs.parse. The advisory is in qs.stringify with encodeValuesOnly set, which nothing on the request path calls.",
+      "reviewBy": "2026-11-06",
+      "title": "qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set"
+    },
+    {
+      "id": "GHSA-4x5r-pxfx-6jf8",
+      "package": "@babel/core",
+      "workspace": "root",
+      "severity": "low",
+      "cwe": [
+        "CWE-22",
+        "CWE-200"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Build toolchain. The read happens while compiling source that carries a sourceMappingURL comment, and the only source this repository compiles is its own. Nothing user-supplied reaches babel.",
+      "reviewBy": "2026-11-06",
+      "title": "@babel/core: Arbitrary File Read via sourceMappingURL Comment"
+    },
+    {
+      "id": "GHSA-9m65-766c-r333",
+      "package": "@tanstack/start-server-core",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-502",
+        "CWE-843"
+      ],
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "reachable": "no",
+      "why": "The vulnerable path is inbound server-function request deserialization. This application defines no server functions: createServerFn and createServerFileRoute appear nowhere under src/. Data flows through backend/ over the REST API instead.",
+      "reviewBy": "2026-11-06",
+      "title": "TanStack Start - Server Core: Inbound server-function request deserialization could invoke a sibling client-referenced server function"
+    },
+    {
+      "id": "GHSA-3jxr-9vmj-r5cp",
+      "package": "brace-expansion",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups"
+    },
+    {
+      "id": "GHSA-jxxr-4gwj-5jf2",
+      "package": "brace-expansion",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-11-06",
+      "title": "brace-expansion: Large numeric range defeats documented `max` DoS protection"
+    },
+    {
+      "id": "GHSA-mh99-v99m-4gvg",
+      "package": "brace-expansion",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash"
+    },
+    {
+      "id": "GHSA-rgw5-rvv9-x895",
+      "package": "brace-expansion",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under minimatch, reached by glob patterns that jest, eslint and the build tooling write themselves. No request path expands a user-supplied brace pattern.",
+      "reviewBy": "2026-09-05",
+      "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation"
+    },
+    {
+      "id": "GHSA-55q2-fjhq-7xh7",
+      "package": "dompurify",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": "A03:2021 Injection",
+      "reachable": "no",
+      "why": "Not imported anywhere under src/. Transitive only. The single dangerouslySetInnerHTML in the codebase is src/components/ui/chart.tsx:73, which interpolates a generated theme string rather than sanitized user content.",
+      "reviewBy": "2026-11-06",
+      "title": "DOMPurify: IN_PLACE hook removal leaves a detached subtree executable, causing XSS"
+    },
+    {
+      "id": "GHSA-g7r4-m6w7-qqqr",
+      "package": "esbuild",
+      "workspace": "root",
+      "severity": "low",
+      "cwe": [
+        "CWE-22"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Development server only, and only on Windows. It does not ship and CI does not run Windows.",
+      "reviewBy": "2026-11-06",
+      "title": "esbuild allows arbitrary file read when running the development server on Windows"
+    },
+    {
+      "id": "GHSA-52cp-r559-cp3m",
+      "package": "js-yaml",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-09-05",
+      "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption"
+    },
+    {
+      "id": "GHSA-5p4m-2wfm-xmqj",
+      "package": "js-yaml",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-09-05",
+      "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) — CVE-2026-59870 fix not backported"
+    },
+    {
+      "id": "GHSA-h67p-54hq-rp68",
+      "package": "js-yaml",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-407"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Parses configuration files this repository writes. No YAML arrives from a user.",
+      "reviewBy": "2026-11-06",
+      "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases"
+    },
+    {
+      "id": "GHSA-28wg-ghj8-5hjv",
+      "package": "nanoid",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-835"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under postcss, not imported anywhere in src/ or backend/src/. The loop needs a caller passing a zero or negative size, and there is no caller.",
+      "reviewBy": "2026-09-05",
+      "title": "nanoid: non-secure generators can loop indefinitely with negative size"
+    },
+    {
+      "id": "GHSA-2v37-7h3g-55p8",
+      "package": "nanoid",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-835"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under postcss, not imported anywhere in src/ or backend/src/. The loop needs a caller passing a zero or negative size, and there is no caller.",
+      "reviewBy": "2026-09-05",
+      "title": "nanoid: custom generators can loop indefinitely when size is zero"
+    },
+    {
+      "id": "GHSA-7mvr-c777-76hp",
+      "package": "playwright",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-347"
+      ],
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "reachable": "no",
+      "why": "Test dependency. The unverified download happens when browsers are installed, on a developer machine and on the CI runner, and never in anything that ships.",
+      "reviewBy": "2026-09-05",
+      "title": "Playwright downloads and installs browsers without verifying the authenticity of the SSL certificate"
+    },
+    {
+      "id": "GHSA-6g55-p6wh-862q",
+      "package": "postcss",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-22",
+        "CWE-200"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain. The arbitrary read needs a sourceMappingURL comment inside CSS being compiled, and the only CSS compiled here is this repository's own.",
+      "reviewBy": "2026-09-05",
+      "title": "PostCSS: Arbitrary file read and information disclosure via attacker-controlled sourceMappingURL in CSS comments"
+    },
+    {
+      "id": "GHSA-fxqj-rqcc-2cmp",
+      "package": "postcss",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-22",
+        "CWE-200"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain. The arbitrary read needs a sourceMappingURL comment inside CSS being compiled, and the only CSS compiled here is this repository's own.",
+      "reviewBy": "2026-11-06",
+      "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q — attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset"
+    },
+    {
+      "id": "GHSA-qx2v-qp2m-jg93",
+      "package": "postcss",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain. The arbitrary read needs a sourceMappingURL comment inside CSS being compiled, and the only CSS compiled here is this repository's own.",
+      "reviewBy": "2026-11-06",
+      "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output"
+    },
+    {
+      "id": "GHSA-r28c-9q8g-f849",
+      "package": "postcss",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-22"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain. The arbitrary read needs a sourceMappingURL comment inside CSS being compiled, and the only CSS compiled here is this repository's own.",
+      "reviewBy": "2026-09-05",
+      "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure"
+    },
+    {
+      "id": "GHSA-mv8w-475r-vwqw",
+      "package": "seroval",
+      "workspace": "root",
+      "severity": "critical",
+      "cwe": [
+        "CWE-502",
+        "CWE-843"
+      ],
+      "owasp": "A08:2021 Software and Data Integrity Failures",
+      "reachable": "unproven",
+      "why": "Transitive under the TanStack Start SSR serializer. The vulnerable call is seroval.fromJSON() on attacker-controlled input, and the usual way to reach it is a server function, which this application does not define. That narrows it a long way but does not prove the SSR payload path cannot be driven, so it is filed rather than dismissed.",
+      "reviewBy": "2026-08-22",
+      "story": "CH-9",
+      "title": "seroval: `seroval.fromJSON()` Promise resolver type confusion invokes attacker-controlled methods during deserialization"
+    },
+    {
+      "id": "GHSA-f88m-g3jw-g9cj",
+      "package": "sharp",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Not a direct dependency and not imported anywhere. Transitive under the build tooling, and no code here hands it an image.",
+      "reviewBy": "2026-09-05",
+      "title": "sharp inherited vulnerabilities in libvips: CVE-2026-33327, CVE-2026-33328, CVE-2026-35590, CVE-2026-35591"
+    },
+    {
+      "id": "GHSA-35p6-xmwp-9g52",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "low",
+      "cwe": [
+        "CWE-367"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to HTTP response queue poisoning via keep-alive socket reuse"
+    },
+    {
+      "id": "GHSA-4cwx-7wf7-3272",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-200",
+        "CWE-248",
+        "CWE-525"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to cross-user information disclosure and parse-time crash via degenerate private cache directives"
+    },
+    {
+      "id": "GHSA-8xcm-r25x-g524",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-444"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to downstream response desynchronization via retry interceptor"
+    },
+    {
+      "id": "GHSA-g8m3-5g58-fq7m",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "low",
+      "cwe": [
+        "CWE-183"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to Set-Cookie SameSite attribute downgrade via permissive substring matching"
+    },
+    {
+      "id": "GHSA-hm92-r4w5-c3mj",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-346"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to cross-origin request routing via SOCKS5 proxy pool reuse"
+    },
+    {
+      "id": "GHSA-jr45-8vmc-qm54",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-436",
+        "CWE-524"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to cross-user information disclosure via whitespace around equals in Cache-Control directives"
+    },
+    {
+      "id": "GHSA-m8rv-5g2x-5cg5",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-93"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to CRLF Injection via blob-like body 'type' property"
+    },
+    {
+      "id": "GHSA-p88m-4jfj-68fv",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-93"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to HTTP header injection via Set-Cookie percent-decoding"
+    },
+    {
+      "id": "GHSA-pr7r-676h-xcf6",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-524"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to cross-user information disclosure via shared cache whitespace bypass"
+    },
+    {
+      "id": "GHSA-v3r7-h72x-cjcm",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-74"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to cookie attribute injection via unsanitized domain and unparsed setCookie fields"
+    },
+    {
+      "id": "GHSA-vmh5-mc38-953g",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-295"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici vulnerable to TLS certificate validation bypass via dropped requestTls in SOCKS5 ProxyAgent"
+    },
+    {
+      "id": "GHSA-vxpw-j846-p89q",
+      "package": "undici",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "unproven",
+      "why": "Node's HTTP client, transitive. The SOCKS5, shared-cache and WebSocket advisories each need a deployment feature this project does not run: there is no forward proxy, no shared response cache and no undici WebSocket client. The Set-Cookie and CRLF entries are the ones that would matter if outbound fetch ever carried user-controlled header content, which is why this reads unproven rather than no.",
+      "reviewBy": "2026-08-22",
+      "title": "undici WebSocket client vulnerable to denial of service via fragment count bypass"
+    },
+    {
+      "id": "GHSA-fx2h-pf6j-xcff",
+      "package": "vite",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-22",
+        "CWE-200"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain, and the fs.deny bypass is a development-server path on Windows. Neither ships.",
+      "reviewBy": "2026-09-05",
+      "title": "vite: `server.fs.deny` bypass on Windows alternate paths"
+    },
+    {
+      "id": "GHSA-v6wh-96g9-6wx3",
+      "package": "vite",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-73",
+        "CWE-522"
+      ],
+      "owasp": "A01:2021 Broken Access Control",
+      "reachable": "no",
+      "why": "Build toolchain, and the fs.deny bypass is a development-server path on Windows. Neither ships.",
+      "reviewBy": "2026-11-06",
+      "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows"
+    },
+    {
+      "id": "GHSA-58qx-3vcg-4xpx",
+      "package": "ws",
+      "workspace": "root",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-908"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under the development server tooling. This application opens no WebSocket.",
+      "reviewBy": "2026-11-06",
+      "title": "ws: Uninitialized memory disclosure"
+    },
+    {
+      "id": "GHSA-96hv-2xvq-fx4p",
+      "package": "ws",
+      "workspace": "root",
+      "severity": "high",
+      "cwe": [
+        "CWE-400",
+        "CWE-770",
+        "CWE-1050"
+      ],
+      "owasp": "A06:2021 Vulnerable and Outdated Components",
+      "reachable": "no",
+      "why": "Transitive under the development server tooling. This application opens no WebSocket.",
+      "reviewBy": "2026-09-05",
+      "title": "ws: Memory exhaustion DoS from tiny fragments and data chunks"
+    }
+  ]
+}

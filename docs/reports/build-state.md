@@ -1,3 +1,5 @@
+<!-- report-state: sha=88cbf5c -->
+
 # What is built, and what is owed
 
 SafeBuyRealties build state. Revised 8 August 2026, after four further answers arrived in

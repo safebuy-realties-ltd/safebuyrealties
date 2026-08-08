@@ -450,6 +450,54 @@ jobs:
       # No npm ci, for the same reason the board check skips it: plain Node and one git call.
       - run: node scripts/check-prose.mjs
 
+  # Rule 11, docs/HANDOVER_WEEK.md. Unfiltered like the prose job, and for a related reason: a
+  # dependency reaches every diff, so a security check that applies to some pull requests and not
+  # others has a gap in the middle of it. This is a ratchet rather than a threshold, so it does not
+  # fail on the advisories already open against this repository; it fails on the ones nobody has
+  # read yet, the ones whose review date has passed, and the ones that are reachable and serious
+  # with no story filed. The reasoning is written out in full in the rule.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # No npm ci. `npm audit` reads the lockfile and asks the registry; it does not need the
+      # packages on disk, which is what keeps this job cheap enough to leave unfiltered.
+      - run: node scripts/check-security.mjs
+
+  # Rule 12, docs/HANDOVER_WEEK.md. This is the only job here that runs on `main` instead of on the
+  # pull request, and that is the whole point of it. The reports under docs/reports/ describe the
+  # state of `main`, and a document about `main` cannot be written truthfully inside a branch that
+  # has not merged. So it gates the merge commit, and `main` stays red until the refresh lands.
+  #
+  # Deliberately NOT in ci-gate's needs. ci-gate is the required check for branch protection, which
+  # is a question about a pull request, and this job has no answer to give on a pull request.
+  reports:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check-reports.mjs asks whether a stale marker is an older commit or a commit that is not
+          # in this history at all, and it needs the history to tell those apart.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # The escape hatch is on the merge commit rather than on a pull request body, because by the
+      # time this runs the pull request is closed and its body is no longer the record of anything.
+      - name: Reports match main
+        run: |
+          set -euo pipefail
+          if git log -1 --pretty=%B | grep -q 'no-report-update:'; then
+            echo "Merge commit carries a no-report-update waiver, so rule 12 is skipped here:"
+            git log -1 --pretty=%B | grep 'no-report-update:'
+            exit 0
+          fi
+          node scripts/check-reports.mjs
+
   # Single required status check for branch protection (see docs/BRANCH_PROTECTION.md).
   ci-gate:
     name: CI (required)
@@ -465,6 +513,7 @@ jobs:
         e2e-browser,
         board,
         prose,
+        security,
       ]
     if: always()
     steps:
@@ -524,6 +573,12 @@ jobs:
         if: needs.prose.result != 'success'
         run: |
           echo "prose: ${{ needs.prose.result }}"
+          exit 1
+
+      - name: Security check
+        if: needs.security.result != 'success'
+        run: |
+          echo "security: ${{ needs.security.result }}"
           exit 1
 
       - name: CI gate passed

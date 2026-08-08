@@ -46,11 +46,15 @@ All accounts use password: `password123`
 
 | Action | Command |
 |--------|---------|
-| Frontend lint | `npx eslint .` (from root) |
+| **Everything CI runs, before you push** | `npm run verify` (add `-- --fast` to skip the test suites) |
+| Lint exactly as CI does | `npx eslint src backend/src --max-warnings 0` (from root) |
 | Frontend tests | `npm test` (from root, Vitest) |
 | Backend tests | `cd backend && npm test` (Jest) |
 | TypeScript check | `npm run validate:tsc` |
 | Board check (required by CI) | `npm run validate:board` |
+| Prose check (required by CI) | `npm run validate:prose` |
+| Security posture (required by CI) | `npm run validate:security` |
+| Reports match main (runs on `main`) | `npm run validate:reports` |
 | Prisma generate | `cd backend && npx prisma generate` |
 | Prisma migrate (cloud DB) | `cd backend && npx prisma migrate deploy` |
 | DB seed (optional) | `cd backend && npx prisma db seed` |
@@ -59,5 +63,9 @@ All accounts use password: `password123`
 ### Notes
 
 - `backend/.env` is gitignored — never commit database credentials.
-- ESLint may report pre-existing prettier issues in `scripts/`.
+- ESLint may report pre-existing prettier issues in `scripts/`. CI lints `src` and `backend/src` only,
+  which is the command in the table above. `npx eslint .` reports more than CI does.
 - Optional deploy checks: `docs/VERCEL_VALIDATION.md`.
+- `npm run verify` is the same list of commands CI executes, kept in one file so this table and the
+  workflow cannot quietly drift apart. It prints what it could not run locally and why. Rules 11, 12
+  and 13 in `docs/HANDOVER_WEEK.md` say what the last three rows are for.

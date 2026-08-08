@@ -118,6 +118,20 @@ Give this to every agent alongside the story.
     stakeholder reads, not in the backend, not in a comment, a commit message or a workflow file.
     Write how the work was staffed instead. This one is enforced rather than trusted, like rule 8,
     and the section below says what the check covers and what it does not.
+11. **Assess the security posture on every PR, and again after it merges.** Every dependency
+    advisory open against this repository is read by a person, tagged with its CWE and its OWASP
+    category, given a verdict on whether this codebase can actually reach it, and given a date
+    somebody looks at it again. Reachable at high or critical means a story gets filed. Enforced
+    rather than trusted. It does **not** discharge EXT-6, and the section below says why not.
+12. **Refresh the reports after the merge, not inside it.** The published artifact,
+    `docs/reports/build-state.*` and `docs/reports/what-is-needed.*` describe the state of `main`,
+    and a document about `main` cannot be written truthfully from inside a branch that has not
+    merged. So this one runs after, and it is the only rule here that gates `main` rather than the
+    pull request.
+13. **Run what CI runs before you push, then watch the run to a conclusion.** `npm run verify` is
+    the same list of commands CI executes, kept in one file so a laptop's checklist cannot quietly
+    drift away from the workflow's. Opening the pull request is not the end of the story; a green
+    check is.
 
 ### Rule 8, and why it is a gate rather than a habit
 
@@ -304,6 +318,168 @@ There is a carve-out this rule deliberately does not make, which is history. The
 Notes* in `docs/BUILD_CHECKLIST.md` record what each session used, and the honest fix there was to
 rewrite the entry as the arrangement rather than to grandfather the name. A rule that exempts what
 is already written is a rule that never removes anything.
+
+### Rule 11, and why it is a ratchet rather than a threshold
+
+The obvious way to write this rule is `npm audit --audit-level=high` in CI. On the day it was
+written that command failed on 23 vulnerable packages at the root and 8 in the backend, none of
+which the pull request in front of it had introduced. A gate that fails every pull request for
+something the author did not do is a gate somebody disables inside a week, and rule 8 already says
+out loud that a check people route around is worse than no check at all. So what is gated is
+movement rather than absence.
+
+`docs/security/advisory-baseline.json` holds every advisory currently open against either tree, and
+each entry carries nine fields: the GHSA identifier, the package, which workspace it is in, the
+severity, **the CWE**, **the OWASP Top 10 2021 category**, a reachability verdict, one sentence of
+reasoning, and the date somebody reads it again. `scripts/check-security.mjs` re-runs the audit and
+compares. It fails on four things:
+
+1. **An advisory nobody has assessed.** That is the ratchet itself. The posture cannot get worse
+   without a person writing down that they looked at it.
+2. **An assessed advisory whose review date has passed.** Without this the baseline turns into a
+   list of things everybody agreed to stop thinking about, which is what a suppression file is.
+3. **Reachable at high or critical with no story named.** Accepting risk is allowed here. Accepting
+   it without filing the work is not.
+4. **Critical and not proved unreachable, with no story named.** "We think it probably cannot be
+   driven" is a sentence that should arrive with a ticket attached.
+
+**Reachability is the field that does the work, and it is the field a tool cannot fill in.** The
+audit knows what is in the tree. It does not know that nodemailer's vulnerable option is passed
+nowhere in this backend, that the TanStack server-function deserializer is unreachable because this
+frontend declares no server functions, or that multer's is on the path that accepts KYC identity
+documents. Somebody has to read the advisory against this code, and the `why` field is where they
+show their working. On the first pass, 53 advisories were assessed and exactly 2 were reachable.
+Nine tenths of a raw audit report is noise to this project, and the point of the baseline is to
+spend the reading once rather than every time somebody opens the file.
+
+**On the CVE and CWE mapping.** The CWE is the useful half. It says what class of mistake this is,
+which is what tells you whether the same mistake exists in code we wrote rather than code we
+installed. CWE-400 on multer is why the upload paths are worth looking at directly, and that
+question does not come out of a version number. The OWASP category is there because it is the
+vocabulary a penetration test report will arrive in, and matching the two up in advance is the
+difference between reading that report in an afternoon and arguing with it for a week.
+
+**How it is enforced:**
+
+- `npm run validate:security` runs the script. CI runs it as its own job on every pull request with
+  no path filter, modelled on the prose job for the same reason: a dependency reaches every diff,
+  so a security check that applies to some diffs and not others has a gap in the middle of it.
+- The job installs nothing. It is plain `node` against a script with no imports outside the standard
+  library, which is what makes it cheap enough to leave unfiltered.
+- **If the registry cannot be reached the check exits clean.** This is deliberate. `npm audit` is a
+  network call to a service this project does not run, and a check that goes red during somebody
+  else's outage is a check people learn to re-run until it passes, which is the same disease as a
+  check that is always red.
+- An advisory fixed upstream, still sitting in the baseline, prints a note rather than a failure.
+  Failing the build on good news teaches the wrong reflex.
+
+**What this rule does not do, and the sentence matters more than the rest of the section.**
+
+**It does not fulfil EXT-6 and it never can.** E8-S3 criterion 1 asks for *an independent review*,
+and a team assessing the code it wrote is not independent by definition. Gate G5 reads "no high
+findings outstanding", and the only party who can attest to that is one who was not paid to build
+the thing, which is why the backlog already says the re-test letter closes the gate rather than the
+first report. Nothing in this repository changes that, and an agent that ticks E8-S3 on the strength
+of this file has misread the rule it is following.
+
+What the rule does instead is narrow, and worth having anyway. It clears the class of finding a
+tester would otherwise spend billable hours writing up, it produces the dependency inventory and
+control map a vendor asks for on the scoping call, and it means the window can be shorter and
+therefore cheaper. It makes the test better. It does not replace it.
+
+**The pentest posture, stated plainly: nothing is booked.** EXT-6 sits with Corne Labs, it is the
+only external input on the register with no upstream dependency, it could have been booked on any
+day since 6 August, and eight things are still owed before a window can be held: the vendor and a
+named contact, a scope naming authentication, authorization, payments and document handling and
+explicitly including the escrow payment path and the KYC document store, whether it is black, grey
+or white box, an environment that is not production carrying live customer data, start and end
+dates, rules of engagement covering the seeded data set and who to call when something breaks
+mid-test, the date the report is due, and the date the re-test letter is due. Until those land,
+E8-S3 stays blocked and G5 stays shut, and no amount of self-assessment moves either.
+
+### Rule 12, and why this one gates `main` instead of the pull request
+
+Rule 8's three documents ship inside the diff because they can. The board describes the work, and
+the work is in front of you while you write it. The report families are a different kind of
+document: they describe the state of `main`, and while a branch is open its own contents are not yet
+part of `main`. Writing "E3-S2a is merged as #156" into a report, inside the branch that is going to
+become #156, is writing a thing that is not true yet and hoping. That is an ordering problem rather
+than a discipline problem, and it is why rule 8 could never have been stretched to cover these
+files.
+
+So the refresh happens after the merge, and `scripts/check-reports.mjs` runs on pushes to `main`
+rather than on pull requests. **`main` goes red until the reports catch up.** That is the intended
+behaviour and not a defect. The alternative, which this repository ran on for four consecutive
+reconciliation notes, is that stakeholders read merged work as still blocked because the only
+documents they actually open were re-derived a week ago.
+
+**What is covered:**
+
+| File | Why |
+| --- | --- |
+| `docs/reports/build-state.html` and `.md` | What is built and what is owed. The document leadership reads |
+| `docs/reports/what-is-needed.html` and `.md` | What is needed from outside. The document that goes to the people who owe it |
+| `docs/reports/remaining-work.html` | The remaining work report |
+| The published artifact | Named here because it is not a file in this repository and no check can see it |
+
+Each tracked file carries one HTML comment, which survives in both the markup and the markdown
+members and renders as nothing:
+
+```html
+<!-- report-state: sha=dd64e55 -->
+```
+
+The board header already names the commit of `main` it was verified against, and `check-board.mjs`
+already forces that to be exactly one real commit, so the reports are compared against the board
+rather than against a second source of truth. When they disagree the check says which commit each
+one describes and whether the stale one is merely behind or names a commit that is not in this
+history at all.
+
+**Two things it cannot enforce, both said out loud rather than left implied.** The pdf, png and docx
+members of each family are generated from the sources and are gitignored, so nothing tracked can
+check them; the rule says regenerate them and only the sources can be gated. And **the published
+artifact is not in this repository**, so no check will ever catch a stale one. It is named in the
+rule anyway, because an obligation nobody wrote down is one nobody discharges, and the artifact is
+the copy most likely to be the one somebody actually opens.
+
+The escape hatch is the same shape as rule 8's. A merge commit whose message carries
+`no-report-update: <reason>` is exempt, and the reason is visible in the log for the same argument
+rule 8 makes: a waiver the reviewer reads is a decision, a waiver nobody sees is a hole.
+
+### Rule 13, and the specific failure that bought it
+
+This rule exists because of one pull request rather than a principle. #156 was pushed after a clean
+build, a full test run, `validate:board` and `check-prose` all passing locally. CI failed on six
+formatting errors in the two files the story had touched. The gate that caught them was the backend
+half of the lint job, which had landed in #151 while that branch was already cut.
+
+A longer local checklist would not have prevented that. **The checklist was not too short, it was a
+copy, and copies drift.** The fix is to stop keeping two lists. `scripts/verify.mjs` holds one array
+of gates, each carrying the name of the CI job that runs the same command, so checking that the two
+agree is a grep rather than an act of memory. Add a job to `.github/workflows/ci.yml`, add the row
+here, and the drift has one place to be noticed instead of none.
+
+```text
+npm run verify              everything a laptop can run
+npm run verify -- --fast    skips the two test suites, for a documents-only change
+```
+
+**It prints what it did not run.** Two end-to-end jobs need a database and a browser that CI
+provisions, and the reports job runs on `main` after the merge by design. All three are listed in
+the summary as not run, with the reason. A verification summary that quietly omits what it skipped
+is how somebody concludes they are green when they are not, which is the failure this rule was
+written to stop rather than a new one to introduce.
+
+**The second half of the rule is the half that was actually missing.** Pushing is not the end of the
+work. After `gh pr create`, watch the run to a conclusion:
+
+```text
+gh pr checks <number> --watch
+```
+
+If it goes red, fix it on the same branch before handing the pull request to anybody. A reviewer
+opening a red pull request learns, correctly, that nobody looked, and every review after that one
+starts from a worse place.
 
 ## What good looks like on Friday
 
