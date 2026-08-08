@@ -417,8 +417,11 @@
         list is the same length this evening as it was this morning. EXT-8 closed on one sentence.
         EXT-4 gained counsel of record and its row stayed open, because naming counsel is not counsel
         having ruled. EXT-9 is now one line short of closing, and the line it is short of is a
-        citation. <code>#153</code> merged alongside, carrying the second return into the record and
-        making this page permanent.</p>
+        citation. <code>#153</code> merged first, carrying the second return into the record and
+        making this page permanent. <code>#154</code> merged after it and wrote the four answers into
+        the register, the board and this page, so the commit these counts are read from is now
+        <code>88cbf5c</code>. Neither pull request moved a count on this page, which is the finding
+        rather than an omission.</p>
       <p>The day before, three pull requests merged and the totals moved for the first time in a
         week: <code>#150</code> put one fail-closed definition of the runtime environment into the
         backend, <code>#151</code> lit the backend up in the linter for the first time, and
@@ -1194,6 +1197,12 @@ flowchart LR
             <td><span class="pill p-done">Merged</span></td>
           </tr>
           <tr>
+            <td class="id">#154</td>
+            <td>The four answers of 8 August written into the record: EXT-8 closed, counsel of record named under EXT-4, EXT-9's three-of-three variation rule settled, two dependency columns moved. Documents only.</td>
+            <td class="half">Neither</td>
+            <td><span class="pill p-done">Merged</span></td>
+          </tr>
+          <tr>
             <td class="id">E3-S2a</td>
             <td>The code half of durable object storage. Branch cut off <code>main</code>, one file written so far: a boot guard that refuses the local storage driver wherever the environment resolves to production. Not wired in, not pushed, no pull request.</td>
             <td class="half">Backend</td>
@@ -1202,8 +1211,9 @@ flowchart LR
         </tbody>
       </table>
     </div>
-    <p>The review queue is empty. All four of those pull requests are on <code>main</code>, which is
-      why the counts above moved for the first time in a week. One branch at a time remains the rule:
+    <p>The review queue is empty. All five of those pull requests are on <code>main</code>. The first
+      four are why the counts above moved for the first time in a week. <code>#154</code> moved no
+      count at all and says so in its own first paragraph. One branch at a time remains the rule:
       every pull request in this repository touches the same three record documents, so a second
       branch opened alongside conflicts in exactly those three files.</p>
   </section>
@@ -1211,7 +1221,7 @@ flowchart LR
   <footer>
     <p>Counts read from the story status table in <code>docs/MVP_OUTSTANDING_BACKLOG.md</code>, the
       milestone table in section 1.3, and the audit corrections in <code>docs/BUILD_CHECKLIST.md</code>.
-      Route, module and coupling counts read from the working tree at commit <code>c993731</code>.</p>
+      Route, module and coupling counts read from the working tree at commit <code>88cbf5c</code>.</p>
     <p>Twenty-five merged plus ten planned plus seven blocked is forty-two, which is the same number
       as there are story headings in the backlog. The two figures were derived separately and they
       agree.</p>

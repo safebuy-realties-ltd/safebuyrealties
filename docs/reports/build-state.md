@@ -3,7 +3,7 @@
 SafeBuyRealties build state. Revised 8 August 2026, after four further answers arrived in
 conversation rather than on the form. Counts read from `docs/MVP_OUTSTANDING_BACKLOG.md` section 3
 and the audit corrections in `docs/BUILD_CHECKLIST.md`. Route, module and coupling counts read from
-the working tree at commit `c993731`.
+the working tree at commit `88cbf5c`.
 
 > **This is the permanent copy.** The same content is published as a page, and the page is generated
 > from `docs/reports/build-state.html` in this repository, so the two cannot drift. This markdown
@@ -32,8 +32,10 @@ board's blocked list is the same length this evening as it was this morning.
 
 EXT-8 closed on one sentence. EXT-4 gained counsel of record and its row stayed open, because naming
 counsel is not counsel having ruled. EXT-9 is now one line short of closing, and the line it is short
-of is a citation. `#153` merged alongside, carrying the second return into the record and making this
-page permanent, so the commit these counts are read from is now `c993731`.
+of is a citation. `#153` merged first, carrying the second return into the record and making this page
+permanent. `#154` merged after it and wrote the four answers into the register, the board and this
+page, so the commit these counts are read from is now `88cbf5c`. Neither pull request moved a count
+on this page, which is the finding rather than an omission.
 
 The day before, three pull requests merged and the totals moved for the first time in a week. `#150`
 put one fail-closed definition of the runtime environment into the backend, `#151` lit the backend up
@@ -419,10 +421,12 @@ into the three record documents until it does. The estimate above stands and the
 | `#151` | Lints the backend, which nothing had ever done. 226 errors cleared, eslint taught that the repository has two halves, a lint job added to CI. | Both | Merged |
 | `#152` | The closure schedule dispatched, five answers recorded, ADR-0003 accepted, ADR-0006 written. Documents only. | Neither | Merged |
 | `#153` | The second return read into the record, E8-S1 released, and this page written as a permanent file in the repository rather than a published page with no source. Documents only. | Neither | Merged |
+| `#154` | The four answers of 8 August written into the record: EXT-8 closed, counsel of record named under EXT-4, EXT-9's three-of-three variation rule settled, two dependency columns moved. Documents only. | Neither | Merged |
 | E3-S2a | The code half of durable object storage. Branch cut off `main`, one file written so far: a boot guard that refuses the local storage driver wherever the environment resolves to production. Not wired in, not pushed, no pull request. | Backend | In progress |
 
-The review queue is empty. All four of those pull requests are on `main`, which is why the counts
-above moved for the first time in a week. One branch at a time remains the rule: every pull request
+The review queue is empty. All five of those pull requests are on `main`. The first four are why the
+counts above moved for the first time in a week. `#154` moved no count at all and says so in its own
+first paragraph. One branch at a time remains the rule: every pull request
 in this repository touches the same three record documents, so a second branch opened alongside
 conflicts in exactly those three files.
 

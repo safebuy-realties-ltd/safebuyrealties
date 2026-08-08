@@ -2,7 +2,7 @@
 
 *Twelve items are open outside engineering. Between them they hold seventeen stories, which is everything left before this platform can go live. Each item below says what has to come back, what shape the answer has to take, where to write it, and who signs it.*
 
-Generated 7 August 2026, against main at commit 1b4c46e. Revision 4, written 2026-08-08 against the 23:09 return and the answers that followed it.
+Generated 7 August 2026, against main at commit 1b4c46e. Revision 5, written 2026-08-08 against main at 88cbf5c, after pull request 154 wrote the four conversational answers into the register. Revision 4 read the 23:09 return and those four answers. Revision 5 changes no count and no outcome. It corrects ten links that still named a review branch that has since merged.
 
 | Count | What it counts |
 |---|---|
@@ -215,8 +215,8 @@ The platform holds client funds. ADR-0002 settled that, and it changes what this
 
 - [The escrow decision that made this a client funds account](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0002-escrow-fund-holding-model.md) `docs/adr/0002-escrow-fund-holding-model.md`
 - [The full wording of the ask, item EXT-1](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`  (on the review branch, pull request 152)
-- [The Finance copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx`  (on the review branch, pull request 152)
+- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`
+- [The Finance copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx`
 
 ### EXT-2, An S3-compatible bucket in a Nigerian region, and its credentials
 
@@ -292,8 +292,8 @@ This item used to carry an argument about which country the files could sit in. 
 
 - [The decision that put the bucket in Nigeria and took the platform off Vercel](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0006-deployment-target-and-runtime-environment.md) `docs/adr/0006-deployment-target-and-runtime-environment.md`
 - [The full wording of the ask, item EXT-2](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The Corne Labs copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx`  (on the review branch, pull request 152)
-- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`  (on the review branch, pull request 152)
+- [The Corne Labs copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx`
+- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`
 
 ### EXT-3, A sending domain for email, with SPF, DKIM, DMARC and SMTP credentials
 
@@ -380,7 +380,7 @@ Five stories sit behind this one item, which makes it the widest of the twelve. 
 **Links**
 
 - [The full wording of the ask, item EXT-3](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`  (on the review branch, pull request 152)
+- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`
 
 ### EXT-4, Counsel-approved Power of Attorney text and terms of service
 
@@ -516,7 +516,7 @@ This was planned as a review of two finished documents. Reading them showed that
 - [The Power of Attorney, dated 2017](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SBR%20-POWER%20OF%20ATTORNEY.docx) `docs/inputs/SBR -POWER OF ATTORNEY.docx`
 - [The instrument the platform generates today, in code](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/backend/src/poa/poa.service.ts) `backend/src/poa/poa.service.ts`
 - [The full wording of the ask, item EXT-4](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [Counsel's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx`  (on the review branch, pull request 152)
+- [Counsel's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx`
 
 ### EXT-5, An adopted privacy policy, a retention schedule, and a Data Protection Officer
 
@@ -625,8 +625,8 @@ The company's own data protection policy is still headed 'SUBJECT TO BOARD', whi
 - [The internal policy, still marked SUBJECT TO BOARD](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SB%20DATA%20PROTECTION%20POLICY.docx) `docs/inputs/SB DATA PROTECTION POLICY.docx`
 - [The published privacy policy](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/inputs/SBR%20PRIVACY%20POLICY.docx) `docs/inputs/SBR PRIVACY POLICY.docx`
 - [The full wording of the ask, item EXT-5, and the eight-row retention table](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The board's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx`  (on the review branch, pull request 152)
-- [The DPO copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx`  (on the review branch, pull request 152)
+- [The board's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Board.docx`
+- [The DPO copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_DPO.docx`
 
 ### EXT-6, A penetration test vendor and a booked testing window
 
@@ -711,7 +711,7 @@ Gate G5 reads 'no high findings outstanding'. Nobody can close that gate without
 **Links**
 
 - [The full wording of the ask, item EXT-6](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The Corne Labs copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx`  (on the review branch, pull request 152)
+- [The Corne Labs copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Corne_Labs.docx`
 
 ### EXT-8, Three contradictions inside the identifier standard, resolved
 
@@ -785,8 +785,8 @@ The identifier standard contradicts itself in three places, and the finance spec
 
 - [The identifier questions in full](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md) `docs/escalations/2026-08-06-ext-8-and-ext-12.md`
 - [The audit query, for whoever holds database access](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/sql/id-location-code-audit.sql) `docs/sql/id-location-code-audit.sql`
-- [The Digital Records copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx`  (on the review branch, pull request 152)
-- [The COO copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx`  (on the review branch, pull request 152)
+- [The Digital Records copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Digital_Records.docx`
+- [The COO copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_COO.docx`
 
 ### EXT-9, The commission basis: what is charged, to whom, and whether it can be varied
 
@@ -847,7 +847,7 @@ The accounting tables shipped with no rows in them, deliberately, because a comm
 **Links**
 
 - [The three questions in full, item EXT-9](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md) `docs/escalations/2026-08-06-ext-8-and-ext-12.md`
-- [The Finance copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx`  (on the review branch, pull request 152)
+- [The Finance copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Finance.docx`
 
 ### EXT-10, Counsel's signature on what authorises withholding VAT from seller proceeds
 
@@ -894,7 +894,7 @@ One signature is all that is outstanding here, and it matters more than its size
 **Links**
 
 - [The question in full, and the worked example it comes from](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-ext-8-and-ext-12.md) `docs/escalations/2026-08-06-ext-8-and-ext-12.md`
-- [Counsel's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx`  (on the review branch, pull request 152)
+- [Counsel's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Counsel.docx`
 
 ### ADR-0004, Ratification of how a private document is served
 
@@ -955,8 +955,8 @@ This is paperwork, not a question. The behaviour it describes shipped weeks ago 
 **Links**
 
 - [The decision record itself](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/adr/0004-private-document-access.md) `docs/adr/0004-private-document-access.md`
-- [The Product copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx`  (on the review branch, pull request 152)
-- [The Security copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx`  (on the review branch, pull request 152)
+- [The Product copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx`
+- [The Security copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Security.docx`
 
 ### D3, Manual review or a provider for identity checks
 
@@ -1017,8 +1017,8 @@ Manual review is what was built and merged. This decision ratifies it. Like ADR-
 **Links**
 
 - [The full wording of the ask, item D3](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/2026-08-06-closure-schedule.md) `docs/escalations/2026-08-06-closure-schedule.md`
-- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`  (on the review branch, pull request 152)
-- [The Product copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/AO_DOCS_DECISIONS_RECORDED/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx`  (on the review branch, pull request 152)
+- [The client's copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Client.docx`
+- [The Product copy of the ask, as a Word document](https://github.com/safebuy-realties-ltd/safebuyrealties/blob/main/docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx) `docs/escalations/ENG-CS-2026-08-06-01_Closure_Schedule_Product.docx`
 
 ### ADR-0006, A named officer's acceptance of leaving Vercel for Nigerian infrastructure
 
@@ -1090,4 +1090,4 @@ Nothing on this page has been ticked on anybody's behalf. Where a name is missin
 
 ---
 
-Generated 7 August 2026 from the working tree at commit 1b4c46e. The counts were re-derived from the backlog rather than carried across: seventeen stories left, eight of them blocked at the head and nine behind those eight, against a backlog total of thirty-seven to fifty-nine developer-days. Links marked as being on the review branch point at pull request 152, which is open and has not been merged. Those ten Word documents move to the main branch when it merges, and the same link works there with 'main' written in place of the branch name.
+Generated 7 August 2026 from the working tree at commit 1b4c46e, and revised on 8 August 2026 against commit 88cbf5c. The counts were re-derived from the backlog rather than carried across: seventeen stories left, eight of them blocked at the head and nine behind those eight, against a backlog total of thirty-seven to fifty-nine developer-days. Neither revision moved any of those counts. Ten of the links below used to be marked as sitting on a review branch. Pull request 152 merged on 7 August 2026, so every link on this page now points at the main branch and none of them depends on a branch that may since have been deleted.
