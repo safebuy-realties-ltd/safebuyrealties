@@ -235,6 +235,26 @@ Coordinate with teammates — one schema PR at a time on the shared database.
 
 `STORAGE_DRIVER=local` writes to `backend/uploads` (or `STORAGE_LOCAL_PATH`). Seller document upload E2E works against local API + cloud DB.
 
+**The local driver is for development only, and production refuses to start on it.** It writes to
+the machine's own disk, which no deployment promises to keep, so a document uploaded through it can
+be gone by the next deploy with nothing in the logs to say so. `assertStorageConfigured()` in
+`backend/src/config/storage-guard.ts` stops the boot wherever `isProductionEnvironment()` is true
+and the driver is `local`, and that includes the case where nothing declares the environment at all,
+because an undeclared environment is treated as production on purpose (ADR-0006). Development, test
+and staging are unaffected, and a Vercel preview resolves to staging, so previews keep uploading
+locally as they always have.
+
+On a host whose filesystem is thrown away with the process, the local driver writes to
+`/tmp/safebuyrealties-uploads` rather than into the deployment bundle. Set `STORAGE_EPHEMERAL_FS=true`
+to declare that outright; left unset the code guesses from the platform, which today means Vercel.
+
+To run against S3 locally, set `STORAGE_DRIVER=s3` with `AWS_REGION`, `AWS_S3_BUCKET` and either a
+key pair or ambient credentials. Every write is encrypted server side, `AES256` by default, and
+`AWS_S3_SSE=aws:kms` with `AWS_S3_SSE_KMS_KEY_ID` selects a managed key instead. A driver failure
+comes back as a 502 carrying the request's correlation id, never as a 500, and the response says
+nothing about the bucket. Bucket policy, object versioning and the migration of existing objects are
+not settled here: they wait on the bucket itself, which is EXT-2.
+
 ## Feature flags locally
 
 Every roadmap flag is off by default, so a feature built behind one is invisible until you say

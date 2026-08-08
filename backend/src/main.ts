@@ -7,6 +7,7 @@ import { assertSafeDatabaseUrl } from "./config/database-guard";
 import { assertCorsConfigured } from "./config/cors-config";
 import { assertPaymentsConfigured } from "./config/payments-guard";
 import { assertJwtSecret } from "./config/jwt-secret";
+import { assertStorageConfigured } from "./config/storage-guard";
 import { warnIfRuntimeEnvironmentUndeclared } from "./config/runtime-environment";
 
 // First, because every guard below resolves the environment and this says so once when nothing
@@ -16,6 +17,10 @@ assertSafeDatabaseUrl();
 assertCorsConfigured();
 assertPaymentsConfigured();
 assertJwtSecret();
+// E3-S2 criterion 1. Here rather than in StorageService's constructor because the constructor runs
+// when the module graph is built, and a production instance that boots on the local driver accepts
+// its first upload before anyone finds out the bytes have nowhere durable to go.
+assertStorageConfigured();
 
 async function bootstrap() {
   // Built and installed before NestFactory, because module construction can throw and a failure
