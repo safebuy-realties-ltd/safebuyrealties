@@ -1,3 +1,5 @@
+<!-- report-state: sha=88cbf5c -->
+
 # What is needed, and who has to give it
 
 *Twelve items are open outside engineering. Between them they hold seventeen stories, which is everything left before this platform can go live. Each item below says what has to come back, what shape the answer has to take, where to write it, and who signs it.*

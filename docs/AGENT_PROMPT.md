@@ -26,9 +26,19 @@ Read `docs/DEVELOPMENT_GUIDE.md` for TDD, PR/CI, and full-stack validation layer
      you did, and a dated reconciliation note under section 3.1 if a dependency moved
    - `docs/BUILD_CHECKLIST.md` — **Last Session Notes** at the top, and the audit-correction row if
      your story closed one
-6. Push branch, open PR, ensure **CI is green** before marking done
-7. After merge: update Last Session Notes with what landed and what the next session should start on
-8. Repeat until context limit; hand off per Handoff Protocol
+6. **Run `npm run verify` before you push.** It is the same list of commands CI executes, held in one
+   file so a local checklist cannot drift away from the workflow, and it prints what it could not run
+   here and why. A green laptop is not the finish line
+7. Push branch, open PR, then **watch the run to a conclusion**: `gh pr checks <number> --watch`.
+   Opening the pull request is not the end of the story, a green check is, and a failure that arrives
+   four minutes after you walked away is still yours (`docs/HANDOVER_WEEK.md`, rule 13)
+8. **After the merge, refresh the reports.** `docs/reports/build-state.*` and
+   `docs/reports/what-is-needed.*` describe the state of `main`, so they cannot be written truthfully
+   from inside a branch that has not merged yet. Re-derive them against the merged commit, move the
+   `<!-- report-state: sha=... -->` marker in each, republish the artifact, and update Last Session
+   Notes with what landed and what the next session should start on (rule 12). The `reports` job on
+   `main` checks this, and `no-report-update: <reason>` in the merge commit is the only way past it
+9. Repeat until context limit; hand off per Handoff Protocol
 
 ## Validation Rules
 
@@ -87,6 +97,8 @@ story with no unmet dependency, and continuing.
 
 - **Never push directly to `main`.** Branch → PR → merge. See `docs/GIT_WORKFLOW.md` and `docs/DEVELOPMENT_GUIDE.md`.
 - **Every PR:** CI must pass; include tests for new behavior; PR body lists validation commands run.
+- **Run `npm run verify` before pushing, and `gh pr checks <number> --watch` after opening.** Guessing
+  which commands CI runs is how a lint gate added in somebody else's PR fails yours.
 - Merge only after CI green; user merges on GitHub.
 
 ## Rules You Must Not Break
@@ -105,6 +117,19 @@ story with no unmet dependency, and continuing.
   by whoever depended on it
 - Never modify files outside the scope of the current story, **except the three record documents**,
   which every story PR updates by rule
+- Never add a dependency advisory to `docs/security/advisory-baseline.json` without deciding, in
+  writing, whether this codebase can actually reach it. `reachable` is the field that does the work
+  and it is the one field a tool cannot fill in for you. Reachable at high or critical means you file
+  a story and name it, and `npm run validate:security` fails until you do
+- Never read `npm run validate:security` passing as a security review. It checks dependency
+  advisories against a baseline a person wrote. **EXT-6 asks for an independent review by a party who
+  was not paid to build this, and nothing in this repository can supply that.** An agent that ticks
+  E8-S3 on the strength of a green CI job has misread the rule it is following
+- Never leave the reports describing an older commit than the board. After your PR merges,
+  `docs/reports/build-state.*` and `docs/reports/what-is-needed.*` get re-derived and their
+  `<!-- report-state: sha=... -->` markers moved, and the published artifact gets republished from
+  the same source. There is exactly one artifact for this project and it is updated in place, never
+  replaced with a second one
 - Never invent a new pattern when an existing one is in the codebase — match what is already there
 - Never install a new package without noting it explicitly in the commit message
 - Never run `prisma migrate reset` or any destructive database command

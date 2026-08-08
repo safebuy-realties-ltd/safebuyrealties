@@ -18,3 +18,17 @@ Follow **[AGENTS.md](AGENTS.md)** and **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT
     deliver as well as what you did, and a dated reconciliation note if a dependency moved
   - **[docs/BUILD_CHECKLIST.md](docs/BUILD_CHECKLIST.md)**: **Last Session Notes** at the top, with
     date, last completed, what is next, blockers
+- **Run `npm run verify` before you push, and watch the run after you open the PR** with
+  `gh pr checks <number> --watch`. That one command is the same list CI executes, held in a single
+  file so a local checklist cannot drift away from the workflow. Rule 13
+- **Assess the security posture on every PR.** Every dependency advisory open against this repository
+  is carried in [docs/security/advisory-baseline.json](docs/security/advisory-baseline.json) with its
+  CWE, its OWASP category, a written verdict on whether this codebase can actually reach it, and a
+  date somebody looks again. `npm run validate:security` fails on anything missing, expired, or
+  reachable at high or critical with no story named. It does **not** discharge EXT-6: that asks for a
+  review by a party who was not paid to build this, and no CI job can be that party. Rule 11
+- **Refresh the reports after the merge, not inside it.** `docs/reports/build-state.*`,
+  `docs/reports/what-is-needed.*` and the published artifact describe `main`, so they are re-derived
+  once the PR has landed and each `<!-- report-state: sha=... -->` marker is moved to the merged
+  commit. There is one artifact for this project, updated in place, never replaced by a second one.
+  Rule 12
