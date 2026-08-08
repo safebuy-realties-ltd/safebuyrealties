@@ -134,6 +134,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return "NOT_FOUND";
       case HttpStatus.CONFLICT:
         return "CONFLICT";
+      // E3-S2 criterion 6. `BadGatewayException` carries `error: "Bad Gateway"` and so is named from
+      // that above without ever reaching here; this case is for a bare `new HttpException(msg, 502)`,
+      // which would otherwise come back as the unhelpful `HTTP_ERROR`.
+      case HttpStatus.BAD_GATEWAY:
+        return "BAD_GATEWAY";
       default:
         return "HTTP_ERROR";
     }

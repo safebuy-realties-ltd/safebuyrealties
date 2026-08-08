@@ -2,8 +2,9 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { BadGatewayException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { StorageService } from "./storage.service";
 
 describe("StorageService (local driver)", () => {
@@ -148,30 +149,84 @@ describe("StorageService (local driver)", () => {
   });
 });
 
-describe("StorageService (s3 driver)", () => {
-  it("uses /tmp on Vercel when no local path is configured", async () => {
-    const prev = process.env.VERCEL;
-    process.env.VERCEL = "1";
+/**
+ * E3-S2a decoupled these two from `process.env.VERCEL` without changing what they do there. The
+ * question is now whether the filesystem survives the process, which an operator can answer on a
+ * host that has never heard of Vercel, and `VERCEL` is only the fallback until the cutover.
+ */
+describe("StorageService (ephemeral filesystem)", () => {
+  const scratch = path.join("/tmp", "safebuyrealties-uploads");
+
+  async function serviceWith(
+    env: Record<string, string>,
+    config: Record<string, string | undefined> = {},
+  ) {
+    const previous = new Map(Object.keys(env).map((key) => [key, process.env[key]]));
+    Object.assign(process.env, env);
     try {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           StorageService,
-          {
-            provide: ConfigService,
-            useValue: { get: () => undefined },
-          },
+          { provide: ConfigService, useValue: { get: (key: string) => config[key] } },
         ],
       }).compile();
-      const service = module.get(StorageService);
-      await service.upload(Buffer.from("v"), "vercel-check.txt", "text/plain");
-      const abs = path.join("/tmp", "safebuyrealties-uploads", "vercel-check.txt");
-      expect(fs.existsSync(abs)).toBe(true);
-      await service.delete("vercel-check.txt");
+      return module.get(StorageService);
     } finally {
-      if (prev === undefined) delete process.env.VERCEL;
-      else process.env.VERCEL = prev;
+      for (const [key, value] of previous) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
     }
+  }
+
+  it("uses /tmp on Vercel when no local path is configured", async () => {
+    const service = await serviceWith({ VERCEL: "1" });
+
+    await service.upload(Buffer.from("v"), "vercel-check.txt", "text/plain");
+
+    expect(fs.existsSync(path.join(scratch, "vercel-check.txt"))).toBe(true);
+    await service.delete("vercel-check.txt");
   });
+
+  it("uses /tmp when an operator declares the filesystem ephemeral, with no vendor involved", async () => {
+    const service = await serviceWith({ STORAGE_EPHEMERAL_FS: "true" });
+
+    await service.upload(Buffer.from("d"), "declared-check.txt", "text/plain");
+
+    expect(fs.existsSync(path.join(scratch, "declared-check.txt"))).toBe(true);
+    await service.delete("declared-check.txt");
+  });
+
+  /**
+   * The relative path is the one that has to be redirected: `./uploads` resolves inside a bundle
+   * that is read-only or discarded. An absolute path is an operator saying where the bytes go, and
+   * is honoured as written.
+   */
+  it("redirects a relative configured path but honours an absolute one", async () => {
+    const relative = await serviceWith({ VERCEL: "1" }, { STORAGE_LOCAL_PATH: "./uploads" });
+    await relative.upload(Buffer.from("r"), "relative-check.txt", "text/plain");
+    expect(fs.existsSync(path.join(scratch, "relative-check.txt"))).toBe(true);
+    await relative.delete("relative-check.txt");
+
+    const absoluteRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sbr-absolute-"));
+    const absolute = await serviceWith({ VERCEL: "1" }, { STORAGE_LOCAL_PATH: absoluteRoot });
+    await absolute.upload(Buffer.from("a"), "absolute-check.txt", "text/plain");
+    expect(fs.existsSync(path.join(absoluteRoot, "absolute-check.txt"))).toBe(true);
+    fs.rmSync(absoluteRoot, { recursive: true, force: true });
+  });
+
+  it("uses the configured path on an ordinary host, where nothing is ephemeral", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "sbr-durable-"));
+    const service = await serviceWith({ STORAGE_EPHEMERAL_FS: "false" }, { UPLOAD_DIR: root });
+
+    await service.upload(Buffer.from("k"), "durable-check.txt", "text/plain");
+
+    expect(fs.existsSync(path.join(root, "durable-check.txt"))).toBe(true);
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+});
+
+describe("StorageService (s3 driver)", () => {
 
   /**
    * The sharp edge of E3-S1c. A presigned URL is a bearer capability — an hour of access to
@@ -199,7 +254,14 @@ describe("StorageService (s3 driver)", () => {
     );
   });
 
-  it("throws when required S3 env vars are missing", async () => {
+  /**
+   * E3-S2a inverted this one. A half-configured bucket used to come back as a 400 naming both
+   * variables, which blamed the caller for a server fault and told anyone who could reach an upload
+   * what this deployment was missing. It is a 502 now, and the variable names go to the log.
+   * `assertStorageConfigured()` refuses to boot production in this state, so the only way to reach
+   * here at all is a development or staging box configured halfway.
+   */
+  it("raises a 502 naming nothing when required S3 settings are missing", async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StorageService,
@@ -213,9 +275,119 @@ describe("StorageService (s3 driver)", () => {
     }).compile();
 
     const service = module.get(StorageService);
-    await expect(service.upload(Buffer.from("x"), "k", "text/plain")).rejects.toThrow(
-      /AWS_S3_BUCKET|AWS_REGION/,
+    const failure = await service.upload(Buffer.from("x"), "k", "text/plain").catch((e) => e);
+
+    expect(failure).toBeInstanceOf(BadGatewayException);
+    expect(failure.getStatus()).toBe(502);
+    expect(JSON.stringify(failure.getResponse())).not.toMatch(/AWS_/);
+  });
+});
+
+/**
+ * E3-S2 criteria 3 and 6, the halves of them that are code rather than bucket configuration.
+ *
+ * `S3Client.prototype.send` is spied on rather than a client being injected, because the service
+ * builds its own client inside `getS3()` and the point of these tests is what it puts on the wire.
+ */
+describe("StorageService (s3 durability and failure mapping)", () => {
+  const S3_CONFIG: Record<string, string> = {
+    STORAGE_DRIVER: "s3",
+    AWS_REGION: "af-south-1",
+    AWS_S3_BUCKET: "sbr-documents",
+    AWS_ACCESS_KEY_ID: "AKIA_EXAMPLE",
+    AWS_SECRET_ACCESS_KEY: "secret-example",
+  };
+
+  function make(overrides: Record<string, string | undefined> = {}): StorageService {
+    const config = { ...S3_CONFIG, ...overrides };
+    return new StorageService({ get: (key: string) => config[key] } as unknown as ConfigService);
+  }
+
+  let send: jest.SpyInstance;
+
+  beforeEach(() => {
+    send = jest.spyOn(S3Client.prototype, "send");
+  });
+
+  afterEach(() => {
+    send.mockRestore();
+  });
+
+  function lastPut(): Record<string, unknown> {
+    const command = send.mock.calls.at(-1)?.[0] as PutObjectCommand;
+    expect(command).toBeInstanceOf(PutObjectCommand);
+    return command.input as unknown as Record<string, unknown>;
+  }
+
+  it("encrypts every object it writes, without being asked to", async () => {
+    send.mockResolvedValue({});
+
+    await make().upload(Buffer.from("deed"), "listings/abc/deed.pdf", "application/pdf");
+
+    expect(lastPut().ServerSideEncryption).toBe("AES256");
+  });
+
+  it("uses a managed key when one is configured", async () => {
+    send.mockResolvedValue({});
+
+    await make({ AWS_S3_SSE: "aws:kms", AWS_S3_SSE_KMS_KEY_ID: "key-1" }).upload(
+      Buffer.from("deed"),
+      "listings/abc/deed.pdf",
+      "application/pdf",
     );
+
+    expect(lastPut()).toMatchObject({ ServerSideEncryption: "aws:kms", SSEKMSKeyId: "key-1" });
+  });
+
+  it("falls back to AES256 on a value it does not recognise, because that is the safe direction", async () => {
+    send.mockResolvedValue({});
+
+    await make({ AWS_S3_SSE: "aes-256" }).upload(Buffer.from("x"), "listings/a/b.pdf", "text/plain");
+
+    expect(lastPut().ServerSideEncryption).toBe("AES256");
+  });
+
+  it("sends no encryption header only when an operator switches it off outright", async () => {
+    send.mockResolvedValue({});
+
+    await make({ AWS_S3_SSE: "none" }).upload(Buffer.from("x"), "listings/a/b.pdf", "text/plain");
+
+    expect(lastPut().ServerSideEncryption).toBeUndefined();
+  });
+
+  it.each([
+    ["upload", (s: StorageService) => s.upload(Buffer.from("x"), "listings/a/b.pdf", "text/plain")],
+    ["read", (s: StorageService) => s.readObject("listings/a/b.pdf")],
+    ["delete", (s: StorageService) => s.delete("listings/a/b.pdf")],
+  ])("maps an unreachable bucket on %s to a 502 rather than an unhandled 500", async (_op, act) => {
+    send.mockRejectedValue(
+      Object.assign(new Error("connect ECONNREFUSED sbr-documents.s3.af-south-1.amazonaws.com"), {
+        name: "NetworkingError",
+      }),
+    );
+
+    const failure = await act(make()).catch((e) => e);
+
+    expect(failure).toBeInstanceOf(BadGatewayException);
+    expect(failure.getStatus()).toBe(502);
+  });
+
+  it("tells the caller nothing about the bucket it could not reach", async () => {
+    send.mockRejectedValue(new Error("Access Denied for bucket sbr-documents"));
+
+    const failure = await make().readObject("listings/a/b.pdf").catch((e) => e);
+
+    expect(JSON.stringify(failure.getResponse())).not.toContain("sbr-documents");
+  });
+
+  /**
+   * The distinction the mapping turns on. A missing key is this service answering correctly and
+   * has to stay a 404; if it became a 502 then every deleted document would read as an outage.
+   */
+  it("still answers 404 for a key that is not there", async () => {
+    send.mockRejectedValue(Object.assign(new Error("no such key"), { name: "NoSuchKey" }));
+
+    await expect(make().readObject("listings/a/gone.pdf")).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 
